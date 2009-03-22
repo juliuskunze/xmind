@@ -1,0 +1,413 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
+package org.xmind.gef;
+
+import org.eclipse.swt.SWT;
+
+/**
+ * @author Brian Sun
+ * @version 2005
+ */
+public class GEF {
+
+    public static final boolean IS_CARBON;
+    public static final boolean IS_WIN32;
+    public static final boolean IS_GTK;
+
+    static {
+        String platform = SWT.getPlatform();
+        IS_CARBON = "carbon".equals(platform); //$NON-NLS-1$
+        IS_WIN32 = "win32".equals(platform); //$NON-NLS-1$
+        IS_GTK = "gtk".equals(platform); //$NON-NLS-1$
+    }
+
+    /*
+     * Request Types:
+     */
+    public static final String REQ_DEBUG = "debug"; //$NON-NLS-1$
+    public static final String REQ_SELECT = "select"; //$NON-NLS-1$
+    public static final String REQ_SELECT_NONE = "select none"; //$NON-NLS-1$
+    public static final String REQ_SELECT_SINGLE = "select single"; //$NON-NLS-1$
+    public static final String REQ_SELECT_MULTI = "select multi"; //$NON-NLS-1$
+    public static final String REQ_SELECT_ALL = "select all"; //$NON-NLS-1$
+
+    public static final String REQ_ZOOM = "zoom"; //$NON-NLS-1$
+    public static final String REQ_ZOOMIN = "zoom in"; //$NON-NLS-1$
+    public static final String REQ_ZOOMOUT = "zoom out"; //$NON-NLS-1$
+    public static final String REQ_ACTUALSIZE = "actual size"; //$NON-NLS-1$
+    public static final String REQ_FITSIZE = "fit size"; //$NON-NLS-1$
+    public static final String REQ_FITSELECTION = "fit selection"; //$NON-NLS-1$
+
+    public static final String REQ_COPY = "copy"; //$NON-NLS-1$
+    public static final String REQ_CUT = "cut"; //$NON-NLS-1$
+    public static final String REQ_PASTE = "paste"; //$NON-NLS-1$
+    public static final String REQ_REDO = "redo"; //$NON-NLS-1$
+    public static final String REQ_UNDO = "undo"; //$NON-NLS-1$
+    public static final String REQ_REPEAT = "repeat"; //$NON-NLS-1$
+
+    public static final String REQ_MODIFY = "modify"; //$NON-NLS-1$
+    public static final String REQ_RESIZE = "resize"; //$NON-NLS-1$
+    public static final String REQ_EDIT = "edit"; //$NON-NLS-1$
+    public static final String REQ_CANCEL = "cancel"; //$NON-NLS-1$
+    public static final String REQ_FINISH = "finish"; //$NON-NLS-1$
+
+    public static final String REQ_CREATE = "create"; //$NON-NLS-1$
+    public static final String REQ_DELETE = "delete"; //$NON-NLS-1$
+    public static final String REQ_MOVETO = "move to"; //$NON-NLS-1$
+    public static final String REQ_COPYTO = "copy to"; //$NON-NLS-1$
+    //public static final String REQ_INDEX = "index"; //$NON-NLS-1$
+
+    public static final String REQ_MOVE_UP = "move up"; //$NON-NLS-1$
+    public static final String REQ_MOVE_DOWN = "move down"; //$NON-NLS-1$
+    public static final String REQ_MOVE_LEFT = "move left"; //$NON-NLS-1$
+    public static final String REQ_MOVE_RIGHT = "move right"; //$NON-NLS-1$
+
+    public static final String REQ_NAV_UP = "navigate up"; //$NON-NLS-1$
+    public static final String REQ_NAV_DOWN = "navigate down"; //$NON-NLS-1$
+    public static final String REQ_NAV_LEFT = "navigate left"; //$NON-NLS-1$
+    public static final String REQ_NAV_RIGHT = "navigate right"; //$NON-NLS-1$
+    public static final String REQ_NAV_BEGINNING = "navigate beginning"; //$NON-NLS-1$
+    public static final String REQ_NAV_END = "navigate end"; //$NON-NLS-1$
+    public static final String REQ_NAV_BACK = "navigate backward"; //$NON-NLS-1$
+    public static final String REQ_NAV_FORWARD = "navigate forward"; //$NON-NLS-1$
+    public static final String REQ_NAV_NEXT = "navigate next"; //$NON-NLS-1$
+    public static final String REQ_NAV_PREV = "navigate previous"; //$NON-NLS-1$
+    public static final String REQ_MOVE_PREV = "move previous"; //$NON-NLS-1$
+    public static final String REQ_MOVE_NEXT = "move next"; //$NON-NLS-1$
+
+    public static final String REQ_TRAVERSE = "traverse"; //$NON-NLS-1$
+    public static final String REQ_GET_TRAVERSABLES = "get traversables"; //$NON-NLS-1$
+
+    public static final String REQ_EXTEND = "extend"; //$NON-NLS-1$
+    public static final String REQ_COLLAPSE = "collapse"; //$NON-NLS-1$
+    public static final String REQ_EXTEND_ALL = "extend all"; //$NON-NLS-1$
+    public static final String REQ_COLLAPSE_ALL = "collapse all"; //$NON-NLS-1$
+
+    public static final String REQ_SHOW = "show"; //$NON-NLS-1$
+    public static final String REQ_HIDE = "hide"; //$NON-NLS-1$
+    public static final String REQ_SHOW_ALL = "show all"; //$NON-NLS-1$
+    public static final String REQ_HIDE_ALL = "hide all"; //$NON-NLS-1$
+    //public static final String REQ_SHOW_ALL_IMMEDIATELY = "show all immediately"; //Experimental! //$NON-NLS-1$
+    public static final String REQ_SHOW_OTHER = "show other"; //$NON-NLS-1$
+    public static final String REQ_SHOW_ONLY = "show only"; //$NON-NLS-1$
+
+    public static final String REQ_ALIGN = "align"; //$NON-NLS-1$
+
+    public static final String REQ_DROP = "drop"; //$NON-NLS-1$
+
+    /*
+     * Tool Status:
+     */
+    public static final int ST_ACTIVE = 1;
+    public static final int ST_ALT_PRESSED = 1 << 1;
+    public static final int ST_CONTROL_PRESSED = 1 << 2;
+    public static final int ST_SHIFT_PRESSED = 1 << 3;
+    public static final int ST_MOUSE_HOVER = 1 << 4;
+    public static final int ST_MOUSE_DOUBLECLICKING = 1 << 5;
+    public static final int ST_MOUSE_PRESSED = 1 << 6;
+    public static final int ST_MOUSE_DRAGGING = 1 << 7;
+    public static final int ST_MOUSE_RIGHT = 1 << 8;
+    public static final int ST_HIDE_CMENU = 1 << 9;
+    public static final int ST_FORCE_CMENU = 1 << 10;
+    public static final int ST_NO_DRAGGING = 1 << 11;
+    public static final int ST_NO_FOCUS = 1 << 12;
+
+    public static final int ST_MODIFIER_MASK = ST_ALT_PRESSED
+            | ST_CONTROL_PRESSED | ST_SHIFT_PRESSED;
+
+    /*
+     * Parts Status:
+     */
+    public static final int PART_ACTIVE = 1;
+    public static final int PART_SELECTED = 1 << 1;
+    public static final int PART_PRESELECTED = 1 << 2;
+    public static final int PART_FOCUSED = 1 << 3;
+    public static final int PART_SEL_MASK = PART_PRESELECTED | PART_SELECTED
+            | PART_FOCUSED;
+    public static final int PART_PRIM_SEL_MASK = PART_SELECTED | PART_FOCUSED;
+
+    /*
+     * Part Roles:
+     */
+    public static final String ROLE_CANVAS = "canvas role"; //$NON-NLS-1$
+    public static final String ROLE_MOVABLE = "movable role"; //$NON-NLS-1$
+    public static final String ROLE_MODIFIABLE = "modifiable role"; //$NON-NLS-1$
+    public static final String ROLE_SELECTABLE = "selectable role"; //$NON-NLS-1$
+    public static final String ROLE_NAVIGABLE = "navigable role"; //$NON-NLS-1$
+    public static final String ROLE_TRAVERSABLE = "traversable role"; //$NON-NLS-1$
+    public static final String ROLE_CONTAINER = "container role"; //$NON-NLS-1$
+    public static final String ROLE_CREATABLE = "creatable role"; //$NON-NLS-1$
+    public static final String ROLE_DELETABLE = "deletable role"; //$NON-NLS-1$
+    public static final String ROLE_EXTENDABLE = "extendable role"; //$NON-NLS-1$
+    public static final String ROLE_SCALABLE = "scalable role"; //$NON-NLS-1$
+    public static final String ROLE_EDITABLE = "editable role"; //$NON-NLS-1$
+    public static final String ROLE_FILTERABLE = "filterable role"; //$NON-NLS-1$
+    public static final String ROLE_DROP_TARGET = "drop target role"; //$NON-NLS-1$
+
+    /*
+     * Command Types:
+     */
+    public static final int CMD_NORMAL = 0;
+    public static final int CMD_CREATE = 1;
+    public static final int CMD_DELETE = 2;
+    public static final int CMD_MODIFY = 3;
+
+    /*
+     * CommandStack Events:
+     */
+    public static final int CS_PRE_EXECUTE = 1;
+    public static final int CS_PRE_REDO = 1 << 1;
+    public static final int CS_PRE_UNDO = 1 << 2;
+    public static final int CS_POST_EXECUTE = 1 << 3;
+    public static final int CS_POST_REDO = 1 << 4;
+    public static final int CS_POST_UNDO = 1 << 5;
+    public static final int CS_COMMAND_PUSHED = 1 << 6;
+    public static final int CS_UPDATED = 1 << 7;
+
+    public static final int CS_PRE_MASK = CS_PRE_EXECUTE | CS_PRE_UNDO
+            | CS_PRE_REDO;
+    public static final int CS_POST_MASK = CS_POST_EXECUTE | CS_POST_UNDO
+            | CS_POST_REDO;
+
+    /*
+     * Tools:
+     */
+    public static final String TOOL_DEFAULT = "default tool"; //$NON-NLS-1$
+    public static final String TOOL_SELECT = "select tool"; //$NON-NLS-1$
+    public static final String TOOL_AREASELECT = "area select tool"; //$NON-NLS-1$
+    public static final String TOOL_TRAVERSE = "traverse tool"; //$NON-NLS-1$
+    public static final String TOOL_CREATE = "create tool"; //$NON-NLS-1$
+    public static final String TOOL_MOVE = "move tool"; //$NON-NLS-1$
+    public static final String TOOL_BROWSE = "browse tool"; //$NON-NLS-1$
+    public static final String TOOL_EDIT = "edit tool"; //$NON-NLS-1$
+    public static final String TOOL_RESIZE = "resize tool"; //$NON-NLS-1$
+    public static final String TOOL_AREACREATE = "area create tool"; //$NON-NLS-1$
+    public static final String TOOL_DND = "dnd tool"; //$NON-NLS-1$
+    public static final String TOOL_PREVIEW = "preview tool"; //$NON-NLS-1$
+
+    /*
+     * Layers:
+     */
+    public static final Object LAYERS_SCALABLE = "scalable layers"; //$NON-NLS-1$
+    public static final Object LAYER_BACKGROUND = "background layer"; //$NON-NLS-1$
+    public static final Object LAYER_CONTENTS = "contents layer"; //$NON-NLS-1$
+    public static final Object LAYER_PRESENTATION = "presentation layer"; //$NON-NLS-1$
+    public static final Object LAYER_FEEDBACK = "feedback layer"; //$NON-NLS-1$
+    public static final Object LAYER_SHADOW = "shadow layer"; //$NON-NLS-1$
+
+    /*
+     * Viewer property
+     */
+    public static final String SelectionConstraint = "selection constraint"; //$NON-NLS-1$
+    public static final int SEL_EMPTY = 1;
+    public static final int SEL_SINGLE = 1 << 1;
+    public static final int SEL_MULTI = 1 << 2;
+    public static final int SEL_DEFAULT = SEL_EMPTY | SEL_SINGLE | SEL_MULTI;
+
+//    /*
+//     * Selection Types:
+//     */
+//    public static final int SEL_NONE = 1;
+//    public static final int SEL_UNKNOWN = 2;
+//    public static final int SEL_TEXT = 3;
+//    /*
+//     * Navigation Directions:
+//     */
+//    public static final int NAVI_UP = 0;
+//    public static final int NAVI_DOWN = 1;
+//    public static final int NAVI_LEFT = 2;
+//    public static final int NAVI_RIGHT = 3;
+
+    /**
+     * Request parameter: the size of a size request.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>a {@link org.eclipse.draw2d.geometry.Dimension}</dd>
+     * </dl>
+     */
+    public static final String PARAM_SIZE = "size"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: the text of a text request.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd><code>String</code></dd>
+     * </dl>
+     */
+    public static final String PARAM_TEXT = "text"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: the position of a position request.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>a {@link org.eclipse.draw2d.geometry.Point}</dd>
+     * </dl>
+     */
+    public static final String PARAM_POSITION = "position"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: whether the position is relative.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd><code>Boolean</code></dd>
+     * </dl>
+     */
+    public static final String PARAM_POSITION_RELATIVE = "positionRelative"; //$NON-NLS-1$
+
+//    /**
+//     * Request parameter: the starting position of an area request.
+//     * <dl>
+//     * <dt>Values:</dt>
+//     * <dd>a {@link org.eclipse.draw2d.geometry.Point}</dd>
+//     * </dl>
+//     */
+//    public static final String PARAM_START_POSITION = "startingPosition"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: the text selection.
+     * 
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>an {@link org.eclipse.jface.text.ITextSelection}</dd>
+     * </dl>
+     */
+    public static final String PARAM_TEXT_SELECTION = "textSelection"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: the scale of a zoom request.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd><code>Double</code></dd>
+     * </dl>
+     */
+    public static final String PARAM_ZOOM_SCALE = "zoomScale"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: the target parent of a 'move to' or 'copy to' request.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>a {@link org.xmind.gef.part.IPart}</dd>
+     * </dl>
+     */
+    public static final String PARAM_PARENT = "parent"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: the new index of a 'move to' or 'copy to' request.
+     * 
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>an <code>Integer</code></dd>
+     * </dl>
+     */
+    public static final String PARAM_INDEX = "index"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: the alignment hint of a 'align' request.
+     * 
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM</dd>
+     * </dl>
+     * 
+     * @see org.eclipse.draw2d.PositionConstants#LEFT
+     * @see org.eclipse.draw2d.PositionConstants#CENTER
+     * @see org.eclipse.draw2d.PositionConstants#RIGHT
+     * @see org.eclipse.draw2d.PositionConstants#TOP
+     * @see org.eclipse.draw2d.PositionConstants#MIDDLE
+     * @see org.eclipse.draw2d.PositionConstants#BOTTOM
+     */
+    public static final String PARAM_ALIGNMENT = "alignment"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: whether the navigation is sequential.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd><code>Boolean</code></dd>
+     * </dl>
+     */
+    public static final String PARAM_NAV_SEQUENTIAL = "navigationSequential"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: the starting part of the sequential navigation.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>{@link org.xmind.gef.part.IPart}</dd>
+     * </dl>
+     */
+    public static final String PARAM_NAV_SEQUENCE_START = "navigationSequenceStart"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: file path(s) of a path request.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>a single file path (<code>String</code>), or an array of file paths (
+     * <code>String[]</code>)</dd>
+     * </dl>
+     */
+    public static final String PARAM_PATH = "paths"; //$NON-NLS-1$
+
+    /**
+     * Result key of the traverse request to retrieve the traversable parts
+     * selected by a <code>TraversablePolicy</code>.
+     * 
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>an array of parts (<code>{@link org.xmind.gef.part.IPart}[]</code>)</dd>
+     * </dl>
+     */
+    public static final String RESULT_TRAVERSE = "traverseResult"; //$NON-NLS-1$
+
+    /**
+     * Result key of the navigation request to retrieve the target parts
+     * selected by a <code>NavigablePolicy</code>.
+     * 
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>an array of parts (<code>{@link org.xmind.gef.part.IPart}[]</code>)</dd>
+     * </dl>
+     */
+    public static final String RESULT_NAVIGATION = "navigationResult"; //$NON-NLS-1$
+
+//    /*
+//     * Anchor Identifiers:
+//     */
+//    public static final String ANC_SOURCE = "anchor.source"; //$NON-NLS-1$
+//    public static final String ANC_TARGET = "anchor.target"; //$NON-NLS-1$
+
+    /*
+     * Graphics Hints:
+     */
+    public static final boolean IS_PLATFORM_SUPPORT_GRADIENT = true;//!IS_CARBON;
+    public static final boolean IS_PLATFORM_SUPPORT_TEXT_PATH = IS_WIN32;
+
+//    /*
+//     * Figure event type:
+//     */
+//    public static final String FIG_VISIBLE = "FIG_VISIBLE"; //$NON-NLS-1$
+//    public static final String FIG_ENABLED = "FIG_ENABLED"; //$NON-NLS-1$
+
+//    /*
+//     * Background Patterns:
+//     */
+//    public static final int BACKGROUND_TRANSPARENT = 0;
+//    public static final int BACKGROUND_TILE = 1;
+//    public static final int BACKGROUND_CENTER = 2;
+//    public static final int BACKGROUND_EXTEND = 3;
+//    public static final int BACKGROUND_COLOR = 4;
+//    public static final int BACKGROUND_TEXTURE = 5;
+
+    private GEF() {
+    }
+
+}

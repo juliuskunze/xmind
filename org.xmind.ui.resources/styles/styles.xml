@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xmap-styles xmlns:fo="http://www.w3.org/1999/XSL/Format"
+	xmlns:svg="http://www.w3.org/2000/svg"
+	xmlns="urn:xmind:xmap:xmlns:style:2.0">
+	<automatic-styles>
+		<style id="STY-03qdmxshf0mi" name="%grassland" type="topic">
+			<topic-properties svg:fill="#37D02B" />
+		</style>
+		<style id="STY-3sb5tusk7pmh" name="%skyline" type="topic">
+			<topic-properties svg:fill="#93CBE3" />
+		</style>
+		<style id="STY-hebc3tmtlvhd" name="%deepOcean" type="topic">
+			<topic-properties svg:fill="#1292EF" />
+		</style>
+		<style id="STY-929sozfghe0q" name="%caution" type="topic">
+			<topic-properties fo:font-weight="bold" svg:fill="#FF0000" />
+		</style>
+		<style id="STY-ksxk3sdwc5af" name="%surprise" type="topic">
+			<topic-properties svg:fill="#FFE76D" />
+		</style>
+		<style id="STY-8qsejumrtkoo" name="%silverCoin" type="topic">
+			<topic-properties line-color="#CACACA" line-width="1pt"
+				shape-class="org.xmind.topicShape.ellipse" svg:fill="#F0F0F0" />
+		</style>
+		<style id="STY-qqry8mjk4ckg" name="%bumbleBee" type="topic">
+			<topic-properties fo:color="#733900" fo:font-weight="bold"
+				line-color="#A06C32" line-width="3pt"
+				shape-class="org.xmind.topicShape.ellipse" svg:fill="#FBCF04" />
+		</style>
+		<style id="STY-sel19yziapwg" name="%void" type="topic">
+			<topic-properties
+				shape-class="org.xmind.topicShape.noBorder" svg:fill="$none$" />
+		</style>
+		<style id="STY-cfcs8uhsczht" name="%decision" type="topic">
+			<topic-properties line-color="#808080" line-width="1pt"
+				shape-class="org.xmind.topicShape.diamond" svg:fill="#FFFFFF" />
+		</style>
+		<style id="STY-5xnyns5kt3n7" name="%process" type="topic">
+			<topic-properties line-color="#808080" line-width="1pt"
+				shape-class="org.xmind.topicShape.rect" svg:fill="#FFFFFF" />
+		</style>
+		<style id="STY-864ycdz366hn" name="%terminator" type="topic">
+			<topic-properties line-color="#808080" line-width="1pt"
+				shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFFFFF" />
+		</style>
+		<style id="STY-gq8ocjodkuip" name="%comments" type="topic">
+			<topic-properties line-color="#808080"
+				shape-class="org.xmind.topicShape.callout.ellipse"
+				svg:fill="#FFFFFF" />
+		</style>
+		<style id="STY-boggvrvqb0dl" name="%clouds" type="boundary">
+			<boundary-properties line-color="#C8C8C8"
+				line-pattern="solid" line-width="1pt"
+				shape-class="org.xmind.boundaryShape.scallops" svg:opacity="0.5" />
+		</style>
+		<style id="STY-7oo1mmspdgs0" name="%lake" type="boundary">
+			<boundary-properties line-color="#A4C1EA"
+				line-pattern="dash-dot-dot" line-width="2pt"
+				shape-class="org.xmind.boundaryShape.waves" svg:fill="#136CC6"
+				svg:opacity="0.76" />
+		</style>
+		<style id="STY-39yj69bux6zi" name="%explosion"
+			type="boundary">
+			<boundary-properties line-color="#FF7300"
+				line-pattern="solid" line-width="1pt"
+				shape-class="org.xmind.boundaryShape.tension" svg:fill="#FF7300"
+				svg:opacity="0.5" />
+		</style>
+		<style id="STY-5fo0c8bvqge0" name="%stone" type="boundary">
+			<boundary-properties line-color="#808080"
+				line-pattern="solid" line-width="5pt"
+				shape-class="org.xmind.boundaryShape.roundedRect" svg:opacity="1.0" />
+		</style>
+		<style id="STY-kgxzw25w6mf6" name="%neonLight1"
+			type="boundary">
+			<boundary-properties line-color="#F9DB06" line-pattern="dot"
+				line-width="5pt" />
+		</style>
+		<style id="STY-q0hokwb3vxp8" name="%neonLight2"
+			type="boundary">
+			<boundary-properties line-color="#26EF10" line-pattern="dot"
+				line-width="5pt" />
+		</style>
+		<style id="STY-q94zwcwxyba7" name="%sagittarius"
+			type="relationship">
+			<relationship-properties
+				arrow-begin-class="org.xmind.arrowShape.herringbone"
+				arrow-end-class="org.xmind.arrowShape.spearhead"
+				line-color="#7B5B40" line-pattern="solid"
+				shape-class="org.xmind.relationshipShape.straight" />
+		</style>
+		<style id="STY-mb2ybdy54t95" name="%tracing"
+			type="relationship">
+			<relationship-properties
+				arrow-begin-class="org.xmind.arrowShape.square"
+				arrow-end-class="org.xmind.arrowShape.triangle"
+				line-color="#9EB0CE" />
+		</style>
+		<style id="STY-l28wgz42777q" name="%subway"
+			type="relationship">
+			<relationship-properties
+				arrow-begin-class="org.xmind.arrowShape.dot"
+				arrow-end-class="org.xmind.arrowShape.dot" line-color="#745BAC"
+				line-pattern="dash" line-width="2pt" />
+		</style>
+		<style id="STY-kmpsdhu9veav" name="%bridge"
+			type="relationship">
+			<relationship-properties
+				arrow-begin-class="org.xmind.arrowShape.none"
+				arrow-end-class="org.xmind.arrowShape.none" line-color="#C0C0C0"
+				line-pattern="solid" />
+		</style>
+		<style id="STY-fmr6mxvmdkze" name="%watchThis"
+			type="relationship">
+			<relationship-properties line-color="#FF0000"
+				line-pattern="solid" />
+		</style>
+		<style id="STY-ucjsp1g12iq9" name="%flow" type="relationship">
+			<relationship-properties
+				arrow-end-class="org.xmind.arrowShape.triangle" line-color="#404040"
+				line-pattern="solid" line-width="1pt"
+				shape-class="org.xmind.relationshipShape.angled" />
+		</style>
+		<style id="STY-cta9ox9ukvnc" name="%water" type="map">
+			<map-properties svg:fill="#BEDCE7" />
+		</style>
+		<style id="STY-dks0z7bzrenp" name="%wheat" type="map">
+			<map-properties svg:fill="#FBFAD8" />
+		</style>
+		<style id="STY-7ixuict0m202" name="%space" type="map">
+			<map-properties svg:fill="#000000" />
+		</style>
+		<style id="STY-sg8j0m2f0zy4" name="%blackboard" type="map">
+			<map-properties svg:fill="#404040" />
+		</style>
+	</automatic-styles>
+</xmap-styles>

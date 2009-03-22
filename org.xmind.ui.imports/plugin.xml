@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.importWizards">
+      <wizard
+            category="org.xmind.ui.importWizards"
+            class="org.xmind.ui.internal.imports.mm.MindManagerImportWizard"
+            icon="icons/importmm.gif"
+            id="org.xmind.ui.import.MindManager"
+            name="%importWizard.mindmanager.name">
+      </wizard>
+      <wizard
+            category="org.xmind.ui.importWizards"
+            class="org.xmind.ui.internal.imports.freemind.FreeMindImportWizard"
+            icon="icons/importfreemind.gif"
+            id="org.xmind.ui.import.FreeMind"
+            name="%importWizard.freemind.name">
+      </wizard>
+   </extension>
+
+</plugin>

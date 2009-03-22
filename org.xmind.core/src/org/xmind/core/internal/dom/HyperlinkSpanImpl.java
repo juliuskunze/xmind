@@ -1,0 +1,79 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
+package org.xmind.core.internal.dom;
+
+import static org.xmind.core.internal.dom.DOMConstants.ATTR_HYPER;
+
+import java.util.List;
+
+import org.w3c.dom.Element;
+import org.xmind.core.IHyperlinkSpan;
+import org.xmind.core.ISpan;
+import org.xmind.core.util.DOMUtils;
+
+/**
+ * @author MANGOSOFT
+ * 
+ */
+public class HyperlinkSpanImpl extends SpanImplBase implements IHyperlinkSpan {
+
+    private Element implementation;
+
+    public HyperlinkSpanImpl(Element implementation, HtmlNotesContentImpl owner) {
+        super(implementation, owner);
+        this.implementation = implementation;
+
+    }
+
+    public String getHref() {
+        return DOMUtils.getAttribute(implementation, ATTR_HYPER);
+    }
+
+    public void setHref(String source) {
+        DOMUtils.setAttribute(implementation, ATTR_HYPER, source);
+    }
+
+    public List<ISpan> getSpans() {
+
+        return DOMUtils.getChildren(implementation, getOwner());
+    }
+
+    public void addSpan(ISpan span) {
+        SpanImplBase base = (SpanImplBase) span;
+        implementation.appendChild(base.getImplementation());
+        base.addNotify(getOwner().getRealizedWorkbook());
+    }
+
+    public void removeSpan(ISpan span) {
+        SpanImplBase base = (SpanImplBase) span;
+        base.removeNotify(getOwner().getRealizedWorkbook());
+        implementation.removeChild(base.getImplementation());
+    }
+
+    @Override
+    protected void addNotify(WorkbookImpl workbook) {
+        WorkbookUtilsImpl.increaseStyleRef(workbook, this);
+        for (ISpan span : getSpans()) {
+            ((SpanImplBase) span).addNotify(workbook);
+        }
+    }
+
+    @Override
+    protected void removeNotify(WorkbookImpl workbook) {
+        for (ISpan span : getSpans())
+            ((SpanImplBase) span).removeNotify(workbook);
+        WorkbookUtilsImpl.decreaseStyleRef(workbook, this);
+    }
+
+}

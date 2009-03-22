@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.editorActions">
+      <editorContribution
+            id="com.xmindshare.uploader.editorActions.upload"
+            targetID="org.xmind.ui.MindMapEditor">
+         <action
+               class="net.xmind.share.actions.UploadAction"
+               definitionId="com.xmindshare.uploader.commands.upload"
+               icon="icons/upload.gif"
+               id="com.xmindshare.uploader.actions.upload"
+               label="%action.upload.text"
+               menubarPath="file/additions"
+               mode="FORCE_TEXT"
+               toolbarPath="additions"
+               tooltip="%action.upload.toolTip">
+         </action>
+      </editorContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            description="%command.upload.description"
+            id="com.xmindshare.uploader.commands.upload"
+            name="%command.upload.name">
+      </command>
+   </extension>
+
+</plugin>

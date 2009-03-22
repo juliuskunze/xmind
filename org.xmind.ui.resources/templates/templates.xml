@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<templates>
+	<template resource="Brainstorming Chart.xmt" name="%template.brainStormingChart.name" />
+	<template resource="Meeting.xmt" name="%template.meetingChart.name" />
+	<template resource="Org Chart.xmt" name="%template.orgChart.name" />
+	<template resource="Project Management.xmt" name="%template.projectManagement.name" />
+	<template resource="Reading journals.xmt" name="%template.readingJournals.name"/>
+	<template resource="Personal Management.xmt" name="%template.personalManagement.name"/>
+</templates>

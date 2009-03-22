@@ -1,0 +1,215 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
+package org.xmind.ui.internal.dnd;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.dnd.TransferData;
+import org.xmind.core.ITopic;
+import org.xmind.core.IWorkbook;
+import org.xmind.gef.IViewer;
+import org.xmind.gef.dnd.IDndClient;
+import org.xmind.ui.util.MindMapUtils;
+
+public class TextDndClient implements IDndClient {
+
+    private static final String LINE_DELIMITER = System
+            .getProperty("line.separator"); //$NON-NLS-1$
+
+    private TextTransfer transfer = TextTransfer.getInstance();
+
+    public Object toTransferData(Object[] viewerElements, IViewer viewer) {
+        StringBuilder sb = new StringBuilder(viewerElements.length * 10);
+        for (Object element : viewerElements) {
+            append(sb, element);
+        }
+        if (sb.length() == 0)
+            sb.append(' ');
+        return sb.toString();
+    }
+
+    private void append(StringBuilder sb, Object element) {
+        if (element instanceof ITopic) {
+            appendTopic(sb, (ITopic) element);
+        } else {
+            String text = toText(element);
+            if (text != null) {
+                if (sb.length() > 0) {
+                    sb.append(LINE_DELIMITER);
+                }
+                sb.append(text);
+            }
+        }
+    }
+
+    private void appendTopic(StringBuilder sb, ITopic topic) {
+        appendTopic(sb, topic, 0);
+    }
+
+    private void appendTopic(StringBuilder sb, ITopic topic, int level) {
+        if (sb.length() > 0) {
+            sb.append(LINE_DELIMITER);
+        }
+        for (int i = 0; i < level; i++) {
+            sb.append('\t');
+        }
+        sb.append(topic.getTitleText());
+        List<ITopic> children = topic.getAllChildren();
+        if (!children.isEmpty()) {
+            int nextLevel = level + 1;
+            for (ITopic c : children) {
+                appendTopic(sb, c, nextLevel);
+            }
+        }
+    }
+
+    private String toText(Object element) {
+        return MindMapUtils.getText(element, null);
+    }
+
+    public Object[] toViewerElements(Object transferData, IViewer viewer,
+            Object target) {
+        if (transferData instanceof String) {
+            String text = (String) transferData;
+            IWorkbook workbook = (IWorkbook) viewer.getAdapter(IWorkbook.class);
+            if (workbook != null) {
+                return buildeTopics(text, viewer, workbook);
+            }
+            return new Object[] { text };
+        }
+        return null;
+    }
+
+    private Object[] buildeTopics(String text, IViewer viewer, IWorkbook wb) {
+        String[] lines = text.split(LINE_DELIMITER);
+        ArrayList<ITopic> topics = new ArrayList<ITopic>(lines.length);
+        HashMap<ITopic, Integer> map = new HashMap<ITopic, Integer>();
+        ITopic lastTopic = null;
+        for (String line : lines) {
+            ITopic topic = wb.createTopic();
+            topic.setTitleText(line);
+
+            int level = 0;
+            for (int i = 0; i < line.length(); i++) {
+                char c = line.charAt(i);
+                if (c == '\t') {
+                    level++;
+                } else {
+                    break;
+                }
+            }
+            String title = line.substring(level);
+            topic.setTitleText(title);
+
+            if (level == 0 || lastTopic == null) {
+                topics.add(topic);
+            } else {
+                int lastLevel = map.get(lastTopic);
+                ITopic parent = null;
+                if (level > lastLevel) {
+                    parent = lastTopic;
+                } else {
+                    while (true) {
+                        if (level == lastLevel) {
+                            ITopic tempTopic = lastTopic.getParent();
+                            if (tempTopic != null) {
+                                parent = tempTopic;
+                                break;
+                            }
+                        } else if (level < lastLevel) {
+                            ITopic tempTopic = lastTopic.getParent();
+                            if (tempTopic != null) {
+                                lastLevel = map.get(tempTopic);
+                                lastTopic = tempTopic;
+                            }
+                        } else { //if (level>lastLevel)
+                            parent = lastTopic;
+                            break;
+                        }
+                    }
+                }
+                if (parent != null) {
+                    parent.add(topic);
+                }
+            }
+            lastTopic = topic;
+            map.put(topic, level);
+        }
+        return topics.toArray();
+    }
+
+//    private Object[] buildeTopics(String text, IViewer viewer, IWorkbook wb) {
+//        String[] lines = text.split(LINE_DELIMITER);
+//        List<ITopic> topics = new ArrayList<ITopic>(lines.length);
+//        Map<ITopic, Integer> levels = new HashMap<ITopic, Integer>();
+//        ITopic last = null;
+//        for (String line : lines) {
+//            ITopic topic = wb.createTopic();
+//
+//            int level = 0;
+//            for (int i = 0; i < line.length(); i++) {
+//                char c = line.charAt(i);
+//                if (c == '\t') {
+//                    level++;
+//                } else {
+//                    break;
+//                }
+//            }
+//
+//            String title = line.substring(level);
+//            topic.setTitleText(title);
+//
+//            if (level == 0 || last == null) {
+//                topics.add(topic);
+//            } else {
+//                int lastLevel = ((Integer) levels.get(last)).intValue();
+//                ITopic parent = null;
+//                if (level > lastLevel) {
+//                    parent = last;
+//                } else {
+//                    while (level <= lastLevel) {
+//                        parent = last.getParent();
+//                        if (parent == null)
+//                            break;
+//                        Integer lvl = ((Integer) levels.get(parent));
+//                        if (lvl == null)
+//                            break;
+//                        lastLevel = lvl.intValue();
+//                    }
+//                }
+//                if (parent != null) {
+//                    parent.add(topic);
+//                }
+//            }
+//            last = topic;
+//            levels.put(topic, level);
+//        }
+//        return topics.toArray();
+//    }
+
+    public Object getData(Transfer transfer, TransferData data) {
+        if (transfer == this.transfer)
+            return this.transfer.nativeToJava(data);
+        return null;
+    }
+
+    public Transfer getTransfer() {
+        return transfer;
+    }
+
+}

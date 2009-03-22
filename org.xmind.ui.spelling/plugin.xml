@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="org.xmind.ui.MindMapPrefPage"
+            class="org.xmind.ui.internal.spelling.SpellingCheckPrefPage"
+            id="org.xmind.ui.SpellingCheckPrefPage"
+            name="%prefPage.spelling.name">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="org.xmind.ui.internal.spelling.SpellingPrefInitilizer">
+      </initializer>
+   </extension>
+
+</plugin>

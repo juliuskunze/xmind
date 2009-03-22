@@ -1,0 +1,510 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
+package org.xmind.ui.internal.notes;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.draw2d.geometry.Rectangle;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.bindings.Trigger;
+import org.eclipse.jface.bindings.TriggerSequence;
+import org.eclipse.jface.bindings.keys.KeyStroke;
+import org.eclipse.jface.bindings.keys.SWTKeySupport;
+import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.PopupDialog;
+import org.eclipse.jface.text.TextViewer;
+import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.contexts.IContextActivation;
+import org.eclipse.ui.contexts.IContextService;
+import org.eclipse.ui.keys.IBindingService;
+import org.xmind.core.INotes;
+import org.xmind.core.INotesContent;
+import org.xmind.core.ITopic;
+import org.xmind.gef.EditDomain;
+import org.xmind.gef.IGraphicalViewer;
+import org.xmind.gef.IViewer;
+import org.xmind.gef.ZoomManager;
+import org.xmind.gef.command.CompoundCommand;
+import org.xmind.gef.command.ICommandStack;
+import org.xmind.ui.commands.CommandMessages;
+import org.xmind.ui.commands.ModifyNotesCommand;
+import org.xmind.ui.internal.MindMapMessages;
+import org.xmind.ui.internal.MindMapUIPlugin;
+import org.xmind.ui.internal.dialogs.DialogMessages;
+import org.xmind.ui.mindmap.IMindMapImages;
+import org.xmind.ui.mindmap.ITopicPart;
+import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.richtext.IRichTextEditViewer;
+import org.xmind.ui.richtext.SimpleRichTextActionBarContributor;
+import org.xmind.ui.util.Logger;
+
+public class NotesPopup extends PopupDialog {
+
+    private static final String CONTEXT_ID = "org.xmind.ui.context.notesPopup"; //$NON-NLS-1$
+
+    private static final String CMD_GOTO_NOTES_VIEW = "org.xmind.ui.command.gotoNotesView"; //$NON-NLS-1$
+
+    private static final String CMD_COMMIT_NOTES = "org.xmind.ui.command.commitNotes"; //$NON-NLS-1$
+
+    private static final String CMD_UNDO = "org.eclipse.ui.edit.undo"; //$NON-NLS-1$
+
+    private static final String CMD_REDO = "org.eclipse.ui.edit.redo"; //$NON-NLS-1$
+
+    private static final String CMD_SAVE = "org.eclipse.ui.file.save"; //$NON-NLS-1$
+
+    private class NotesPopupActionBarContributor extends
+            SimpleRichTextActionBarContributor {
+
+        private class GotoNotesViewAction extends Action {
+            public GotoNotesViewAction() {
+                super(MindMapMessages.EditInNotesView_text);
+                setToolTipText(MindMapMessages.EditInNotesView_toolTip);
+                setImageDescriptor(MindMapUI.getImages().get(
+                        IMindMapImages.NOTES, true));
+                setDisabledImageDescriptor(MindMapUI.getImages().get(
+                        IMindMapImages.NOTES, false));
+            }
+
+            public void run() {
+                gotoNotesView();
+            }
+        }
+
+        public void fillToolBar(IToolBarManager toolbar) {
+            super.fillToolBar(toolbar);
+            if (showGotoNotesView) {
+                toolbar.add(new Separator());
+                toolbar.add(new GotoNotesViewAction());
+            }
+        }
+    }
+
+    private class PopupKeyboardListener implements Listener {
+
+        private List<TriggerSequence> currentSequences = null;
+
+        private int nextKeyIndex = -1;
+
+        public void hook(Control control) {
+            control.getDisplay().addFilter(SWT.KeyDown, this);
+            control.getShell().addDisposeListener(new DisposeListener() {
+                public void widgetDisposed(DisposeEvent e) {
+                    if (!e.display.isDisposed()) {
+                        e.display.removeFilter(SWT.KeyDown,
+                                PopupKeyboardListener.this);
+                    }
+                }
+            });
+        }
+
+        public void handleEvent(Event event) {
+            if (event.type == SWT.KeyDown) {
+                handleKeyDown(event);
+            }
+        }
+
+        private void handleKeyDown(Event event) {
+            if (triggerableCommands.isEmpty())
+                return;
+
+            List<KeyStroke> keys = generateKeyStrokes(event);
+            if (currentSequences == null) {
+                nextKeyIndex = -1;
+                for (TriggerSequence ts : triggerableCommands.keySet()) {
+                    if (matches(keys, ts.getTriggers()[0])) {
+                        if (currentSequences == null)
+                            currentSequences = new ArrayList<TriggerSequence>(
+                                    triggerableCommands.size());
+                        currentSequences.add(ts);
+                    }
+                }
+                if (currentSequences == null)
+                    return;
+            }
+
+            if (nextKeyIndex < 0)
+                nextKeyIndex = 0;
+            Iterator<TriggerSequence> it = currentSequences.iterator();
+            while (it.hasNext()) {
+                TriggerSequence ts = it.next();
+                Trigger[] triggers = ts.getTriggers();
+                if (nextKeyIndex >= triggers.length) {
+                    it.remove();
+                } else {
+                    if (matches(keys, triggers[nextKeyIndex])) {
+                        if (nextKeyIndex == triggers.length - 1) {
+                            if (triggerFound(ts)) {
+                                event.doit = false;
+                            }
+                            return;
+                        }
+                    } else {
+                        it.remove();
+                    }
+                }
+            }
+            if (currentSequences != null && currentSequences.isEmpty()) {
+                nextKeyIndex++;
+            } else {
+                currentSequences = null;
+                nextKeyIndex = -1;
+            }
+        }
+
+        private boolean triggerFound(TriggerSequence triggerSequence) {
+            currentSequences = null;
+            nextKeyIndex = -1;
+            String commandId = triggerableCommands.get(triggerSequence);
+            if (commandId != null) {
+                return handleCommand(commandId);
+            }
+            return false;
+        }
+
+        private boolean matches(List<KeyStroke> keys, Trigger expected) {
+            for (KeyStroke key : keys) {
+                if (key.equals(expected))
+                    return true;
+            }
+            return false;
+        }
+
+        private List<KeyStroke> generateKeyStrokes(Event event) {
+            final List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>(3);
+
+            /*
+             * If this is not a keyboard event, then there are no key strokes.
+             * This can happen if we are listening to focus traversal events.
+             */
+            if ((event.stateMask == 0) && (event.keyCode == 0)
+                    && (event.character == 0)) {
+                return keyStrokes;
+            }
+
+            // Add each unique key stroke to the list for consideration.
+            final int firstAccelerator = SWTKeySupport
+                    .convertEventToUnmodifiedAccelerator(event);
+            keyStrokes.add(SWTKeySupport
+                    .convertAcceleratorToKeyStroke(firstAccelerator));
+
+            // We shouldn't allow delete to undergo shift resolution.
+            if (event.character == SWT.DEL) {
+                return keyStrokes;
+            }
+
+            final int secondAccelerator = SWTKeySupport
+                    .convertEventToUnshiftedModifiedAccelerator(event);
+            if (secondAccelerator != firstAccelerator) {
+                keyStrokes.add(SWTKeySupport
+                        .convertAcceleratorToKeyStroke(secondAccelerator));
+            }
+
+            final int thirdAccelerator = SWTKeySupport
+                    .convertEventToModifiedAccelerator(event);
+            if ((thirdAccelerator != secondAccelerator)
+                    && (thirdAccelerator != firstAccelerator)) {
+                keyStrokes.add(SWTKeySupport
+                        .convertAcceleratorToKeyStroke(thirdAccelerator));
+            }
+
+            return keyStrokes;
+        }
+
+    }
+
+    private IWorkbenchWindow window;
+
+    private ITopicPart topicPart;
+
+    private NotesViewer notesViewer;
+
+    private RichDocumentNotesAdapter notesAdapter;
+
+    private Map<TriggerSequence, String> triggerableCommands = new HashMap<TriggerSequence, String>(
+            3);
+
+    private IContextActivation contextActivation;
+
+    private IContextService contextService;
+
+    private IBindingService bindingService;
+
+    private boolean showGotoNotesView;
+
+    private boolean editable;
+
+    public NotesPopup(IWorkbenchWindow window, ITopicPart topicPart,
+            boolean editable, boolean showGotoNotesView) {
+        super(window.getShell(), SWT.RESIZE, true, true, true, false, false,
+                null, showGotoNotesView ? "" : null); //$NON-NLS-1$
+        this.window = window;
+        this.topicPart = topicPart;
+        this.showGotoNotesView = showGotoNotesView;
+        this.editable = editable;
+    }
+
+    public NotesPopup(Shell parentShell, ITopicPart topicPart, boolean editable) {
+        super(parentShell, SWT.Resize, true, true, true, false, false, null,
+                null);
+        this.topicPart = topicPart;
+        this.window = null;
+        this.showGotoNotesView = false;
+        this.editable = editable;
+    }
+
+    protected Control createDialogArea(Composite parent) {
+        Composite composite = (Composite) super.createDialogArea(parent);
+        notesViewer = new NotesViewer();
+        if (editable) {
+            notesViewer.setContributor(new NotesPopupActionBarContributor());
+        }
+        int style = IRichTextEditViewer.DEFAULT_CONTROL_STYLE;
+        if (!editable) {
+            style |= SWT.READ_ONLY;
+        }
+        notesViewer.createControl(composite, style);
+
+        GridData gridData = new GridData(GridData.FILL_BOTH);
+        gridData.widthHint = 400;
+        notesViewer.getControl().setLayoutData(gridData);
+
+        ITopic topic = topicPart.getTopic();
+
+        notesAdapter = new RichDocumentNotesAdapter(topic);
+
+        notesViewer.setInput(notesAdapter);
+
+        notesViewer.getControl().addDisposeListener(new DisposeListener() {
+            public void widgetDisposed(DisposeEvent e) {
+                if (notesAdapter != null) {
+                    notesAdapter.dispose();
+                    notesAdapter = null;
+                }
+            }
+        });
+
+        new PopupKeyboardListener().hook(notesViewer.getImplementation()
+                .getFocusControl());
+        return composite;
+    }
+
+    public NotesViewer getNotesViewer() {
+        return notesViewer;
+    }
+
+    public RichDocumentNotesAdapter getNotesAdapter() {
+        return notesAdapter;
+    }
+
+    public ITopicPart getTopicPart() {
+        return topicPart;
+    }
+
+    protected Control getFocusControl() {
+        return notesViewer.getImplementation().getFocusControl();
+    }
+
+    @Override
+    protected Point getInitialLocation(Point initialSize) {
+        IViewer viewer = topicPart.getSite().getViewer();
+        Rectangle bounds = topicPart.getFigure().getBounds().getCopy();
+        return calcInitialLocation((IGraphicalViewer) viewer, bounds);
+    }
+
+    private Point calcInitialLocation(IGraphicalViewer viewer, Rectangle bounds) {
+        ZoomManager zoom = viewer.getZoomManager();
+        bounds = bounds.scale(zoom.getScale()).expand(1, 1).translate(
+                viewer.getScrollPosition().getNegated());
+        return viewer.getControl()
+                .toDisplay(bounds.x, bounds.y + bounds.height);
+    }
+
+    protected List getBackgroundColorExclusions() {
+        List list = super.getBackgroundColorExclusions();
+        collectBackgroundColorExclusions(notesViewer.getControl(), list);
+        return list;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void collectBackgroundColorExclusions(Control control, List list) {
+        list.add(control);
+        if (control instanceof Composite) {
+            for (Control child : ((Composite) control).getChildren()) {
+                collectBackgroundColorExclusions(child, list);
+            }
+        }
+    }
+
+    protected IDialogSettings getDialogSettings() {
+        return MindMapUIPlugin.getDefault().getDialogSettings(
+                MindMapUI.POPUP_DIALOG_SETTINGS_ID);
+    }
+
+    public int open() {
+        bindingService = (IBindingService) PlatformUI.getWorkbench()
+                .getAdapter(IBindingService.class);
+        contextService = (IContextService) PlatformUI.getWorkbench()
+                .getAdapter(IContextService.class);
+        if (bindingService != null) {
+            registerWorkbenchCommands();
+        }
+        int ret = super.open();
+        if (ret == OK) {
+            if (contextService != null) {
+                contextActivation = contextService.activateContext(CONTEXT_ID);
+            }
+            if (bindingService != null) {
+                registerDialogCommands();
+            }
+        }
+        return ret;
+    }
+
+    protected void registerDialogCommands() {
+        if (showGotoNotesView) {
+            TriggerSequence key = registerCommand(CMD_GOTO_NOTES_VIEW);
+            if (key != null) {
+                setInfoText(NLS.bind(
+                        DialogMessages.NotesPopup_GotoNotesView_text, key
+                                .format()));
+            }
+        }
+        registerCommand(CMD_COMMIT_NOTES);
+    }
+
+    protected void registerWorkbenchCommands() {
+        registerCommand(CMD_UNDO);
+        registerCommand(CMD_REDO);
+        registerCommand(CMD_SAVE);
+    }
+
+    protected TriggerSequence registerCommand(String commandId) {
+        if (bindingService == null)
+            return null;
+        TriggerSequence key = bindingService.getBestActiveBindingFor(commandId);
+        if (key != null) {
+            triggerableCommands.put(key, commandId);
+        }
+        return key;
+    }
+
+    protected boolean handleCommand(String commandId) {
+        if (CMD_GOTO_NOTES_VIEW.equals(commandId)) {
+            if (showGotoNotesView) {
+                gotoNotesView();
+            }
+            return true;
+        } else if (CMD_UNDO.equals(commandId)) {
+            TextViewer textViewer = notesViewer.getImplementation()
+                    .getTextViewer();
+            if (textViewer.canDoOperation(TextViewer.UNDO)) {
+                textViewer.doOperation(TextViewer.UNDO);
+            }
+            return true;
+        } else if (CMD_REDO.equals(commandId)) {
+            TextViewer textViewer = notesViewer.getImplementation()
+                    .getTextViewer();
+            if (textViewer.canDoOperation(TextViewer.REDO)) {
+                textViewer.doOperation(TextViewer.REDO);
+            }
+            return true;
+        } else if (CMD_COMMIT_NOTES.equals(commandId)) {
+            setReturnCode(OK);
+            close();
+            return true;
+        } else if (CMD_SAVE.equals(commandId)) {
+            saveNotes();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean close() {
+        if (contextActivation != null && contextService != null) {
+            contextService.deactivateContext(contextActivation);
+            contextActivation = null;
+        }
+        if (getReturnCode() == OK)
+            saveNotes();
+        return super.close();
+    }
+
+    private void saveNotes() {
+        if (notesAdapter == null || notesViewer == null
+                || notesViewer.getControl().isDisposed()
+                || !notesViewer.hasModified())
+            return;
+
+        INotesContent html = notesAdapter.makeNewHtmlContent();
+        INotesContent plain = notesAdapter.makeNewPlainContent();
+        ITopic topic = topicPart.getTopic();
+        EditDomain domain = topicPart.getSite().getViewer().getEditDomain();
+        if (domain != null) {
+            ICommandStack cs = domain.getCommandStack();
+            if (cs != null) {
+                ModifyNotesCommand modifyHtml = new ModifyNotesCommand(topic,
+                        html, INotes.HTML);
+                ModifyNotesCommand modifyPlain = new ModifyNotesCommand(topic,
+                        plain, INotes.PLAIN);
+                CompoundCommand cmd = new CompoundCommand(modifyHtml,
+                        modifyPlain);
+                cmd.setLabel(CommandMessages.Command_ModifyNotes);
+                cs.execute(cmd);
+                return;
+            }
+        }
+
+        INotes notes = topic.getNotes();
+        notes.setContent(INotes.HTML, html);
+        notes.setContent(INotes.PLAIN, plain);
+    }
+
+    private void gotoNotesView() {
+        if (window == null)
+            return;
+
+        IWorkbenchPage workbenchPage = window.getActivePage();
+        if (workbenchPage == null)
+            return;
+
+        close();
+        try {
+            workbenchPage.showView(MindMapUI.VIEW_NOTES, null,
+                    IWorkbenchPage.VIEW_ACTIVATE);
+        } catch (PartInitException e) {
+            Logger.log(e, "GotoNotesViewAction failed to show Notes View."); //$NON-NLS-1$
+        }
+    }
+
+}

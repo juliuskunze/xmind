@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource-mappings application-id="MindManager">
+	<resource-group type="marker">
+		<resource-mapping src="urn:mindjet:SmileyHappy" dest="smiley-smile" />
+		<resource-mapping src="urn:mindjet:SmileyAngry" dest="smiley-angry" />
+		<resource-mapping src="urn:mindjet:SmileyNeutral" dest="smiley-boring" />
+		<resource-mapping src="urn:mindjet:SmileySad" dest="smiley-cry" />
+		<resource-mapping src="urn:mindjet:SmileyScreaming" dest="smiley-surprise" />
+		
+		<resource-mapping src="urn:mindjet:FlagGreen" dest="flag-green" />
+		<resource-mapping src="urn:mindjet:FlagYellow" dest="flag-orange" />
+		<resource-mapping src="urn:mindjet:FlagPurple" dest="flag-purple" />
+		<resource-mapping src="urn:mindjet:FlagBlack" dest="flag-black" />
+		<resource-mapping src="urn:mindjet:FlagBlue" dest="flag-blue" />
+		<resource-mapping src="urn:mindjet:FlagOrange" dest="flag-orange" />
+		<resource-mapping src="urn:mindjet:FlagRed" dest="flag-red" />
+		
+		<resource-mapping src="urn:mindjet:Calendar" dest="other-calendar" />
+		<resource-mapping src="urn:mindjet:Clock" dest="other-clock" />
+		<resource-mapping src="urn:mindjet:CoffeeCup" dest="other-coffee-cup" />
+		<resource-mapping src="urn:mindjet:Email" dest="other-email" />
+		<resource-mapping src="urn:mindjet:Mailbox" dest="other-email" />
+		<resource-mapping src="urn:mindjet:Fax" dest="other-fax" />
+		<resource-mapping src="urn:mindjet:Lightbulb" dest="other-lightbulb" />
+		<resource-mapping src="urn:mindjet:Phone" dest="other-phone" />
+		<resource-mapping src="urn:mindjet:Cellphone" dest="other-phone" />
+		<resource-mapping src="urn:mindjet:Resource1" dest="other-people" />
+		<resource-mapping src="urn:mindjet:Resource2" dest="other-people" />
+		<resource-mapping src="urn:mindjet:QuestionMark" dest="other-question" />
+		<resource-mapping src="urn:mindjet:ExclamationMark" dest="other-exclam" />
+		
+		<resource-mapping src="0" dest="task-start" />
+		<resource-mapping src="25" dest="task-quarter" />
+		<resource-mapping src="50" dest="task-half" />
+		<resource-mapping src="75" dest="task-3quar" />
+		<resource-mapping src="100" dest="task-done" />
+		
+		<resource-mapping src="urn:mindjet:Prio1" dest="priority-1" />
+		<resource-mapping src="urn:mindjet:Prio2" dest="priority-2" />
+		<resource-mapping src="urn:mindjet:Prio3" dest="priority-3" />
+		<resource-mapping src="urn:mindjet:Prio4" dest="priority-4" />
+		<resource-mapping src="urn:mindjet:Prio5" dest="priority-5" />
+		<resource-mapping src="urn:mindjet:Prio6" dest="priority-6" />
+	</resource-group>
+	<resource-group type="topicShape">
+		<resource-mapping src="urn:mindjet:RoundedRectangle" dest="org.xmind.topicShape.roundedRect" />
+		<resource-mapping src="urn:mindjet:Rectangle" dest="org.xmind.topicShape.rect" />
+		<resource-mapping src="urn:mindjet:Line" dest="org.xmind.topicShape.underline" />
+		<resource-mapping src="urn:mindjet:Oval" dest="org.xmind.topicShape.ellipse" />
+		<resource-mapping src="urn:mindjet:None" dest="org.xmind.topicShape.noBorder" />
+	</resource-group>
+	<resource-group type="branchConnection">
+		<resource-mapping src="urn:mindjet:None" dest="org.xmind.branchConnection.none" />
+		<resource-mapping src="urn:mindjet:Elbow" dest="org.xmind.branchConnection.elbow" />
+		<resource-mapping src="urn:mindjet:Curve" dest="org.xmind.branchConnection.curve" />
+		<resource-mapping src="urn:mindjet:Straight" dest="org.xmind.branchConnection.straight" />
+		<resource-mapping src="urn:mindjet:RoundedElbow" dest="org.xmind.branchConnection.roundedElbow" />
+	</resource-group>
+	<resource-group type="boundaryShape">
+		<resource-mapping src="urn:mindjet:Rectangle" dest="org.xmind.boundaryShape.rect" />
+		<resource-mapping src="urn:mindjet:CurvedRectangle" dest="org.xmind.boundaryShape.roundedRect" />
+		<resource-mapping src="urn:mindjet:Scallops" dest="org.xmind.boundaryShape.scallops" />
+		<resource-mapping src="urn:mindjet:Waves" dest="org.xmind.boundaryShape.waves" />
+		<resource-mapping src="urn:mindjet:Zigzag" dest="org.xmind.boundaryShape.tension" />
+	</resource-group>
+	<resource-group type="lineStyle">
+		<resource-mapping src="urn:mindjet:Solid" dest="solid" />
+		<resource-mapping src="urn:mindjet:Dash" dest="dash" />
+		<resource-mapping src="urn:mindjet:RoundDot" dest="dot" />
+		<resource-mapping src="urn:mindjet:DashDot" dest="dash-dot" />
+		<resource-mapping src="urn:mindjet:LongDashDotDot" dest="dash-dot-dot" />
+	</resource-group>
+	<resource-group type="imageAlignment">
+		<resource-mapping src="urn:mindjet:TextLeftImageRight" dest="right" />
+		<resource-mapping src="urn:mindjet:TextBottomImageTop" dest="top" />
+		<resource-mapping src="urn:mindjet:TextTopImageBottom" dest="bottom" />
+		<resource-mapping src="urn:mindjet:TextRightImageLeft" dest="left" />
+	</resource-group>
+	<resource-group type="relationshipShape">
+		<resource-mapping src="urn:mindjet:Angled" dest="org.xmind.relationshipShape.angled" />
+		<resource-mapping src="urn:mindjet:Bezier" dest="org.xmind.relationshipShape.curved" />
+		<resource-mapping src="urn:mindjet:Straight" dest="org.xmind.relationshipShape.straight" />
+	</resource-group>
+	<resource-group type="arrowShape">
+		<resource-mapping src="urn:mindjet:DiamondArrow" dest="org.xmind.arrowShape.diamond"/>
+		<resource-mapping src="urn:mindjet:OvalArrow" dest="org.xmind.arrowShape.dot"/>
+		<resource-mapping src="urn:mindjet:StealthArrow" dest="org.xmind.arrowShape.spearhead"/>
+		<resource-mapping src="urn:mindjet:OpenArrow" dest="org.xmind.arrowShape.normal"/>
+		<resource-mapping src="urn:mindjet:Arrow" dest="org.xmind.arrowShape.triangle"/>
+		<resource-mapping src="urn:mindjet:NoArrow" dest="org.xmind.arrowShape.none"/>
+	</resource-group>
+	<resource-group type="summaryShape">
+		<resource-mapping src="urn:mindjet:SummaryElbow" dest="org.xmind.summaryShape.square"/>
+		<resource-mapping src="urn:mindjet:SummaryShearedElbow" dest="org.xmind.summaryShape.angle"/>
+		<resource-mapping src="urn:mindjet:SummaryArc" dest="org.xmind.summaryShape.curly"/>
+		<resource-mapping src="urn:mindjet:SummaryCurve" dest="org.xmind.summaryShape.round"/>
+	</resource-group>
+</resource-mappings>

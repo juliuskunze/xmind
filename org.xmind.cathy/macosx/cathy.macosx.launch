@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launchConfiguration type="org.eclipse.pde.ui.RuntimeWorkbench">
+<booleanAttribute key="append.args" value="true"/>
+<stringAttribute key="application" value="org.xmind.cathy.application"/>
+<booleanAttribute key="askclear" value="true"/>
+<booleanAttribute key="automaticAdd" value="false"/>
+<booleanAttribute key="automaticValidate" value="true"/>
+<stringAttribute key="bad_container_name" value="/org.xmind.cath/macosx"/>
+<stringAttribute key="bootstrap" value=""/>
+<stringAttribute key="checked" value="[NONE]"/>
+<booleanAttribute key="clearConfig" value="true"/>
+<booleanAttribute key="clearws" value="true"/>
+<booleanAttribute key="clearwslog" value="false"/>
+<stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/cathy.macosx"/>
+<booleanAttribute key="default" value="false"/>
+<booleanAttribute key="includeOptional" value="true"/>
+<stringAttribute key="location" value="${workspace_loc}/../runtime-cathy"/>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XstartOnFirstThread -Xms128m -Xmx512m -Dorg.eclipse.swt.internal.carbon.smallFonts"/>
+<stringAttribute key="pde.version" value="3.3"/>
+<stringAttribute key="product" value="org.xmind.cathy.product"/>
+<stringAttribute key="selected_target_plugins" value="org.eclipse.equinox.common,org.eclipse.core.contenttype,org.eclipse.core.commands,org.eclipse.equinox.app,org.eclipse.core.net,com.ibm.icu,org.eclipse.update.core,org.eclipse.osgi.services,org.eclipse.core.runtime.compatibility.auth,org.eclipse.update.ui,org.eclipse.update.configurator,org.eclipse.core.filesystem,org.eclipse.jface.databinding,org.eclipse.update.scheduler,org.eclipse.osgi,org.eclipse.equinox.security,org.eclipse.core.resources.compatibility,org.eclipse.ui.workbench,org.eclipse.text,org.eclipse.ant.core,org.eclipse.core.runtime.compatibility.registry,org.eclipse.equinox.launcher.carbon.macosx,org.eclipse.swt.carbon.macosx,org.eclipse.core.jobs,org.eclipse.core.filesystem.macosx,org.eclipse.equinox.registry,org.apache.commons.codec,org.apache.commons.httpclient,org.eclipse.help,org.eclipse.swt,org.eclipse.draw2d*3.4.0.v20080529,org.eclipse.equinox.preferences,org.eclipse.core.runtime,org.eclipse.equinox.launcher,org.eclipse.equinox.security.macosx,org.eclipse.core.expressions,org.eclipse.core.databinding,org.eclipse.ui,org.eclipse.ui.forms,org.eclipse.ui.views,org.eclipse.jface,org.apache.commons.logging,javax.servlet,org.eclipse.draw2d*3.4.1.v20080910-1351,org.eclipse.core.variables,org.eclipse.jface.text,org.eclipse.core.resources,org.eclipse.ui.carbon"/>
+<stringAttribute key="selected_workspace_plugins" value="org.xmind.cathy,org.xmind.core,org.xmind.ui.spreadsheet,org.xmind.ui.resources,org.xmind.core.io,org.xmind.ui.browser,org.json,net.xmind.signin,org.xmind.ui.help,org.xmind.ui,org.xmind.gef.ui,org.xmind.gef,org.xmind.ui.toolkit,org.xmind.ui.imports,org.xmind.core.runtime,org.xmind.ui.fishbone,net.xmind.share,org.xmind.ui.mindmap,org.xmind.neuquant"/>
+<booleanAttribute key="show_selected_only" value="false"/>
+<booleanAttribute key="tracing" value="false"/>
+<booleanAttribute key="useDefaultConfig" value="true"/>
+<booleanAttribute key="useDefaultConfigArea" value="true"/>
+<booleanAttribute key="useProduct" value="true"/>
+<booleanAttribute key="usefeatures" value="false"/>
+</launchConfiguration>

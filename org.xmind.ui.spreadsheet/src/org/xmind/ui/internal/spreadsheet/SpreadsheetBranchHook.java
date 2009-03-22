@@ -1,0 +1,57 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
+package org.xmind.ui.internal.spreadsheet;
+
+import org.xmind.core.ITopic;
+import org.xmind.core.event.CoreEvent;
+import org.xmind.core.event.CoreEventRegister;
+import org.xmind.core.event.ICoreEventListener;
+import org.xmind.core.event.ICoreEventRegister;
+import org.xmind.core.event.ICoreEventSource;
+import org.xmind.ui.branch.IBranchHook;
+import org.xmind.ui.mindmap.IBranchPart;
+
+public class SpreadsheetBranchHook implements IBranchHook, ICoreEventListener {
+
+    private IBranchPart branch;
+
+    private ICoreEventRegister register;
+
+    public void hook(IBranchPart branch) {
+        this.branch = branch;
+        ITopic topic = branch.getTopic();
+        if (topic instanceof ICoreEventSource) {
+            register = new CoreEventRegister((ICoreEventSource) topic, this);
+            register.register(Spreadsheet.EVENT_MODIFY_COLUMN_ORDER);
+        }
+    }
+
+    public void unhook(IBranchPart branch) {
+        if (register != null) {
+            register.unregisterAll();
+            register = null;
+        }
+        this.branch = null;
+    }
+
+    public void handleCoreEvent(CoreEvent event) {
+        if (branch != null
+                && Spreadsheet.EVENT_MODIFY_COLUMN_ORDER.equals(event
+                        .getType())) {
+            branch.getFigure().revalidate();
+            branch.getFigure().repaint();
+        }
+    }
+
+}

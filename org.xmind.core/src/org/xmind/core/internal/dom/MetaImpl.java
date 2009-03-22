@@ -1,0 +1,188 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
+package org.xmind.core.internal.dom;
+
+import static org.xmind.core.internal.dom.DOMConstants.TAG_META;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xmind.core.IMetaData;
+import org.xmind.core.IWorkbook;
+import org.xmind.core.internal.ElementRegistry;
+import org.xmind.core.internal.Meta;
+import org.xmind.core.util.DOMUtils;
+
+public class MetaImpl extends Meta {
+
+    private Document implementation;
+
+    private WorkbookImpl ownedWorkbook;
+
+    private ElementRegistry elementRegistry;
+
+    public MetaImpl(Document implementation) {
+        super();
+        this.implementation = implementation;
+        init();
+    }
+
+    /**
+     * @param ownedWorkbook
+     *            the ownedWorkbook to set
+     */
+    protected void setOwnedWorkbook(WorkbookImpl ownedWorkbook) {
+        this.ownedWorkbook = ownedWorkbook;
+    }
+
+    private void init() {
+        Element m = DOMUtils.ensureChildElement(implementation, TAG_META);
+        NS.setNS(NS.Meta, m);
+        InternalDOMUtils.addVersion(implementation);
+    }
+
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        if (obj == null || !(obj instanceof MetaImpl))
+            return false;
+        MetaImpl that = (MetaImpl) obj;
+        return that.implementation == this.implementation;
+    }
+
+    public int hashCode() {
+        return implementation.hashCode();
+    }
+
+    public String toString() {
+        return DOMUtils.toString(implementation);
+    }
+
+    public Object getAdapter(Class adapter) {
+        if (adapter == Node.class || adapter == Document.class)
+            return implementation;
+        if (adapter == ElementRegistry.class)
+            return getElementRegistry();
+        return super.getAdapter(adapter);
+    }
+
+    public Document getImplementation() {
+        return implementation;
+    }
+
+    protected Element getMetaElement() {
+        return implementation.getDocumentElement();
+    }
+
+    public IWorkbook getOwnedWorkbook() {
+        return ownedWorkbook;
+    }
+
+    private String[] getKeys(String keyPath) {
+        return keyPath.split(SEP);
+    }
+
+    private Element findElementByPath(String keyPath, boolean ensure) {
+        String[] keys = getKeys(keyPath);
+        if (keys.length == 0)
+            return null;
+        Element e = getMetaElement();
+        Element c = null;
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            if (!"".equals(key)) { //$NON-NLS-1$
+                if (ensure) {
+                    c = DOMUtils.ensureChildElement(e, key);
+                } else {
+                    c = DOMUtils.getFirstChildElementByTag(e, key);
+                }
+                if (c == null)
+                    return null;
+                e = c;
+            }
+        }
+        return c;
+    }
+
+    public String getValue(String keyPath) {
+        Element d = findElementByPath(keyPath, false);
+        return d == null ? null : d.getTextContent();
+    }
+
+    public void setValue(String keyPath, String value) {
+        Element d;
+        if (value == null) {
+            d = findElementByPath(keyPath, false);
+            if (d != null && d.getParentNode() != null) {
+                d.getParentNode().removeChild(d);
+            }
+        } else {
+            d = findElementByPath(keyPath, true);
+            if (d != null) {
+                d.setTextContent(value);
+            }
+        }
+    }
+
+    public void addMetaData(IMetaData data) {
+        Element mdEle = ((MetaDataImpl) data).getImplementation();
+        getMetaElement().appendChild(mdEle);
+    }
+
+    public void removeMetaData(IMetaData data) {
+        Element mdEle = ((MetaDataImpl) data).getImplementation();
+        getMetaElement().removeChild(mdEle);
+    }
+
+    public IMetaData createMetaData(String key) {
+        Element mdEle = implementation.createElement(key);
+        MetaDataImpl md = new MetaDataImpl(mdEle, this);
+        getElementRegistry().registerByKey(mdEle, md);
+        return md;
+    }
+
+    public IMetaData[] getMetaData(String key) {
+        List<IMetaData> list = new ArrayList<IMetaData>();
+        Iterator<Element> it = DOMUtils.childElementIterByTag(getMetaElement(),
+                key);
+        while (it.hasNext()) {
+            Element mdEle = it.next();
+            list.add(getMetaData(mdEle));
+        }
+        return list.toArray(new IMetaData[list.size()]);
+    }
+
+    protected MetaDataImpl getMetaData(Element mdEle) {
+        if (elementRegistry != null) {
+            Object md = elementRegistry.getElement(mdEle);
+            if (md != null && md instanceof IMetaData)
+                return (MetaDataImpl) md;
+        }
+        MetaDataImpl md = new MetaDataImpl(mdEle, this);
+        getElementRegistry().registerByKey(mdEle, md);
+        return md;
+    }
+
+    public ElementRegistry getElementRegistry() {
+        if (elementRegistry == null) {
+            elementRegistry = new ElementRegistry();
+        }
+        return elementRegistry;
+    }
+
+}

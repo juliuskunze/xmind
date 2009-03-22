@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource-mappings application-id="FreeMind">
+	<resource-group type="marker">
+		<resource-mapping src="full-1" dest="priority-1" />
+		<resource-mapping src="full-2" dest="priority-2" />
+		<resource-mapping src="full-3" dest="priority-3" />
+		<resource-mapping src="full-4" dest="priority-4" />
+		<resource-mapping src="full-5" dest="priority-5" />
+		<resource-mapping src="full-6" dest="priority-6" />
+	
+		<resource-mapping src="clock" dest="other-clock" />
+		<resource-mapping src="desktop_new" dest="other-calendar" />
+		<resource-mapping src="help" dest="other-question" />
+		<resource-mapping src="idea" dest="other-light" />
+		<resource-mapping src="kaddressbook" dest="other-phone" />
+		<resource-mapping src="korn" dest="other-email" />
+		<resource-mapping src="mail" dest="other-email" />
+		<resource-mapping src="licq" dest="other-people" />
+		<resource-mapping src="messagebox_warning" dest="other-exclam" />
+	
+		<resource-mapping src="ksmiletris" dest="smiley-happy" />
+		<resource-mapping src="flag" dest="flag-red" />
+	</resource-group>
+</resource-mappings>

@@ -1,0 +1,229 @@
+package org.xmind.ui.internal.dialogs;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
+import org.xmind.core.ISheet;
+import org.xmind.core.ITopic;
+import org.xmind.core.IWorkbook;
+import org.xmind.ui.dialogs.HyperlinkPage;
+import org.xmind.ui.internal.protocols.TopicProtocol;
+import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.MindMapUtils;
+import org.xmind.ui.viewers.ImageCachedLabelProvider;
+
+public class TopicHyperlinkPage extends HyperlinkPage {
+
+    private class TopicPageContentProvider implements ITreeContentProvider {
+        public Object[] getElements(Object inputElement) {
+            if (inputElement instanceof IWorkbook) {
+                List<ISheet> sheets = ((IWorkbook) inputElement).getSheets();
+                List<ITopic> rootTopics = new ArrayList<ITopic>(sheets.size());
+                for (ISheet sheet : sheets) {
+                    rootTopics.add(sheet.getRootTopic());
+                }
+                return rootTopics.toArray();
+            }
+            return new Object[0];
+        }
+
+        public boolean hasChildren(Object element) {
+            if (element instanceof ITopic) {
+                return !((ITopic) element).getAllChildren().isEmpty();
+            }
+            return false;
+        }
+
+        public Object[] getChildren(Object parentElement) {
+            if (parentElement instanceof ITopic) {
+                return ((ITopic) parentElement).getAllChildren().toArray();
+            }
+            return new Object[0];
+        }
+
+        public Object getParent(Object element) {
+            if (element instanceof ITopic) {
+                ITopic topic = (ITopic) element;
+                if (topic.isRoot())
+                    return topic.getOwnedWorkbook();
+                return topic.getParent();
+            }
+            return null;
+        }
+
+        public void dispose() {
+        }
+
+        public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+        }
+    }
+
+    private class TopicPageLabelProvider extends ImageCachedLabelProvider {
+
+        public String getText(Object element) {
+            if (element instanceof ITopic) {
+                ITopic topic = (ITopic) element;
+                if (topic.isRoot()) {
+                    return topic.getTitleText() + " (" //$NON-NLS-1$
+                            + topic.getOwnedSheet().getTitleText() + ")"; //$NON-NLS-1$
+                }
+                return topic.getTitleText();
+            }
+            return super.getText(element);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.xmind.ui.viewers.ImageCachedLabelProvider#createImage(java.lang
+         * .Object)
+         */
+        protected Image createImage(Object element) {
+            ImageDescriptor icon = MindMapUI.getImages().getElementIcon(
+                    element, true);
+            if (icon == null)
+                return null;
+            return icon.createImage(false);
+        }
+
+    }
+
+    private class TopicSelectionListener implements ISelectionChangedListener {
+
+        public void selectionChanged(SelectionChangedEvent event) {
+            ISelection selection = event.getSelection();
+            if (selection instanceof IStructuredSelection) {
+                IStructuredSelection ss = (IStructuredSelection) selection;
+                Object element = ss.getFirstElement();
+                if (element instanceof ITopic) {
+                    isModifyValue = true;
+                    setValue(TopicProtocol.toXmindURL((ITopic) element));
+                    isModifyValue = false;
+                    setCanFinish(true);
+                }
+            }
+
+        }
+    }
+
+    public Composite composite;
+
+    public IWorkbook workbook;
+
+    public boolean isModifyValue = false;
+
+    public String str;
+
+    private TreeViewer topicViewer;
+
+    public TopicHyperlinkPage() {
+    }
+
+    public void init(IStructuredSelection selection) {
+        this.workbook = findWorkbook(selection);
+    }
+
+    private IWorkbook findWorkbook(IStructuredSelection selection) {
+        for (Object o : selection.toArray()) {
+            IWorkbook workbook = MindMapUtils.findWorkbook(o);
+            if (workbook != null)
+                return workbook;
+        }
+        return null;
+    }
+
+    public void createControl(Composite parent) {
+        composite = new Composite(parent, SWT.NONE);
+        composite.setLayout(new GridLayout(1, false));
+
+        createLabel(composite);
+        createTopicViewer(composite);
+    }
+
+    /**
+     * @param parent
+     */
+    private void createLabel(Composite parent) {
+        Label label = new Label(parent, SWT.WRAP);
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        label.setText(DialogMessages.TopicHyperlinkPage_label);
+    }
+
+    /**
+     * @param parent
+     */
+    private void createTopicViewer(Composite parent) {
+        topicViewer = new TreeViewer(parent, SWT.SINGLE | SWT.BORDER);
+        topicViewer.getControl().setLayoutData(
+                new GridData(SWT.FILL, SWT.FILL, true, true));
+        topicViewer.setAutoExpandLevel(2);
+
+        topicViewer.setContentProvider(new TopicPageContentProvider());
+        topicViewer.setLabelProvider(new TopicPageLabelProvider());
+        if (workbook != null)
+            topicViewer.setInput(workbook);
+
+        topicViewer.addSelectionChangedListener(new TopicSelectionListener());
+    }
+
+    public void setValue(String value) {
+        super.setValue(value);
+        if (!isModifyValue) {
+            if (topicViewer != null && topicViewer.getControl() != null
+                    && !topicViewer.getControl().isDisposed()) {
+                Object element = getElement(value);
+                if (element != null) {
+                    topicViewer.setSelection(new StructuredSelection(element),
+                            true);
+                } else {
+                    topicViewer.setSelection(StructuredSelection.EMPTY);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param value
+     */
+    private Object getElement(String value) {
+        if (value == null)
+            return null;
+        if (workbook == null)
+            return null;
+        return TopicProtocol.findElement(value, workbook);
+    }
+
+    public void dispose() {
+    }
+
+    public Control getControl() {
+        return composite;
+    }
+
+    public void setFocus() {
+        if (topicViewer != null) {
+            Control control = topicViewer.getControl();
+            if (control != null && !control.isDisposed()) {
+                control.setFocus();
+            }
+        }
+    }
+
+}

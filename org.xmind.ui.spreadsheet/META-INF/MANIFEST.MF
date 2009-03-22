@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %pluginName
+Bundle-SymbolicName: org.xmind.ui.spreadsheet;singleton:=true
+Bundle-Version: 3.0.2.qualifier
+Bundle-Activator: org.xmind.ui.internal.spreadsheet.SpreadsheetUIPlugin
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.xmind.ui,
+ org.eclipse.draw2d,
+ org.xmind.ui.toolkit,
+ org.eclipse.jface.text
+Eclipse-LazyStart: true
+Bundle-Vendor: %providerName
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ActivationPolicy: lazy
+Bundle-Localization: plugin

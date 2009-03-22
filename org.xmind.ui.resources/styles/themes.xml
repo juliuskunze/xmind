@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xmap-styles xmlns:fo="http://www.w3.org/1999/XSL/Format"
+	xmlns:svg="http://www.w3.org/2000/svg"
+	xmlns="urn:xmind:xmap:xmlns:style:2.0">
+	<automatic-styles>
+		<style type="topic" id="STY@LDC48Uvs-ZcI28NX4edkSg==">
+			<topic-properties svg:fill="#F5F1BC"/>
+		</style>
+		<style type="topic" id="STY@UUvY02qjMoQz67j4h73q6A==">
+			<topic-properties svg:fill="#ADF3A3" line-tapered="tapered"
+			line-class="org.xmind.branchConnection.curve" 
+			shape-class="org.xmind.topicShape.ellipse"
+			multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac"/>
+		</style>
+		<style type="topic" id="STY@dXdQ_4xOxFKqRTIDI0nWCQ==">
+			<topic-properties svg:fill="#C2D6F1" line-class="org.xmind.branchConnection.roundedElbow"/>
+		</style>
+		<style type="topic" id="STY@CoHgLcQNT559V9zxlvKDHw==">
+			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.curve" line-color="#808080" shape-class="org.xmind.topicShape.ellipse"/>
+		</style>
+		<style type="topic" id="STY@6UFOsjZvoLJTY3O7BdF2iw==">
+			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.curve" line-color="#808080" shape-class="org.xmind.topicShape.noBorder" fo:font-size="10pt"/>
+		</style>
+		<style type="topic" id="STY@ueZD3SnDubVbMR5OC4THpQ==">
+			<topic-properties svg:fill="$none$" line-color="#808080" fo:font-weight="bold"/>
+		</style>
+		<style type="topic" id="STY@iRp-G-ReJcawr_r-fZxe5g==">
+			<topic-properties svg:fill="$none$" shape-class="org.xmind.topicShape.underline"/>
+		</style>
+		<style type="topic" id="STY@TqB2H0dF73WGxKamQ6mo3v==">
+			<topic-properties svg:fill="$none$"/>
+		</style>
+		<style type="topic" id="STY@-7dUJe5_7F8JM3WB6D07-Q==">
+			<topic-properties svg:fill="#F8EC9A" 
+			line-class="org.xmind.branchConnection.curve" 
+			line-color="#808080" line-width="2pt" line-tapered="tapered"
+			shape-class="org.xmind.topicShape.roundedRect"/>
+		</style>
+		<style type="topic" id="STY@ZIGzVGtoHF5wPBn0-4bGyw==">
+			<topic-properties svg:fill="#F8EC9A" line-color="#808080" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" fo:font-weight="normal"/>
+		</style>
+		<style type="topic" id="STY@dIluG7wjTCUAZ7k2zO1RFQ==">
+			<topic-properties line-class="org.xmind.branchConnection.roundedElbow" line-width="2pt" shape-class="org.xmind.topicShape.rect"/>
+		</style>
+		<style type="topic" id="STY@cquE40Yc73SGWgrmFAnI3g==">
+			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.roundedElbow" line-width="2pt"/>
+		</style>
+		<style type="topic" id="STY@6KSP5_auAo7OY7JxTcv_sQ==">
+			<topic-properties svg:fill="$none$" 
+			line-class="org.xmind.branchConnection.straight" 
+			line-color="#FFFFFF" line-width="3pt" 
+			shape-class="org.xmind.topicShape.rect" 
+			fo:color="#F0F0F0" fo:font-size="20pt"/>
+		</style>
+		<style type="topic" id="STY@kmtZ8d33ciezYkS8kxfvlQ==">
+			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.curve" line-color="#FFFFFF" line-width="3pt" shape-class="org.xmind.topicShape.ellipse" fo:font-weight="true" fo:color="#F0F0F0"/>
+		</style>
+		<style type="topic" id="STY@ZGbnmXqnQs3n64NFuxVoQA==">
+			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.roundedElbow" line-color="#FFFFFF" line-width="3pt" shape-class="org.xmind.topicShape.noBorder" fo:color="#F0F0F0"/>
+		</style>
+		<style type="topic" id="STY@-WXUrloGIpiyFRdEcjf47Q==">
+			<topic-properties line-class="org.xmind.branchConnection.roundedElbow" svg:fill="$none$" fo:color="#F0F0F0"/>
+		</style>
+		<style type="topic" id="STY@zGBjelDfIWhQCJvBUH3ErQ==">
+			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.roundedElbow" shape-class="org.xmind.topicShape.ellipse" fo:color="#F0F0F0"/>
+		</style>
+		<style type="topic" id="STY@oE577J4Ej6Fd4-cCHdaUCA==">
+			<topic-properties svg:fill="#FF8000" 
+			line-class="org.xmind.branchConnection.roundedElbow" 
+			line-width="5pt" line-tapered="tapered"
+			shape-class="org.xmind.topicShape.ellipse" 
+			fo:font-size="16pt" 
+			multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac"/>
+		</style>
+		<style type="topic" id="STY@e5WqwJpf2h4wZ9xEHlpmJw==">
+			<topic-properties fo:font-weight="false" fo:color="#9C3C1F" text-italic="normal" fo:font-size="10pt"/>
+		</style>
+		<style type="topic" id="STY@-EW4XZsso1ZfGrTz8U74zA==">
+			<topic-properties svg:fill="#A9BAE2" line-width="5pt" fo:font-weight="bold"/>
+		</style>
+		<style type="topic" id="STY@Rfj3nQprNQx3yIzN170UfA==">
+			<topic-properties svg:fill="#F3CBEC" line-class="org.xmind.branchConnection.roundedElbow" line-width="5pt" fo:font-weight="bold"/>
+		</style>
+		<style type="topic" id="STY@UN6QwaRTa3q6ZK9ZJ9xC1Q==">
+			<topic-properties svg:fill="#DAEFCF" line-width="2pt" fo:font-weight="bold"/>
+		</style>
+		<style type="relationship" id="STY@rFVuO8z1st4AztwnToloDw==">
+			<relationship-properties line-color="#266BDF" line-pattern="dot"/>
+		</style>
+		<style type="relationship" id="STY@My-8GGTxfuf4pE5XZvjp3w==">
+			<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" 
+			arrow-end-class="org.xmind.arrowShape.triangle" 
+			line-color="#A1A1A1" line-pattern="solid" line-width="1pt" 
+			shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style type="relationship" id="STY@QMfbEAqG-vJat3vjey9-iA==">
+			<relationship-properties line-color="#8B7C74" line-pattern="dash"/>
+		</style>
+		<style type="relationship" id="STY@fn0uclOtKS0KVYKxdEXz1g==">
+			<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" arrow-end-class="org.xmind.arrowShape.spearhead" line-color="#EFEB94" line-pattern="dash" line-width="4pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style type="relationship" id="STY@8BEEGfuwXLDQYU_PGbUQMg==">
+			<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.triangle" line-color="#2FC19D" line-pattern="solid" line-width="5pt" shape-class="org.xmind.relationshipShape.angled"/>
+		</style>
+		<style type="boundary" id="STY@-g9kCEtQds5Y-E-uf4WDQg==">
+			<boundary-properties svg:fill="#FFFF80" line-color="#E67B57" shape-class="org.xmind.boundaryShape.scallops" svg:opacity=".77"/>
+		</style>
+		<style type="boundary" id="STY@pDxSy7ZlOHxAb44NeGg0Jw==">
+			<boundary-properties line-pattern="dash" line-width="2pt" shape-class="org.xmind.boundaryShape.roundedRect"/>
+		</style>
+		<style type="boundary" id="STY@t4lwkPF3eNkGLsz_soDKZA==">
+			<boundary-properties svg:fill="#EFEFEF" line-color="#808080" shape-class="org.xmind.boundaryShape.rect" svg:opacity=".77"/>
+		</style>
+		<style type="boundary" id="STY@zOfWuDnpBCh6abnij1_Rrw==">
+			<boundary-properties svg:fill="$none$" line-color="#AFC4CD" line-pattern="solid" line-width="4pt" shape-class="org.xmind.boundaryShape.scallops"/>
+		</style>
+		<style type="boundary" id="STY@dLdhSBMOVCy62w65iFprSA==">
+			<boundary-properties svg:fill="#EEE311" line-color="#E24343" line-pattern="solid" line-width="5pt" shape-class="org.xmind.boundaryShape.scallops"/>
+		</style>
+		<style type="map" id="STY@b7BMj28Mtid9kT-jx-wVBA==">
+			<map-properties svg:fill="#FFFFFF"/>
+		</style>
+		<style type="map" id="STY@WeIzZNOEjr569iL1qyoRVA==">
+			<map-properties svg:fill="#F5F5F5" spinylines="true"/>
+		</style>
+		<style type="map" id="STY@u5LwnyRMZhENtQP8ZsyWVg==">
+			<map-properties svg:fill="#4F606C" rainbowcolor="false" spinylines="false"/>
+		</style>
+		<style type="map" id="STY@YBnXdk7SzMEqE1nrfNIgQw==">
+			<map-properties svg:fill="#E9EBC7" rainbowcolor="true" spinylines="true"/>
+		</style>
+		<style type="map" id="STY@Gg3WAk2cLjVgnlYGtxG31w==">
+			<map-properties svg:fill="#FCFCE9" rainbowcolor="true" spinylines="true"/>
+		</style>
+	</automatic-styles>
+	
+	<master-styles>
+		<style type="theme" id="brainy.defaultGenre.classic" name="%classic"><theme-properties>
+			<default-style style-family="relationship" style-id="STY@rFVuO8z1st4AztwnToloDw=="/>
+			<default-style style-family="centralTopic" style-id="STY@UUvY02qjMoQz67j4h73q6A=="/>
+			<default-style style-family="map" style-id="STY@Gg3WAk2cLjVgnlYGtxG31w=="/>
+			<default-style style-family="floatingTopic" style-id="STY@LDC48Uvs-ZcI28NX4edkSg=="/>
+			<default-style style-family="mainTopic" style-id="STY@dXdQ_4xOxFKqRTIDI0nWCQ=="/>
+			<default-style style-family="boundary" style-id="STY@-g9kCEtQds5Y-E-uf4WDQg=="/>
+		</theme-properties></style>
+		<style type="theme" id="brainy.defaultGenre.simple" name="%simple"><theme-properties>
+			<default-style style-family="relationship" style-id="STY@My-8GGTxfuf4pE5XZvjp3w=="/>
+			<default-style style-family="centralTopic" style-id="STY@CoHgLcQNT559V9zxlvKDHw=="/>
+			<default-style style-family="map" style-id="STY@b7BMj28Mtid9kT-jx-wVBA=="/>
+			<default-style style-family="floatingTopic" style-id="STY@6UFOsjZvoLJTY3O7BdF2iw=="/>
+			<default-style style-family="mainTopic" style-id="STY@iRp-G-ReJcawr_r-fZxe5g=="/>
+			<default-style style-family="subTopic" style-id="STY@TqB2H0dF73WGxKamQ6mo3v=="/>
+			<default-style style-family="boundary" style-id="STY@pDxSy7ZlOHxAb44NeGg0Jw=="/>
+		</theme-properties></style>
+		<style type="theme" id="brainy.defaultGenre.Business" name="%bussiness"><theme-properties>
+			<default-style style-family="relationship" style-id="STY@QMfbEAqG-vJat3vjey9-iA=="/>
+			<default-style style-family="centralTopic" style-id="STY@-7dUJe5_7F8JM3WB6D07-Q=="/>
+			<default-style style-family="map" style-id="STY@WeIzZNOEjr569iL1qyoRVA=="/>
+			<default-style style-family="subTopic" style-id="STY@cquE40Yc73SGWgrmFAnI3g=="/>
+			<default-style style-family="floatingTopic" style-id="STY@dIluG7wjTCUAZ7k2zO1RFQ=="/>
+			<default-style style-family="mainTopic" style-id="STY@dIluG7wjTCUAZ7k2zO1RFQ=="/>
+			<default-style style-family="boundary" style-id="STY@t4lwkPF3eNkGLsz_soDKZA=="/>
+		</theme-properties></style>
+		<style type="theme" id="brainy.defaultGenre.academese" name="%academese"><theme-properties>
+			<default-style style-family="relationship" style-id="STY@fn0uclOtKS0KVYKxdEXz1g=="/>
+			<default-style style-family="centralTopic" style-id="STY@6KSP5_auAo7OY7JxTcv_sQ=="/>
+			<default-style style-family="map" style-id="STY@u5LwnyRMZhENtQP8ZsyWVg=="/>
+			<default-style style-family="subTopic" style-id="STY@-WXUrloGIpiyFRdEcjf47Q=="/>
+			<default-style style-family="floatingTopic" style-id="STY@ZGbnmXqnQs3n64NFuxVoQA=="/>
+			<default-style style-family="mainTopic" style-id="STY@zGBjelDfIWhQCJvBUH3ErQ=="/>
+			<default-style style-family="boundary" style-id="STY@zOfWuDnpBCh6abnij1_Rrw=="/>
+		</theme-properties></style>
+		<style type="theme" id="brainy.defaultGenre.comic" name="%comic"><theme-properties>
+			<default-style style-family="relationship" style-id="STY@8BEEGfuwXLDQYU_PGbUQMg=="/>
+			<default-style style-family="centralTopic" style-id="STY@oE577J4Ej6Fd4-cCHdaUCA=="/>
+			<default-style style-family="map" style-id="STY@YBnXdk7SzMEqE1nrfNIgQw=="/>
+			<default-style style-family="floatingTopic" style-id="STY@-EW4XZsso1ZfGrTz8U74zA=="/>
+			<default-style style-family="subTopic" style-id="STY@e5WqwJpf2h4wZ9xEHlpmJw=="/>
+			<default-style style-family="mainTopic" style-id="STY@UN6QwaRTa3q6ZK9ZJ9xC1Q=="/>
+			<default-style style-family="boundary" style-id="STY@dLdhSBMOVCy62w65iFprSA=="/>
+		</theme-properties></style>
+	</master-styles>
+</xmap-styles>
