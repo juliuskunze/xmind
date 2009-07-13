@@ -146,7 +146,8 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
 
     public void create() {
         super.create();
-        partActivated(window.getActivePage().getActivePart());
+        IWorkbenchPart activePart = window.getActivePage().getActivePart();
+        partActivated(activePart);
     }
 
     /**

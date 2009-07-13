@@ -63,8 +63,7 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         private ITextSelection textSelection = null;
 
         public List<IPart> getPartSelection() {
-            return partSelection == null ? EMPTY_PART_SELECTION : Collections
-                    .unmodifiableList(partSelection);
+            return partSelection == null ? EMPTY_PART_SELECTION : partSelection;
         }
 
         protected boolean trimValidParts() {

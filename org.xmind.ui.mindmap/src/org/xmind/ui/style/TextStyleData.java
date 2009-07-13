@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.ui.style;
 
+import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
@@ -38,7 +39,7 @@ public class TextStyleData {
 
     public boolean strikeout;
 
-//    public int align;
+    public int align;
 
     public TextStyleData() {
         this(JFaceResources.getDefaultFont().getFontData()[0]);
@@ -53,7 +54,7 @@ public class TextStyleData {
         this.underline = false;
         this.strikeout = false;
 
-//        this.align = SWT.LEFT;
+        this.align = PositionConstants.LEFT;
     }
 
     public TextStyleData(TextStyleData data) {
@@ -65,7 +66,7 @@ public class TextStyleData {
         this.underline = data.underline;
         this.strikeout = data.strikeout;
 
-//        this.align = data.align;
+        this.align = data.align;
 
     }
 
@@ -105,9 +106,9 @@ public class TextStyleData {
                 && (this.color == that.color || (this.color != null && this.color
                         .equals(that.color)))
                 && this.underline == that.underline
-                && this.strikeout == that.strikeout;
+                && this.strikeout == that.strikeout
 
-//                && this.align == that.align;
+                && this.align == that.align;
     }
 
     public int hashCode() {
@@ -124,6 +125,7 @@ public class TextStyleData {
             c ^= name.hashCode();
         if (color != null)
             c ^= color.hashCode();
+        c ^= align;
         return c;
     }
 
@@ -144,8 +146,8 @@ public class TextStyleData {
             sb.append("underline"); //$NON-NLS-1$
         if (strikeout)
             sb.append("strikeout"); //$NON-NLS-1$
-//        sb.append(",align=");
-//        sb.append(align);
+        sb.append(",align="); //$NON-NLS-1$
+        sb.append(align);
         sb.append("}"); //$NON-NLS-1$
         return sb.toString();
     }

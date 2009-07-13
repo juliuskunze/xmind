@@ -115,8 +115,7 @@ public class Request {
     }
 
     public List<IPart> getTargets() {
-        return targets == null ? EMPTY_SOURCES : Collections
-                .unmodifiableList(targets);
+        return targets == null ? EMPTY_SOURCES : targets;
     }
 
     public boolean hasTargets() {

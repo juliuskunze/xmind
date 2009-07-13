@@ -90,33 +90,12 @@ public class AttachmentProtocol implements IProtocol {
                 ((ICoreEventSource2) workbook).registerOnceCoreEventListener(
                         Core.WorkbookPreSaveOnce, ICoreEventListener.NULL);
             }
-//            IWorkbookRef ref = MindMapUI.getWorkbookRefManager().findRef(
-//                    workbook);
-//            if (ref != null) {
-//                ref.addDirtyMarker(IDirtyMarker.NULL);
-//                //ref.forceDirty();
-//            }
         }
 
         /**
          * @param path
          */
         private void open(String path) {
-//            URL url = Platform.getInstanceLocation().getURL();
-//            try {
-//                url = FileLocator.toFileURL(url);
-//            } catch (IOException e) {
-//            }
-//            String file = url.getFile();
-//            String resourcePath = getResourcePath(new File(file),
-//                    new File(path));
-//            if (resourcePath != null) {
-//                IFile file2 = ResourcesPlugin.getWorkspace().getRoot().getFile(
-//                        new Path(resourcePath));
-//                if (openResource(file2))
-//                    return;
-//            }
-
             String extension = FileUtils.getExtension(path);
             if (MindMapUI.FILE_EXT_TEMPLATE.equalsIgnoreCase(extension)) {
                 if (window != null) {
@@ -136,47 +115,6 @@ public class AttachmentProtocol implements IProtocol {
 
             Program.launch(path);
         }
-
-//        /**
-//         * @param file
-//         */
-//        private boolean openResource(IFile file) {
-//            //IEditorDescriptor editor = PlatformUI.getWorkbench()
-//            //    .getEditorRegistry().getDefaultEditor(file.getName());
-//            //window.getActivePage().openEditor(new FileEditorInput(file),
-//            //    editor == null ? IEditorRegistry.SYSTEM_EXTERNAL_EDITOR_ID 
-//            //        : editor.getId());
-//            return false;
-//        }
-//
-//        /**
-//         * @param ancestor
-//         * @param file
-//         * @return
-//         */
-//        private String getResourcePath(File ancestor, File file) {
-//            return getResourcePath(ancestor, file, null);
-//        }
-//
-//        /**
-//         * @param ancestor
-//         * @param file
-//         * @param object
-//         * @return
-//         */
-//        private String getResourcePath(File ancestor, File file, String path) {
-//            if (file == null)
-//                return null;
-//            if (file.equals(ancestor)) {
-//                return path;
-//            }
-//            if (path == null) {
-//                path = file.getName();
-//            } else {
-//                path = file.getName() + "/" + path;
-//            }
-//            return getResourcePath(ancestor, file.getParentFile(), path);
-//        }
 
         /**
          * @param window
@@ -198,11 +136,6 @@ public class AttachmentProtocol implements IProtocol {
             final boolean[] ret = new boolean[1];
             SafeRunner.run(new SafeRunnable(errMessage) {
                 public void run() throws Exception {
-//                    IWorkbook contents = Core.getWorkbookBuilder()
-//                            .loadFromPath(path);
-//                    WorkbookEditorInput input = new WorkbookEditorInput(
-//                            contents, path);
-//                    input.setOverrideName(fileName);
                     window.getActivePage().openEditor(
                             MME.createFileEditorInput(path),
                             MindMapUI.MINDMAP_EDITOR_ID);

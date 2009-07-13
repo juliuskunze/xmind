@@ -180,6 +180,9 @@ public class BoundaryPart extends NodePart implements IBoundaryPart {
                 MindMapUI.POLICY_MODIFIABLE);
         reqHandler.installEditPolicy(GEF.ROLE_MOVABLE, NullEditPolicy
                 .getInstance());
+
+        reqHandler.installEditPolicy(GEF.ROLE_NAVIGABLE,
+                MindMapUI.POLICY_TOPIC_NAVIGABLE);
     }
 
     protected void registerCoreEvents(ICoreEventSource source,

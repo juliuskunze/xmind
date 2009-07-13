@@ -16,6 +16,7 @@ package org.xmind.ui.style;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
@@ -244,7 +245,29 @@ public class StyleUtils {
                     .contains(Styles.TEXT_DECORATION_LINE_THROUGH);
         }
 
+        int align = getAlignValue(part, ss, Styles.TextAlign);
+        data.align = align;
         return data;
+    }
+
+    public static int getAlign(IGraphicalPart part, IStyleSelector ss,
+            String key) {
+        return getAlignValue(part, ss, Styles.TextAlign);
+    }
+
+    private static int getAlignValue(IGraphicalPart part, IStyleSelector ss,
+            String key) {
+        // TODO Auto-generated method stub
+        if (part != null && ss != null) {
+            String value = ss.getStyleValue(part, key);
+            if (Styles.ALIGN_CENTER.equals(value))
+                return PositionConstants.CENTER;
+            else if (Styles.ALIGN_RIGHT.equals(value))
+                return PositionConstants.RIGHT;
+            else
+                return PositionConstants.LEFT;
+        }
+        return PositionConstants.LEFT;
     }
 
     public static FontData getCompositeFontData(IGraphicalPart part,

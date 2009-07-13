@@ -23,6 +23,7 @@ import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
@@ -37,6 +38,8 @@ public abstract class BaseNewFromTemplateAction extends Action implements
         IWorkbenchAction {
 
     private IWorkbenchWindow window;
+
+    private final IEditorPart[] editorPart = new IEditorPart[1];
 
     protected BaseNewFromTemplateAction(IWorkbenchWindow window) {
         if (window == null)
@@ -63,21 +66,18 @@ public abstract class BaseNewFromTemplateAction extends Action implements
         if (templateStream == null)
             return;
 
-//        final boolean[] b = new boolean[1];
         SafeRunner.run(new SafeRunnable() {
             public void run() throws Exception {
-//                IWorkbook contents = createWorkbookFromTemplate(templateStream);
                 IEditorInput input = MME
                         .createTemplatedEditorInput(templateStream);
-                page.openEditor(input, MindMapUI.MINDMAP_EDITOR_ID);
-//                b[0] = editor != null;
+                editorPart[0] = page.openEditor(input,
+                        MindMapUI.MINDMAP_EDITOR_ID);
             }
-
-//            public void handleException(Throwable e) {
-//                b[0] = false;
-//                super.handleException(e);
-//            }
         });
+    }
+
+    public IEditorPart getEditorPart() {
+        return editorPart[0];
     }
 
     /**

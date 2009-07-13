@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -483,7 +482,7 @@ public class DOMUtils {
     public static <T extends IAdaptable> List<T> getChildList(Element element,
             String childTag, INodeAdaptableProvider finder) {
         List<T> list = getChildren(element, childTag, finder);
-        return Collections.unmodifiableList(list);
+        return list;
     }
 
     public static <T extends IAdaptable> Set<T> getChildSet(Element element,
@@ -539,7 +538,7 @@ public class DOMUtils {
                 list.add((T) a);
             }
         }
-        return Collections.unmodifiableList(list);
+        return list;
     }
 
     public static <T> Set<T> unmodifiableSet(Collection<T> c) {

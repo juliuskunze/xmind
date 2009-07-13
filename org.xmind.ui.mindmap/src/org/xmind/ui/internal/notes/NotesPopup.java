@@ -420,6 +420,9 @@ public class NotesPopup extends PopupDialog {
     }
 
     protected boolean handleCommand(String commandId) {
+//        if("findReplace".equals(commandId))
+//            System.out.println();
+
         if (CMD_GOTO_NOTES_VIEW.equals(commandId)) {
             if (showGotoNotesView) {
                 gotoNotesView();

@@ -253,6 +253,12 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
             getStatus().setStatus(ST_ALT_PRESSED, pressed);
     }
 
+    protected void captureModifier(MouseEvent me) {
+        getStatus().setStatus(ST_CONTROL_PRESSED, me.isState(SWT.MOD1));
+        getStatus().setStatus(ST_SHIFT_PRESSED, me.isState(SWT.MOD2));
+        getStatus().setStatus(ST_ALT_PRESSED, me.isState(SWT.MOD3));
+    }
+
     /**
      * @see org.xmind.gef.tool.ITool#keyTraversed(org.xmind.gef.event.KeyEvent)
      */
@@ -270,6 +276,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseDoubleClick(MouseEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleMouseDoubleClick(me);
     }
 
@@ -282,6 +289,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseDown(MouseEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleMouseDown(me);
     }
 
@@ -294,6 +302,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseLongPressed(MouseEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleLongPressed(me);
     }
 
@@ -306,6 +315,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseDrag(MouseDragEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleMouseDrag(me);
     }
 
@@ -318,6 +328,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseHover(MouseEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleMouseHover(me);
     }
 
@@ -330,6 +341,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseMove(MouseEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleMouseMove(me);
     }
 
@@ -342,6 +354,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseUp(MouseEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleMouseUp(me);
     }
 
@@ -354,6 +367,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseEntered(MouseEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleMouseEntered(me);
     }
 
@@ -366,6 +380,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseExited(MouseEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleMouseExited(me);
     }
 
@@ -378,6 +393,7 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      */
     public void mouseWheelScrolled(MouseWheelEvent me, IViewer viewer) {
         setTargetViewer(viewer);
+        captureModifier(me);
         handleWheelScrolled(me);
     }
 

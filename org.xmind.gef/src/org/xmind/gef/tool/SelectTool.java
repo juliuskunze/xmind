@@ -30,6 +30,7 @@ import org.xmind.gef.command.ICommandStack;
 import org.xmind.gef.event.KeyEvent;
 import org.xmind.gef.event.MouseDragEvent;
 import org.xmind.gef.event.MouseEvent;
+import org.xmind.gef.event.MouseWheelEvent;
 import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IPart;
 
@@ -400,7 +401,8 @@ public abstract class SelectTool extends GraphicalTool {
             select(request.getTargets(), request.getPrimaryTarget());
         } else if (GEF.REQ_SELECT_SINGLE.equals(requestType)) {
             selectSingle(request.getPrimaryTarget());
-        } else if (GEF.REQ_EDIT.equals(requestType)) {
+        } else if (GEF.REQ_EDIT.equals(requestType)
+                || GEF.REQ_EDIT_LABEL.equals(requestType)) {
             handleEditRequest(request);
         } else {
             super.handleTargetedRequest(request);
@@ -526,6 +528,25 @@ public abstract class SelectTool extends GraphicalTool {
 
     protected String getEditTool(IPart source, Request request) {
         return GEF.TOOL_EDIT;
+    }
+
+    @Override
+    protected boolean handleWheelScrolled(MouseWheelEvent me) {
+        if (getStatus().isStatus(GEF.ST_CONTROL_PRESSED)) {
+            if (handleZoomByScroll(me))
+                return true;
+        }
+        return super.handleWheelScrolled(me);
+    }
+
+    protected boolean handleZoomByScroll(MouseWheelEvent me) {
+        if (me.upOrDown) {
+            handleRequest(GEF.REQ_ZOOMIN, getTargetViewer());
+        } else {
+            handleRequest(GEF.REQ_ZOOMOUT, getTargetViewer());
+        }
+        me.doIt = false;
+        return true;
     }
 
 }

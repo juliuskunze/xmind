@@ -151,7 +151,6 @@ public class ModifiablePolicy extends MindMapPolicyBase {
                     IPositioned positionOwner = (IPositioned) o;
                     Point position = positionOwner.getPosition();
                     if (position != null)
-//                        System.out.println(position.x + "," + position.y);
 //                    if (positionOwner.getPosition() != null)
                         positionOwners.add(positionOwner);
                 } else if (o instanceof IRelationship) {
@@ -171,8 +170,6 @@ public class ModifiablePolicy extends MindMapPolicyBase {
                 commands.add(new ModifyPositionCommand(p, null));
             }
         }
-//        System.out.println(commands.size());
-
         for (IRelationship r : rels) {
             commands.add(new ModifyPositionCommand(r.getControlPoint(0), null));
             commands.add(new ModifyPositionCommand(r.getControlPoint(1), null));

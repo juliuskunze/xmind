@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.ToolBarManager;
@@ -56,6 +57,7 @@ import org.xmind.ui.properties.StyledPropertySectionPart;
 import org.xmind.ui.resources.ColorUtils;
 import org.xmind.ui.resources.FontUtils;
 import org.xmind.ui.resources.FontUtils.IFontNameListCallback;
+import org.xmind.ui.richtext.AlignmentGroup;
 import org.xmind.ui.style.StyleUtils;
 import org.xmind.ui.style.Styles;
 import org.xmind.ui.style.TextStyleData;
@@ -199,47 +201,44 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
         }
     }
 
-//    private class AlignLeftAction extends Action {
-//        public AlignLeftAction() {
-//            super("Left", MindMapUI.getImages().get(IMindMapImages.ALIGN_LEFT,
-//                    true));
-//            setToolTipText("Alignment Left");
-//            setChecked(false);
-//        }
-//
-//        public void run() {
-//            super.run();
-//            changeAlignLeft(isChecked());
-//        }
-//    }
-//
-//    private class AlignCenterAction extends Action {
-//        public AlignCenterAction() {
-//            super("Center", MindMapUI.getImages().get(
-//                    IMindMapImages.ALIGN_CENTER, true));
-//            setToolTipText("Alignment Center");
-//            setChecked(false);
-//        }
-//
-//        public void run() {
-//            super.run();
-//            changeAlignCenter(isChecked());
-//        }
-//    }
-//
-//    private class AlignRightAction extends Action {
-//        public AlignRightAction() {
-//            super("Right", MindMapUI.getImages().get(
-//                    IMindMapImages.ALIGN_RIGHT, true));
-//            setToolTipText("Alignment Right");
-//            setChecked(false);
-//        }
-//
-//        public void run() {
-//            super.run();
-//            changeAlignRight(isChecked());
-//        }
-//    }
+    private class AlignLeftAction extends Action {
+        public AlignLeftAction() {
+            super(PropertyMessages.TextAlignLeft_text, MindMapUI.getImages()
+                    .get(IMindMapImages.ALIGN_LEFT, true));
+            setToolTipText(PropertyMessages.TextAlignLeft_toolTip);
+            setChecked(false);
+        }
+
+        public void run() {
+            changeAlignLeft();
+        }
+    }
+
+    private class AlignCenterAction extends Action {
+        public AlignCenterAction() {
+            super(PropertyMessages.TextAlignCenter_text, MindMapUI.getImages()
+                    .get(IMindMapImages.ALIGN_CENTER, true));
+            setToolTipText(PropertyMessages.TextAlignCenter_toolTip);
+            setChecked(false);
+        }
+
+        public void run() {
+            changeAlignCenter();
+        }
+    }
+
+    private class AlignRightAction extends Action {
+        public AlignRightAction() {
+            super(PropertyMessages.TextAlignRight_text, MindMapUI.getImages()
+                    .get(IMindMapImages.ALIGN_RIGHT, true));
+            setToolTipText(PropertyMessages.TextAlignRight_toolTip);
+            setChecked(false);
+        }
+
+        public void run() {
+            changeAlignRight();
+        }
+    }
 
     private class ColorOpenListener implements IOpenListener {
 
@@ -265,13 +264,13 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
 
     private ColorPicker textColorPicker;
 
-//    private AlignmentGroup alignGroup;
-//
-//    private IAction alignLeftAction;
-//
-//    private IAction alignCenterAction;
-//
-//    private IAction alignRightAction;
+    private AlignmentGroup alignGroup;
+
+    private IAction alignLeftAction;
+
+    private IAction alignCenterAction;
+
+    private IAction alignRightAction;
 
     protected void createContent(Composite parent) {
         Composite line1 = new Composite(parent, SWT.NONE);
@@ -359,11 +358,11 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
         textColorPicker.addOpenListener(new ColorOpenListener());
         styleBar.add(textColorPicker);
 
-//        alignGroup = new AlignmentGroup();
-//        alignGroup.add(alignLeftAction = new AlignLeftAction());
-//        alignGroup.add(alignCenterAction = new AlignCenterAction());
-//        alignGroup.add(alignRightAction = new AlignRightAction());
-//        styleBar.add(alignGroup);
+        alignGroup = new AlignmentGroup();
+        alignGroup.add(alignLeftAction = new AlignLeftAction());
+        alignGroup.add(alignCenterAction = new AlignCenterAction());
+        alignGroup.add(alignRightAction = new AlignRightAction());
+        styleBar.add(alignGroup);
 
         ToolBar barControl = styleBar.createControl(parent);
         barControl.setLayoutData(new GridData(GridData.END, GridData.CENTER,
@@ -395,15 +394,20 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
         if (textColorPicker != null)
             updateColorPicker(textColorPicker);
 
-//        if (alignLeftAction != null)
-//            alignLeftAction.setChecked(ts != null && ts.align == SWT.LEFT);
-//
-//        if (alignCenterAction != null)
-//            alignCenterAction.setChecked(ts != null && ts.align == SWT.CENTER);
-//
-//        if (alignRightAction != null) 
-//            alignRightAction.setChecked(ts != null && ts.align == SWT.RIGHT);
-
+        switch (ts == null ? PositionConstants.LEFT : ts.align) {
+        case PositionConstants.LEFT:
+            if (alignLeftAction != null)
+                alignLeftAction.setChecked(ts != null);
+            break;
+        case PositionConstants.CENTER:
+            if (alignCenterAction != null)
+                alignCenterAction.setChecked(ts != null);
+            break;
+        case PositionConstants.RIGHT:
+            if (alignRightAction != null)
+                alignRightAction.setChecked(ts != null);
+            break;
+        }
     }
 
     private void updateColorPicker(ColorPicker picker) {
@@ -448,7 +452,7 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
                             && textStyle.color == null && !textStyle.italic
                             && !textStyle.bold && !textStyle.underline
                             && !textStyle.strikeout
-                    /* && textStyle.align == 0 */) {/////////
+                    /* && textStyle.align == 0 */) {
                         textStyle = null;
                         break;
                     }
@@ -475,9 +479,9 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
             source.strikeout = false;
         if (source.underline && !target.underline)
             source.underline = false;
-        //////////////////////////////////////
-//        if (source.align != target.align)
-//            source.align = SWT.LEFT;
+
+        if (source.align != target.align)
+            source.align = SWT.LEFT;
         return source;
     }
 
@@ -502,9 +506,9 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
         currentTextStyle = null;
         textColorPicker = null;
 
-//        alignLeftAction = null;
-//        alignCenterAction = null;
-//        alignRightAction = null;
+        alignLeftAction = null;
+        alignCenterAction = null;
+        alignRightAction = null;
     }
 
     private void changeFontName(String name) {
@@ -567,23 +571,25 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
                 Styles.TextDecoration, decoration));
     }
 
-//    private void changeAlignLeft(boolean left) {
-//        sendRequest(addStyle(
-//                createStyleRequest(CommandMessages.Command_ModifyFont),
-//                Styles.TextAlign, left ? Styles.ALIGN_LEFT : Styles.NORMAL));
-//    }
-//
-//    private void changeAlignCenter(boolean center) {
-//        sendRequest(addStyle(
-//                createStyleRequest(CommandMessages.Command_ModifyFont),
-//                Styles.TextAlign, center ? Styles.ALIGN_CENTER : Styles.NORMAL));
-//    }
-//
-//    private void changeAlignRight(boolean right) {
-//        sendRequest(addStyle(
-//                createStyleRequest(CommandMessages.Command_ModifyFont),
-//                Styles.TextAlign, right ? Styles.ALIGN_RIGHT : Styles.NORMAL));
-//    }
+    private void changeAlignLeft() {
+        Request leftReq = createStyleRequest(CommandMessages.Command_TextAlignLeft);
+        Request request = addStyle(leftReq, Styles.TextAlign, Styles.ALIGN_LEFT);
+        sendRequest(request);
+    }
+
+    private void changeAlignCenter() {
+        Request centerReq = createStyleRequest(CommandMessages.Command_TextAlignCenter);
+        Request request = addStyle(centerReq, Styles.TextAlign,
+                Styles.ALIGN_CENTER);
+        sendRequest(request);
+    }
+
+    private void changeAlignRight() {
+        Request rightReq = createStyleRequest(CommandMessages.Command_TextAlignRight);
+        Request request = addStyle(rightReq, Styles.TextAlign,
+                Styles.ALIGN_RIGHT);
+        sendRequest(request);
+    }
 
     private void changeTextColor(IColorSelection selection) {
         changeColor(selection, Styles.TextColor,

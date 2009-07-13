@@ -29,6 +29,7 @@ import org.xmind.gef.policy.NullEditPolicy;
 import org.xmind.ui.internal.decorators.LabelDecorator;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.ILabelPart;
+import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.MindMapUtils;
 
 public class LabelPart extends MindMapPartBase implements ILabelPart {
@@ -93,6 +94,9 @@ public class LabelPart extends MindMapPartBase implements ILabelPart {
         super.declareEditPolicies(reqHandler);
         reqHandler.installEditPolicy(GEF.ROLE_EDITABLE, NullEditPolicy
                 .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_NAVIGABLE,
+                MindMapUI.POLICY_TOPIC_NAVIGABLE);
+
     }
 
     protected void registerCoreEvents(ICoreEventSource source,

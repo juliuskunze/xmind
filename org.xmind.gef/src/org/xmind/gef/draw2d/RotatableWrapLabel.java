@@ -74,7 +74,7 @@ public class RotatableWrapLabel extends Figure implements ITextFigure,
 
     private TextStyle style = null;
 
-    private int align = PositionConstants.CENTER;
+    private int align = PositionConstants.LEFT;
 
     private int renderStyle = ADVANCED;
 
@@ -546,6 +546,7 @@ public class RotatableWrapLabel extends Figure implements ITextFigure,
             Path p = new Path(Display.getCurrent());
             p.addString(s, 0, 0, f);
             p.getBounds(RECT);
+            p.dispose();
             size.width = Math.max(size.width, (int) Math.ceil(RECT[2]));
             size.height = Math.max(size.height, (int) Math.ceil(RECT[3]));
         }

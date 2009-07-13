@@ -137,6 +137,9 @@ public class RelationshipPart extends ConnectionPart implements
                 MindMapUI.POLICY_RELATIONSHIP_CREATABLE);
         reqHandler.installEditPolicy(GEF.ROLE_TRAVERSABLE,
                 MindMapUI.POLICY_RELATIONSHIP_TRAVERSABLE);
+
+        reqHandler.installEditPolicy(GEF.ROLE_NAVIGABLE,
+                MindMapUI.POLICY_TOPIC_NAVIGABLE);
     }
 
     @SuppressWarnings("unchecked")

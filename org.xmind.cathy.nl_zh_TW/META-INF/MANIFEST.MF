@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: XMind Standalone App Feature Chinese (Traditional) Language Support
+Bundle-SymbolicName: org.xmind.cathy.nl_zh_TW;singleton:=true
+Bundle-Version: 3.0.3.qualifier
+Bundle-Vendor: XMind Ltd.
+Fragment-Host: org.xmind.cathy
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

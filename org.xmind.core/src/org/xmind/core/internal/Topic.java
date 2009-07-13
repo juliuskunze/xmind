@@ -94,7 +94,7 @@ public abstract class Topic implements ITopic {
         for (String type : types) {
             all.addAll(getChildren(type));
         }
-        return Collections.unmodifiableList(all);
+        return all;
     }
 
     public boolean isAttached() {

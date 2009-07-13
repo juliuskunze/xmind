@@ -26,16 +26,22 @@ public class MouseWheelEvent extends MouseEvent {
 
     public boolean doIt = true;
 
+    public MouseWheelEvent(IPart host, Point location, boolean upOrDown) {
+        this(host, location, upOrDown, 0);
+    }
+
     /**
      * @param host
      * @param location
      */
-    public MouseWheelEvent(IPart host, Point location, boolean upOrDown) {
-        super(null, host, true, location);
+    public MouseWheelEvent(IPart host, Point location, boolean upOrDown,
+            int state) {
+        super(null, host, true, location, state);
         this.upOrDown = upOrDown;
     }
 
-    public static MouseWheelEvent createEvent(IPart host, Event e) {
-        return new MouseWheelEvent(host, new Point(e.x, e.y), e.count > 0);
+    public static MouseWheelEvent createEvent(IPart host, Event wheelEvent) {
+        return new MouseWheelEvent(host, new Point(wheelEvent.x, wheelEvent.y),
+                wheelEvent.count > 0, wheelEvent.stateMask);
     }
 }

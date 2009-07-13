@@ -153,7 +153,7 @@ public class NumberFormatExtensionManager extends RegistryReader implements
 
     public List<INumberFormatDescriptor> getDescriptors() {
         ensureLoaded();
-        return Collections.unmodifiableList(list);
+        return list;
     }
 
     public INumberFormat getFormat(String formatId) {

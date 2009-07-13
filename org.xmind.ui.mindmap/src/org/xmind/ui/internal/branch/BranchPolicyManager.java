@@ -104,7 +104,7 @@ public class BranchPolicyManager extends RegistryReader implements
      */
     public List<IBranchPolicyDescriptor> getBranchPolicyDescriptors() {
         ensureLoaded();
-        return Collections.unmodifiableList(policyList);
+        return policyList;
     }
 
     private Map<String, BranchPolicy> getPolicyMap() {

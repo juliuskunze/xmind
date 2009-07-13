@@ -31,7 +31,15 @@ public class MouseDragEvent extends MouseEvent {
     public MouseDragEvent(org.eclipse.swt.events.MouseEvent startEvent,
             org.eclipse.swt.events.MouseEvent currentEvent, IPart target,
             IPart source, Point startLoc, Point currentLoc, boolean leftOrRight) {
-        super(currentEvent, target, leftOrRight, currentLoc);
+        this(startEvent, currentEvent, target, source, startLoc, currentLoc,
+                leftOrRight, 0);
+    }
+
+    public MouseDragEvent(org.eclipse.swt.events.MouseEvent startEvent,
+            org.eclipse.swt.events.MouseEvent currentEvent, IPart target,
+            IPart source, Point startLoc, Point currentLoc,
+            boolean leftOrRight, int state) {
+        super(currentEvent, target, leftOrRight, currentLoc, state);
         this.startingSWTEvent = startEvent;
         this.startingLocation = startLoc;
         this.source = source;
@@ -42,7 +50,7 @@ public class MouseDragEvent extends MouseEvent {
             Point currentLoc, IPart newTarget) {
         return new MouseDragEvent(prev.startingSWTEvent, current, newTarget,
                 prev.source, prev.startingLocation, currentLoc,
-                prev.leftOrRight);
+                prev.leftOrRight, current.stateMask);
     }
 
 //    public MouseDragEvent( MouseDragEvent prev, Point current, IPart hover ) {
@@ -57,7 +65,7 @@ public class MouseDragEvent extends MouseEvent {
             org.eclipse.swt.events.MouseEvent start, IPart source,
             Point startLoc) {
         return new MouseDragEvent(start, start, source, source, startLoc,
-                startLoc, getButtonState(start.button));
+                startLoc, getButtonState(start.button), start.stateMask);
     }
 
     public Dimension getDisplacement() {

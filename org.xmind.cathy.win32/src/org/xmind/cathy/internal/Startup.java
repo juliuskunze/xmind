@@ -12,6 +12,8 @@
 package org.xmind.cathy.internal;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -91,19 +93,32 @@ public class Startup implements IStartup {
     private void checkLog() {
         Log log = Log.get(Log.OPENING);
         if (log.exists()) {
+            boolean presentation = false;
+            List<String> files = new ArrayList<String>();
             String[] contents = log.getContents();
             for (String line : contents) {
-                open(line);
+                if ("-p".equals(line)) { //$NON-NLS-1$
+                    presentation = true;
+                } else
+                    files.add(line);
             }
+            if (files.isEmpty())
+                return;
+            for (String file : files) {
+                open(file, presentation);
+                if (presentation)
+                    presentation = false;
+            }
+            files.clear();
             log.delete();
         }
     }
 
-    private void open(String path) {
+    private void open(String path, boolean presentation) {
         File file = new File(path);
         if (file.isFile() && file.canRead()) {
             if (primaryWindow == null)
-                SimpleOpenAction.open(path);
+                new SimpleOpenAction(path, presentation).run();
             else
                 SimpleOpenAction.open(primaryWindow, path);
         }

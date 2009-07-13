@@ -1467,6 +1467,20 @@ public class MindManagerImporter extends MindMapImporter implements
             if (fontEle != null) {
                 loadFont(fontEle, (IStyled) titleOwner);
             }
+            String align = textEle == null ? null : att(textEle,
+                    "TextAlignment"); //$NON-NLS-1$
+            if (align != null) {
+                loadTextAlignment(align, (IStyled) titleOwner);
+            }
+        }
+    }
+
+    private void loadTextAlignment(String align, IStyled styleOwner) {
+        // TODO Auto-generated method stub
+        if (align.startsWith("urn:mindjet:")) { //$NON-NLS-1$
+            int len = "urn:mindjet:".length(); //$NON-NLS-1$
+            String textAlign = align.substring(len).toLowerCase();
+            registerStyle(styleOwner, Styles.TextAlign, textAlign);
         }
     }
 

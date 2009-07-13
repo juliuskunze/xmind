@@ -45,6 +45,8 @@ public interface IMindMapImages {
     String PATH_WIZ = PATH + "wizban/"; //$NON-NLS-1$
     String PATH_PROP = PATH + "prop/"; //$NON-NLS-1$
 
+    String XMIND_ICON = PATH + "xmind.16.gif"; //$NON-NLS-1$
+
     String ACTUAL_SIZE = "actualsize.gif"; //$NON-NLS-1$
     String ACTUAL_SIZE_SMALL = "actualsize_small.gif"; //$NON-NLS-1$
     String ADD = "add.gif"; //$NON-NLS-1$

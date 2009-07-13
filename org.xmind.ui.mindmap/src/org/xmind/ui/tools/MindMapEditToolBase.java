@@ -21,7 +21,7 @@ import org.xmind.gef.event.KeyEvent;
 import org.xmind.gef.event.MouseEvent;
 import org.xmind.gef.part.IPart;
 import org.xmind.ui.commands.CommandMessages;
-import org.xmind.ui.internal.MindMapSpellingSupport;
+import org.xmind.ui.internal.spellsupport.SpellingSupport;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.texteditor.FloatingTextEditTool;
 import org.xmind.ui.texteditor.FloatingTextEditor;
@@ -46,8 +46,8 @@ public abstract class MindMapEditToolBase extends FloatingTextEditTool {
     protected void hookEditorControl(FloatingTextEditor editor,
             ITextViewer textViewer) {
         super.hookEditorControl(editor, textViewer);
-        MindMapSpellingSupport.getInstance().install(
-                textViewer.getTextWidget(), new StyledTextContentAdapter());
+        StyledTextContentAdapter adapter = new StyledTextContentAdapter();
+        SpellingSupport.getInstance().install(textViewer, adapter);
     }
 
     protected abstract String getInitialText(IPart source);

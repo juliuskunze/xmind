@@ -1249,24 +1249,16 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
 
     public void init(IEditorSite site, IEditorInput input)
             throws PartInitException {
-//        IWorkbookRef realInput = MindMapUI.getWorkbookRefManager().createRef(
-//                input, this);
-//        if (realInput == null || realInput.getWorkbook() == null) {
-//            throw new PartInitException(
-//                    "Not a valid MindMapEditor input: " + input.toString());//$NON-NLS-1$
-//        }
-//        this.workbookRef = realInput;
         setSite(site);
         setInput(input);
+
         try {
-            this.workbookRef = WorkbookRefManager.getInstance().addReferrer(
-                    input, this);
+            WorkbookRefManager manager = WorkbookRefManager.getInstance();
+            this.workbookRef = manager.addReferrer(input, this);
         } catch (org.eclipse.core.runtime.CoreException e) {
             throw new PartInitException(NLS.bind(
                     MindMapMessages.MindMapEditor_partInitException_message,
                     input), e);
-//            throw new PartInitException(NLS.bind(
-//                    "Invalid input for MindMapEditor: {0}", input), e);
         }
         super.init();
         setMiniBarContributor(new MindMapMiniBarContributor());

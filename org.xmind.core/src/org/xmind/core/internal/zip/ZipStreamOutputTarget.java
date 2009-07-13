@@ -28,13 +28,28 @@ import org.xmind.core.io.IOutputTarget;
  */
 public class ZipStreamOutputTarget implements IOutputTarget {
 
-    private static class NonCloseableOutputStream extends FilterOutputStream {
+    private static class ZipEntryOutputStream extends FilterOutputStream {
 
         /**
          * @param out
          */
-        public NonCloseableOutputStream(OutputStream out) {
+        public ZipEntryOutputStream(ZipOutputStream out) {
             super(out);
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            out.write(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            out.write(b, off, len);
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            out.write(b);
         }
 
         /*
@@ -45,7 +60,7 @@ public class ZipStreamOutputTarget implements IOutputTarget {
         @Override
         public void close() throws IOException {
             try {
-                flush();
+                ((ZipOutputStream) out).closeEntry();
             } catch (IOException ignored) {
             }
         }
@@ -86,7 +101,7 @@ public class ZipStreamOutputTarget implements IOutputTarget {
         try {
             this.currentEntry = new ZipEntry(entryName);
             zip.putNextEntry(currentEntry);
-            return new NonCloseableOutputStream(zip);
+            return new ZipEntryOutputStream(zip);
         } catch (IOException e) {
             Core.getLogger().log(e);
             return null;

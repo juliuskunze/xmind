@@ -59,6 +59,9 @@ public class GEF {
     public static final String REQ_MODIFY = "modify"; //$NON-NLS-1$
     public static final String REQ_RESIZE = "resize"; //$NON-NLS-1$
     public static final String REQ_EDIT = "edit"; //$NON-NLS-1$
+
+    public static final String REQ_EDIT_LABEL = "edit label"; //$NON-NLS-1$
+
     public static final String REQ_CANCEL = "cancel"; //$NON-NLS-1$
     public static final String REQ_FINISH = "finish"; //$NON-NLS-1$
 

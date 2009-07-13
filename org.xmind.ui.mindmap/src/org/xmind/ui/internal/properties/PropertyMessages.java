@@ -72,6 +72,13 @@ public class PropertyMessages extends NLS {
     public static String MultiLineColors_text;
     public static String TaperedLines_text;
 
+    public static String TextAlignLeft_text;
+    public static String TextAlignLeft_toolTip;
+    public static String TextAlignCenter_text;
+    public static String TextAlignCenter_toolTip;
+    public static String TextAlignRight_text;
+    public static String TextAlignRight_toolTip;
+
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, PropertyMessages.class);

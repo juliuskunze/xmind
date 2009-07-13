@@ -126,7 +126,7 @@ public class ManifestImpl extends Manifest {
                 list.add(entry);
             }
         }
-        return Collections.unmodifiableList(list);
+        return list;
     }
 
     public IFileEntry getFileEntry(String path) {

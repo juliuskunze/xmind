@@ -84,7 +84,7 @@ public class Part implements IPart {
     public List<IPart> getChildren() {
         if (children == null)
             return EMPTY_CHILDREN;
-        return Collections.unmodifiableList(children);
+        return children;
     }
 
     public void addNotify() {

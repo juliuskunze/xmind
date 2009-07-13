@@ -98,7 +98,8 @@ public class Log {
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    lines.add(line);
+                    if (!"".equals(line.trim())) //$NON-NLS-1$
+                        lines.add(line);
                 }
             } finally {
                 reader.close();
@@ -116,7 +117,7 @@ public class Log {
     public void append(String... lines) {
         if (lines.length == 0)
             return;
-        write(false, lines);
+        write(true, lines);
     }
 
     private void write(boolean append, String... contents) {
@@ -125,14 +126,9 @@ public class Log {
             BufferedWriter writer = new BufferedWriter(new FileWriter(file,
                     append));
             try {
-                boolean firstLine = true;
                 for (String line : contents) {
-                    if (firstLine) {
-                        firstLine = false;
-                    } else {
-                        writer.newLine();
-                    }
                     writer.write(line);
+                    writer.newLine();
                 }
             } finally {
                 writer.close();
@@ -159,7 +155,8 @@ public class Log {
             e.printStackTrace();
         }
         File file = new File(url.getFile(), name);
-        return new Log(file);
+        Log log = new Log(file);
+        return log;
     }
 
     public static String getLineSeparator() {

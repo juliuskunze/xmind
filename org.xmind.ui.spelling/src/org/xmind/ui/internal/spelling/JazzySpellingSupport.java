@@ -13,7 +13,8 @@
  *******************************************************************************/
 package org.xmind.ui.internal.spelling;
 
-import org.eclipse.swt.widgets.Control;
+import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.swt.custom.StyledText;
 import org.xmind.ui.texteditor.IControlContentAdapter2;
 import org.xmind.ui.texteditor.ISpellingSupport;
 
@@ -24,14 +25,16 @@ public class JazzySpellingSupport implements ISpellingSupport {
     public JazzySpellingSupport() {
     }
 
-    public void install(Control textWidget, IControlContentAdapter2 adapter) {
+//    public void install(Control textWidget, IControlContentAdapter2 adapter) {
+    public void install(ITextViewer textViewer, IControlContentAdapter2 adapter) {
         if (!SpellingPlugin.isSpellingCheckEnabled())
             return;
 
+        StyledText textWidget = textViewer.getTextWidget();
         if (textWidget.getData(KEY_SPELLING_HELPER) instanceof SpellingHelper)
             return;
 
-        SpellingHelper helper = new SpellingHelper(textWidget, adapter);
+        SpellingHelper1 helper = new SpellingHelper1(textViewer, adapter);
         textWidget.setData(KEY_SPELLING_HELPER, helper);
     }
 

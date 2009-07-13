@@ -31,6 +31,21 @@ public class ResourceFileOutputStream extends FilterOutputStream {
     }
 
     @Override
+    public void write(byte[] b) throws IOException {
+        out.write(b);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        out.write(b, off, len);
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+        out.write(b);
+    }
+
+    @Override
     public void close() throws IOException {
         try {
             super.close();

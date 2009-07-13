@@ -87,6 +87,14 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
         this.key = key;
     }
 
+    public IWorkbookLoader getWorkbookLoader() {
+        return workbookLoader;
+    }
+
+    public IWorkbookSaver getWorkbookSaver() {
+        return workbookSaver;
+    }
+
     public WorkbookRef setWorkbookLoader(IWorkbookLoader workbookLoader) {
         this.workbookLoader = workbookLoader;
         return this;
@@ -272,7 +280,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
     public List<IEditorPart> getOpenedEditors() {
         if (referrers == null)
             return EMPTY_LIST;
-        return Collections.unmodifiableList(referrers);
+        return referrers;
     }
 
     public void forceDirty() {

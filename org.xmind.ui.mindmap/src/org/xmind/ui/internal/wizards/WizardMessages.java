@@ -161,6 +161,12 @@ public class WizardMessages extends NLS {
     public static String NewPage_FileName_label;
     public static String NewPage_InvalidExtension_message;
 
+    public static String FreeMindPage_title;
+    public static String FreeMindPage_description;
+    public static String FreeMindPage_filterName;
+    public static String FreeMindWizard_windowTitle;
+    public static String FreeMindWizard_formatName;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, WizardMessages.class);
     }

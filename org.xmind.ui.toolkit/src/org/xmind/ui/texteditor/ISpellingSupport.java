@@ -13,16 +13,20 @@
  *******************************************************************************/
 package org.xmind.ui.texteditor;
 
-import org.eclipse.swt.widgets.Control;
+import org.eclipse.jface.text.ITextViewer;
 
 public interface ISpellingSupport {
 
     ISpellingSupport NULL = new ISpellingSupport() {
-        public void install(Control textWidget, IControlContentAdapter2 adapter) {
+        public void install(ITextViewer textViewer,
+                IControlContentAdapter2 adapter) {
         }
+//        public void install(Control textWidget, IControlContentAdapter2 adapter) {
+//        }
 
     };
 
-    void install(Control textWidget, IControlContentAdapter2 adapter);
+//    void install(Control textWidget, IControlContentAdapter2 adapter);
+    void install(ITextViewer textViewer, IControlContentAdapter2 adapter);
 
 }

@@ -21,7 +21,7 @@ public class Hyperlink implements Cloneable {
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
-        if (obj == null || !(obj instanceof Hyperlink))
+        if (obj != null || !(obj instanceof Hyperlink))
             return false;
         Hyperlink that = (Hyperlink) obj;
         return this.start == that.start && this.length == that.length

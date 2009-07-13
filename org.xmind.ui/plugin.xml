@@ -2230,6 +2230,13 @@
             id="org.xmind.ui.XMind2008ExportWizard"
             name="%exportWizard.xmind2008.name">
       </wizard>
+      <wizard
+            category="org.xmind.ui.exportWizards"
+            class="org.xmind.ui.internal.wizards.FreeMindExportWizard"
+            icon="icons/impexp/exportmm.png"
+            id="org.xmind.ui.FreeMindExportWizard"
+            name="FreeMind">
+      </wizard>
    </extension>
    <extension
          point="org.eclipse.ui.importWizards">

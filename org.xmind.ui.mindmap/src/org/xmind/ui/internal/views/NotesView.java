@@ -67,7 +67,10 @@ import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.commands.CommandMessages;
 import org.xmind.ui.commands.ModifyNotesCommand;
 import org.xmind.ui.internal.MindMapMessages;
+import org.xmind.ui.internal.actions.FindReplaceAction;
 import org.xmind.ui.internal.dialogs.DialogUtils;
+import org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider;
+import org.xmind.ui.internal.notes.NotesFindReplaceOperationProvider;
 import org.xmind.ui.internal.notes.NotesViewer;
 import org.xmind.ui.internal.notes.RichDocumentNotesAdapter;
 import org.xmind.ui.mindmap.IMindMapImages;
@@ -144,8 +147,8 @@ public class NotesView extends ViewPart implements IPartListener,
         private IRichTextEditViewer viewer;
 
         public InsertHyperlinkAction(IRichTextEditViewer viewer) {
-            super(MindMapMessages.InsertHyperlinkAction_text, MindMapUI.getImages().get(
-                    IMindMapImages.HYPERLINK, true));
+            super(MindMapMessages.InsertHyperlinkAction_text, MindMapUI
+                    .getImages().get(IMindMapImages.HYPERLINK, true));
             setToolTipText(MindMapMessages.InserthyperlinkAction_toolTip);
             setDisabledImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.HYPERLINK, false));
@@ -310,6 +313,8 @@ public class NotesView extends ViewPart implements IPartListener,
 
     private boolean savingNotes;
 
+    private NotesFindReplaceOperationProvider notesOperationProvider = null;
+
 //    private IPreSaveListener saveNotesJob = null;
 //    private SaveNotesJob saveNotesJob = null;
     private ICoreEventRegistration saveNotesReg = null;
@@ -366,9 +371,13 @@ public class NotesView extends ViewPart implements IPartListener,
                 ITextOperationTarget.PASTE));
         setTextActionHandler(ActionFactory.DELETE.getId(), new TextAction(
                 ITextOperationTarget.DELETE));
+
+        FindReplaceAction findReplaceAction = new FindReplaceAction(this);
+        setTextActionHandler(ActionFactory.FIND.getId(), findReplaceAction);
+
     }
 
-    private void setTextActionHandler(String id, TextAction action) {
+    private void setTextActionHandler(String id, Action action) {
         textActionIds.add(id);
         getViewSite().getActionBars().setGlobalActionHandler(id, action);
     }
@@ -401,6 +410,8 @@ public class NotesView extends ViewPart implements IPartListener,
             adapter = null;
         }
         viewer = null;
+        if (notesOperationProvider != null)
+            notesOperationProvider = null;
     }
 
     public void setFocus() {
@@ -506,6 +517,11 @@ public class NotesView extends ViewPart implements IPartListener,
             return this;
         } else if (adapter == ISaveablePart.class) {
             return getSaveablePart();
+        } else if (adapter == IFindReplaceOperationProvider.class) {
+            if (notesOperationProvider == null)
+                notesOperationProvider = new NotesFindReplaceOperationProvider(
+                        viewer);
+            return notesOperationProvider;
         }
         return super.getAdapter(adapter);
     }

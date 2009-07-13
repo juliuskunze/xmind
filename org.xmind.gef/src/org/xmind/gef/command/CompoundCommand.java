@@ -15,7 +15,6 @@ package org.xmind.gef.command;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
@@ -60,7 +59,7 @@ public class CompoundCommand extends Command implements ISourceProvider2 {
     }
 
     public List<Command> getCommands() {
-        return Collections.unmodifiableList(commands);
+        return commands;
     }
 
     public int getType() {

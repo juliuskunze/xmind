@@ -34,7 +34,7 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
 
     private MindMapEditor editor;
 
-    private boolean lastExisting = false;
+    private Boolean lastExisting = null;
 
     /**
      * 
@@ -58,10 +58,14 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
      * 
      */
     private void checkFiles() {
-        IEditorInput input = editor.getEditorInput();
-        if (input != null) {
-            if (input.exists() != lastExisting) {
-                addDirtyMarker();
+        if (lastExisting == null) {
+            recordLastExisting();
+        } else {
+            IEditorInput input = editor.getEditorInput();
+            if (input != null) {
+                if (input.exists() != lastExisting.booleanValue()) {
+                    addDirtyMarker();
+                }
             }
         }
     }
@@ -79,7 +83,7 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
      */
     private void recordLastExisting() {
         IEditorInput input = editor.getEditorInput();
-        lastExisting = input == null ? false : input.exists();
+        lastExisting = Boolean.valueOf(input == null ? false : input.exists());
     }
 
     /*

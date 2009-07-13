@@ -13,10 +13,12 @@
  *******************************************************************************/
 package org.xmind.ui.internal.decorators;
 
+import static org.xmind.ui.style.StyleUtils.getAlign;
 import static org.xmind.ui.style.StyleUtils.getCompositeFont;
 import static org.xmind.ui.style.StyleUtils.getTextStyle;
 
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.graphics.TextStyle;
 import org.xmind.core.ITitled;
@@ -45,7 +47,28 @@ public class TitleTextDecorator extends Decorator {
                 textFigure.setText(text);
             textFigure.setVisible(isVisible(part, titled));
             decorateTextFigure(part, textFigure);
+            decorateTextAlignment(part, textFigure);
         }
+    }
+
+    private void decorateTextAlignment(IGraphicalPart part,
+            ITextFigure textFigure) {
+        // TODO Auto-generated method stub
+        IGraphicalPart parent = getOwnerPart(part);
+        if (parent != null)
+            part = parent;
+        decorateTextAlignment(part, StyleUtils.getStyleSelector(part),
+                textFigure);
+    }
+
+    private void decorateTextAlignment(IGraphicalPart part, IStyleSelector ss,
+            ITextFigure textFigure) {
+        // TODO Auto-generated method stub
+        int align = getAlign(part, ss, null);
+        if (align != 0)
+            textFigure.setTextAlignment(align);
+        else
+            textFigure.setTextAlignment(PositionConstants.LEFT);
     }
 
     private ITitled getTitledModel(IGraphicalPart part) {

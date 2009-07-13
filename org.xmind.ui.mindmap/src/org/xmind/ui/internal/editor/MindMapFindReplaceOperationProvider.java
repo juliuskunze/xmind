@@ -17,12 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Point;
 import org.xmind.core.ITitled;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IGraphicalViewer;
+import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.tool.AbstractTool;
@@ -30,6 +32,10 @@ import org.xmind.gef.tool.ITool;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.internal.findreplace.AbstractFindReplaceOperationProvider;
+import org.xmind.ui.mindmap.IBoundaryPart;
+import org.xmind.ui.mindmap.IBranchPart;
+import org.xmind.ui.mindmap.ILabelPart;
+import org.xmind.ui.mindmap.IRelationshipPart;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.texteditor.FloatingTextEditTool;
@@ -84,6 +90,8 @@ public class MindMapFindReplaceOperationProvider extends
 
     private String cachedToFind = null;
 
+    private IPart tempPart = null;
+
     /**
      * 
      */
@@ -92,18 +100,25 @@ public class MindMapFindReplaceOperationProvider extends
     }
 
     protected IPart getCurrentPart() {
+//        IGraphicalViewer viewer = getActiveViewer();
+//        if (viewer != null) {
+//            IPart focusedPart = viewer.getFocusedPart();
+//            if (focusedPart != null && focusedPart instanceof ITopicPart)
+//                return focusedPart;
+//            List<IPart> selection = viewer.getSelectionSupport()
+//                    .getPartSelection();
+//            if (!selection.isEmpty()) {
+//                IPart part = selection.get(0);
+//                if (part instanceof ITopicPart)
+//                    return part;
+//            }
+//        }
+
         IGraphicalViewer viewer = getActiveViewer();
         if (viewer != null) {
-            IPart focusedPart = viewer.getFocusedPart();
-            if (focusedPart != null && focusedPart instanceof ITopicPart)
-                return focusedPart;
-            List<IPart> selection = viewer.getSelectionSupport()
-                    .getPartSelection();
-            if (!selection.isEmpty()) {
-                IPart part = selection.get(0);
-                if (part instanceof ITopicPart)
-                    return part;
-            }
+            IPart part = viewer.getFocusedPart();
+            if (part != null)
+                return part;
         }
         return getCurrentCentralTopicPart();
     }
@@ -168,16 +183,22 @@ public class MindMapFindReplaceOperationProvider extends
      */
     @Override
     protected boolean findNext(String toFind) {
-        int offset = getCurrentOffset();
+        int offset = getCurrentOffset(tempPart);
         if (offset < 0)
             return false;
-        SearchData current = new SearchData(getCurrentPart(), offset);
+        IPart part = getCurrentPart();
+        if (tempPart instanceof ILabelPart)
+            part = tempPart;
+
+        SearchData current = new SearchData(part, offset);
         SearchData next = findNext(toFind, current);
         if (next == null)
             return false;
 
         startEditing(next.host);
-        selectText(next.offset, toFind.length());
+        selectText(next, toFind.length());
+
+        tempPart = next.host;
         return true;
     }
 
@@ -222,7 +243,11 @@ public class MindMapFindReplaceOperationProvider extends
      */
     @Override
     protected boolean replaceNext(String toFind, String toReplaceWith) {
-        FloatingTextEditor textEditor = getTextEditor();
+//        FloatingTextEditor textEditor = getTextEditor();
+        IPart part = getCurrentPart();
+        if (tempPart instanceof ILabelPart)
+            part = tempPart;
+        FloatingTextEditor textEditor = getTextEditor(part);
         if (textEditor != null) {
             if (canReplace(toFind, textEditor)) {
                 StyledText textWidget = textEditor.getTextViewer()
@@ -239,41 +264,69 @@ public class MindMapFindReplaceOperationProvider extends
     /**
      * @return
      */
-    private int getCurrentOffset() {
-        if (isEditing()) {
-            FloatingTextEditor textEditor = getTextEditor();
+    private int getCurrentOffset(IPart part) {
+//        if (isEditing()) {
+//            FloatingTextEditor textEditor = getTextEditor();
+        if (isEditing(part)) {
+            FloatingTextEditor textEditor = getTextEditor(part);
             if (textEditor == null)
                 return -1;
             StyledText textWidget = textEditor.getTextViewer().getTextWidget();
             Point selection = textWidget.getSelection();
             int offset = isForward() ? selection.y : selection.x;
-            getEditTool().handleRequest(GEF.REQ_FINISH, getActiveViewer());
+//            getEditTool().handleRequest(GEF.REQ_FINISH, getActiveViewer());
+            ITool editTool = getEditTool(part);
+            editTool.handleRequest(GEF.REQ_FINISH, getActiveViewer());
             return offset;
-        }
+        } else
+            tempPart = null;
         if (isForward())
             return 0;
         String text = getText(getCurrentPart());
         return text == null ? -1 : getNewOffset(text);
     }
 
-    protected void selectText(final int start, final int length) {
-        FloatingTextEditor textEditor = getTextEditor();
+    protected void selectText(SearchData data, int length) {
+        FloatingTextEditor textEditor = getTextEditor(data.host);
         if (textEditor != null) {
-            textEditor.getTextViewer().getTextWidget().setSelectionRange(start,
-                    length);
+            ITextViewer textViewer = textEditor.getTextViewer();
+            StyledText textWidget = textViewer.getTextWidget();
+            textWidget.setSelectionRange(data.offset, length);
         }
     }
 
-    protected boolean startEditing(IPart p) {
-        if (p == null)
+    protected boolean startEditing(IPart part) {
+        if (part == null)
             return false;
         ITool selectTool = getDefaultTool();
-        ITool editTool = getEditTool();
+        ITool editTool = getEditTool(part);
         if (selectTool == null || editTool == null)
             return false;
-        ((AbstractTool) editTool).getStatus().setStatus(GEF.ST_NO_FOCUS, true);
-        selectTool.handleRequest(new Request(GEF.REQ_EDIT).setPrimaryTarget(p));
-        return isEditing();
+        startEditing(part, selectTool, editTool);
+        return isEditing(part);
+    }
+
+    private void startEditing(IPart part, ITool selectTool, ITool editTool) {
+        if (part instanceof ITopicPart || part instanceof IBoundaryPart
+                || part instanceof IRelationshipPart) {
+
+            ((AbstractTool) editTool).getStatus().setStatus(GEF.ST_NO_FOCUS,
+                    true);
+            Request request = new Request(GEF.REQ_EDIT);
+            request.setPrimaryTarget(part);
+            selectTool.handleRequest(request);
+        } else if (part instanceof ILabelPart) {
+            ((AbstractTool) editTool).getStatus().setStatus(GEF.ST_NO_FOCUS,
+                    true);
+//            Request request = new Request(MindMapUI.REQ_EDIT_LABEL);
+//            MindMapUI.REQ_EDIT_LABEL==GEF.REQ_EDIT_LABE;
+            Request request = new Request(GEF.REQ_EDIT_LABEL);
+            ILabelPart p = (ILabelPart) part;
+            IBranchPart branch = p.getOwnedBranch();
+            ITopicPart topicPart = branch.getTopicPart();
+            request.setPrimaryTarget(topicPart);
+            selectTool.handleRequest(request);
+        }
     }
 
     protected SearchData findNext(String toFind, SearchData current) {
@@ -304,7 +357,8 @@ public class MindMapFindReplaceOperationProvider extends
         }
         int newOffset = getNewOffset(nextText);
         if (next != start.host) {
-            return findNext(toFind, new SearchData(next, newOffset), start);
+            SearchData data = new SearchData(next, newOffset);
+            return findNext(toFind, data, start);
         }
         index = indexOf(nextText, toFind, newOffset);
         if (index >= 0 && isIndexPermitted(index, start.offset)) {
@@ -342,8 +396,8 @@ public class MindMapFindReplaceOperationProvider extends
      * @param result
      */
     protected boolean select(List<IPart> result) {
-        if (isEditing()) {
-            getEditTool().handleRequest(GEF.REQ_FINISH, getActiveViewer());
+        if (isEditing(null)) {
+            getEditTool(null).handleRequest(GEF.REQ_FINISH, getActiveViewer());
         }
         ITool selectTool = getDefaultTool();
         if (selectTool == null)
@@ -369,6 +423,13 @@ public class MindMapFindReplaceOperationProvider extends
     protected String getText(IPart p) {
         if (p == null)
             return null;
+
+        if (p instanceof ILabelPart) {
+            ILabelPart labelPart = (ILabelPart) p;
+            String text = labelPart.getLabelText();
+            return text;
+        }
+
         ITitled titled = (ITitled) p.getAdapter(ITitled.class);
         if (titled != null && titled.hasTitle()) {
             return titled.getTitleText();
@@ -443,20 +504,62 @@ public class MindMapFindReplaceOperationProvider extends
     }
 
     private IPart findSucceedingPart(IPart current) {
+//        if (current instanceof ITopicPart) {
+//            ITopicPart topicPart = (ITopicPart) current;
+//            ITopic topic = topicPart.getTopic();
+//            INotes notes = topic.getNotes();
+//            if (notes != null) {
+//                if (hasOwnedWord(notes)) {
+//                    gotoNotesView();
+//                    return null;
+//                }
+//            }
+//        }
+
         if (current.hasRole(GEF.ROLE_NAVIGABLE)) {
-            Request navRequest = new Request(GEF.REQ_NAV_NEXT)
-                    .setPrimaryTarget(current).setViewer(
-                            current.getSite().getViewer());
+            Request navRequest = new Request(GEF.REQ_NAV_NEXT);
+            navRequest.setPrimaryTarget(current);
+            IViewer viewer = current.getSite().getViewer();
+            navRequest.setViewer(viewer);
             current.handleRequest(navRequest, GEF.ROLE_NAVIGABLE);
             Object result = navRequest.getResult(GEF.RESULT_NAVIGATION);
             if (result instanceof IPart[]) {
                 IPart[] parts = (IPart[]) result;
-                if (parts.length > 0)
-                    return parts[0];
+                if (parts.length > 0) {
+                    IPart part = parts[0];
+                    return part;
+                }
             }
         }
         return current;
     }
+
+//    private boolean hasOwnedWord(INotes notes) {
+//        INotesContent content = notes.getContent(INotes.PLAIN);
+//        if (content == null)
+//            return false;
+//        IPlainNotesContent plain = (IPlainNotesContent) content;
+//        String context = plain.getTextContent();
+//        if (context == null || "".equals(context))
+//            return false;
+//        return context.contains(cachedToFind);
+//    }
+//
+//    private void gotoNotesView() {
+//        IWorkbenchWindow window = getActivePage().getParentEditor().getSite()
+//                .getWorkbenchWindow();
+//        if (window != null) {
+//            IWorkbenchPage page = window.getActivePage();
+//            if (page != null) {
+//                try {
+//                    page.showView(MindMapUI.VIEW_NOTES, null,
+//                            IWorkbenchPage.VIEW_ACTIVATE);
+//                } catch (PartInitException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//    }
 
     /**
      * @see cn.brainy.ui.mindmap.dialogs.IFindReplaceOperationProvider#getParameter()
@@ -515,42 +618,34 @@ public class MindMapFindReplaceOperationProvider extends
         return replaceAll(cachedToFind, toReplaceWith);
     }
 
-    protected FloatingTextEditor getTextEditor() {
-        ITool editTool = getEditTool();
+    protected FloatingTextEditor getTextEditor(IPart part) {
+        ITool editTool = getEditTool(part);
         if (editTool instanceof FloatingTextEditTool) {
             return ((FloatingTextEditTool) editTool).getEditor();
         }
         return null;
     }
 
-//    protected ITopic getCentralTopic() {
-//        IMindMap map = getCurrentMap();
-//        return map == null ? null : map.getCentralTopic();
-//    }
-//
-//    /**
-//     * @return
-//     */
-//    protected IMindMap getCurrentMap() {
-//        IGraphicalViewer viewer = getActiveViewer();
-//        return viewer == null ? null : (IMindMap) viewer
-//                .getAdapter(IMindMap.class);
-//    }
-
-    protected boolean isEditing() {
-        ITool editTool = getEditTool();
+    protected boolean isEditing(IPart part) {
+        ITool editTool = getEditTool(part);
         return editTool != null
                 && ((AbstractTool) editTool).getStatus()
                         .isStatus(GEF.ST_ACTIVE);
     }
 
-    /**
-     * @return
-     */
-    protected ITool getEditTool() {
+    protected ITool getEditTool(IPart part) {
         EditDomain domain = getCurrentDomain();
-        return domain == null ? null : domain
-                .getTool(MindMapUI.TOOL_EDIT_TOPIC_TITLE);
+        if (part instanceof ILabelPart) {
+            return domain == null ? null : domain
+                    .getTool(MindMapUI.TOOL_EDIT_LABEL);
+        } else if (part instanceof IBoundaryPart
+                || part instanceof IRelationshipPart) {
+            return domain == null ? null : domain.getTool(GEF.TOOL_EDIT);
+        } else
+            // (part instanceof ITopicPart || part==null) 
+            return domain == null ? null : domain
+                    .getTool(MindMapUI.TOOL_EDIT_TOPIC_TITLE);
+
     }
 
     /**
@@ -583,5 +678,4 @@ public class MindMapFindReplaceOperationProvider extends
     private IGraphicalEditorPage getActivePage() {
         return editor.getActivePageInstance();
     }
-
 }

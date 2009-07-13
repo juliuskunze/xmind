@@ -1,6 +1,8 @@
 package org.xmind.ui.richtext;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -12,6 +14,8 @@ import org.eclipse.jface.text.hyperlink.URLHyperlink;
 
 public class RichTextHyperlinkDetector extends AbstractHyperlinkDetector {
 
+    private static final String regex = "http://([\\w-]+\\.)+[\\w-]+(/[\\w- ./?%&=]*)?";//$NON-NLS-1$
+
     public IHyperlink[] detectHyperlinks(ITextViewer textViewer,
             IRegion region, boolean canShowMultipleHyperlinks) {
 
@@ -21,12 +25,34 @@ public class RichTextHyperlinkDetector extends AbstractHyperlinkDetector {
         if (document == null || !(document instanceof IRichDocument))
             return null;
 
+        IHyperlink autoHyperlink = getAutoHyperlink(document, region);
+        if (autoHyperlink != null)
+            return new IHyperlink[] { autoHyperlink };
+
         IRichDocument doc = (IRichDocument) document;
         List<Hyperlink> hyperlinks = getHyperlinksInRange(doc.getHyperlinks(),
                 region);
         if (hyperlinks.isEmpty())
             return null;
         return parseHyperlinks(textViewer, hyperlinks);
+    }
+
+    private IHyperlink getAutoHyperlink(IDocument document, IRegion region) {
+        int offset = region.getOffset();
+        String content = document.get();
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(content);
+        while (matcher.find()) {
+            String group = matcher.group();
+            int start = matcher.start();
+            int end = matcher.end();
+            if (start <= offset && offset <= end) {
+                return new URLHyperlink(new Region(start, group.length()),
+                        group);
+            }
+        }
+        return null;
     }
 
     protected IHyperlink[] parseHyperlinks(ITextViewer viewer,

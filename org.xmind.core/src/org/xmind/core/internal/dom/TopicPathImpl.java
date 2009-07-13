@@ -14,7 +14,6 @@
 package org.xmind.core.internal.dom;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.xmind.core.ISheet;
@@ -54,7 +53,7 @@ public class TopicPathImpl extends TopicPath {
             IWorkbook workbook = sheet.getParent();
             entries.add(0, workbook);
         }
-        return Collections.unmodifiableList(entries);
+        return entries;
     }
 
 }

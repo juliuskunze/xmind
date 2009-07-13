@@ -43,17 +43,11 @@ public class WorkbookEditorInput implements IEditorInput {
     /**
      */
     public WorkbookEditorInput() {
-        this(WorkbookFactory.createEmptyWorkbook(), null, false);
+        this(WorkbookFactory.createEmptyWorkbook());
     }
 
     public WorkbookEditorInput(String name) {
-        ++NUMBER;
-        if (name == null) {
-            this.name = NLS.bind(MindMapMessages.WorkbookEditorInput_name,
-                    NUMBER);
-        } else {
-            this.name = name;
-        }
+        this.name = name;
     }
 
     public WorkbookEditorInput(String name, IWorkbook workbook) {
@@ -125,6 +119,10 @@ public class WorkbookEditorInput implements IEditorInput {
     }
 
     public String getName() {
+        if (name == null) {
+            ++NUMBER;
+            name = NLS.bind(MindMapMessages.WorkbookEditorInput_name, NUMBER);
+        }
         return name;
     }
 
@@ -133,7 +131,7 @@ public class WorkbookEditorInput implements IEditorInput {
     }
 
     public String getToolTipText() {
-        return name;
+        return getName();
     }
 
     public Object getAdapter(Class adapter) {

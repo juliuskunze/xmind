@@ -32,19 +32,33 @@ public class MouseEvent {
 
     private boolean consumed = false;
 
+    private int state;
+
     public MouseEvent(org.eclipse.swt.events.MouseEvent swtEvent, IPart target,
             boolean leftOrRight, Point location) {
+        this(swtEvent, target, leftOrRight, location, swtEvent.stateMask);
+    }
+
+    public MouseEvent(org.eclipse.swt.events.MouseEvent swtEvent, IPart target,
+            boolean leftOrRight, Point location, int state) {
         this.target = target;
         this.leftOrRight = leftOrRight;
         this.cursorLocation = location;
         this.currentSWTEvent = swtEvent;
+        this.state = state;
+    }
+
+    public static MouseEvent createEvent(
+            org.eclipse.swt.events.MouseEvent swtEvent, IPart host,
+            Point location, int state) {
+        return new MouseEvent(swtEvent, host, getButtonState(swtEvent.button),
+                location, state);
     }
 
     public static MouseEvent createEvent(
             org.eclipse.swt.events.MouseEvent swtEvent, IPart host,
             Point location) {
-        return new MouseEvent(swtEvent, host, getButtonState(swtEvent.button),
-                location);
+        return createEvent(swtEvent, host, location, swtEvent.stateMask);
     }
 
 //    public static MouseEvent createEvent( org.eclipse.swt.events.MouseEvent me, IPart host ) {
@@ -74,6 +88,10 @@ public class MouseEvent {
 
     public org.eclipse.swt.events.MouseEvent getCurrentSWTEvent() {
         return currentSWTEvent;
+    }
+
+    public boolean isState(int bitMask) {
+        return (state & bitMask) == bitMask;
     }
 
     //    public void consume() {

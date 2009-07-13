@@ -62,6 +62,7 @@ public class DialogMessages extends NLS {
 
     public static String AllFilesFilterName;
     public static String WebHyperlinkPage_label;
+    public static String WebHyperlinkPage_nullHyper_message;
 
     public static String WorkbookFilterName;
     public static String TemplateFilterName;

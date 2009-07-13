@@ -109,6 +109,10 @@ public class CommandMessages extends NLS {
     public static String Command_ToggleMultiLineColors;
     public static String Command_ToggleTaperedLines;
 
+    public static String Command_TextAlignLeft;
+    public static String Command_TextAlignCenter;
+    public static String Command_TextAlignRight;
+
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, CommandMessages.class);

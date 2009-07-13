@@ -35,6 +35,10 @@ public class WorkbenchMessages extends NLS {
     public static String AutoSaveJob_finished;
     public static String AutoSaveJob_errorOccurred;
 
+    public static String appWindow_ListSelectionDialog_Text;
+
+    public static String appWindow_ListSelectionDialog_Title;
+
     public static String KeyAssist_text;
 
     public static String SignIn_text;

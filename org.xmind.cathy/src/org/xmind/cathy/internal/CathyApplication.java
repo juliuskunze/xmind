@@ -43,7 +43,7 @@ public class CathyApplication implements IApplication {
 
         Display display = PlatformUI.createDisplay();
         try {
-            int returnCode = PlatformUI.createAndRunWorkbench(display,
+            int returnCode = PlatformUI.createAndRunWorkbench(display, //advisor);
                     new CathyWorkbenchAdvisor());
             if (returnCode == PlatformUI.RETURN_RESTART) {
                 return EXIT_RESTART;
@@ -57,14 +57,16 @@ public class CathyApplication implements IApplication {
     private void logArgs(String[] args) {
         Log opening = Log.get(Log.OPENING);
         for (String arg : args) {
-            if (new File(arg).isFile()) {
+            File file = new File(arg);
+            if (file.isFile()) {
                 try {
-                    arg = new File(arg).getCanonicalPath();
+                    arg = file.getCanonicalPath();
                 } catch (Exception e) {
-                    arg = new File(arg).getAbsolutePath();
+                    arg = file.getAbsolutePath();
                 }
                 opening.append(arg);
-            }
+            } else if ("-p".equals(arg)) //$NON-NLS-1$
+                opening.append("-p"); //$NON-NLS-1$
         }
     }
 

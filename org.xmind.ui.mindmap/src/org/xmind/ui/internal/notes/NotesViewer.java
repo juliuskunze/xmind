@@ -30,10 +30,12 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.xmind.ui.internal.spellsupport.SpellingSupport;
 import org.xmind.ui.richtext.IRichDocument;
 import org.xmind.ui.richtext.IRichTextActionBarContributor;
 import org.xmind.ui.richtext.IRichTextEditViewer;
 import org.xmind.ui.richtext.RichTextEditViewer;
+import org.xmind.ui.texteditor.StyledTextContentAdapter;
 
 public class NotesViewer implements IInputSelectionProvider {
 
@@ -119,6 +121,12 @@ public class NotesViewer implements IInputSelectionProvider {
                 SWT.MOD1);
 
         implementation.setInput(getDocument());
+        addSpellCheck(viewer);
+    }
+
+    public void addSpellCheck(TextViewer viewer) {
+        StyledTextContentAdapter styleAdapter = new StyledTextContentAdapter();
+        SpellingSupport.getInstance().install(viewer, styleAdapter);
     }
 
     private IRichDocument getDocument() {

@@ -21,7 +21,6 @@ import static org.xmind.gef.GEF.CS_PRE_REDO;
 import static org.xmind.gef.GEF.CS_PRE_UNDO;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.xmind.gef.GEF;
@@ -156,7 +155,7 @@ public class CommandStack extends CommandStackBase implements ICommandStack2,
      * @return the commandList
      */
     public List<Command> getCommandList() {
-        return Collections.unmodifiableList(commandList);
+        return commandList;
     }
 
     public boolean canUndo() {

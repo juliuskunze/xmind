@@ -147,10 +147,6 @@ public class WorkbookSaver {
     private void doSave(IOutputTarget target) throws FileNotFoundException,
             IOException, CoreException {
         this.target = target;
-
-//        if (!this.target.open())
-//            throw new FileNotFoundException("Can't open output target"); //$NON-NLS-1$
-
         this.savedEntries = null;
         try {
             doSave();
@@ -160,7 +156,6 @@ public class WorkbookSaver {
             } catch (Throwable ignore) {
             }
             this.savedEntries = null;
-//            this.target.close();
         }
     }
 
@@ -209,13 +204,7 @@ public class WorkbookSaver {
 
     private void copyOtherStaff() throws IOException, CoreException {
         IInputSource source = workbook.getTempStorage().getInputSource();
-//        if (!source.open())
-//            return;
-//        try {
         copyAll(source, target);
-//        } finally {
-//            source.close();
-//        }
     }
 
     private void copyAll(IInputSource source, IOutputTarget target) {
@@ -348,21 +337,6 @@ public class WorkbookSaver {
 
         IEncryptionData encData = entry.createEncryptionData();
         return Crypto.creatOutputStream(out, true, encData, password);
-
-//        Document mfDoc = (Document) workbook.getManifest().getAdapter(
-//                Document.class);
-//        if (mfDoc == null)
-//            return out;
-//
-//        EncryptionData encData = Crypto.generateEncryptionData(mfDoc);
-//        if (encData == null)
-//            return out;
-//
-//        if (encryptionTable == null)
-//            encryptionTable = new HashMap<String, EncryptionData>();
-//        encryptionTable.put(entryPath, encData);
-//
-//        return Crypto.creatOutputStream(out, password, encData, true, true);
     }
 
     private boolean ignoresEncryption(IFileEntry entry, String entryPath) {

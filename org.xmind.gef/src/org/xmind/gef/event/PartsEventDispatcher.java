@@ -828,10 +828,6 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             if (loc != null) {
                 host = findPart(me.getCurrentSWTEvent().x, me
                         .getCurrentSWTEvent().y);
-            }
-            if (loc == null) {
-                hideToolTip();
-            } else {
                 IFigure tip = gt.getToolTip(host, loc);
                 if (tip == null) {
                     hideToolTip();
@@ -846,6 +842,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
                         hideToolTip();
                     }
                 }
+            } else {
+                hideToolTip();
             }
         }
     }

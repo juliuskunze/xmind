@@ -15,7 +15,6 @@ package org.xmind.gef;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,7 +41,7 @@ public class ArraySourceProvider implements ISourceProvider {
     }
 
     public List<Object> getSources() {
-        return Collections.unmodifiableList(sources);
+        return sources;
     }
 
     public Object getSource() {

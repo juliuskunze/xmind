@@ -46,7 +46,8 @@ public class UpdateAction extends Action implements IWorkbenchAction {
      */
     @Override
     public void run() {
-        UpdateJob job = new UpdateJob(WorkbenchMessages.Update_jobName, false, false);
+        UpdateJob job = new UpdateJob(WorkbenchMessages.Update_jobName, false,
+                false);
         UpdateManagerUI.openInstaller(window.getShell(), job);
     }
 
