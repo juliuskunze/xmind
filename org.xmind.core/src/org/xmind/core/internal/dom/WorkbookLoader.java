@@ -162,10 +162,8 @@ public class WorkbookLoader extends XMLLoader {
 
     private boolean loadOldFormat() throws IOException, CoreException {
         IWorkbook compatible = Compatibility.loadCompatibleWorkbook(source,
-                this);
+                this, storage);
         if (compatible != null) {
-//            if (storage != null)
-//                compatible.setTempStorage(storage);
             workbook = (WorkbookImpl) compatible;
             return true;
         }
@@ -187,6 +185,7 @@ public class WorkbookLoader extends XMLLoader {
         try {
             IStyleSheet styleSheet = ((StyleSheetBuilderImpl) Core
                     .getStyleSheetBuilder()).loadFromInputSource(source, this);
+            ((StyleSheetImpl) styleSheet).setManifest(manifest);
             workbook.setStyleSheet((StyleSheetImpl) styleSheet);
         } catch (IOException e) {
             throw e;

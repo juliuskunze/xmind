@@ -55,14 +55,8 @@ public class CategorizedGalleryViewer extends CategorizedViewer {
             if (settingViewerSelections)
                 return;
 
-            Display.getCurrent().asyncExec(new Runnable() {
-                public void run() {
-                    if (getControl().isDisposed())
-                        return;
-                    fireSelectionChanged(new SelectionChangedEvent(
-                            CategorizedGalleryViewer.this, getSelection()));
-                }
-            });
+            fireSelectionChanged(new SelectionChangedEvent(
+                    CategorizedGalleryViewer.this, getSelection()));
         }
 
     };
@@ -70,14 +64,8 @@ public class CategorizedGalleryViewer extends CategorizedViewer {
     private IOpenListener viewerOpenListener = new IOpenListener() {
 
         public void open(OpenEvent event) {
-            Display.getCurrent().asyncExec(new Runnable() {
-                public void run() {
-                    if (getControl().isDisposed())
-                        return;
-                    fireOpen(new OpenEvent(CategorizedGalleryViewer.this,
-                            getSelection()));
-                }
-            });
+            fireOpen(new OpenEvent(CategorizedGalleryViewer.this,
+                    getSelection()));
         }
 
     };

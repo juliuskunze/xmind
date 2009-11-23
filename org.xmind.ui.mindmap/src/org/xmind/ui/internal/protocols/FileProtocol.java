@@ -2,13 +2,12 @@ package org.xmind.ui.internal.protocols;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.osgi.util.NLS;
@@ -20,6 +19,7 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
+import org.xmind.core.IWorkbook;
 import org.xmind.core.util.FileUtils;
 import org.xmind.ui.internal.MarkerImpExpUtils;
 import org.xmind.ui.internal.MindMapMessages;
@@ -29,6 +29,7 @@ import org.xmind.ui.internal.prefs.MarkerManagerPrefPage;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.IProtocol;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.MindMapUtils;
 
 public class FileProtocol implements IProtocol {
 
@@ -38,28 +39,27 @@ public class FileProtocol implements IProtocol {
 
         private String path;
 
-        /**
-         * 
-         */
         public OpenFileAction(IWorkbenchWindow window, String path) {
             this.window = window;
             this.path = path;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.jface.action.Action#run()
-         */
-        @Override
         public void run() {
             open(path);
         }
 
-        /**
-         * @param path
-         */
         private void open(String path) {
+            if (!new File(path).exists()) {
+                MessageDialog
+                        .openInformation(
+                                window.getShell(),
+                                DialogMessages.InfoFileNotExists_title,
+                                NLS
+                                        .bind(
+                                                DialogMessages.InfoFileNotExists_message,
+                                                path));
+                return;
+            }
             String extension = FileUtils.getExtension(path);
             if (MindMapUI.FILE_EXT_TEMPLATE.equalsIgnoreCase(extension)) {
                 if (window != null) {
@@ -77,21 +77,17 @@ public class FileProtocol implements IProtocol {
                     return;
             }
 
-            Program.launch(path);
+            try {
+                Program.launch(new File(path).getCanonicalPath());
+            } catch (Exception e) {
+                Program.launch(path);
+            }
         }
 
-        /**
-         * @param window
-         * @param path
-         */
         private boolean openTemplate(IWorkbenchWindow window, String path) {
             return openMindMap(window, path);
         }
 
-        /**
-         * @param window
-         * @param path
-         */
         private boolean openMindMap(final IWorkbenchWindow window,
                 final String path) {
             String errMessage = NLS.bind(
@@ -99,9 +95,6 @@ public class FileProtocol implements IProtocol {
             final boolean[] ret = new boolean[1];
             SafeRunner.run(new SafeRunnable(errMessage) {
                 public void run() throws Exception {
-//                    IWorkbook contents = Core.getWorkbookBuilder()
-//                            .loadFromPath(path);
-//                    WorkbookEditorInput input = new WorkbookEditorInput(path);
                     IEditorInput input = MME.createFileEditorInput(path);
                     window.getActivePage().openEditor(input,
                             MindMapUI.MINDMAP_EDITOR_ID);
@@ -135,9 +128,12 @@ public class FileProtocol implements IProtocol {
     }
 
     public IAction createOpenHyperlinkAction(Object context, final String uri) {
-        final String path = toFilePath(uri);
-        File file = new File(path);
-        ImageDescriptor image = MindMapUI.getImages().getFileIcon(path, true);
+        IWorkbenchWindow window = getWindow(context);
+        String path = FilePathParser.toPath(uri);
+        String absolutePath = getAbsolutePath(context, path);
+        File file = new File(absolutePath);
+        ImageDescriptor image = MindMapUI.getImages().getFileIcon(absolutePath,
+                true);
         if (image == null) {
             if (file.isDirectory()) {
                 image = MindMapUI.getImages().get(IMindMapImages.OPEN, true);
@@ -152,27 +148,29 @@ public class FileProtocol implements IProtocol {
         } else {
             text = MindMapMessages.FileProtocol_OpenFile_text;
         }
-        OpenFileAction action = new OpenFileAction(getWindow(context), path);
+        OpenFileAction action = new OpenFileAction(window, absolutePath);
         action.setText(text);
         action.setImageDescriptor(image);
-        action.setToolTipText(path);
+        action.setToolTipText(absolutePath);
         return action;
     }
 
-    public static String toFilePath(String uri) {
-        File file;
-        try {
-            file = new File(new URI(uri));
-        } catch (URISyntaxException e) {
-            if (uri.startsWith("file:")) { //$NON-NLS-1$
-                uri = uri.substring(5);
-                while (uri.startsWith("/")) { //$NON-NLS-1$
-                    uri = uri.substring(1);
+    public static String getAbsolutePath(Object context, String path) {
+        if (FilePathParser.isPathRelative(path)) {
+            IWorkbook workbook = MindMapUtils.findWorkbook(context);
+            if (workbook != null) {
+                String base = workbook.getFile();
+                if (base != null) {
+                    base = new File(base).getParent();
+                    if (base != null) {
+                        return FilePathParser.toAbsolutePath(base, path);
+                    }
                 }
             }
-            file = new File(uri);
+            return FilePathParser.toAbsolutePath(System
+                    .getProperty("user.home"), path); //$NON-NLS-1$
         }
-        return file.getAbsolutePath();
+        return path;
     }
 
     private static IWorkbenchWindow getWindow(Object context) {
@@ -200,5 +198,4 @@ public class FileProtocol implements IProtocol {
     public boolean isHyperlinkModifiable(Object source, String uri) {
         return true;
     }
-
 }

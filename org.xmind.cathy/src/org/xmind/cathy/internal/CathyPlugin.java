@@ -41,6 +41,11 @@ public class CathyPlugin extends AbstractUIPlugin {
      */
     public static final String RESTORE_LAST_SESSION = "restoreLastSession"; //$NON-NLS-1$
 
+    /**
+     * 
+     */
+    public static final String CHECK_UPDATES_ON_STARTUP = "checkUpdatesOnStartup"; //$NON-NLS-1$
+
 //    /**
 //     * 
 //     */
@@ -65,7 +70,6 @@ public class CathyPlugin extends AbstractUIPlugin {
 
         // Activate XMind Core
         XmindCore.getDefault();
-
     }
 
     /**

@@ -13,22 +13,14 @@
  *******************************************************************************/
 package org.xmind.core;
 
-import java.util.List;
-
 /**
- * @author MANGOSOFT
  * 
+ * @author Frank Shaka
  */
-
-public interface IHyperlinkSpan extends ISpan {
+public interface IHyperlinkSpan extends ISpan, ISpanList {
 
     String getHref();
 
     void setHref(String source);
 
-    List<ISpan> getSpans();
-
-    void addSpan(ISpan span);
-
-    void removeSpan(ISpan span);
 }

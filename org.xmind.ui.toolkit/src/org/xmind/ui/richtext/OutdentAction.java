@@ -32,6 +32,7 @@ public class OutdentAction extends Action implements IRichTextAction {
             ImageDescriptor image, String tooltip) {
         super(text, image);
         this.viewer = viewer;
+        setId(TextActionConstants.OUTDENT_ID);
         setToolTipText(tooltip);
     }
 

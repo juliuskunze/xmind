@@ -40,7 +40,7 @@ public class MindMapImageExtractor {
 
     private Image image;
 
-    private int margin = -1;
+    private Integer margin = null;
 
     private Point origin;
 
@@ -78,6 +78,10 @@ public class MindMapImageExtractor {
         properties.set(key, value);
     }
 
+    public Object getProperty(String key) {
+        return properties == null ? null : properties.get(key);
+    }
+
     public Image getImage() {
         if (image == null) {
             if (Thread.currentThread() != display.getThread()) {
@@ -93,7 +97,7 @@ public class MindMapImageExtractor {
         return image;
     }
 
-    public void setMargin(int margin) {
+    public void setMargin(Integer margin) {
         this.margin = margin;
     }
 

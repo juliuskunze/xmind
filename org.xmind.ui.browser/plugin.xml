@@ -33,7 +33,7 @@
          point="org.eclipse.ui.views">
       <view
             allowMultiple="true"
-            category="org.eclipse.ui"
+            category="org.xmind.ui.views.resources"
             class="org.xmind.ui.internal.browser.InternalBrowserView"
             icon="icons/browser.gif"
             id="org.xmind.ui.BrowserView"

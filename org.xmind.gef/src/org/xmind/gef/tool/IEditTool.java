@@ -13,14 +13,19 @@
  *******************************************************************************/
 package org.xmind.gef.tool;
 
+/**
+ * 
+ * @author frankshaka
+ * @deprecated Use EditTool instead.
+ */
 public interface IEditTool {
-    
+
     boolean canUndo();
-    
+
     boolean canRedo();
-    
+
     String getUndoLabel();
-    
+
     String getRedoLabel();
 
 }

@@ -17,11 +17,12 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import net.xmind.share.dialog.UploaderDialog;
-import net.xmind.share.jobs.IUploadJobCallback;
 import net.xmind.share.jobs.UploadJob;
 import net.xmind.signin.XMindNetEntry;
 
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.draw2d.Layer;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -45,7 +46,7 @@ import org.xmind.ui.mindmap.MindMapPreviewBuilder;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.resources.ColorUtils;
 
-public class Uploader implements IUploadJobCallback {
+public class Uploader extends JobChangeAdapter {
 
     private Shell parentShell;
 
@@ -80,6 +81,9 @@ public class Uploader implements IUploadJobCallback {
 
         trimAttachments();
         generatePreview();
+
+//        String styleId = workbook.getPrimarySheet().getStyleId();
+//        System.out.println(styleId);
 
         if (fullImage == null || origin == null) {
             cancel();
@@ -133,26 +137,30 @@ public class Uploader implements IUploadJobCallback {
                             "upload/" //$NON-NLS-1$
                                     + Core.getIdFactory().createId()
                                     + MindMapUI.FILE_EXT_XMIND);
+
             file = new File(tempFile);
         }
 
         SafeRunner.run(new SafeRunnable(Messages.failedToGenerateUploadFile) {
             public void run() throws Exception {
-                workbook.save(file.getAbsolutePath());
+                String path = file.getAbsolutePath();
+                workbook.save(path);
             }
         });
 
         if (!file.exists() || !file.canRead()) {
             // some error may have occurred and been catched
             // by the above SafeRunner, so we simply return here
-            cancel();
+            //cancel();
             return;
         }
 
         if (file != null) {
             info.setProperty(Info.FILE, file);
             info.setProperty(Info.WORKBOOK, workbook);
-            new UploadJob(info, this).schedule();
+            UploadJob uploadJob = new UploadJob(info);
+            uploadJob.addJobChangeListener(this);
+            uploadJob.schedule();
         }
 
     }
@@ -165,10 +173,6 @@ public class Uploader implements IUploadJobCallback {
                 return ColorUtils.toString(color);
         }
         return "#ffffff"; //$NON-NLS-1$
-    }
-
-    private void openMyMaps() {
-        // TODO open 'My Maps' page
     }
 
     private boolean signIn() {
@@ -263,16 +267,8 @@ public class Uploader implements IUploadJobCallback {
         return null;
     }
 
-    public void onError() {
-        clearTemp();
-    }
-
-    public void onSuccess() {
-        openMyMaps();
-        clearTemp();
-    }
-
-    public void onCancle() {
+    @Override
+    public void done(final IJobChangeEvent event) {
         clearTemp();
     }
 
@@ -290,4 +286,22 @@ public class Uploader implements IUploadJobCallback {
             }
         }
     }
+
+//    public void onError() {
+//        clearTemp();
+//    }
+//
+//    public void onSuccess() {
+//        openMyMaps();
+//        clearTemp();
+//    }
+//
+//    public void onCancle() {
+//        clearTemp();
+//    }
+
+//    private void openMyMaps() {
+//        // TODO open 'My Maps' page
+//    }
+
 }

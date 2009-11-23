@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
@@ -25,8 +26,11 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IPageChangedListener;
 import org.eclipse.jface.dialogs.PageChangedEvent;
 import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorPart;
@@ -43,6 +47,8 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
+import org.xmind.core.event.ICoreEventRegistration;
+import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.event.ICoreEventSupport;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.style.IStyleSheet;
@@ -54,6 +60,7 @@ import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.mindmap.IMindMapImages;
+import org.xmind.ui.mindmap.IResourceManager;
 import org.xmind.ui.mindmap.ISheetPart;
 import org.xmind.ui.mindmap.MindMapUI;
 
@@ -78,6 +85,35 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         }
     }
 
+    private class SetDefaultThemeAction extends Action {
+
+        public SetDefaultThemeAction() {
+            super(MindMapMessages.DefaultThemeAction_text, IAction.AS_CHECK_BOX);
+            setToolTipText(MindMapMessages.DefaultThemeAction_toolTip);
+            setImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.DEFAULT_THEME, true));
+            setDisabledImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.DEFAULT_THEME, false));
+            setEnabled(getSelectionStyle() != null);
+        }
+
+        public void run() {
+            IStyle style = getSelectionStyle();
+            if (style == null)
+                return;
+            viewer.setDefaultTheme(style);
+            MindMapUI.getResourceManager().setDefaultTheme(style.getId());
+        }
+
+        private IStyle getSelectionStyle() {
+            ISelection selection = viewer.getSelection();
+            Object obj = ((IStructuredSelection) selection).getFirstElement();
+            if (obj instanceof IStyle)
+                return (IStyle) obj;
+            return null;
+        }
+    }
+
     private class ChangeThemeListener implements IOpenListener {
         public void open(OpenEvent event) {
             if (updatingSelection)
@@ -93,6 +129,8 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
 
     private IGraphicalEditor activeEditor;
 
+    private ICoreEventRegistration currentSheetEventReg;
+
     private ThemesViewer viewer;
 
     private IDialogSettings dialogSettings;
@@ -102,6 +140,8 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
     private boolean updatingSelection = false;
 
     private ICoreEventRegister register = null;
+
+    private SetDefaultThemeAction setDefaultThemeAction;
 
     public void init(IViewSite site) throws PartInitException {
         super.init(site);
@@ -121,8 +161,22 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
                 && dialogSettings.getBoolean(KEY_LINK_TO_EDITOR);
 
         viewer = new ThemesViewer(parent);
+        IStyle theme = MindMapUI.getResourceManager().getDefaultTheme();
+        if (theme != null)
+            viewer.setDefaultTheme(theme);
         viewer.setInput(getViewerInput());
         viewer.addOpenListener(new ChangeThemeListener());
+
+        viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+            public void selectionChanged(SelectionChangedEvent event) {
+                ISelection selection = event.getSelection();
+                Object obj = ((IStructuredSelection) selection)
+                        .getFirstElement();
+                if (setDefaultThemeAction != null) {
+                    setDefaultThemeAction.setEnabled(obj != null);
+                }
+            }
+        });
 
         IEditorPart editor = getSite().getPage().getActiveEditor();
         if (editor instanceof IGraphicalEditor) {
@@ -130,14 +184,17 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         }
 
         ToggleLinkEditorAction toggleLinkingAction = new ToggleLinkEditorAction();
+        setDefaultThemeAction = new SetDefaultThemeAction();
         IToolBarManager toolBar = getViewSite().getActionBars()
                 .getToolBarManager();
         toolBar.add(toggleLinkingAction);
+        toolBar.add(setDefaultThemeAction);
         toolBar.add(new Separator());
         toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
         IMenuManager menu = getViewSite().getActionBars().getMenuManager();
         menu.add(toggleLinkingAction);
+        menu.add(setDefaultThemeAction);
         menu.add(new Separator());
         menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
@@ -169,6 +226,7 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         super.dispose();
         viewer = null;
         dialogSettings = null;
+        setDefaultThemeAction = null;
     }
 
     public void setFocus() {
@@ -205,13 +263,18 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
     }
 
     private Object getViewerInput() {
-        Set<IStyle> systemThemes = MindMapUI.getResourceManager()
-                .getSystemThemeSheet().getStyles(IStyleSheet.MASTER_STYLES);
-        Set<IStyle> userThemes = MindMapUI.getResourceManager()
-                .getUserThemeSheet().getStyles(IStyleSheet.MASTER_STYLES);
+        IResourceManager resourceManager = MindMapUI.getResourceManager();
+        IStyleSheet systemThemeSheets = resourceManager.getSystemThemeSheet();
+        Set<IStyle> systemThemes = systemThemeSheets
+                .getStyles(IStyleSheet.MASTER_STYLES);
+
+        IStyleSheet userThemeSheets = resourceManager.getUserThemeSheet();
+        Set<IStyle> userThemes = userThemeSheets
+                .getStyles(IStyleSheet.MASTER_STYLES);
+
         List<IStyle> list = new ArrayList<IStyle>(systemThemes.size()
                 + userThemes.size() + 1);
-        list.add(MindMapUI.getResourceManager().getDefaultTheme());
+        list.add(resourceManager.getBlankTheme());
         list.addAll(systemThemes);
         list.addAll(userThemes);
         return list;
@@ -250,16 +313,13 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         if (viewer == null || viewer.getControl().isDisposed())
             return;
         String themeId = getCurrentThemeId();
-        IStyle theme;
-        if (themeId == null) {
-            theme = MindMapUI.getResourceManager().getDefaultTheme();
-        } else {
+        IStyle theme = MindMapUI.getResourceManager().getBlankTheme();
+        if (themeId != null && !theme.getId().equals(themeId)) {
             theme = MindMapUI.getResourceManager().getSystemThemeSheet()
                     .findStyle(themeId);
-            if (theme == null) {
+            if (theme == null)
                 theme = MindMapUI.getResourceManager().getUserThemeSheet()
                         .findStyle(themeId);
-            }
         }
         updatingSelection = true;
         viewer.setSelection(theme == null ? StructuredSelection.EMPTY
@@ -268,16 +328,16 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
     }
 
     private String getCurrentThemeId() {
-        if (activeEditor != null) {
-            IGraphicalEditorPage page = activeEditor.getActivePageInstance();
-            if (page != null) {
-                ISheet sheet = (ISheet) page.getAdapter(ISheet.class);
-                if (sheet != null) {
-                    return sheet.getThemeId();
-                }
-            }
-        }
-        return null;
+        if (activeEditor == null)
+            return null;
+        IGraphicalEditorPage page = activeEditor.getActivePageInstance();
+        if (page == null)
+            return null;
+        ISheet sheet = (ISheet) page.getAdapter(ISheet.class);
+        if (sheet == null)
+            return null;
+        String themeId = sheet.getThemeId();
+        return themeId;
     }
 
     public void partActivated(IWorkbenchPart part) {
@@ -298,7 +358,37 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         if (editor != null) {
             hook(editor);
         }
+        setCurrentSheet(findCurrentSheet());
         updateSelection();
+    }
+
+    private void setCurrentSheet(ISheet sheet) {
+        if (currentSheetEventReg != null) {
+            currentSheetEventReg.unregister();
+            currentSheetEventReg = null;
+        }
+        if (sheet != null) {
+            hookSheet(sheet);
+        }
+    }
+
+    private void hookSheet(ISheet sheet) {
+        ICoreEventSupport ces = (ICoreEventSupport) sheet
+                .getAdapter(ICoreEventSupport.class);
+        if (ces != null) {
+            currentSheetEventReg = ces.registerCoreEventListener(
+                    (ICoreEventSource) sheet, Core.ThemeId, this);
+        }
+    }
+
+    private ISheet findCurrentSheet() {
+        if (activeEditor == null)
+            return null;
+        IGraphicalEditorPage page = activeEditor.getActivePageInstance();
+        if (page == null)
+            return null;
+        ISheet sheet = (ISheet) page.getAdapter(ISheet.class);
+        return sheet;
     }
 
     private void hook(IGraphicalEditor editor) {
@@ -325,11 +415,14 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
     }
 
     public void pageChanged(PageChangedEvent event) {
+        setCurrentSheet(findCurrentSheet());
         updateSelection();
     }
 
     public void handleCoreEvent(CoreEvent event) {
-        if (Core.Name.equals(event.getType())) {
+        if (Core.ThemeId.equals(event.getType())) {
+            updateSelection();
+        } else if (Core.Name.equals(event.getType())) {
             viewer.update(new Object[] { event.getSource() });
         } else {
             viewer.setInput(getViewerInput());

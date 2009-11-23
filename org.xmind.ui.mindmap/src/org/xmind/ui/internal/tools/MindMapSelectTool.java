@@ -46,7 +46,6 @@ import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.Shell;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.gef.GEF;
@@ -72,7 +71,6 @@ import org.xmind.gef.tool.SelectTool;
 import org.xmind.ui.branch.IBranchDoubleClickSupport;
 import org.xmind.ui.branch.IBranchMoveSupport;
 import org.xmind.ui.internal.actions.GroupMarkers;
-import org.xmind.ui.internal.dialogs.HyperlinkDialog2;
 import org.xmind.ui.internal.mindmap.IconTipPart;
 import org.xmind.ui.internal.mindmap.MindMapRevealService;
 import org.xmind.ui.mindmap.IBranchPart;
@@ -141,26 +139,8 @@ public class MindMapSelectTool extends SelectTool {
     public boolean handleMouseUp(final MouseEvent me) {
         if (me.target instanceof IconTipPart) {
             if (me.leftOrRight) {
-                getStatus().setStatus(GEF.ST_NO_DRAGGING, false);
-                getStatus().setStatus(GEF.ST_MOUSE_PRESSED, false);
-                if (!me.leftOrRight) {
-                    getStatus().setStatus(GEF.ST_MOUSE_RIGHT, false);
-                }
-                IconTipPart iconTip = (IconTipPart) me.target;
-                selectSingle(iconTip.getTopicPart());
-                final IAction iconTipAction = iconTip.getAction();
-                if (iconTipAction != null) {
-                    SafeRunner.run(new SafeRunnable() {
-                        public void run() throws Exception {
-                            iconTipAction.run();
-                            me.consume();
-                        }
-                    });
-                    if (me.isConsumed()) {
-                        setToSelectOnMouseUp(null);
-                        return true;
-                    }
-                }
+                handleMouseUpOnIconTip(me);
+                return true;
             }
         } else if (me.target instanceof IMarkerPart) {
             if (me.leftOrRight) {
@@ -168,6 +148,24 @@ public class MindMapSelectTool extends SelectTool {
             }
         }
         return super.handleMouseUp(me);
+    }
+
+    protected void handleMouseUpOnIconTip(final MouseEvent me) {
+        getStatus().setStatus(GEF.ST_NO_DRAGGING, false);
+        getStatus().setStatus(GEF.ST_MOUSE_PRESSED, false);
+        IconTipPart iconTip = (IconTipPart) me.target;
+        selectSingle(iconTip.getTopicPart());
+        final IAction action = iconTip.getAction();
+        if (action != null) {
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    action.run();
+                    me.consume();
+                }
+            });
+            if (me.isConsumed())
+                setToSelectOnMouseUp(null);
+        }
     }
 
     protected boolean handleMouseDoubleClick(MouseEvent me) {
@@ -249,14 +247,17 @@ public class MindMapSelectTool extends SelectTool {
                     Request req = new Request(GEF.REQ_EDIT);
                     req.setDomain(getDomain());
                     req.setViewer(getTargetViewer());
-                    startEditing(p, req);
-                    if (!SWTUtils.matchKey(stateMask, keyCode, 0, ' ')) {
-                        ITool activeTool = getDomain().getActiveTool();
-                        if (activeTool != this) {
-                            activeTool.keyDown(ke, getTargetViewer());
+                    fillTargets(req, getTargetViewer(), false);
+                    if (req.hasTargets()) {
+                        startEditing(p, req);
+                        if (!SWTUtils.matchKey(stateMask, keyCode, 0, ' ')) {
+                            ITool activeTool = getDomain().getActiveTool();
+                            if (activeTool != this) {
+                                activeTool.keyDown(ke, getTargetViewer());
+                            }
                         }
+                        return true;
                     }
-                    return true;
                 }
             }
         }
@@ -577,7 +578,8 @@ public class MindMapSelectTool extends SelectTool {
     }
 
     protected Request createAddAttachmentRequest(Request request, IViewer viewer) {
-        List<ITopicPart> topics = getTopicParts(getSelectedParts(viewer));
+        List<ITopicPart> topics = MindMapUtils
+                .getTopicParts(getSelectedParts(viewer));
         if (topics.isEmpty())
             return request;
 
@@ -601,75 +603,27 @@ public class MindMapSelectTool extends SelectTool {
 
     protected Request createModifyHyperlinkRequest(Request request,
             IViewer viewer) {
-        List<ITopicPart> topics = getTopicParts(getSelectedParts(viewer));
+        List<ITopicPart> topics = MindMapUtils
+                .getTopicParts(getSelectedParts(viewer));
         if (topics.isEmpty())
             return null;
 
         if (request.hasParameter(GEF.PARAM_TEXT))
             return request.setTargets(topics);
 
-//        HyperlinkDialog dialog;
-        Shell parentShell = viewer.getControl().getShell();
-        HyperlinkDialog2 dialog = new HyperlinkDialog2(parentShell,
-                new StructuredSelection(topics));
-//        dialog = new HyperlinkDialog2(parentShell, );
-
-//        if (topics.size() > 1) {
-//            dialog = new HyperlinkDialog2(parentShell, getHyperlink(topics));
-
+//        Shell parentShell = viewer.getControl().getShell();
 //        HyperlinkDialog dialog = new HyperlinkDialog(parentShell,
-//                getHyperlink(topics));
-
-//        } else {
-////            String initValue = getHyperlink(topics);
-//         dialog = new HyperlinkDialog2(parentShell,
 //                new StructuredSelection(topics));
-////            dialog = new HyperlinkDialog2(parentShell, topics.get(0).getTopic()
-////                    .getOwnedWorkbook(), initValue);
-////            dialog = new HyperlinkDialog(parentShell, topics.get(0).getTopic()
-////                    .getTitleText(), initValue);
+//        int retCode = dialog.open();
+//
+//        if (retCode == HyperlinkDialog.OK) {
+//            return request.setTargets(topics).setParameter(GEF.PARAM_TEXT,
+//                    dialog.getValue());
+//        } else if (retCode == HyperlinkDialog.REMOVE) {
+//            return request.setTargets(topics)
+//                    .setParameter(GEF.PARAM_TEXT, null);
 //        }
-
-        int retCode = dialog.open();
-
-        if (retCode == HyperlinkDialog2.OK) {
-            return request.setTargets(topics).setParameter(GEF.PARAM_TEXT,
-                    dialog.getValue());
-
-        } else if (retCode == HyperlinkDialog2.REMOVE) {
-            return request.setTargets(topics)
-                    .setParameter(GEF.PARAM_TEXT, null);
-        }
         return null;
-    }
-
-//    private String getHyperlink(List<ITopicPart> topics) {
-//        ITopicPart last = null;
-//        String lastHyperlink = null;
-//        for (ITopicPart t : topics) {
-//            String h = t.getTopic().getHyperlink();
-//            if (last != null) {
-//                if (h != lastHyperlink
-//                        && (h == null || !h.equals(lastHyperlink)))
-//                    return null;
-//            } else {
-//                last = t;
-//                lastHyperlink = h;
-//            }
-//        }
-//        if (lastHyperlink != null)
-//            return lastHyperlink;
-//        return "http://"; //$NON-NLS-1$
-//    }
-
-    protected List<ITopicPart> getTopicParts(List<IPart> parts) {
-        ArrayList<ITopicPart> topics = new ArrayList<ITopicPart>(parts.size());
-        for (IPart p : parts) {
-            if (p instanceof ITopicPart)
-                topics.add((ITopicPart) p);
-        }
-        topics.trimToSize();
-        return topics;
     }
 
     protected void handleSelectCentral(IViewer viewer) {

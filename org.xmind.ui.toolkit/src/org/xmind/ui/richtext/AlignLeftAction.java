@@ -33,6 +33,7 @@ public class AlignLeftAction extends Action implements IRichTextAction {
             ImageDescriptor image, String tooltip) {
         super(text, AS_CHECK_BOX);
         this.viewer = viewer;
+        setId(TextActionConstants.LEFT_ALIGN_ID);
         setImageDescriptor(image);
         setToolTipText(tooltip);
     }

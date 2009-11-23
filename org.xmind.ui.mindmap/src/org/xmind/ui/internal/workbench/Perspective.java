@@ -44,8 +44,9 @@ public class Perspective implements IPerspectiveFactory {
         pageLayout.addShowViewShortcut(MindMapUI.VIEW_MARKER);
         pageLayout.addShowViewShortcut(MindMapUI.VIEW_NOTES);
         pageLayout.addShowViewShortcut(MindMapUI.VIEW_STYLES);
-        pageLayout.addShowViewShortcut(MindMapUI.VIEW_THEMES);
         pageLayout.addShowViewShortcut(PROPERTIES_VIEW_ID);
+        pageLayout.addShowViewShortcut(MindMapUI.VIEW_THEMES);
+        pageLayout.addShowViewShortcut(MindMapUI.VIEW_BROSWER);
     }
 
     private void createUpRightLayout(IPageLayout pageLayout) {

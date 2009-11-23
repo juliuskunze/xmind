@@ -93,7 +93,7 @@ public class WorkbookRefManager implements IWorkbookRefManager {
     private WorkbookRefManager() {
     }
 
-    public WorkbookRef addReferrer(Object source, IEditorPart referrer)
+    public WorkbookRef addReferrer(Object source, IWorkbookReferrer referrer)
             throws CoreException {
         WorkbookRef ref = registry.get(source);
         if (ref != null) {
@@ -107,8 +107,8 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         return ref;
     }
 
-    private WorkbookRef createWorkbookRef(Object source, IEditorPart referrer)
-            throws CoreException {
+    private WorkbookRef createWorkbookRef(Object source,
+            IWorkbookReferrer referrer) throws CoreException {
         WorkbookRef ref = new WorkbookRef();
         WorkbookRefInitializer.getInstance().initialize(ref, source, referrer);
         if (!ref.isReady()) {
@@ -142,7 +142,7 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         }
     }
 
-    public void removeReferrer(Object source, IEditorPart referrer) {
+    public void removeReferrer(Object source, IWorkbookReferrer referrer) {
         WorkbookRef ref = registry.get(source);
         try {
             if (ref != null) {
@@ -168,16 +168,31 @@ public class WorkbookRefManager implements IWorkbookRefManager {
     }
 
     public IWorkbookRef createRef(IEditorInput editorInput, IEditorPart editor) {
+        IWorkbookReferrer referrer = findWorkbookReferrer(editor);
+        if (referrer == null)
+            return null;
         try {
-            return addReferrer(editorInput, editor);
+            return addReferrer(editorInput, referrer);
         } catch (CoreException e) {
             Logger.log(e);
             return null;
         }
     }
 
+    private IWorkbookReferrer findWorkbookReferrer(IEditorPart editor) {
+        IWorkbookReferrer referrer = null;
+        if (editor instanceof IWorkbookReferrer)
+            referrer = (IWorkbookReferrer) editor;
+        else
+            referrer = (IWorkbookReferrer) editor
+                    .getAdapter(IWorkbookReferrer.class);
+        return referrer;
+    }
+
     public void disposeRef(IEditorInput editorInput, IEditorPart editor) {
-        removeReferrer(editorInput, editor);
+        IWorkbookReferrer referrer = findWorkbookReferrer(editor);
+        if (referrer != null)
+            removeReferrer(editorInput, referrer);
     }
 
     public IWorkbookRef findRef(IWorkbook workbook) {
@@ -197,15 +212,11 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         return instance;
     }
 
-    public void changeKey(Object oldKey, Object newKey, Object referrer)
-            throws CoreException {
-        WorkbookRef ref = registry.remove(oldKey);
-        if (ref == null)
+    void changeKey(WorkbookRef ref, Object newKey) {
+        WorkbookRef oldRef = registry.remove(ref.getKey());
+        if (oldRef != ref)
             return;
-        ref.setKey(newKey);
         registry.put(newKey, ref);
-        ref.setWorkbookLoader(null).setWorkbookSaver(null);
-        WorkbookRefInitializer.getInstance().initialize(ref, newKey, referrer);
     }
 
     public long getAutoHibernateIntervals() {
@@ -242,20 +253,19 @@ public class WorkbookRefManager implements IWorkbookRefManager {
                     workbook.saveTemp();
                 } catch (Throwable e) {
                 }
-            }
-
-            Object key = en.getKey();
-            if (key instanceof IEditorInput) {
-                if (memento == null) {
-                    memento = XMLMemento.createWriteRoot(TAG_OPENED_EDITORS);
+                Object key = en.getKey();
+                if (key instanceof IEditorInput) {
+                    if (memento == null) {
+                        memento = XMLMemento
+                                .createWriteRoot(TAG_OPENED_EDITORS);
+                    }
+                    saveMemento(memento, (IEditorInput) key, workbook
+                            .getTempLocation());
                 }
-                saveMemento(memento, (IEditorInput) key, workbook
-                        .getTempLocation());
             }
         }
         if (location == null) {
             location = new File(Core.getWorkspace().getTempFile(".opened")); //$NON-NLS-1$
-//            location.delete();
         }
         if (memento != null) {
             try {

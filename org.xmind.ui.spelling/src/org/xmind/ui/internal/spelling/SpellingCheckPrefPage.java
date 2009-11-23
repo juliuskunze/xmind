@@ -13,12 +13,16 @@
  *******************************************************************************/
 package org.xmind.ui.internal.spelling;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
+import org.eclipse.jface.preference.FileFieldEditor;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -30,9 +34,13 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.swabunga.spell.engine.Configuration;
+import com.swabunga.spell.engine.SpellDictionaryHashMap;
+import com.swabunga.spell.event.SpellChecker;
 
 public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
         IWorkbenchPreferencePage {
+
+    private static final String FILE_EXT = ".dict"; //$NON-NLS-1$
 
     private List<FieldEditor> settingFields = new ArrayList<FieldEditor>();
 
@@ -49,12 +57,45 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
     protected void createFieldEditors() {
         addField(new BooleanFieldEditor(SpellingPlugin.SPELLING_CHECK_ENABLED,
                 Messages.enableSpellCheck, getFieldEditorParent()));
-        addSpellingSettings();
+
+        Composite composite = createCoposite();
+        addSpellingSettings(composite);
+        addImportDictationaryArea(composite);
         updateOptions(SpellingPlugin.isSpellingCheckEnabled());
     }
 
-    private void addSpellingSettings() {
-        settingsParent = createSettingsParent();
+    private Composite createCoposite() {
+        Composite parent = getFieldEditorParent();
+        GridLayout gridLayout = new GridLayout(1, false);
+        gridLayout.marginWidth = 0;
+        gridLayout.marginHeight = 0;
+        gridLayout.verticalSpacing = 0;
+        gridLayout.horizontalSpacing = 0;
+        parent.setLayout(gridLayout);
+
+        Label blank = new Label(parent, SWT.NONE);
+        blank.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
+                false));
+        return parent;
+    }
+
+    private void addImportDictationaryArea(Composite parent) {
+        Group group = new Group(parent, SWT.NONE);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
+        GridLayout layout = new GridLayout(2, true);
+        group.setLayout(layout);
+        group.setText(Messages.importDict_Text);
+
+        FileFieldEditor field = new FileFieldEditor(
+                Configuration.SPELL_TARGET_FILE, Messages.importDictLabel_Text,
+                group);
+        String dictFile = "*" + FILE_EXT; //$NON-NLS-1$
+        field.setFileExtensions(new String[] { dictFile });
+        addField(field);
+    }
+
+    private void addSpellingSettings(Composite composite) {
+        settingsParent = createSettingsParent(composite);
         addSettingField(Configuration.SPELL_IGNOREUPPERCASE,
                 Messages.ignoreAllCapital);
         addSettingField(Configuration.SPELL_IGNOREMIXEDCASE,
@@ -73,19 +114,7 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
         settingFields.add(field);
     }
 
-    private Composite createSettingsParent() {
-        Composite parent = getFieldEditorParent();
-        GridLayout gridLayout = new GridLayout(1, false);
-        gridLayout.marginWidth = 0;
-        gridLayout.marginHeight = 0;
-        gridLayout.verticalSpacing = 0;
-        gridLayout.horizontalSpacing = 0;
-        parent.setLayout(gridLayout);
-
-        Label blank = new Label(parent, SWT.NONE);
-        blank.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
-                false));
-
+    private Composite createSettingsParent(Composite parent) {
         Group group = new Group(parent, SWT.NONE);
         group.setText(Messages.options);
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -127,8 +156,26 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
     public boolean performOk() {
         boolean ok = super.performOk();
         if (ok) {
-            SpellCheckerAgent.setConfigurations(getPreferenceStore());
+            IPreferenceStore ps = getPreferenceStore();
+            SpellCheckerAgent.setConfigurations(ps);
+            String path = ps.getString(Configuration.SPELL_TARGET_FILE);
+            addFileToDict(path);
         }
         return ok;
+    }
+
+    private void addFileToDict(String path) {
+        try {
+            File file = new File(path);
+            final SpellDictionaryHashMap dictionary = new SpellDictionaryHashMap(
+                    file);
+            SpellCheckerAgent.visitSpellChecker(new ISpellCheckerVisitor() {
+                public void handleWith(SpellChecker spellChecker) {
+                    spellChecker.addDictionary(dictionary);
+                }
+            });
+        } catch (IOException e) {
+        }
+
     }
 }

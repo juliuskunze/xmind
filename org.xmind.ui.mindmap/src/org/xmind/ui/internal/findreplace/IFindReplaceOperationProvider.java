@@ -84,4 +84,6 @@ public interface IFindReplaceOperationProvider {
 
     void setParameter(int op, boolean value);
 
+    void setParameter(int parameter);
+
 }

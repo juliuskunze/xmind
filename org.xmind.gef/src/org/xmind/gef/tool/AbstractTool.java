@@ -592,9 +592,9 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
                 request.setPrimaryTarget(viewer.getRootPart());
         } else {
             request.setTargets(parts);
-            IPart focusedPart = viewer.getFocusedPart();
-            if (parts.contains(focusedPart))
-                request.setPrimaryTarget(focusedPart);
+//            IPart focusedPart = viewer.getFocusedPart();
+//            if (parts.contains(focusedPart))
+//                request.setPrimaryTarget(focusedPart);
         }
         return request;
     }

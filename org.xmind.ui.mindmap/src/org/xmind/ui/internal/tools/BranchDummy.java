@@ -25,6 +25,7 @@ import org.xmind.core.internal.dom.TopicImpl;
 import org.xmind.core.internal.event.CoreEventSupport;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.style.IStyleSheet;
+import org.xmind.gef.AbstractViewer;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.draw2d.IReferencedFigure;
@@ -35,6 +36,7 @@ import org.xmind.gef.graphicalpolicy.IStyleSelector;
 import org.xmind.gef.graphicalpolicy.IStyleValueProvider;
 import org.xmind.gef.part.IGraphicalPart;
 import org.xmind.gef.part.IPart;
+import org.xmind.gef.part.PartRegistry;
 import org.xmind.gef.service.IShadowService;
 import org.xmind.ui.branch.AbstractBranchStructure;
 import org.xmind.ui.branch.IBranchPolicy;
@@ -183,10 +185,13 @@ public class BranchDummy {
         pack(sourceBranch);
     }
 
-    private void create(IBranchPart sourceBranch, boolean newTopic) {
+    private void create(final IBranchPart sourceBranch, boolean newTopic) {
         topic = createDummyTopic(sourceBranch, newTopic);
 
         if (sourceBranch != null || !newTopic) {
+            PartRegistry partRegistry = viewer.getPartRegistry();
+            if (viewer instanceof AbstractViewer)
+                ((AbstractViewer) viewer).setPartRegistry(null);
             branch = new BranchPart();
             branch.setModel(topic);
             branch.setParent(viewer.getRootPart());
@@ -197,6 +202,8 @@ public class BranchDummy {
             if (sourceBranch != null)
                 ((BranchPart) branch).setGraphicalPolicy(new DummyBranchPolicy(
                         sourceBranch));
+            if (viewer instanceof AbstractViewer)
+                ((AbstractViewer) viewer).setPartRegistry(partRegistry);
         } else {
             IPart topicPart = viewer.findPart(topic);
             branch = MindMapUtils.findBranch(topicPart);
@@ -272,6 +279,7 @@ public class BranchDummy {
             }
             topic = null;
         }
+
     }
 
     private void addBranchView() {

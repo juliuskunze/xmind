@@ -29,5 +29,6 @@ public interface IHtmlNotesContent extends INotesContent {
 
     IImageSpan createImageSpan(String source);
 
-    IHyperlinkSpan createHyperlinkSpan(String sourceHyper);
+    IHyperlinkSpan createHyperlinkSpan(String href);
+
 }

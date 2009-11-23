@@ -222,8 +222,8 @@ public class SliderViewer extends ContentViewer implements
     }
 
     protected Control createControl(Composite parent, int style) {
-        boolean isCarbon = "carbon".equals(SWT.getPlatform()); //$NON-NLS-1$
-        if (isCarbon) {
+        if ("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                || "cocoa".equals(SWT.getPlatform())) { //$NON-NLS-1$
             return new Scale(parent, style);
         }
 

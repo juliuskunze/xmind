@@ -27,7 +27,7 @@ public class GEF {
 
     static {
         String platform = SWT.getPlatform();
-        IS_CARBON = "carbon".equals(platform); //$NON-NLS-1$
+        IS_CARBON = "carbon".equals(platform) || "cocoa".equals(platform); //$NON-NLS-1$ //$NON-NLS-2$
         IS_WIN32 = "win32".equals(platform); //$NON-NLS-1$
         IS_GTK = "gtk".equals(platform); //$NON-NLS-1$
     }
@@ -106,6 +106,7 @@ public class GEF {
     public static final String REQ_SHOW_ONLY = "show only"; //$NON-NLS-1$
 
     public static final String REQ_ALIGN = "align"; //$NON-NLS-1$
+    public static final String REQ_SORT = "sort"; //$NON-NLS-1$
 
     public static final String REQ_DROP = "drop"; //$NON-NLS-1$
 
@@ -124,7 +125,10 @@ public class GEF {
     public static final int ST_HIDE_CMENU = 1 << 9;
     public static final int ST_FORCE_CMENU = 1 << 10;
     public static final int ST_NO_DRAGGING = 1 << 11;
-    public static final int ST_NO_FOCUS = 1 << 12;
+
+    /**
+     */
+    //public static final int ST_NO_FOCUS = 1 << 12;
 
     public static final int ST_MODIFIER_MASK = ST_ALT_PRESSED
             | ST_CONTROL_PRESSED | ST_SHIFT_PRESSED;
@@ -157,6 +161,8 @@ public class GEF {
     public static final String ROLE_EDITABLE = "editable role"; //$NON-NLS-1$
     public static final String ROLE_FILTERABLE = "filterable role"; //$NON-NLS-1$
     public static final String ROLE_DROP_TARGET = "drop target role"; //$NON-NLS-1$
+
+    public static final String ROLE_SORTABLE = "sortable role"; //$NON-NLS-1$
 
     /*
      * Command Types:
@@ -208,6 +214,7 @@ public class GEF {
     public static final Object LAYER_PRESENTATION = "presentation layer"; //$NON-NLS-1$
     public static final Object LAYER_FEEDBACK = "feedback layer"; //$NON-NLS-1$
     public static final Object LAYER_SHADOW = "shadow layer"; //$NON-NLS-1$
+    public static final Object LAYER_TIMER = "timer layer"; //$NON-NLS-1$
 
     /*
      * Viewer property
@@ -333,6 +340,13 @@ public class GEF {
     public static final String PARAM_ALIGNMENT = "alignment"; //$NON-NLS-1$
 
     /**
+     * Request parameter: the method to compare two elements when handling a
+     * 'sort' request.
+     * 
+     */
+    public static final String PARAM_COMPARAND = "comparand"; //$NON-NLS-1$
+
+    /**
      * Request parameter: whether the navigation is sequential.
      * <dl>
      * <dt>Values:</dt>
@@ -359,6 +373,15 @@ public class GEF {
      * </dl>
      */
     public static final String PARAM_PATH = "paths"; //$NON-NLS-1$
+
+    /**
+     * Request parameter: whether to take focus on start.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd><code>Boolean</code></dd>
+     * </dl>
+     */
+    public static final String PARAM_FOCUS = "focus"; //$NON-NLS-1$
 
     /**
      * Result key of the traverse request to retrieve the traversable parts

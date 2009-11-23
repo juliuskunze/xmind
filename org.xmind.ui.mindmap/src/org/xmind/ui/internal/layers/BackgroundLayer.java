@@ -15,37 +15,33 @@ package org.xmind.ui.internal.layers;
 
 import org.eclipse.draw2d.Graphics;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Pattern;
-import org.eclipse.swt.widgets.Display;
 
 public class BackgroundLayer extends BaseLayer {
 
-    private Image wallpaper = null;
+    private Pattern wallpaper = null;
 
     public BackgroundLayer() {
         setOpaque(true);
     }
 
-    public void setWallpaper(Image wallpaper) {
+    public void setWallpaper(Pattern wallpaper) {
         if (wallpaper == this.wallpaper)
             return;
         this.wallpaper = wallpaper;
         repaint();
     }
 
-    public Image getWallpaper() {
+    public Pattern getWallpaper() {
         return wallpaper;
     }
 
     protected void paintFigure(Graphics graphics) {
-        if (isOpaque() && wallpaper != null) {
-            Pattern pattern = new Pattern(Display.getCurrent(), wallpaper);
+        if (isOpaque() && wallpaper != null && !wallpaper.isDisposed()) {
             graphics.setAntialias(SWT.ON);
-            graphics.setBackgroundPattern(pattern);
+            graphics.setBackgroundPattern(wallpaper);
             graphics.fillRectangle(getBounds());
             graphics.restoreState();
-            pattern.dispose();
             graphics.setAlpha(0xff - getSubAlpha());
         }
 

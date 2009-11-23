@@ -21,22 +21,24 @@ import org.xmind.core.internal.dom.FileFormat_0_1;
 import org.xmind.core.internal.dom.FileFormat_1;
 import org.xmind.core.internal.dom.WorkbookImpl;
 import org.xmind.core.io.IInputSource;
+import org.xmind.core.io.IStorage;
 import org.xmind.core.util.IXMLLoader;
 
 public class Compatibility {
 
     public static IWorkbook loadCompatibleWorkbook(IInputSource source,
-            IXMLLoader loader) throws CoreException, IOException {
+            IXMLLoader loader, IStorage storage) throws CoreException,
+            IOException {
 
         WorkbookImpl workbook = null;
 
-        FileFormat format = new FileFormat_0_1(source, loader);
+        FileFormat format = new FileFormat_0_1(source, loader, storage);
 
         if (format.identifies())
             workbook = format.load();
 
         if (workbook == null) {
-            format = new FileFormat_1(source, loader);
+            format = new FileFormat_1(source, loader, storage);
             if (format.identifies())
                 workbook = format.load();
         }

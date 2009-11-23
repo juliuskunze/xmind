@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.xmind.gef.GEF;
+import org.xmind.gef.Request;
 import org.xmind.gef.command.Command;
 import org.xmind.gef.command.CommandStackBase;
 import org.xmind.gef.command.ICommandStack;
@@ -55,7 +56,8 @@ public abstract class FloatingTextEditTool extends EditTool {
         }
 
         public boolean canUndo() {
-            return FloatingTextEditTool.this.canUndo();
+            //return FloatingTextEditTool.this.canUndo();
+            return true;
         }
 
         public void clear() {
@@ -115,7 +117,9 @@ public abstract class FloatingTextEditTool extends EditTool {
         }
 
         public void handleEvent(Event event) {
-            if (event.type == SWT.FocusOut) {
+            if (event.type == SWT.Dispose) {
+                uninstallCommandStackDelegate();
+            } else if (event.type == SWT.FocusOut) {
                 final Shell oldShell = getTargetViewer().getControl()
                         .getShell();
                 final Display display = event.display;
@@ -185,6 +189,8 @@ public abstract class FloatingTextEditTool extends EditTool {
 
     private ICommandStackDelegate oldDelegate = null;
 
+    private boolean focusOnStart = true;
+
     public FloatingTextEditTool() {
         this(false);
     }
@@ -233,17 +239,31 @@ public abstract class FloatingTextEditTool extends EditTool {
         notifyingSelectionChange = false;
     }
 
+    @Override
+    protected void handleEditRequest(Request request) {
+        focusOnStart = !request.hasParameter(GEF.PARAM_FOCUS)
+                || request.isParameter(GEF.PARAM_FOCUS);
+        super.handleEditRequest(request);
+        Object param = request.getParameter(GEF.PARAM_TEXT_SELECTION);
+        if (param instanceof ITextSelection) {
+            setTextSelection((ITextSelection) param);
+        }
+    }
+
     protected boolean startEditing(IGraphicalEditPart source) {
         IDocument document = getTextContents(source);
         if (document == null)
             return false;
 
-        if (editor == null)
+        if (editor == null) {
             editor = createEditor();
+            if (editor != null) {
+                hookEditor(editor);
+            }
+        }
         boolean started = openEditor(editor, document);
         if (started) {
             notifySelectionChange();
-            installCommandStackDelegate();
         }
         return started;
     }
@@ -277,26 +297,30 @@ public abstract class FloatingTextEditTool extends EditTool {
     }
 
     protected boolean openEditor(FloatingTextEditor editor, IDocument document) {
+        boolean wasOpen = !editor.isClosed();
         editor.setInput(document);
-        hookEditor(editor);
-        boolean open = editor.open(!getStatus().isStatus(GEF.ST_NO_FOCUS));
-        if (open) {
+        boolean isOpen = editor.open(focusOnStart);
+        if (isOpen) {
             if (editor.canDoOperation(ITextOperationTarget.SELECT_ALL)) {
                 editor.doOperation(ITextOperationTarget.SELECT_ALL);
             }
-            editor.getTextViewer().getTextWidget().addListener(SWT.FocusOut,
-                    getEditorListener());
-            hookEditorControl(editor, editor.getTextViewer());
+            if (!wasOpen) {
+                hookEditorControl(editor, editor.getTextViewer());
+            }
         }
-        return open;
+        return isOpen;
     }
 
     protected void hookEditorControl(FloatingTextEditor editor,
             ITextViewer textViewer) {
+        installCommandStackDelegate();
+        textViewer.getTextWidget().addListener(SWT.FocusOut,
+                getEditorListener());
+        textViewer.getTextWidget()
+                .addListener(SWT.Dispose, getEditorListener());
     }
 
     protected void cancelEditing() {
-        uninstallCommandStackDelegate();
         if (editor != null) {
             if (closingFromEditor) {
                 unhookEditor(editor);
@@ -305,6 +329,7 @@ public abstract class FloatingTextEditTool extends EditTool {
                 closeEditor(editor, false);
                 closingFromTool = false;
             }
+            editor = null;
         }
         super.cancelEditing();
         notifySelectionChange();
@@ -313,7 +338,6 @@ public abstract class FloatingTextEditTool extends EditTool {
     protected void finishEditing() {
         if (DEBUG)
             System.out.println("Finish Editing"); //$NON-NLS-1$
-        uninstallCommandStackDelegate();
         if (editor != null) {
             if (closingFromEditor) {
                 unhookEditor(editor);
@@ -331,6 +355,7 @@ public abstract class FloatingTextEditTool extends EditTool {
                     System.out.println("Perform text modification"); //$NON-NLS-1$
                 handleTextModified(getSource(), document);
             }
+            editor = null;
         }
         super.finishEditing();
         notifySelectionChange();
@@ -417,11 +442,13 @@ public abstract class FloatingTextEditTool extends EditTool {
     }
 
     protected void undo() {
-        editor.doOperation(FloatingTextEditor.UNDO);
+        if (editor != null && editor.canDoOperation(FloatingTextEditor.UNDO))
+            editor.doOperation(FloatingTextEditor.UNDO);
     }
 
     protected void redo() {
-        editor.doOperation(FloatingTextEditor.REDO);
+        if (editor != null && editor.canDoOperation(FloatingTextEditor.REDO))
+            editor.doOperation(FloatingTextEditor.REDO);
     }
 
     public boolean canUndo() {

@@ -13,7 +13,7 @@
  *******************************************************************************/
 package org.xmind.core.internal.dom;
 
-import static org.xmind.core.internal.dom.DOMConstants.ATTR_HYPER;
+import static org.xmind.core.internal.dom.DOMConstants.ATTR_HREF;
 
 import java.util.List;
 
@@ -33,19 +33,20 @@ public class HyperlinkSpanImpl extends SpanImplBase implements IHyperlinkSpan {
     public HyperlinkSpanImpl(Element implementation, HtmlNotesContentImpl owner) {
         super(implementation, owner);
         this.implementation = implementation;
-
     }
 
     public String getHref() {
-        return DOMUtils.getAttribute(implementation, ATTR_HYPER);
+        String href = DOMUtils.getAttribute(implementation, ATTR_HREF);
+        if (href != null)
+            return href;
+        return DOMUtils.getAttribute(implementation, "href"); //$NON-NLS-1$
     }
 
     public void setHref(String source) {
-        DOMUtils.setAttribute(implementation, ATTR_HYPER, source);
+        DOMUtils.setAttribute(implementation, ATTR_HREF, source);
     }
 
     public List<ISpan> getSpans() {
-
         return DOMUtils.getChildren(implementation, getOwner());
     }
 

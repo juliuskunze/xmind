@@ -36,7 +36,7 @@ public class AnimationViewer extends StructuredViewer {
 
     private static final int DEFAULT_DURATION = 125;
 
-    private static class Frame {
+    protected static class Frame {
 
         Object element;
 

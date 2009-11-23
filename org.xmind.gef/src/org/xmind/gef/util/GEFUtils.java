@@ -93,7 +93,8 @@ public class GEFUtils {
         if (f2 == null && f1 != null)
             return false;
 
-        if (!"carbon".equals(SWT.getPlatform())) //$NON-NLS-1$
+        if (!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                && !"cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
             return f1.equals(f2);
 
         if (f1.isDisposed() || f2.isDisposed())

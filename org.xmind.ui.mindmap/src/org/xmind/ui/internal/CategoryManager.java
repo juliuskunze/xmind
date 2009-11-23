@@ -24,7 +24,7 @@ import org.xmind.ui.mindmap.MindMapUI;
 
 public class CategoryManager implements ICategoryManager {
 
-    private static class Category {
+    protected static class Category {
 
         private String id;
 

@@ -127,7 +127,8 @@ public abstract class BrowserDialog extends Dialog {
                 browser.setUrl(url);
         }
 
-        if ("carbon".equals(SWT.getPlatform())) //$NON-NLS-1$
+        if ("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                || "cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
             browser.refresh();
         return browser;
     }

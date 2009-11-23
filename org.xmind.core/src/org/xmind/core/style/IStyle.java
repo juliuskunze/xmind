@@ -32,7 +32,10 @@ public interface IStyle extends IAdaptable, IIdentifiable, IProperties, INamed {
      * Style type for paragraph properties.
      */
     String PARAGRAPH = "paragraph"; //$NON-NLS-1$
-
+    /**
+     * Style type for bullet paragraph properties.
+     */
+//    String BULLETPARAGRAPH = "bulletParagraph";
     /**
      * Style type for text properties.
      */

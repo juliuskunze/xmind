@@ -110,10 +110,10 @@ public class NotesImpl extends Notes {
                 : getNotesContent(oldContentEle);
 
         WorkbookImpl workbook = null;
-        if (oldContent instanceof NotesContentImplBase) {
+        if (oldContent instanceof BaseNotesContentImpl) {
             if (workbook == null)
                 workbook = getRealizedWorkbook();
-            ((NotesContentImplBase) oldContent).removeNotify(workbook);
+            ((BaseNotesContentImpl) oldContent).removeNotify(workbook);
         }
 
         if (oldContentEle != null && notesEle != null) {
@@ -134,13 +134,14 @@ public class NotesImpl extends Notes {
             topicElement.removeChild(notesEle);
         }
 
-        if (content instanceof NotesContentImplBase) {
+        if (content instanceof BaseNotesContentImpl) {
             if (workbook == null)
                 workbook = getRealizedWorkbook();
-            ((NotesContentImplBase) content).addNotify(workbook);
+            ((BaseNotesContentImpl) content).addNotify(workbook);
         }
 
         fireTargetValueChange(format, oldContent, content);
+        ownedTopic.updateModifiedTime();
     }
 
     private INotesContent getNotesContent(Element oldContentEle) {
@@ -162,8 +163,8 @@ public class NotesImpl extends Notes {
             while (it.hasNext()) {
                 Element c = it.next();
                 INotesContent content = getNotesContent(c);
-                if (content instanceof NotesContentImplBase) {
-                    ((NotesContentImplBase) content).addNotify(workbook);
+                if (content instanceof BaseNotesContentImpl) {
+                    ((BaseNotesContentImpl) content).addNotify(workbook);
                 }
             }
         }
@@ -176,136 +177,12 @@ public class NotesImpl extends Notes {
             while (it.hasNext()) {
                 Element c = it.next();
                 INotesContent content = getNotesContent(c);
-                if (content instanceof NotesContentImplBase) {
-                    ((NotesContentImplBase) content).removeNotify(workbook);
+                if (content instanceof BaseNotesContentImpl) {
+                    ((BaseNotesContentImpl) content).removeNotify(workbook);
                 }
             }
         }
     }
-
-//    /**
-//     * @see org.xmind.core.INotes#getContent(java.lang.String)
-//     */
-//    public String getContent(String format) {
-//        Element notesElement = getNotesElement();
-//        if (notesElement != null) {
-//            return getTextContentByTag(notesElement, format);
-//        }
-//        return null;
-//    }
-//
-//    /**
-//     * @see org.xmind.core.INotes#isEmpty()
-//     */
-//    public boolean isEmpty() {
-//        Element notesElement = getNotesElement();
-//        if (notesElement != null) {
-//            return getTextContentByTag(topicElement, INotes.PLAIN) != null
-//                    || getTextContentByTag(topicElement, INotes.HTML) != null;
-//        }
-//        return true;
-//    }
-//
-//    /**
-//     * @see org.xmind.core.INotes#setContent(java.lang.String, java.lang.String)
-//     */
-//    public void setContent(String format, String content) {
-//        String oldValue = getContent(format);
-//        if (HTML.equals(format)) {
-//            decreaseRefs(oldValue);
-//        }
-//        if (content != null) {
-//            Element notesElement = ensureChildElement(topicElement, TAG_NOTES);
-//            setText(notesElement, format, content);
-//        } else {
-//            Element notesElement = getNotesElement();
-//            Element dataElement = getFirstChildElementByTag(notesElement,
-//                    format);
-//            if (dataElement != null) {
-//                notesElement.removeChild(dataElement);
-//                if (!notesElement.hasChildNodes())
-//                    topicElement.removeChild(notesElement);
-//            }
-//        }
-//        String newValue = getContent(format);
-//        if (HTML.equals(format)) {
-//            increaseRefs(newValue);
-//        }
-//        fireTargetValueChange(format, oldValue, newValue);
-//    }
-
-//    private void decreaseRefs(String content) {
-//        if (content == null || "".equals(content)) //$NON-NLS-1$
-//            return;
-//
-//        Element richEle = getRichElement(content);
-//        if (richEle != null) {
-//            decreaseRefs(richEle);
-//        }
-//    }
-//
-//    private void increaseRefs(String content) {
-//        if (content == null || "".equals(content)) //$NON-NLS-1$
-//            return;
-//
-//        Element richEle = getRichElement(content);
-//        if (richEle != null) {
-//            increaseRefs(richEle);
-//        }
-//    }
-//
-//    private void decreaseRefs(Element ele) {
-//        String styleId = getAttribute(ele, DOMConstants.ATTR_STYLE_ID);
-//        if (styleId != null) {
-//            IWorkbook wb = ownedTopic.getPath().getWorkbook();
-//            if (wb != null && wb == ownedTopic.getOwnedWorkbook()) {
-//                ((WorkbookImpl) wb).getStyleRefCounter().decreaseRef(styleId);
-//            }
-//        }
-//
-//        String url = getAttribute(ele, DOMConstants.ATTR_SRC);
-//        if (url != null) {
-//            InternalHyperlinkUtils.deactivateHyperlink(ownedTopic
-//                    .getOwnedWorkbook(), url);
-//        }
-//
-//        Iterator<Element> it = childElementIter(ele);
-//        while (it.hasNext()) {
-//            decreaseRefs(it.next());
-//        }
-//    }
-//
-//    private void increaseRefs(Element ele) {
-//        String styleId = getAttribute(ele, DOMConstants.ATTR_STYLE_ID);
-//        if (styleId != null) {
-//            IWorkbook wb = ownedTopic.getPath().getWorkbook();
-//            if (wb != null && wb == ownedTopic.getOwnedWorkbook()) {
-//                ((WorkbookImpl) wb).getStyleRefCounter().increaseRef(styleId);
-//            }
-//        }
-//
-//        String url = getAttribute(ele, DOMConstants.ATTR_SRC);
-//        if (url != null) {
-//            InternalHyperlinkUtils.activateHyperlink(ownedTopic
-//                    .getOwnedWorkbook(), url);
-//        }
-//
-//        Iterator<Element> it = childElementIter(ele);
-//        while (it.hasNext()) {
-//            increaseRefs(it.next());
-//        }
-//    }
-//
-//    private Element getRichElement(String content) {
-//        String text = DOMUtils.makeElementText(content, NS.XMAP,
-//                WorkbookUtils.TAG_RICH_CONTENT, NS.Xhtml, NS.Xlink, NS.SVG);
-//        try {
-//            Document doc = DOMUtils.loadDocument(text.getBytes());
-//            return doc.getDocumentElement();
-//        } catch (IOException e) {
-//            return null;
-//        }
-//    }
 
     private void fireTargetValueChange(Object target, Object oldValue,
             Object newValue) {

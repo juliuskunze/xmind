@@ -91,7 +91,7 @@ public class ClockwiseRadialStructure extends BaseRadialStructure {
         }
     }
 
-    public IPart calcChildNavigation(IBranchPart branch, // centre Topic 
+    public IPart calcChildNavigation(IBranchPart branch,
             IBranchPart sourceChild, String navReqType, boolean sequential) {
         int numRight = getRadialData(branch).getNumRight();
         int index = sourceChild.getBranchIndex();

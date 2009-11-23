@@ -16,7 +16,7 @@ package org.xmind.core.internal.dom;
 import org.w3c.dom.Element;
 import org.xmind.core.IPlainNotesContent;
 
-public class PlainNotesContentImpl extends NotesContentImplBase implements
+public class PlainNotesContentImpl extends BaseNotesContentImpl implements
         IPlainNotesContent {
 
     public PlainNotesContentImpl(Element implementation,

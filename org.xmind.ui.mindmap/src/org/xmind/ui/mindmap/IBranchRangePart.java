@@ -25,4 +25,8 @@ public interface IBranchRangePart extends IGraphicalPart {
 
     boolean encloses(IBranchPart subbranch);
 
+    void addRangeListener(IRangeListener listener);
+
+    void removeRangeListener(IRangeListener listener);
+
 }

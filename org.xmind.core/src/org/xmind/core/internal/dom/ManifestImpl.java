@@ -397,7 +397,8 @@ public class ManifestImpl extends Manifest {
             throws IOException {
         String sourcePath = sourceEntry.getPath();
         String path = makeAttachmentPath(sourcePath, sourceEntry.isDirectory());
-        return cloneEntry(sourceEntry, path);
+        IFileEntry cloneEntry = cloneEntry(sourceEntry, path);
+        return cloneEntry;
     }
 
     public String makeAttachmentPath(String source) {

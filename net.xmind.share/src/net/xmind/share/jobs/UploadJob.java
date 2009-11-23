@@ -37,56 +37,36 @@ public class UploadJob extends Job {
 
     private HttpClient client;
 
-    private TransferFileJob uploadJob;
-
-    private Thread uploadThread;
-
-    private IUploadJobCallback callback;
-
-    public UploadJob(Info info, IUploadJobCallback callback) {
+    public UploadJob(Info info) {
         super(NLS.bind(Messages.UploadJob_name, info.getString(Info.TITLE)));
         this.info = info;
-        this.callback = callback;
         this.client = new HttpClient();
     }
 
     protected IStatus run(IProgressMonitor monitor) {
         try {
-            runWithProgress(monitor);
-        } catch (Exception e) {
-            if (callback != null) {
-                callback.onError();
-            }
-            PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
+            return runWithException(monitor);
+        } catch (Throwable e) {
+            // inform user the exception
+            PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
                 public void run() {
-                    // warn user that there's some problems during uploading
                     if (MessageDialog.openQuestion(null,
                             Messages.ErrorDialog_title,
                             Messages.ErrorDialog_message)) {
-                        new UploadJob(info, callback).schedule();
+                        schedule();
                     }
                 }
             });
-            // log this error, but don't make user see it.
+            // log this error, but don't let user see it.
             XmindSharePlugin.getDefault().getLog().log(
                     new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
                             Messages.UploadJob_Failure_message, e));
-
             return new Status(IStatus.WARNING, XmindSharePlugin.PLUGIN_ID,
-                    IStatus.ERROR, Messages.UploadJob_Failure_message, null);
+                    IStatus.ERROR, Messages.UploadJob_Failure_message, e);
         }
-        if (callback != null) {
-            callback.onSuccess();
-        }
-        if (monitor.isCanceled()) {
-            return new Status(IStatus.CANCEL, XmindSharePlugin.PLUGIN_ID,
-                    Messages.UploadJob_Canceled_message);
-        }
-        return new Status(IStatus.OK, XmindSharePlugin.PLUGIN_ID, IStatus.OK,
-                Messages.UploadJob_Success_message, null);
     }
 
-    private void runWithProgress(IProgressMonitor monitor) throws Exception {
+    private IStatus runWithException(IProgressMonitor monitor) throws Exception {
         String title = info.getString(Info.TITLE);
         Assert.isNotNull(title);
         String userName = info.getString(Info.USER_ID);
@@ -118,32 +98,37 @@ public class UploadJob extends Job {
             }
         }
 
+        if (monitor.isCanceled())
+            return Status.CANCEL_STATUS;
+
         monitor.worked(10);
 
-        if (monitor.isCanceled()) {
-            return;
-        }
-
         monitor.subTask(Messages.UploadJob_Task_TransferFile);
+
         // Start file uploading.
-        uploadJob = new TransferFileJob(userName, session, file);
-        uploadThread = new Thread(uploadJob);
+        TransferFileJob uploadJob = new TransferFileJob(userName, session, file);
+        Thread uploadThread = new Thread(uploadJob);
         uploadThread.setName("Upload Map (" + title + ")"); //$NON-NLS-1$ //$NON-NLS-2$
         uploadThread.setPriority(Thread.NORM_PRIORITY);
         uploadThread.start();
 
-        boolean canceled = progressLoop(monitor, userName, token, session);
-        if (!canceled) {
+        loopRetrieveProgress(monitor, userName, token, session, uploadJob);
+
+        if (monitor.isCanceled()) {
+            monitor.subTask(Messages.UploadJob_Task_Cancel);
+            try {
+                HttpUtils.cancelUploading(client, userName, session, token);
+            } catch (Exception ignore) {
+            }
+            return Status.CANCEL_STATUS;
+        } else {
             if (uploadJob.getException() != null) {
                 throw uploadJob.getException();
             }
+            monitor.done();
         }
 
-        if (!monitor.isCanceled())
-            monitor.done();
-
         uploadJob = null;
-        uploadThread = null;
 
         if (mapname != null) {
             final String mapURL = "http://www.xmind.net/xmind/map/" + userName //$NON-NLS-1$ 
@@ -161,38 +146,27 @@ public class UploadJob extends Job {
                 }
             });
         }
+        return Status.OK_STATUS;
     }
 
-    private boolean progressLoop(IProgressMonitor monitor, String userName,
-            String token, String session) {
+    private void loopRetrieveProgress(IProgressMonitor monitor,
+            String userName, String token, String session,
+            TransferFileJob uploadJob) {
         int uploaded = 0;
-        boolean canceled = false;
-        while (!uploadJob.isDone()) {
-            if (!canceled && monitor.isCanceled()) {
-                monitor.subTask(Messages.UploadJob_Task_Cancel);
-                try {
-                    HttpUtils.cancelUploading(client, userName, session, token);
-                    canceled = true;
-                } catch (Exception ignore) {
+        while (!monitor.isCanceled() && !uploadJob.isDone()) {
+            try {
+                double progress = HttpUtils.retrieveUploadingProcess(client,
+                        userName, session, token);
+                if (progress < 0) {
+                    break;
                 }
-                // wait for uploadFileThread throwing exception
-            }
 
-            if (!canceled) {
-                try {
-                    double progress = HttpUtils.retrieveUploadingProcess(
-                            client, userName, session, token);
-                    if (progress < 0) {
-                        break;
-                    }
-
-                    int newUploaded = (int) (progress * 90);
-                    if (newUploaded > uploaded) {
-                        monitor.worked(newUploaded - uploaded);
-                        uploaded = newUploaded;
-                    }
-                } catch (Exception ignore) {
+                int newUploaded = (int) (progress * 90);
+                if (newUploaded > uploaded) {
+                    monitor.worked(newUploaded - uploaded);
+                    uploaded = newUploaded;
                 }
+            } catch (Exception ignore) {
             }
 
             try {
@@ -201,7 +175,6 @@ public class UploadJob extends Job {
                 break;
             }
         }
-        return canceled;
     }
 
 }

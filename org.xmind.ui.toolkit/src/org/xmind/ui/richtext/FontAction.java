@@ -34,14 +34,14 @@ public class FontAction extends Action implements IRichTextAction {
 
     public FontAction(IRichTextEditViewer viewer) {
         this(viewer, RichTextMessages.FontAction_text, ToolkitImages
-                .get(ToolkitImages.FONT),
-                RichTextMessages.FontAction_toolTip);
+                .get(ToolkitImages.FONT), RichTextMessages.FontAction_toolTip);
     }
 
     public FontAction(IRichTextEditViewer viewer, String text,
             ImageDescriptor image, String tooltip) {
         super(text, AS_CHECK_BOX);
         this.viewer = viewer;
+        setId(TextActionConstants.FONT_ID);
         setImageDescriptor(image);
         setToolTipText(tooltip);
     }

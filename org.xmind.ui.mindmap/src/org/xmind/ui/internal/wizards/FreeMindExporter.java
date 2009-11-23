@@ -15,11 +15,9 @@ package org.xmind.ui.internal.wizards;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -38,12 +36,12 @@ import org.w3c.dom.Element;
 import org.xmind.core.IControlPoint;
 import org.xmind.core.IFileEntry;
 import org.xmind.core.IHtmlNotesContent;
+import org.xmind.core.IHyperlinkSpan;
 import org.xmind.core.IImage;
 import org.xmind.core.INotes;
 import org.xmind.core.INotesContent;
 import org.xmind.core.IParagraph;
 import org.xmind.core.IRelationship;
-import org.xmind.core.IRelationshipEnd;
 import org.xmind.core.ISheet;
 import org.xmind.core.ISpan;
 import org.xmind.core.ITextSpan;
@@ -57,6 +55,7 @@ import org.xmind.core.util.DOMUtils;
 import org.xmind.core.util.FileUtils;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.core.util.Point;
+import org.xmind.ui.internal.protocols.FilePathParser;
 import org.xmind.ui.style.Styles;
 
 /**
@@ -65,7 +64,7 @@ import org.xmind.ui.style.Styles;
  */
 public class FreeMindExporter {
 
-    private class EdgeData {
+    private static class EdgeData {
         String color;
         String style;
         String width;
@@ -87,6 +86,8 @@ public class FreeMindExporter {
                     && ed.width.equals(this.width);
         }
     }
+
+    private static final String IMAGE_FILE = "images"; //$NON-NLS-1$
 
     private static DocumentBuilder documentBuilder;
 
@@ -135,7 +136,11 @@ public class FreeMindExporter {
             throw new InvocationTargetException(e);
         }
         checkInterrupter();
-        writeContent();
+        try {
+            writeContent();
+        } catch (Throwable e) {
+            throw new InvocationTargetException(e);
+        }
 
         try {
             OutputStream os = new FileOutputStream(new File(targetPath));
@@ -146,7 +151,7 @@ public class FreeMindExporter {
         }
     }
 
-    private void writeContent() {
+    private void writeContent() throws Exception {
         Element mapEle = DOMUtils.createElement(document, "map"); //$NON-NLS-1$
         writeMap(mapEle);
         if (edgeDataMap != null)
@@ -155,14 +160,14 @@ public class FreeMindExporter {
             markers.clear();
     }
 
-    private void writeMap(Element mapEle) {
+    private void writeMap(Element mapEle) throws Exception {
         mapEle.setAttribute("version", "0.8.1"); //$NON-NLS-1$ //$NON-NLS-2$
         ITopic rootTopic = getSheet().getRootTopic();
         cacheMarkers();
         writeTopic(mapEle, rootTopic);
     }
 
-    private void writeTopic(Element element, ITopic topic) {
+    private void writeTopic(Element element, ITopic topic) throws Exception {
         Element nodeEle = DOMUtils.createElement(element, "node"); //$NON-NLS-1$
         IStyle style = getStyle(topic);
         writeColor(nodeEle, topic, style);
@@ -196,27 +201,31 @@ public class FreeMindExporter {
             Element notesEle = DOMUtils.createElement(hookEle, "text"); //$NON-NLS-1$
             IHtmlNotesContent html = (IHtmlNotesContent) content;
             List<IParagraph> paragraphs = html.getParagraphs();
-            String paraText = null;
+            StringBuilder paraBuffer = new StringBuilder();
             for (IParagraph paragraph : paragraphs) {
                 List<ISpan> spans = paragraph.getSpans();
-                String spanText = null;
+                StringBuilder spanBuffer = new StringBuilder();
                 for (ISpan span : spans) {
-                    if (span instanceof ITextSpan) {
-                        String text = ((ITextSpan) span).getTextContent();
-                        if (spanText == null)
-                            spanText = text;
-                        else
-                            spanText += text;
-                    }
+                    writeSpan(spanBuffer, span);
                 }
-                if (paraText == null)
-                    paraText = spanText;
-                else
-                    //TODO: something wrong here????
-//                    paraText += "&#xa;" + spanText; //$NON-NLS-1$
-                    paraText += (char) 10 + spanText;
+                if (paraBuffer.length() > 0) {
+                    //paraBuffer.append("&#xa;"); //$NON-NLS-1$
+                    paraBuffer.append((char) 10);
+                }
+                paraBuffer.append(spanBuffer.toString());
             }
-            notesEle.setTextContent(paraText);
+            notesEle.setTextContent(paraBuffer.toString());
+        }
+    }
+
+    private void writeSpan(StringBuilder buffer, ISpan span) {
+        if (span instanceof ITextSpan) {
+            String text = ((ITextSpan) span).getTextContent();
+            buffer.append(text);
+        } else if (span instanceof IHyperlinkSpan) {
+            for (ISpan subSpan : ((IHyperlinkSpan) span).getSpans()) {
+                writeSpan(buffer, subSpan);
+            }
         }
     }
 
@@ -429,7 +438,8 @@ public class FreeMindExporter {
         }
     }
 
-    private void writeImageOrText(Element nodeEle, ITopic topic) {
+    private void writeImageOrText(Element nodeEle, ITopic topic)
+            throws Exception {
         IImage image = topic.getImage();
         String source = image.getSource();
         if (source != null) {
@@ -440,21 +450,20 @@ public class FreeMindExporter {
             String path = fileEntry.getPath();
             int lastIndex = path.lastIndexOf('/');
             String fileName = path.substring(lastIndex + 1);
-            try {
+            InputStream is = fileEntry.getInputStream();
+            if (is != null) {
                 FileOutputStream os = new FileOutputStream(new File(imageDir,
                         fileName));
-                InputStream is = fileEntry.getInputStream();
                 FileUtils.transfer(is, os, false);
                 is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+
+                String sourcePath = "images" + "/" + fileName; //$NON-NLS-1$ //$NON-NLS-2$
+                // " ASCII is 34
+                String value = "<html><img src=" + (char) 34 + sourcePath //$NON-NLS-1$
+                        + (char) 34 + ">"; //$NON-NLS-1$
+                nodeEle.setAttribute("TEXT", value); //$NON-NLS-1$
+                return;
             }
-            String sourcePath = "images" + "/" + fileName; //$NON-NLS-1$ //$NON-NLS-2$
-            // " ASCII is 34
-            String value = "<html><img src=" + (char) 34 + sourcePath //$NON-NLS-1$
-                    + (char) 34 + ">"; //$NON-NLS-1$
-            nodeEle.setAttribute("TEXT", value); //$NON-NLS-1$
-            return;
         }
         String text = topic.getTitleText();
         nodeEle.setAttribute("TEXT", text); //$NON-NLS-1$
@@ -462,15 +471,14 @@ public class FreeMindExporter {
 
     private File getImageDir() {
         if (imageDir == null) {
-            int lastIndex = targetPath.lastIndexOf('\\');
-            String imageSource = targetPath.substring(0, lastIndex);
-            imageDir = FileUtils
-                    .ensureDirectory(new File(imageSource, "images")); //$NON-NLS-1$
+            String imageSource = new File(targetPath).getParent();
+            imageDir = FileUtils.ensureDirectory(new File(imageSource,
+                    IMAGE_FILE));
         }
         return imageDir;
     }
 
-    private void writSubTopics(Element topicEle, ITopic topic) {
+    private void writSubTopics(Element topicEle, ITopic topic) throws Exception {
         List<ITopic> children = topic.getAllChildren();
         if (children != null) {
             for (ITopic subTopic : children)
@@ -537,39 +545,64 @@ public class FreeMindExporter {
         nodeEle.setAttribute("MOIFIED", value); //$NON-NLS-1$
     }
 
-    private void writeLink(Element nodeEle, ITopic topic) {
+    private void writeLink(Element nodeEle, ITopic topic) throws Exception {
         String hyperlink = topic.getHyperlink();
         if (hyperlink == null)
             return;
-        if (hyperlink.startsWith("file:/")) { //$NON-NLS-1$
-            String subHyper = hyperlink.substring("file:/".length()); //$NON-NLS-1$
-            File file = new File(subHyper);
-            if (file.isFile()) {
-                if (areSameDir(targetPath, subHyper))
-                    nodeEle.setAttribute("LINK", subHyper); //$NON-NLS-1$
-                else {
-                    String value = "../../../../" + subHyper; //$NON-NLS-1$
-                    nodeEle.setAttribute("LINK", value); //$NON-NLS-1$
-                }
-            }
-        } else if (hyperlink.startsWith("xmind:")) { //$NON-NLS-1$
-            String value = hyperlink.substring("xmind:".length()); //$NON-NLS-1$
-            nodeEle.setAttribute("LINK", value); //$NON-NLS-1$
+        String link = toLink(topic);
+        if (link != null) {
+            nodeEle.setAttribute("LINK", link); //$NON-NLS-1$
         }
-
     }
 
-    private boolean areSameDir(String path1, String path2) {
-        File file = new File(path1);
-        URI uri = file.toURI();
-        String temp = uri.toString().substring("file:/".length()); //$NON-NLS-1$
-        int lastIndex1 = temp.lastIndexOf('/');
-        String dir1 = temp.substring(0, lastIndex1);
-        int lastIndex2 = path2.lastIndexOf('/');
-        String dir2 = path2.substring(0, lastIndex2);
-        if (dir1.equals(dir2))
-            return true;
-        return false;
+    private String toLink(ITopic topic) throws Exception {
+        String hyperlink = topic.getHyperlink();
+        if (hyperlink == null)
+            return null;
+        if (hyperlink.startsWith("file:")) { //$NON-NLS-1$
+            String path = FilePathParser.toPath(hyperlink);
+            if (FilePathParser.isPathRelative(path)) {
+                IWorkbook workbook = topic.getOwnedWorkbook();
+                if (workbook != null) {
+                    String base = workbook.getFile();
+                    if (base != null) {
+                        base = new File(base).getParent();
+                        if (base != null) {
+                            FilePathParser.toAbsolutePath(base, path);
+                        }
+                    }
+                }
+                return FilePathParser.toAbsolutePath(System
+                        .getProperty("user.home"), path); //$NON-NLS-1$
+            }
+            return path;
+        } else if (HyperlinkUtils.isInternalURL(hyperlink)) {
+            return HyperlinkUtils.toElementID(hyperlink);
+        } else if (HyperlinkUtils.isAttachmentURL(hyperlink)) {
+            File imageDir = getImageDir();
+            String entryPath = HyperlinkUtils.toAttachmentPath(hyperlink);
+            IFileEntry fileEntry = topic.getOwnedWorkbook().getManifest()
+                    .getFileEntry(entryPath);
+            String path = fileEntry.getPath();
+            int lastIndex = path.lastIndexOf('/');
+            String fileName = path.substring(lastIndex + 1);
+            InputStream is = fileEntry.getInputStream();
+            if (is != null) {
+                try {
+                    FileOutputStream os = new FileOutputStream(new File(
+                            imageDir, fileName));
+                    try {
+                        FileUtils.transfer(is, os, false);
+                        return IMAGE_FILE + "/" + fileName; //$NON-NLS-1$
+                    } finally {
+                        os.close();
+                    }
+                } finally {
+                    is.close();
+                }
+            }
+        }
+        return hyperlink;
     }
 
     private void writeCreateFolderAndId(Element nodeEle, ITopic topic) {
@@ -612,12 +645,13 @@ public class FreeMindExporter {
         Iterator<IRelationship> iter = relationships.iterator();
         while (iter.hasNext()) {
             IRelationship next = iter.next();
-            IRelationshipEnd end1 = next.getEnd1();
-            String id1 = end1.getId();
-            if (id1.equals(topic.getId())) {
-                if (result == null)
-                    result = new ArrayList<IRelationship>();
-                result.add(next);
+            if (next != null) {
+                String end1Id = next.getEnd1Id();
+                if (topic.getId().equals(end1Id)) {
+                    if (result == null)
+                        result = new ArrayList<IRelationship>();
+                    result.add(next);
+                }
             }
         }
         return result;

@@ -187,6 +187,12 @@ public interface IWorkbook extends IAdaptable {
 
     /**
      * 
+     * @param file
+     */
+    void setFile(String file);
+
+    /**
+     * 
      * @param storage
      */
     void setTempStorage(IStorage storage);

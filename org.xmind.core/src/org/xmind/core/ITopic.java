@@ -249,4 +249,6 @@ public interface ITopic extends ITitled, IStyled, IRelationshipEnd, IAdaptable,
 
     void deleteExtension(String providerName);
 
+    long getModifiedTime();
+
 }

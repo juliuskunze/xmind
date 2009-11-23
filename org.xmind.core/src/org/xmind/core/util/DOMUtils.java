@@ -289,25 +289,6 @@ public class DOMUtils {
         return e;
     }
 
-    //    public static Element createElementNS(Node parent, String namespaceURI,
-    //            String qualifiedName) {
-    //        Document doc = parent.getNodeType() == Node.DOCUMENT_NODE ? (Document) parent
-    //                : parent.getOwnerDocument();
-    //        String prefix = getPrefix(qualifiedName);
-    //        if (prefix != null) {
-    //            Element docEle = doc.getDocumentElement();
-    //            if (docEle != null) {
-    //                String nsName = "xmlns:" + prefix; //$NON-NLS-1$
-    //                if (!docEle.hasAttribute(nsName)) {
-    //                    docEle.setAttribute(nsName, namespaceURI);
-    //                }
-    //            }
-    //        }
-    //        Element e = doc.createElementNS(namespaceURI, qualifiedName);
-    //        parent.appendChild(e);
-    //        return e;
-    //    }
-    //
     public static String getPrefix(String qualifiedName) {
         int index = qualifiedName.indexOf(':');
         if (index >= 0)

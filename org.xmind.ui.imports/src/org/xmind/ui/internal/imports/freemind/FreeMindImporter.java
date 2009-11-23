@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
+import java.util.Map.Entry;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -32,11 +34,14 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmind.core.Core;
 import org.xmind.core.IBoundary;
+import org.xmind.core.IFileEntry;
 import org.xmind.core.IHtmlNotesContent;
+import org.xmind.core.IImage;
 import org.xmind.core.INotes;
 import org.xmind.core.IParagraph;
-import org.xmind.core.IPlainNotesContent;
+import org.xmind.core.IRelationship;
 import org.xmind.core.ISheet;
+import org.xmind.core.ISpan;
 import org.xmind.core.ITextSpan;
 import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
@@ -45,7 +50,9 @@ import org.xmind.core.io.freemind.FreeMindConstants;
 import org.xmind.core.io.freemind.FreeMindResourceMappingManager;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.style.IStyleSheet;
+import org.xmind.core.style.IStyled;
 import org.xmind.core.util.DOMUtils;
+import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.ui.internal.imports.ImportMessages;
 import org.xmind.ui.internal.imports.ImporterUtils;
 import org.xmind.ui.io.MonitoredInputStream;
@@ -58,22 +65,39 @@ import org.xml.sax.SAXParseException;
 public class FreeMindImporter extends MindMapImporter implements
         FreeMindConstants, ErrorHandler {
 
-    private class ArrowLink {
-        String fromId;
-        String toId;
+    private class LinkPoint {
+        ITopic end1;
+        ITopic end2;
 
-        public ArrowLink(String fromId, String toId) {
-            super();
-            this.fromId = fromId;
-            this.toId = toId;
+        public LinkPoint(Element ele) {
+            String id1 = att(ele, "ID"); //$NON-NLS-1$
+            end1 = findLinkTopic(id1);
+            Element linkNode = child(ele, "arrowlink"); //$NON-NLS-1$
+            String id2 = att(linkNode, "DESTINATION"); //$NON-NLS-1$
+            end2 = findLinkTopic(id2);
+        }
+
+        private ITopic findLinkTopic(String id) {
+            if (idMap == null || idMap.isEmpty())
+                return null;
+            String topicId = idMap.get(id);
+            return getTargetWorkbook().findTopic(topicId);
+        }
+
+        public boolean equals(Object obj) {
+            if (obj == this)
+                return true;
+            if (obj != null && !(obj instanceof LinkPoint))
+                return false;
+            LinkPoint that = (LinkPoint) obj;
+            return this.end1 == that.end1 && this.end2 == that.end2;
         }
     }
 
     private class NotesImporter {
-
         IHtmlNotesContent content;
-
-        IParagraph currentParagraph;
+        IParagraph currentParagraph = null;
+        Stack<IStyle> styleStack = new Stack<IStyle>();
 
         public NotesImporter(IHtmlNotesContent content) {
             this.content = content;
@@ -82,34 +106,109 @@ public class FreeMindImporter extends MindMapImporter implements
         public void importFrom(Element htmlEle) throws InterruptedException {
             checkInterrupted();
             String tagName = DOMUtils.getLocalName(htmlEle.getTagName());
-            if ("p".equalsIgnoreCase(tagName)) { //$NON-NLS-1$
+            boolean isParagraph = "p".equalsIgnoreCase(tagName) //$NON-NLS-1$
+                    || "li".equalsIgnoreCase(tagName); //$NON-NLS-1$
+            IStyle style = pushStyle(htmlEle, isParagraph ? IStyle.PARAGRAPH
+                    : IStyle.TEXT);
+            if (isParagraph)
                 addParagraph();
-            } else if ("li".equalsIgnoreCase(tagName)) { //$NON-NLS-1$
-                addParagraph();
-            } else if ("br".equalsIgnoreCase(tagName)) { //$NON-NLS-1$
-                addParagraph();
-            }
+
             NodeList nl = htmlEle.getChildNodes();
             for (int i = 0; i < nl.getLength(); i++) {
-                Node e = nl.item(i);
-                if (e.getNodeType() == Node.TEXT_NODE) {
-                    addText(e.getTextContent());
-                } else if (e.getNodeType() == Node.ELEMENT_NODE) {
-                    importFrom((Element) e);
+                Node node = nl.item(i);
+                short nodeType = node.getNodeType();
+                if (nodeType == Node.TEXT_NODE) {
+                    addText(node.getTextContent());
+                } else if (nodeType == Node.ELEMENT_NODE) {
+                    importFrom((Element) node);
                 }
             }
+            popStyle(style);
         }
 
-        private void addText(String textContent) {
+        private void addText(String text) {
+            if (text == null)
+                return;
+            text = text.trim();
+            if ("".equals(text)) //$NON-NLS-1$
+                return;
+            ITextSpan textSpan = content.createTextSpan(text);
+            addSpan(textSpan);
+        }
+
+        private void addSpan(ISpan span) {
             if (currentParagraph == null)
                 addParagraph();
-            ITextSpan span = content.createTextSpan(textContent);
             currentParagraph.addSpan(span);
+            registerStyle(span, Styles.FontFamily, Styles.FontSize,
+                    Styles.TextColor, Styles.FontWeight, Styles.TextDecoration,
+                    Styles.FontStyle);
         }
 
         private void addParagraph() {
             currentParagraph = content.createParagraph();
             content.addParagraph(currentParagraph);
+            registerStyle(currentParagraph, Styles.TextAlign);
+        }
+
+        private void registerStyle(IStyled host, String... keys) {
+            for (IStyle style : styleStack) {
+                registerStyle(host, style, keys);
+            }
+        }
+
+        private void registerStyle(IStyled host, IStyle style, String... keys) {
+            for (String key : keys) {
+                String value = style.getProperty(key);
+                if (value != null)
+                    FreeMindImporter.this.registerStyle(host, key, value);
+            }
+        }
+
+        private IStyle pushStyle(Element ele, String type) {
+            IStyle style = getStyleSheet().createStyle(type);
+            receiveStyle(ele, style);
+            if (style.isEmpty())
+                style = null;
+            else
+                styleStack.push(style);
+            return style;
+        }
+
+        private void receiveStyle(Element ele, IStyle style) {
+            String alignStyle = att(ele, "style"); //$NON-NLS-1$
+            if (alignStyle != null) {
+                String align = FreeMindImporter.this.parseAlign(alignStyle);
+                style.setProperty(Styles.TextAlign, align);
+            }
+            String name = ele.getTagName();
+            if ("b".equalsIgnoreCase(name)) //$NON-NLS-1$
+                style.setProperty(Styles.FontWeight, Styles.FONT_WEIGHT_BOLD);
+            else if ("i".equalsIgnoreCase(name)) //$NON-NLS-1$
+                style.setProperty(Styles.FontStyle, Styles.FONT_STYLE_ITALIC);
+            else if ("u".equalsIgnoreCase(name)) //$NON-NLS-1$
+                style.setProperty(Styles.TextDecoration,
+                        Styles.TEXT_DECORATION_UNDERLINE);
+            else if ("font".equalsIgnoreCase(name)) { //$NON-NLS-1$
+                String fontFamily = att(ele, "face"); //$NON-NLS-1$
+                if (fontFamily != null)
+                    style.setProperty(Styles.FontWeight, fontFamily);
+                String color = att(ele, "color"); //$NON-NLS-1$
+                if (color != null)
+                    style.setProperty(Styles.TextColor, color);
+                String size = att(ele, "size"); //$NON-NLS-1$
+                if (size != null) {
+                    String fontSize = FreeMindImporter.this.parseSize(size);
+                    style.setProperty(Styles.FontSize, fontSize);
+                }
+            }
+        }
+
+        private void popStyle(IStyle style) {
+            if (style == null)
+                return;
+            if (!styleSheet.isEmpty() && styleStack.peek() == style)
+                styleStack.pop();
         }
     }
 
@@ -117,11 +216,17 @@ public class FreeMindImporter extends MindMapImporter implements
 
     private static ResourceMappingManager mappings = null;
 
+    private List<Element> linkEles = null;
+
     private Map<String, String> idMap = new HashMap<String, String>();
 
-    private IStyleSheet tempStyleSheet = null;
+    private Map<IStyled, IStyle> styleMap = new HashMap<IStyled, IStyle>();
 
-    private List<ArrowLink> links = null;
+    private Map<ITopic, String> topicHyperMap = null;
+
+    private IStyleSheet styleSheet = null;
+
+    private String topicText = ""; //$NON-NLS-1$
 
     public FreeMindImporter(String sourcePath, IWorkbook targetWorkbook) {
         super(sourcePath, targetWorkbook);
@@ -147,58 +252,127 @@ public class FreeMindImporter extends MindMapImporter implements
                 } catch (IOException e) {
                 }
             }
+            checkInterrupted();
+            Element rootElement = doc.getDocumentElement();
+            loadSheet(rootElement);
 
-            loadSheet(doc.getDocumentElement());
+            checkInterrupted();
+            arrangeStyles();
+
+            checkInterrupted();
+            dealTopicHyperlinks();
 
         } catch (Throwable e) {
             throw new InvocationTargetException(e);
+        } finally {
+            idMap = null;
+            styleMap = null;
         }
     }
 
-    private void checkInterrupted() throws InterruptedException {
-        if (getMonitor().isCanceled())
-            throw new InterruptedException();
+    private void dealTopicHyperlinks() {
+        if (topicHyperMap == null || topicHyperMap.isEmpty())
+            return;
+        for (Entry<ITopic, String> entry : topicHyperMap.entrySet()) {
+            ITopic topic = entry.getKey();
+            String nodeId = entry.getValue();
+            if (idMap == null || idMap.isEmpty())
+                break;
+            String topicId = idMap.get(nodeId);
+            if (topicId == null)
+                continue;
+            topic.setHyperlink("xmind:#" + topicId); //$NON-NLS-1$
+        }
     }
 
-    private void loadSheet(Element docEle) throws InterruptedException {
+    private void arrangeStyles() throws InterruptedException {
+        IStyleSheet targetStyleSheet = getTargetWorkbook().getStyleSheet();
+        for (Entry<IStyled, IStyle> entry : styleMap.entrySet()) {
+            checkInterrupted();
+            IStyled styleOwned = entry.getKey();
+            IStyle style = entry.getValue();
+            IStyle importStyle = targetStyleSheet.importStyle(style);
+            if (importStyle != null)
+                styleOwned.setStyleId(importStyle.getId());
+        }
+    }
+
+    private void loadSheet(Element rootEle) throws InterruptedException {
         checkInterrupted();
         ISheet sheet = getTargetWorkbook().createSheet();
-        Element nodeEle = child(docEle, "node"); //$NON-NLS-1$
-        if (nodeEle != null) {
+        sheet.setTitleText("sheet1"); //$NON-NLS-1$
+        Element nodeEle = child(rootEle, "node"); //$NON-NLS-1$
+        if (nodeEle != null)
             loadTopic(sheet.getRootTopic(), nodeEle);
-        } else {
+        else
             sheet.getRootTopic().setTitleText(
                     ImportMessages.Importer_CentralTopic);
-        }
 
-        arrangeRelationships();
+        if (linkEles != null && !linkEles.isEmpty())
+            loadRelationship();
 
-        String bgColor = att(docEle, "backgound_color"); //$NON-NLS-1$
-        if (bgColor != null) {
-            IStyle style = getTempStyleSheet().createStyle(IStyle.MAP);
-            style.setProperty(Styles.FillColor, bgColor);
-            style = getTargetWorkbook().getStyleSheet().importStyle(style);
-            if (style != null) {
-                sheet.setStyleId(style.getId());
-            }
-        }
         addTargetSheet(sheet);
     }
 
-    private void arrangeRelationships() {
+    private void loadRelationship() {
+        for (Element linkEle : linkEles) {
+            if (linkEle == null)
+                continue;
+            LinkPoint link = new LinkPoint(linkEle);
+            ITopic end1 = link.end1;
+            ITopic end2 = link.end2;
+            IRelationship relationship = getTargetWorkbook()
+                    .createRelationship(end1, end2);
+            relationship.setEnd1Id(end1.getId());
+            relationship.setEnd2Id(end2.getId());
+
+            Element arrowEle = child(linkEle, "arrowlink"); //$NON-NLS-1$
+            loadLinkShape(relationship, arrowEle);
+            loadLinkColor(relationship, arrowEle);
+        }
+    }
+
+    private void loadLinkColor(IRelationship relationship, Element arrowEle) {
+        String color = att(arrowEle, "COLOR"); //$NON-NLS-1$
+        if (color == null)
+            return;
+        registerStyle(relationship, Styles.LineColor, color);
+    }
+
+    private void loadLinkShape(IRelationship relationship, Element arrowEle) {
+        String startArrow = att(arrowEle, "STARTARROW"); //$NON-NLS-1$
+        String startShape = parseArrowShape(startArrow);
+        registerStyle(relationship, Styles.ArrowBeginClass, startShape);
+        String endArrow = att(arrowEle, "ENDARROW"); //$NON-NLS-1$
+        String endShape = parseArrowShape(endArrow);
+        registerStyle(relationship, Styles.ArrowEndClass, endShape);
+    }
+
+    private String parseArrowShape(String shape) {
+        if ("Default".equals(shape)) //$NON-NLS-1$
+            return "org.xmind.arrowShape.normal"; //$NON-NLS-1$
+        return "org.xmind.arrowShape.none"; //$NON-NLS-1$
     }
 
     private void loadTopic(ITopic topic, Element topicEle)
             throws InterruptedException {
         checkInterrupted();
         String id = att(topicEle, "ID"); //$NON-NLS-1$
-        if (id != null)
+        if (id != null) {
             idMap.put(id, topic.getId());
+        }
 
         checkInterrupted();
         String text = att(topicEle, "TEXT"); //$NON-NLS-1$
         if (text == null)
             text = ImporterUtils.getDefaultTopicTitle(topic);
+        else if (text.contains("../../../../")) { //$NON-NLS-1$
+            int index = text.indexOf("../../../../"); //$NON-NLS-1$
+            String path = text.substring(index + "../../../../".length(), text //$NON-NLS-1$
+                    .length() - 2);
+            loadImage(topic, path);
+            text = ImporterUtils.getDefaultTopicTitle(topic);
+        }
         topic.setTitleText(text);
 
         checkInterrupted();
@@ -207,15 +381,8 @@ public class FreeMindImporter extends MindMapImporter implements
             topic.setFolded(true);
 
         checkInterrupted();
-        String link = att(topicEle, "LINK"); //$NON-NLS-1$
-        if (link != null) {
-            topic.setHyperlink(link);
-        }
-
-        checkInterrupted();
-        Element ele = null;
         if (!topic.isRoot()) {
-            ele = child(topicEle, "cloud"); //$NON-NLS-1$
+            Element ele = child(topicEle, "cloud"); //$NON-NLS-1$
             if (ele != null) {
                 IBoundary boundary = getTargetWorkbook().createBoundary();
                 int index = topic.getIndex();
@@ -226,79 +393,273 @@ public class FreeMindImporter extends MindMapImporter implements
         }
 
         checkInterrupted();
-        ele = child(topicEle, "arrowlink"); //$NON-NLS-1$
-        if (ele != null) {
-            String toId = att(ele, "DESTINATION"); //$NON-NLS-1$
-            if (toId != null) {
-                ArrowLink arrowLink = new ArrowLink(id, toId);
-                if (links == null)
-                    links = new ArrayList<ArrowLink>();
-                links.add(arrowLink);
+        String link = att(topicEle, "LINK"); //$NON-NLS-1$
+        if (link != null) {
+            if (link.startsWith("../../../../")) { //$NON-NLS-1$
+                String hyperlink = link.substring("../../../../".length()); //$NON-NLS-1$
+                topic.setHyperlink("file:" + hyperlink); //$NON-NLS-1$
+            } else if (link.startsWith("#")) { //$NON-NLS-1$
+                String nodeId = link.substring(1);
+                if (topicHyperMap == null)
+                    topicHyperMap = new HashMap<ITopic, String>();
+                topicHyperMap.put(topic, nodeId);
+            } else {
+                topic.setHyperlink(link);
             }
         }
 
-        Iterator<Element> it = children(topicEle, "icon"); //$NON-NLS-1$
-        while (it.hasNext()) {
+        checkInterrupted();
+        String backgroundColor = att(topicEle, "BACKGROUND_COLOR"); //$NON-NLS-1$
+        registerStyle(topic, Styles.FillColor, backgroundColor);
+
+        checkInterrupted();
+        String foregroundColor = att(topicEle, "COLOR"); //$NON-NLS-1$
+        registerStyle(topic, Styles.TextColor, foregroundColor);
+
+        checkInterrupted();
+        Element fontEle = child(topicEle, "font"); //$NON-NLS-1$
+        loadFont(fontEle, topic);
+
+        checkInterrupted();
+        Element linkNode = child(topicEle, "arrowlink"); //$NON-NLS-1$
+        if (linkNode != null) {
+            if (linkEles == null)
+                linkEles = new ArrayList<Element>();
+            linkEles.add(topicEle);
+        }
+
+        Iterator<Element> iconIter = children(topicEle, "icon"); //$NON-NLS-1$
+        while (iconIter.hasNext()) {
             checkInterrupted();
-            Element iconEle = it.next();
+            Element iconEle = iconIter.next();
             String builtIn = att(iconEle, "BUILTIN"); //$NON-NLS-1$
             if (builtIn != null) {
                 String markerId = getTransferred("marker", builtIn, null); //$NON-NLS-1$
-                if (markerId != null) {
+                if (markerId != null)
                     topic.addMarker(markerId);
-                }
             }
         }
 
-        it = children(topicEle, "hook"); //$NON-NLS-1$
-        while (it.hasNext()) {
-            checkInterrupted();
-            Element hookEle = it.next();
-            String type = att(hookEle, "NAME"); //$NON-NLS-1$
-            if (type != null
-                    && "accessories/plugins/NodeNote.properties".equals(type)) { //$NON-NLS-1$
-                Element textEle = child(hookEle, "text"); //$NON-NLS-1$
-                if (textEle != null) {
-                    IPlainNotesContent notesContent = (IPlainNotesContent) getTargetWorkbook()
-                            .createNotesContent(INotes.PLAIN);
-                    notesContent.setTextContent(textEle.getTextContent());
-                    topic.getNotes().setContent(INotes.PLAIN, notesContent);
-                    break;
-                }
+        checkInterrupted();
+        Element hookEle = child(topicEle, "hook"); //$NON-NLS-1$
+        if (hookEle != null) {
+            String name = att(hookEle, "NAME"); //$NON-NLS-1$
+            if ("accessories/plugins/NodeNote.properties".equals(name)) { //$NON-NLS-1$
+                Element notesEle = child(hookEle, "text"); //$NON-NLS-1$
+                if (notesEle != null)
+                    loadNotesContent(topic, notesEle);
             }
         }
 
-        it = children(topicEle, "richcontent"); //$NON-NLS-1$
-        while (it.hasNext()) {
+        Iterator<Element> notesIter = children(topicEle, "richcontent"); //$NON-NLS-1$
+        while (notesIter.hasNext()) {
             checkInterrupted();
-            Element richEle = it.next();
+            Element richEle = notesIter.next();
             String type = att(richEle, "TYPE"); //$NON-NLS-1$
             if (type != null && "NOTE".equals(type)) { //$NON-NLS-1$
                 Element htmlEle = child(richEle, "html"); //$NON-NLS-1$
                 if (htmlEle != null) {
                     IHtmlNotesContent notesContent = (IHtmlNotesContent) getTargetWorkbook()
                             .createNotesContent(INotes.HTML);
-                    new NotesImporter(notesContent).importFrom(htmlEle);
+                    NotesImporter notesImport = new NotesImporter(notesContent);
+                    notesImport.importFrom(htmlEle);
                     topic.getNotes().setContent(INotes.HTML, notesContent);
-                    break;
                 }
+            } else if ("NODE".equals(type)) { //$NON-NLS-1$
+                Element htmlEle = child(richEle, "html"); //$NON-NLS-1$
+                if (htmlEle != null)
+                    loadNode(topic, htmlEle);
+                if (topicText == null)
+                    topicText = ImporterUtils.getDefaultTopicTitle(topic);
+                topic.setTitleText(topicText.trim());
             }
         }
 
-        it = children(topicEle, "node"); //$NON-NLS-1$
-        while (it.hasNext()) {
+        Iterator<Element> nodeIter = children(topicEle, "node"); //$NON-NLS-1$
+        while (nodeIter.hasNext()) {
             checkInterrupted();
-            Element subTopicEle = it.next();
+            Element subNodeEle = nodeIter.next();
             ITopic subTopic = getTargetWorkbook().createTopic();
             topic.add(subTopic);
-            loadTopic(subTopic, subTopicEle);
+            loadTopic(subTopic, subNodeEle);
         }
     }
 
-    private IStyleSheet getTempStyleSheet() {
-        if (tempStyleSheet == null)
-            tempStyleSheet = Core.getStyleSheetBuilder().createStyleSheet();
-        return tempStyleSheet;
+    private void loadNotesContent(ITopic topic, Element ele) {
+        String text = ele.getTextContent().trim();
+        if (text == null)
+            return;
+        IHtmlNotesContent notesContent = (IHtmlNotesContent) getTargetWorkbook()
+                .createNotesContent(INotes.HTML);
+        ITextSpan span = notesContent.createTextSpan(text);
+        IParagraph paragraph = notesContent.createParagraph();
+        paragraph.addSpan(span);
+        notesContent.addParagraph(paragraph);
+        topic.getNotes().setContent(INotes.HTML, notesContent);
+    }
+
+    private void loadNode(ITopic topic, Element element)
+            throws InterruptedException {
+        checkInterrupted();
+        String tagName = DOMUtils.getLocalName(element.getTagName());
+        if ("img".equalsIgnoreCase(tagName)) { //$NON-NLS-1$
+            String src = att(element, "src"); //$NON-NLS-1$
+            if (src.startsWith("../../../../")) { //$NON-NLS-1$
+                String path = src.substring("../../../../".length()); //$NON-NLS-1$
+                loadImage(topic, path);
+            }
+        } else if ("p".equalsIgnoreCase(tagName) //$NON-NLS-1$
+                || "li".equalsIgnoreCase(tagName)) { //$NON-NLS-1$
+            String text = element.getTextContent().trim();
+            if (text != null)
+                topicText += text + '\n';
+
+            String align = att(element, "style"); //$NON-NLS-1$
+            if (align != null) {
+                String value = parseAlign(align);
+                registerStyle(topic, Styles.TextAlign, value);
+            }
+        } else if ("b".equalsIgnoreCase(tagName)) //$NON-NLS-1$
+            registerStyle(topic, Styles.FontWeight, Styles.FONT_WEIGHT_BOLD);
+        else if ("i".equalsIgnoreCase(tagName)) //$NON-NLS-1$
+            registerStyle(topic, Styles.FontStyle, Styles.FONT_STYLE_ITALIC);
+        else if ("font".equalsIgnoreCase(tagName)) { //$NON-NLS-1$
+            String fontFamily = att(element, "face"); //$NON-NLS-1$
+            if (fontFamily != null)
+                registerStyle(topic, Styles.FontWeight, fontFamily);
+            String color = att(element, "color"); //$NON-NLS-1$
+            if (color != null)
+                registerStyle(topic, Styles.TextColor, color);
+            String size = att(element, "size"); //$NON-NLS-1$
+            if (size != null)
+                registerStyle(topic, Styles.FontSize, parseSize(size));
+        }
+
+        Element[] children = DOMUtils.getChildElements(element);
+        for (Element ele : children) {
+            loadNode(topic, ele);
+        }
+    }
+
+    private void loadImage(ITopic topic, String path)
+            throws InterruptedException {
+        checkInterrupted();
+        IFileEntry imgEntry = loadAttachment(path);
+        IImage image = topic.getImage();
+        image.setSource(HyperlinkUtils.toAttachmentURL(imgEntry.getPath()));
+    }
+
+    private IFileEntry loadAttachment(String path) throws InterruptedException {
+        checkInterrupted();
+        try {
+            IFileEntry entry = getTargetWorkbook().getManifest()
+                    .createAttachmentFromFilePath(path);
+            return entry;
+        } catch (IOException e) {
+            log(e, "failed to create attachment from: " + path); //$NON-NLS-1$
+        }
+        return null;
+    }
+
+    private void loadFont(Element fontEle, ITopic topic) {
+        if (fontEle == null)
+            return;
+        String name = att(fontEle, "NAME"); //$NON-NLS-1$
+        if (name != null) {
+            registerStyle(topic, Styles.FontFamily, name);
+        }
+        String size = att(fontEle, "SIZE"); //$NON-NLS-1$
+        if (size != null) {
+            registerStyle(topic, Styles.FontSize, size);
+        }
+        String italic = att(fontEle, "ITALIC"); //$NON-NLS-1$
+        if ("true".equalsIgnoreCase(italic)) { //$NON-NLS-1$
+            registerStyle(topic, Styles.FontStyle, Styles.FONT_STYLE_ITALIC);
+        }
+        String bold = att(fontEle, "BOLD"); //$NON-NLS-1$
+        if ("true".equalsIgnoreCase(bold)) //$NON-NLS-1$
+            registerStyle(topic, Styles.FontWeight, Styles.FONT_WEIGHT_BOLD);
+    }
+
+    private void registerStyle(IStyled styleOwned, String key, String value) {
+        if (value == null)
+            return;
+        IStyle style = styleMap.get(styleOwned);
+        if (style == null) {
+            style = getStyleSheet().createStyle(styleOwned.getStyleType());
+            getStyleSheet().addStyle(style, IStyleSheet.NORMAL_STYLES);
+            styleMap.put(styleOwned, style);
+        }
+        style.setProperty(key, value);
+    }
+
+    private String parseSize(String size) {
+        if ("2".equals(size)) //$NON-NLS-1$
+            return "10"; //$NON-NLS-1$
+        else if ("3".equals(size)) //$NON-NLS-1$
+            return "12"; //$NON-NLS-1$
+        else if ("4".equals(size)) //$NON-NLS-1$
+            return "14"; //$NON-NLS-1$
+        else if ("5".equals(size)) //$NON-NLS-1$
+            return "18"; //$NON-NLS-1$
+        else if ("6".equals(size)) //$NON-NLS-1$
+            return "24"; //$NON-NLS-1$
+        return "8"; //$NON-NLS-1$
+    }
+
+    private String parseAlign(String align) {
+        if (align.endsWith(Styles.ALIGN_CENTER))
+            return Styles.ALIGN_CENTER;
+        else if (align.endsWith(Styles.ALIGN_RIGHT))
+            return Styles.ALIGN_RIGHT;
+        return Styles.ALIGN_LEFT;
+    }
+
+    private IStyleSheet getStyleSheet() {
+        if (styleSheet == null)
+            styleSheet = Core.getStyleSheetBuilder().createStyleSheet();
+        return styleSheet;
+    }
+
+    private String getTransferred(String type, String sourceId, String defaultId) {
+        if (sourceId != null) {
+            ResourceMappingManager mappings = getMappings();
+            if (mappings != null) {
+                String destination = mappings.getDestination(type, sourceId);
+                if (destination != null)
+                    return destination;
+            }
+        }
+        return defaultId;
+    }
+
+    private ResourceMappingManager getMappings() {
+        if (mappings == null)
+            mappings = createMappings();
+        return mappings;
+    }
+
+    private ResourceMappingManager createMappings() {
+        return FreeMindResourceMappingManager.getInstance();
+    }
+
+    private void checkInterrupted() throws InterruptedException {
+        if (getMonitor().isCanceled())
+            throw new InterruptedException();
+    }
+
+    private DocumentBuilder getDocumentBuilder()
+            throws ParserConfigurationException {
+        if (documentBuilder == null) {
+            DocumentBuilderFactory factory = DocumentBuilderFactory
+                    .newInstance();
+            factory
+                    .setAttribute(
+                            "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+                            true);
+            documentBuilder = factory.newDocumentBuilder();
+        }
+        return documentBuilder;
     }
 
     private static Element child(Element parentEle, String childTag) {
@@ -308,11 +669,8 @@ public class FreeMindImporter extends MindMapImporter implements
     private static Iterator<Element> children(final Element parentEle,
             final String childTag) {
         return new Iterator<Element>() {
-
             String tag = DOMUtils.getLocalName(childTag);
-
             Iterator<Element> it = DOMUtils.childElementIter(parentEle);
-
             Element next = findNext();
 
             public void remove() {
@@ -357,44 +715,6 @@ public class FreeMindImporter extends MindMapImporter implements
         return null;
     }
 
-    private static String getTransferred(String type, String sourceId,
-            String defaultId) {
-        if (sourceId != null) {
-            ResourceMappingManager mappings = getMappings();
-            if (mappings != null) {
-                String destination = mappings.getDestination(type, sourceId);
-                if (destination != null)
-                    return destination;
-            }
-        }
-        return defaultId;
-    }
-
-    private static ResourceMappingManager getMappings() {
-        if (mappings == null) {
-            mappings = createMappings();
-        }
-        return mappings;
-    }
-
-    private static ResourceMappingManager createMappings() {
-        return FreeMindResourceMappingManager.getInstance();
-    }
-
-    private DocumentBuilder getDocumentBuilder()
-            throws ParserConfigurationException {
-        if (documentBuilder == null) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory
-                    .newInstance();
-            factory
-                    .setAttribute(
-                            "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                            true);
-            documentBuilder = factory.newDocumentBuilder();
-        }
-        return documentBuilder;
-    }
-
     public void error(SAXParseException exception) throws SAXException {
         log(exception, null);
     }
@@ -406,5 +726,4 @@ public class FreeMindImporter extends MindMapImporter implements
     public void warning(SAXParseException exception) throws SAXException {
         log(exception, null);
     }
-
 }

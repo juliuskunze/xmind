@@ -101,7 +101,7 @@ import org.json.JSONObject;
  * 200: OK
  * </p>
  * 
- * @author MANGOSOFT
+ * @author Frank Shaka
  * 
  */
 public class HttpUtils {
@@ -109,9 +109,9 @@ public class HttpUtils {
     private static final boolean DEBUG = false;
 
     /**
-     * http://www.xmindshare.com/_res/upload/mapfile/{USERNAME}/{SESSION}
+     * http://www.xmind.net/_fs/mapfile/{USERNAME}/{SESSION}
      */
-    private static final String RES_URL = "http://share.xmind.net/_res/upload/mapfile/"; //$NON-NLS-1$
+    private static final String RES_URL = "http://www.xmind.net/_fs/mapfile/"; //$NON-NLS-1$
 
     private HttpUtils() {
     }

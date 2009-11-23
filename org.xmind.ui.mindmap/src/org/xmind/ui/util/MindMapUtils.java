@@ -280,32 +280,6 @@ public class MindMapUtils {
     }
 
     public static ImageDescriptor getImageDescriptor(Object element) {
-//        if (element instanceof ITopic) {
-//            ITopic t = (ITopic) element;
-//            String hyperlink = t.getHyperlink();
-//            if (hyperlink != null) {
-//                IAction action = MindMapUI.getProtocolManager()
-//                        .createOpenHyperlinkAction(t, hyperlink);
-//                if (action != null)
-//                    return action.getImageDescriptor();
-//            }
-//            if (t.isRoot()) {
-//                return MindMapUI.getImages().get(IMindMapImages.CENTRAL, true);
-//            }
-//            if (!t.isAttached()) {
-//                return MindMapUI.getImages().get(IMindMapImages.FLOATING, true);
-//            }
-//            ITopic parent = t.getParent();
-//            if (parent != null && parent.isRoot()) {
-//                return MindMapUI.getImages().get(IMindMapImages.MAIN, true);
-//            }
-//            return MindMapUI.getImages().get(IMindMapImages.TOPIC, true);
-//        } else if (element instanceof ISheet) {
-//            return MindMapUI.getImages().get(IMindMapImages.SHEET, true);
-//        } else if (element instanceof IWorkbook) {
-//            return MindMapUI.getImages().get(IMindMapImages.WORKBOOK, true);
-//        }
-//        return null;
         return MindMapUI.getImages().getElementIcon(element, true);
     }
 
@@ -757,6 +731,16 @@ public class MindMapUtils {
                 return ((ISheetComponent) adapter).getOwnedSheet();
         }
         return null;
+    }
+
+    public static List<ITopicPart> getTopicParts(List<IPart> parts) {
+        ArrayList<ITopicPart> topics = new ArrayList<ITopicPart>(parts.size());
+        for (IPart p : parts) {
+            if (p instanceof ITopicPart)
+                topics.add((ITopicPart) p);
+        }
+        topics.trimToSize();
+        return topics;
     }
 
 }

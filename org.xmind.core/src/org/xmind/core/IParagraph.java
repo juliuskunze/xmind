@@ -13,16 +13,9 @@
  *******************************************************************************/
 package org.xmind.core;
 
-import java.util.List;
-
 import org.xmind.core.style.IStyled;
 
-public interface IParagraph extends IAdaptable, IStyled, IWorkbookComponent {
-
-    List<ISpan> getSpans();
-
-    void addSpan(ISpan span);
-
-    void removeSpan(ISpan span);
+public interface IParagraph extends IAdaptable, IStyled, IWorkbookComponent,
+        ISpanList {
 
 }

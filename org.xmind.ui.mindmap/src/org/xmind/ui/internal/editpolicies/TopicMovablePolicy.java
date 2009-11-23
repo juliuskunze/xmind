@@ -55,7 +55,8 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
                 || GEF.REQ_MOVE_UP.equals(requestType)
                 || GEF.REQ_MOVE_DOWN.equals(requestType)
                 || GEF.REQ_MOVE_LEFT.equals(requestType)
-                || GEF.REQ_MOVE_RIGHT.equals(requestType);
+                || GEF.REQ_MOVE_RIGHT.equals(requestType)
+                || GEF.REQ_SORT.equals(requestType);
     }
 
     public void handle(Request request) {
@@ -65,6 +66,8 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
             moveOrCopyTopics(request);
         } else if (GEF.REQ_ALIGN.equals(requestType)) {
             alignTopics(request);
+        } else if (GEF.REQ_SORT.equals(requestType)) {
+            sortTopics(request);
         } else if (GEF.REQ_MOVE_UP.equals(requestType)
                 || GEF.REQ_MOVE_DOWN.equals(requestType)
                 || GEF.REQ_MOVE_LEFT.equals(requestType)
@@ -153,6 +156,10 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
         return -1;
     }
 
+    private void sortTopics(Request request) {
+
+    }
+
     private void alignTopics(Request request) {
         List<ITopic> topics = MindMapUtils.filterOutDescendents(MindMapUtils
                 .getTopics(request.getTargets()), null);
@@ -236,7 +243,6 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
                 .getTopics(request.getTargets()), null);
         if (topics.isEmpty())
             return;
-
         Collections.sort(topics, Core.getTopicComparator());
 
         Point targetPosition = (Point) request.getParameter(GEF.PARAM_POSITION);
@@ -266,16 +272,12 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
             // Sorry, NO valid parent topic has been found to add these topics
             return;
 
-//        Command cmd = createReorganizeCommand(request, topics, viewer,
-//                position, relative, parentTopic, index, type, copy);
-//        if (cmd == null)
-//            return;
-
         TopicMoveCommandBuilder builder = new TopicMoveCommandBuilder(viewer,
                 request.getTargetCommandStack(), targetParent, targetIndex,
                 targetType, targetPosition, relative);
         PropertyCommandBuilder builder2 = new PropertyCommandBuilder(viewer,
                 builder, request);
+
         if (!builder.canStart())
             return;
 
@@ -283,14 +285,12 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
                 : CommandMessages.Command_MoveTopic);
         builder.start();
         builder2.start();
-        for (ITopic topic : topics) {
-            if (copy) {
-                builder.copyTopic(topic);
-            } else {
-                builder.moveTopic(topic);
-            }
-            builder2.addSource(topic, true);
-        }
+        if (copy)
+            builder.copyTopics(topics);
+        else
+            builder.moveTopics(topics);
+        builder2.addSources(topics.toArray(), true);
+
         builder2.end();
         builder.end();
 //        saveAndRun(cmd, request.getTargetDomain());

@@ -19,13 +19,13 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.ui.IEditorPart;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.ui.dialogs.HyperlinkPage;
-import org.xmind.ui.internal.protocols.TopicProtocol;
 import org.xmind.ui.mindmap.MindMapUI;
-import org.xmind.ui.util.MindMapUtils;
 import org.xmind.ui.viewers.ImageCachedLabelProvider;
 
 public class TopicHyperlinkPage extends HyperlinkPage {
@@ -114,7 +114,7 @@ public class TopicHyperlinkPage extends HyperlinkPage {
                 Object element = ss.getFirstElement();
                 if (element instanceof ITopic) {
                     isModifyValue = true;
-                    setValue(TopicProtocol.toXmindURL((ITopic) element));
+                    setValue(HyperlinkUtils.toInternalURL((ITopic) element));
                     isModifyValue = false;
                     setCanFinish(true);
                 }
@@ -136,17 +136,8 @@ public class TopicHyperlinkPage extends HyperlinkPage {
     public TopicHyperlinkPage() {
     }
 
-    public void init(IStructuredSelection selection) {
-        this.workbook = findWorkbook(selection);
-    }
-
-    private IWorkbook findWorkbook(IStructuredSelection selection) {
-        for (Object o : selection.toArray()) {
-            IWorkbook workbook = MindMapUtils.findWorkbook(o);
-            if (workbook != null)
-                return workbook;
-        }
-        return null;
+    public void init(IEditorPart editor, IStructuredSelection selection) {
+        this.workbook = (IWorkbook) editor.getAdapter(IWorkbook.class);
     }
 
     public void createControl(Composite parent) {
@@ -207,7 +198,7 @@ public class TopicHyperlinkPage extends HyperlinkPage {
             return null;
         if (workbook == null)
             return null;
-        return TopicProtocol.findElement(value, workbook);
+        return HyperlinkUtils.findElement(value, workbook);
     }
 
     public void dispose() {

@@ -44,8 +44,9 @@ public class ModifyTopicHyperlinkCommand extends ModifyCommand {
     protected void setValue(Object source, Object value) {
         if (source instanceof ITopic
                 && (value == null || value instanceof String)) {
-            ((ITopic) source).setHyperlink((String) value);
+            ITopic topic = (ITopic) source;
+            String href = (String) value;
+            topic.setHyperlink(href);
         }
     }
-
 }

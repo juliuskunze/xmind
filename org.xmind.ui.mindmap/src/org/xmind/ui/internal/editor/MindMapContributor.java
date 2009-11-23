@@ -74,6 +74,7 @@ import org.xmind.ui.internal.actions.GroupMarkers;
 import org.xmind.ui.internal.actions.MindMapViewsMenu;
 import org.xmind.ui.internal.actions.RenameSheetAction;
 import org.xmind.ui.internal.actions.SaveSheetAsAction;
+import org.xmind.ui.internal.actions.SortAction;
 import org.xmind.ui.internal.actions.StructureMenu;
 import org.xmind.ui.mindmap.ICategoryAnalyzation;
 import org.xmind.ui.mindmap.ICategoryManager;
@@ -83,7 +84,7 @@ import org.xmind.ui.util.MindMapUtils;
 public class MindMapContributor extends GraphicalEditorActionBarContributor
         implements ISelectionListener {
 
-    private static class Contributor {
+    protected static class Contributor {
 
         private String id;
 
@@ -229,8 +230,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
 
         private void buildSingleTopicPopupActions() {
             add(createPopupInsertMenu());
-            add(structureMenu);
-//            add(popupAllMarkersMenu);
+            add(getPopupStructureMenu());
             add(getPopupAllMarkersMenu());
             add(new Separator());
 
@@ -262,6 +262,9 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
             add(resetPositionAction);
             add(new Separator());
 
+            add(getPopupSortGroup());
+            add(new Separator());
+
             add(new Separator(ActionConstants.CM_ADDITIONS));
             add(new Separator());
             add(propertiesAction);
@@ -272,7 +275,8 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
             add(createSummaryAction);
             add(new Separator());
 
-            add(structureMenu);
+//            add(structureMenu);
+
 //            add(popupAllMarkersMenu);
             add(getPopupAllMarkersMenu());
             add(new Separator());
@@ -290,7 +294,6 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
             add(resetPositionAction);
             add(new Separator());
 
-//            add(getPopupAlignmentGroup());
             add(getPopupAlignmentGroup());
             add(new Separator());
 
@@ -429,8 +432,13 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     private Contributor popupAlignGroup;
     private Map<Integer, AlignmentAction> alignmentActions;
 
+    private MenuManager sortGroup;
+    private Contributor popupSortGroup;
+    private Map<String, SortAction> sortActions;
+
     private IWorkbenchAction newSheetAction;
     private IWorkbenchAction deleteSheetAction;
+    private IWorkbenchAction deleteOtherSheetAction;
 
     private IWorkbenchAction allowOverlapsAction;
     private IWorkbenchAction tileAction;
@@ -467,7 +475,6 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     private IWorkbenchAction pasteAction;
     private IWorkbenchAction propertiesAction;
 
-    private List<IWorkbenchAction> imageActionExtensions;
     private DropDownInsertImageAction dropDownInsertImageAction;
 
     private IHandlerService handlerService;
@@ -477,6 +484,8 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     private AddMarkerHandler addMarkerHandler;
 
     private ContentPopupContributor contentPopupContributor;
+
+    private IGraphicalEditorPage page;
 
     public void init(IActionBars bars, IWorkbenchPage page) {
         this.handlerService = (IHandlerService) page.getWorkbenchWindow()
@@ -584,6 +593,10 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         addRetargetAction((RetargetAction) newSheetAction);
         deleteSheetAction = MindMapActionFactory.DELETE_SHEET.create(window);
         addRetargetAction((RetargetAction) deleteSheetAction);
+        deleteOtherSheetAction = MindMapActionFactory.DELETE_OTHER_SHEET
+                .create(window);
+        addRetargetAction((RetargetAction) deleteOtherSheetAction);
+
         createRelationshipAction = MindMapActionFactory.CREATE_RELATIONSHIP
                 .create(window);
         addRetargetAction((RetargetAction) createRelationshipAction);
@@ -633,11 +646,6 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         findReplaceAction = new FindReplaceAction(window);
         addAction(findReplaceAction);
 
-//        allMarkersMenu = new AllMarkersMenu();
-//        popupAllMarkersMenu = new AllMarkersMenu();
-//        popupAlignGroup = makeAlignmentGroup();
-
-        structureMenu = new StructureMenu();
         saveSheetAsAction = new SaveSheetAsAction();
 
         renameSheetAction = new RenameSheetAction();
@@ -669,22 +677,40 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
 
         contentPopupContributor = new ContentPopupContributor();
 
-        List<IActionBuilder> imageChooserActionBuilders = ImageActionExtensionManager
+        List<IActionBuilder> imageActionBuilders = ImageActionExtensionManager
                 .getInstance().getActionBuilders();
-        imageActionExtensions = new ArrayList<IWorkbenchAction>(
-                imageChooserActionBuilders.size());
-        for (IActionBuilder builder : imageChooserActionBuilders) {
-            IWorkbenchAction imageChooserAction = builder
+        List<IWorkbenchAction> imageActionExtensions = new ArrayList<IWorkbenchAction>(
+                imageActionBuilders.size());
+        for (IActionBuilder builder : imageActionBuilders) {
+            IWorkbenchAction imageActionExtension = builder
                     .createAction(getPage());
-            imageActionExtensions.add(imageChooserAction);
-            addAction(imageChooserAction);
+            imageActionExtensions.add(imageActionExtension);
+            addAction(imageActionExtension);
         }
 
         if (imageActionExtensions.size() > 0) {
             imageActionExtensions.add(0, insertImageAction);
             dropDownInsertImageAction = new DropDownInsertImageAction(
-                    imageActionExtensions.get(0), imageActionExtensions);
+                    insertImageAction, imageActionExtensions);
+            dropDownInsertImageAction.setText(insertImageAction.getText());
+            dropDownInsertImageAction.setToolTipText(insertImageAction
+                    .getToolTipText());
+            dropDownInsertImageAction.setImageDescriptor(insertImageAction
+                    .getImageDescriptor());
+            dropDownInsertImageAction
+                    .setDisabledImageDescriptor(insertImageAction
+                            .getDisabledImageDescriptor());
+            insertImageAction.setText(MindMapMessages.InsertImageFromFile_text);
+            insertImageAction
+                    .setToolTipText(MindMapMessages.InsertImageFromFile_toolTip);
+            insertImageAction.setImageDescriptor(null);
+            insertImageAction.setDisabledImageDescriptor(null);
         }
+    }
+
+    private IAction getInsertImageAction() {
+        return dropDownInsertImageAction != null ? dropDownInsertImageAction
+                : insertImageAction;
     }
 
     public void init(IActionBars bars) {
@@ -821,8 +847,9 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     private IContributionItem createViewList(boolean mindMapOrSystem) {
         if (mindMapOrSystem)
             return new MindMapViewsMenu(getPage().getWorkbenchWindow());
-        return ContributionItemFactory.VIEWS_SHORTLIST.create(getPage()
-                .getWorkbenchWindow());
+        IContributionItem contributeItem = ContributionItemFactory.VIEWS_SHORTLIST
+                .create(getPage().getWorkbenchWindow());
+        return contributeItem;
     }
 
     private void addInsertActions(IMenuManager menu) {
@@ -841,15 +868,8 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         menu.add(new Separator());
 
         menu.add(new GroupMarker(ActionConstants.GROUP_INSERT));
-//        menu.add(allMarkersMenu);
         menu.add(getAllMarkersMenu());
-
-        if (dropDownInsertImageAction != null) {
-            menu.add(dropDownInsertImageAction);
-        } else {
-            menu.add(insertImageAction);
-        }
-
+        menu.add(getInsertImageAction());
         menu.add(createRelationshipAction);
         menu.add(createBoundaryAction);
         menu.add(createSummaryAction);
@@ -902,6 +922,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         menu.add(resetPositionAction);
         menu.add(new Separator());
         menu.add(getAlignmentGroup());
+        menu.add(getSortGroup());
         menu.add(new Separator());
         menu.add(new GroupMarker(ActionConstants.POSITION_EXT));
         menu.add(new Separator());
@@ -955,18 +976,12 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         toolBarManager.add(insertSubtopicAction);
         toolBarManager.add(insertTopicBeforeAction);
         toolBarManager.add(insertParentTopicAction);
-//        toolBarManager.add(insertSheetAction);
         toolBarManager.add(new GroupMarker(ActionConstants.INSERT_TOPIC_EXT));
         toolBarManager.add(new Separator());
 
         toolBarManager.add(new GroupMarker(ActionConstants.GROUP_INSERT));
         toolBarManager.add(insertAttachmentAction);
-
-        if (dropDownInsertImageAction != null) {
-            toolBarManager.add(dropDownInsertImageAction);
-        } else {
-            toolBarManager.add(insertImageAction);
-        }
+        toolBarManager.add(getInsertImageAction());
         toolBarManager.add(editLabelAction);
         toolBarManager.add(editNotesAction);
         toolBarManager.add(modifyHyperlinkAction);
@@ -989,22 +1004,37 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     }
 
     private MenuManager getPopupAllMarkersMenu() {
-        if (popupAllMarkersMenu == null)
-            popupAllMarkersMenu = new AllMarkersMenu();
+        if (popupAllMarkersMenu != null) {
+            popupAllMarkersMenu.dispose();
+            popupAllMarkersMenu = null;
+        }
+        popupAllMarkersMenu = new AllMarkersMenu();
+        popupAllMarkersMenu.setActivePage(page);
         return popupAllMarkersMenu;
     }
 
     private MenuManager getAlignmentGroup() {
-        if (alignmentGroup == null) {
+        if (alignmentGroup == null)
             alignmentGroup = makeAlignmentGroup();
-        }
         return alignmentGroup;
+    }
+
+    private MenuManager getSortGroup() {
+        if (sortGroup == null)
+            sortGroup = makeSortGroup();
+        return sortGroup;
     }
 
     private Contributor getPopupAlignmentGroup() {
         if (popupAlignGroup == null)
             popupAlignGroup = makeAlignmentGroup2();
         return popupAlignGroup;
+    }
+
+    private Contributor getPopupSortGroup() {
+        if (popupSortGroup == null)
+            popupSortGroup = makeSortGroup2();
+        return popupSortGroup;
     }
 
     private MenuManager makeAlignmentGroup() {
@@ -1014,10 +1044,24 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         return menu;
     }
 
+    private MenuManager makeSortGroup() {
+        MenuManager menu = new MenuManager(MindMapMessages.SortMenu,
+                ActionConstants.SORT_GROUP_ID);
+        buildSortGroup(menu);
+        return menu;
+    }
+
     private Contributor makeAlignmentGroup2() {
         Contributor group = new Contributor(ActionConstants.ALIGNMENT_GROUP_ID,
                 MindMapMessages.AlignmentMenu);
         buildAlignmentGroup(group);
+        return group;
+    }
+
+    private Contributor makeSortGroup2() {
+        Contributor group = new Contributor(ActionConstants.SORT_GROUP_ID,
+                MindMapMessages.SortMenu);
+        buildSortGroup(group);
         return group;
     }
 
@@ -1033,6 +1077,24 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         addAlignmentAction(manager, PositionConstants.BOTTOM);
         addContribution(manager, new Separator(MB_ADDITIONS));
         addContribution(manager, new GroupMarker(ActionConstants.ALIGNMENT_END));
+    }
+
+    private void buildSortGroup(Object manager) {
+        addSortAction(manager, ActionConstants.SORT_TITLE_ID);
+        addSortAction(manager, ActionConstants.SORT_PRIORITY_ID);
+        addSortAction(manager, ActionConstants.SORT_MODIFIED_ID);
+        addContribution(manager, new Separator(MB_ADDITIONS));
+        addContribution(manager, new GroupMarker(ActionConstants.SORT_EXT));
+    }
+
+    private StructureMenu getPopupStructureMenu() {
+        if (structureMenu != null) {
+            structureMenu.dispose();
+            structureMenu = null;
+        }
+        structureMenu = new StructureMenu();
+        structureMenu.setActivePage(page);
+        return structureMenu;
     }
 
     private Contributor createPopupInsertMenu() {
@@ -1089,6 +1151,16 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         addRetargetAction(action);
     }
 
+    private void addSortAction(Object menu, String sortId) {
+        SortAction action = createSortAction(sortId);
+        if (menu instanceof IMenuManager) {
+            ((IMenuManager) menu).add(action);
+        } else if (menu instanceof Contributor) {
+            ((Contributor) menu).add(action);
+        }
+        addRetargetAction(action);
+    }
+
     /**
      * @param alignment
      * @return
@@ -1108,6 +1180,21 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         return action;
     }
 
+    private SortAction createSortAction(String sortId) {
+        SortAction action;
+        if (sortActions != null) {
+            action = sortActions.get(sortId);
+            if (action != null)
+                return action;
+        }
+        action = new SortAction(sortId);
+        if (sortActions == null) {
+            sortActions = new HashMap<String, SortAction>();
+        }
+        sortActions.put(sortId, action);
+        return action;
+    }
+
     @Override
     public void setActiveEditor(IEditorPart targetEditor) {
         if (groupMarkers != null) {
@@ -1122,23 +1209,28 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     }
 
     protected void activePageChanged(IGraphicalEditorPage page) {
+        this.page = page;
+
         if (addMarkerHandler != null) {
             addMarkerHandler.setActivatePage(page);
         }
-//        if (allMarkersMenu != null) {
         if (getAllMarkersMenu() != null) {
             allMarkersMenu.setActivePage(page);
         }
 //        if (popupAllMarkersMenu != null) {
-        if (getPopupAllMarkersMenu() != null) {
-            popupAllMarkersMenu.setActivePage(page);
-        }
+//        if (getPopupAllMarkersMenu() != null) {
+//            popupAllMarkersMenu.setActivePage(page);
+//        }
 //        if (groupMarkers != null) {
 //            groupMarkers.setSelectionProvider( getSelectionProvider());
 //        }
-        if (structureMenu != null) {
-            structureMenu.setActivePage(page);
-        }
+
+//        if (structureMenu != null) {
+//            structureMenu.setActivePage(page);
+//        }
+//        if (getPopupStructureMenu() != null)
+//            getPopupStructureMenu().setActivePage(page);
+
         if (saveSheetAsAction != null) {
             saveSheetAsAction.setActivePage(page);
         }
@@ -1178,6 +1270,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         menu.add(renameSheetAction);
         menu.add(saveSheetAsAction);
         menu.add(deleteSheetAction);
+        menu.add(deleteOtherSheetAction);
         super.contributeToPagePopupMenu(menu);
         menu.add(new Separator());
         menu.add(propertiesAction);
@@ -1192,8 +1285,14 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
             alignmentGroup.dispose();
             alignmentGroup = null;
         }
+        if (sortGroup != null) {
+            sortGroup.dispose();
+            sortGroup = null;
+        }
         popupAlignGroup = null;
+        popupSortGroup = null;
         alignmentActions = null;
+        sortActions = null;
 
         if (allMarkersMenu != null) {
             allMarkersMenu.dispose();

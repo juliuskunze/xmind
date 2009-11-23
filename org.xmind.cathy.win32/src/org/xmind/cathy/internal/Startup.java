@@ -11,25 +11,16 @@
  */
 package org.xmind.cathy.internal;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IStartup;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.xmind.cathy.internal.actions.SimpleOpenAction;
 
 public class Startup implements IStartup {
-
-    private IWorkbenchWindow primaryWindow;
 
     public void earlyStartup() {
         final IWorkbench workbench = PlatformUI.getWorkbench();
@@ -45,17 +36,10 @@ public class Startup implements IStartup {
     }
 
     private void hookWindow(IWorkbenchWindow window) {
-        this.primaryWindow = window;
         Shell shell = window.getShell();
         if (shell != null && !shell.isDisposed()) {
             int hWnd = shell.handle;
             logPrimaryWindow(hWnd);
-            shell.addShellListener(new ShellAdapter() {
-                public void shellActivated(ShellEvent e) {
-                    super.shellActivated(e);
-                    checkLog();
-                }
-            });
             shell.addDisposeListener(new DisposeListener() {
                 public void widgetDisposed(DisposeEvent e) {
                     Log.get(Log.SINGLETON).delete();
@@ -75,7 +59,11 @@ public class Startup implements IStartup {
         IWorkbenchWindow window = PlatformUI.getWorkbench()
                 .getActiveWorkbenchWindow();
         if (window == null) {
-            return;
+            IWorkbenchWindow[] windows = PlatformUI.getWorkbench()
+                    .getWorkbenchWindows();
+            if (windows == null || windows.length <= 0)
+                return;
+            window = windows[0];
         }
         hookWindow(window);
     }
@@ -90,70 +78,4 @@ public class Startup implements IStartup {
         log.saveProperties();
     }
 
-    private void checkLog() {
-        Log log = Log.get(Log.OPENING);
-        if (log.exists()) {
-            boolean presentation = false;
-            List<String> files = new ArrayList<String>();
-            String[] contents = log.getContents();
-            for (String line : contents) {
-                if ("-p".equals(line)) { //$NON-NLS-1$
-                    presentation = true;
-                } else
-                    files.add(line);
-            }
-            if (files.isEmpty())
-                return;
-            for (String file : files) {
-                open(file, presentation);
-                if (presentation)
-                    presentation = false;
-            }
-            files.clear();
-            log.delete();
-        }
-    }
-
-    private void open(String path, boolean presentation) {
-        File file = new File(path);
-        if (file.isFile() && file.canRead()) {
-            if (primaryWindow == null)
-                new SimpleOpenAction(path, presentation).run();
-            else
-                SimpleOpenAction.open(primaryWindow, path);
-        }
-    }
-
-    //    public void earlyStartup() {
-    ////        initXULRunnerPath();
-    //        //initProxyService();
-    //    }
-
-    //    private static final String KEY_XULRUNNER_PATH = "org.eclipse.swt.browser.XULRunnerPath"; //$NON-NLS-1$
-
-    //    private void initXULRunnerPath() {
-    //        String xulRunnerPath = System.getProperty(KEY_XULRUNNER_PATH);
-    //        if (xulRunnerPath == null) {
-    //            xulRunnerPath = getXULRunnerPath();
-    //            if (xulRunnerPath != null) {
-    //                System.setProperty(KEY_XULRUNNER_PATH, xulRunnerPath);
-    //            }
-    //        }
-    //    }
-    //    
-    //    private String getXULRunnerPath() {
-    //        URL instUrl = Platform.getInstallLocation().getURL();
-    //        try {
-    //            instUrl = FileLocator.toFileURL(instUrl);
-    //        } catch (IOException e1) {
-    //        }
-    //        String path = instUrl.getFile();
-    //        if (path != null && !"".equals(path)) { //$NON-NLS-1$
-    //            File dir = new File(new File(path, "misc"), "xulrunner-1.8.1.3");
-    //            if (dir.exists())
-    //                return dir.getAbsolutePath();
-    //        }
-    //        return null;
-    //    }
-    //
 }

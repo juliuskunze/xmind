@@ -66,7 +66,7 @@ public class ProtocolManager extends RegistryReader implements IProtocolManager 
         }
     }
 
-    private static class DefaultProtocol implements IProtocol {
+    protected static class DefaultProtocol implements IProtocol {
 
         public String getProtocolName() {
             return null;

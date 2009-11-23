@@ -196,7 +196,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         }
     }
 
-    private class TopicTitlePreviewPart extends GraphicalEditPart {
+    protected class TopicTitlePreviewPart extends GraphicalEditPart {
 
         private RotatableWrapLabel number;
 
@@ -266,7 +266,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         }
     }
 
-    private class HyperlinkPreviewPart extends TopicTitlePreviewPart {
+    protected class HyperlinkPreviewPart extends TopicTitlePreviewPart {
 
         public HyperlinkPreviewPart() {
         }
@@ -297,7 +297,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         }
     }
 
-    private class AttachmentPreviewPart extends TopicTitlePreviewPart {
+    protected class AttachmentPreviewPart extends TopicTitlePreviewPart {
 
         public AttachmentPreviewPart() {
         }
@@ -328,7 +328,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         }
     }
 
-    private class OverviewPreviewPart extends GraphicalEditPart {
+    protected class OverviewPreviewPart extends GraphicalEditPart {
 
         private SizeableImageFigure imgFigure;
 
@@ -383,7 +383,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         }
     }
 
-    private class TagsPreviewPart extends GraphicalEditPart {
+    protected class TagsPreviewPart extends GraphicalEditPart {
 
         public TagsPreviewPart() {
         }
@@ -437,7 +437,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         }
     }
 
-    private class MarkerPreviewPart extends GraphicalEditPart {
+    protected class MarkerPreviewPart extends GraphicalEditPart {
 
         public MarkerPreviewPart() {
         }
@@ -463,7 +463,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
 
     }
 
-    private class LabelsPreviewPart extends GraphicalEditPart {
+    protected class LabelsPreviewPart extends GraphicalEditPart {
 
         public LabelsPreviewPart() {
         }
@@ -489,7 +489,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
 
     }
 
-    private class ImagePreviewPart extends GraphicalEditPart {
+    protected class ImagePreviewPart extends GraphicalEditPart {
 
         public ImagePreviewPart() {
         }
@@ -520,7 +520,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
 
     }
 
-    private class NotesPreviewPart extends GraphicalEditPart {
+    protected class NotesPreviewPart extends GraphicalEditPart {
 
         public NotesPreviewPart() {
         }
@@ -541,7 +541,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
 
     }
 
-    private class RelationshipsPreviewPart extends GraphicalEditPart {
+    protected class RelationshipsPreviewPart extends GraphicalEditPart {
 
         public RelationshipsPreviewPart() {
         }
@@ -574,7 +574,8 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
             relationshipsLabel.setFont(FontUtils.getNewHeight(
                     JFaceResources.DEFAULT_FONT, 6));
             relationshipsLabel.setForegroundColor(ColorConstants.darkGray);
-            relationshipsLabel.setText(WizardMessages.DocumentExportPage_Sample_Relationships);
+            relationshipsLabel
+                    .setText(WizardMessages.DocumentExportPage_Sample_Relationships);
 
             figure.add(seeAlsoLabel);
             figure.add(relationshipsLabel);
@@ -582,7 +583,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
 
     }
 
-    private class PreviewPartFactory implements IPartFactory {
+    protected class PreviewPartFactory implements IPartFactory {
 
         private IPartFactory factory;
 
@@ -1015,14 +1016,18 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         IWorkbook workbook = Core.getWorkbookBuilder().createWorkbook();
         ISheet sheet = workbook.getPrimarySheet();
         ITopic rootTopic = sheet.getRootTopic();
-        rootTopic.setTitleText(WizardMessages.DocumentExportPage_Sample_CentralTopic);
+        rootTopic
+                .setTitleText(WizardMessages.DocumentExportPage_Sample_CentralTopic);
 
         ITopic mainTopic = workbook.createTopic();
         rootTopic.add(mainTopic);
-        mainTopic.setTitleText(WizardMessages.DocumentExportPage_Sample_MainTopic1);
+        mainTopic
+                .setTitleText(WizardMessages.DocumentExportPage_Sample_MainTopic1);
         mainTopic.addMarker("priority-1"); //$NON-NLS-1$
         mainTopic.addMarker("smiley-smile"); //$NON-NLS-1$
-        mainTopic.setLabels(Arrays.asList(WizardMessages.DocumentExportPage_Sample_Label1, WizardMessages.DocumentExportPage_Sample_Label2));
+        mainTopic.setLabels(Arrays.asList(
+                WizardMessages.DocumentExportPage_Sample_Label1,
+                WizardMessages.DocumentExportPage_Sample_Label2));
         mainTopic.setHyperlink("http://www.xmind.net"); //$NON-NLS-1$
         mainTopic.getImage().setSource("temp.png"); //$NON-NLS-1$
         INotesContent notesContent = workbook.createNotesContent(INotes.PLAIN);
@@ -1039,19 +1044,23 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         mainTopic.add(sub2);
 
         ITopic summary1 = workbook.createTopic();
-        summary1.setTitleText(WizardMessages.DocumentExportPage_Sample_Summary1);
+        summary1
+                .setTitleText(WizardMessages.DocumentExportPage_Sample_Summary1);
         mainTopic.add(summary1, ITopic.SUMMARY);
 
         ITopic summary2 = workbook.createTopic();
-        summary2.setTitleText(WizardMessages.DocumentExportPage_Sample_Summary2);
+        summary2
+                .setTitleText(WizardMessages.DocumentExportPage_Sample_Summary2);
         mainTopic.add(summary2, ITopic.SUMMARY);
 
         ITopic floating1 = workbook.createTopic();
-        floating1.setTitleText(WizardMessages.DocumentExportPage_Sample_FloatingTopic1);
+        floating1
+                .setTitleText(WizardMessages.DocumentExportPage_Sample_FloatingTopic1);
         rootTopic.add(floating1, ITopic.DETACHED);
 
         ITopic floating2 = workbook.createTopic();
-        floating2.setTitleText(WizardMessages.DocumentExportPage_Sample_FloatingTopic2);
+        floating2
+                .setTitleText(WizardMessages.DocumentExportPage_Sample_FloatingTopic2);
         rootTopic.add(floating2, ITopic.DETACHED);
         return sheet;
     }

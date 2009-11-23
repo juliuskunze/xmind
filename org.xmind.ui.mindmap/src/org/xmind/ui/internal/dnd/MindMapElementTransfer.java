@@ -16,6 +16,8 @@ package org.xmind.ui.internal.dnd;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.swt.dnd.ByteArrayTransfer;
 import org.eclipse.swt.dnd.TransferData;
@@ -38,6 +40,8 @@ public class MindMapElementTransfer extends ByteArrayTransfer {
     private Object[] elements = null;
 
     private IWorkbook tempWorkbook = null;
+
+    private Map<Object, Object> cloneMap = new HashMap<Object, Object>();
 
     private MindMapElementTransfer() {
     }
@@ -101,9 +105,23 @@ public class MindMapElementTransfer extends ByteArrayTransfer {
         ICloneData result = tempWorkbook.clone(Arrays.asList(elements));
         Collection<Object> cloneds = result.getCloneds();
         if (!cloneds.isEmpty()) {
+            fillCloneMap(result, elements);
             return cloneds.toArray();
         }
         return null;
+    }
+
+    private void fillCloneMap(ICloneData result, Object[] elements) {
+        if (!cloneMap.isEmpty())
+            cloneMap.clear();
+        for (Object obj : elements) {
+            Object cloned = result.get(obj);
+            cloneMap.put(cloned, obj);
+        }
+    }
+
+    public Map<Object, Object> getTransferMap() {
+        return cloneMap;
     }
 
     private IWorkbook recreateTempWorkbook() {

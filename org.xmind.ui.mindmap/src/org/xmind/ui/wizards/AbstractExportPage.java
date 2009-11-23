@@ -176,9 +176,8 @@ public abstract class AbstractExportPage extends WizardPage {
     protected void openBrowseDialog() {
         FileDialog dialog = createBrowseDialog();
         String path = dialog.open();
-        if (path != null) {
+        if (path != null)
             setTargetPath(path);
-        }
     }
 
     protected FileDialog createBrowseDialog() {

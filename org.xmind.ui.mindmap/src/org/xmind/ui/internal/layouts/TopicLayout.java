@@ -133,33 +133,52 @@ public class TopicLayout extends MindMapLayoutBase implements
         IImage imageModel = image.getImageModel();
         String alignment = imageModel.getAlignment();
         IFigure imageFigure = image.getFigure();
-        Dimension size = imageFigure.getPreferredSize();
+        PrecisionDimension size = r().rd(
+                new PrecisionDimension(imageFigure.getPreferredSize()));
+        PrecisionDimension size2 = r().td(
+                new PrecisionDimension(imageFigure.getPreferredSize()));
         Point ref = data.getReference();
         Rectangle r;
         Rectangle area = data.getClientArea();
         if (area == null) {
-            r = createBounds(ref, size);
+            r = createBounds(ref, size.toDraw2DDimension());
         } else {
             if (IImage.LEFT.equals(alignment)) {
-                data.translate((size.width + spacing) / 2, 0);
+                data.translate((int) ((size2.width + spacing) / 2), 0);
                 area = data.getClientArea();
-                r = new Rectangle(area.x - size.width - spacing, ref.y
-                        - size.height / 2, size.width, size.height);
+                r = new PrecisionRectangle(area.x - size2.width / 2
+                        - size.width / 2 - spacing, ref.y - size.height / 2,
+                        size.width, size.height).toDraw2DRectangle();
+                data.add(new PrecisionRectangle(area.x - size2.width - spacing,
+                        ref.y - size2.height / 2, size2.width, size2.height)
+                        .toDraw2DRectangle());
             } else if (IImage.RIGHT.equals(alignment)) {
-                data.translate(-(size.width + spacing) / 2, 0);
+                data.translate((int) (-(size2.width + spacing) / 2), 0);
                 area = data.getClientArea();
-                r = new Rectangle(area.x + area.width + spacing, ref.y
-                        - size.height / 2, size.width, size.height);
+                r = new PrecisionRectangle(area.x + area.width + spacing
+                        + size2.width / 2 - size.width / 2, ref.y - size.height
+                        / 2, size.width, size.height).toDraw2DRectangle();
+                data.add(new PrecisionRectangle(area.x + area.width + spacing,
+                        ref.y - size2.height / 2, size2.width, size2.height)
+                        .toDraw2DRectangle());
             } else if (IImage.BOTTOM.equals(alignment)) {
-                data.translate(0, -(size.height + spacing) / 2);
+                data.translate(0, -(int) ((size2.height + spacing) / 2));
                 area = data.getClientArea();
-                r = new Rectangle(ref.x - size.width / 2, area.y + area.height
-                        + spacing, size.width, size.height);
+                r = new PrecisionRectangle(ref.x - size.width / 2, area.y
+                        + area.height + size2.height / 2 - size.height / 2
+                        + spacing, size.width, size.height).toDraw2DRectangle();
+                data.add(new PrecisionRectangle(ref.x - size2.width / 2, area.y
+                        + area.height + spacing, size2.width, size2.height)
+                        .toDraw2DRectangle());
             } else /* if (IImage.TOP.equals(alignment) */{
-                data.translate(0, (size.height + spacing) / 2);
+                data.translate(0, (int) ((size2.height + spacing) / 2));
                 area = data.getClientArea();
-                r = new Rectangle(ref.x - size.width / 2, area.y - size.height
-                        - spacing, size.width, size.height);
+                r = new PrecisionRectangle(ref.x - size.width / 2, area.y
+                        - size2.height / 2 - size.height / 2 - spacing,
+                        size.width, size.height).toDraw2DRectangle();
+                data.add(new PrecisionRectangle(ref.x - size2.width / 2, area.y
+                        - size2.height - spacing, size2.width, size2.height)
+                        .toDraw2DRectangle());
             }
         }
         data.put(imageFigure, r);

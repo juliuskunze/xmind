@@ -120,21 +120,37 @@ public class TopicMoveCommandBuilder extends DeleteCommandBuilder {
         return insertIndex;
     }
 
-    public void moveTopic(ITopic topic) {
-        moveTopic(topic, insertIndex);
-        insertIndex++;
+//    public void moveTopic(ITopic topic) {
+//        moveTopic(topic, insertIndex);
+//        insertIndex++;
+//    }
+//
+//    public void copyTopic(ITopic topic) {
+//        copyTopic(topic, insertIndex);
+//        insertIndex++;
+//    }
+
+    public void copyTopics(List<ITopic> topics) {
+        for (ITopic topic : topics) {
+            copyTopic(topic, insertIndex);
+            insertIndex++;
+        }
     }
 
-    public void copyTopic(ITopic topic) {
-        copyTopic(topic, insertIndex);
-        insertIndex++;
+    public void moveTopics(List<ITopic> topics) {
+        for (ITopic topic : topics) {
+            deleteTopic(topic, insertIndex);
+        }
+        for (ITopic topic : topics) {
+            moveTopic(topic, insertIndex);
+            insertIndex++;
+        }
     }
 
-    private void moveTopic(ITopic topic, int toIndex) {
+    private void deleteTopic(ITopic topic, int toIndex) {
         ITopic oldParent = topic.getParent();
         int oldIndex = topic.getIndex();
         String oldType = topic.getType();
-        Point toPosition = calculateTargetPosition(topic);
         boolean needsReorganize = needsReorganize(topic, toIndex, oldParent,
                 oldIndex, oldType);
         if (needsReorganize) {
@@ -145,10 +161,26 @@ public class TopicMoveCommandBuilder extends DeleteCommandBuilder {
             }
             deleteTopic(topic, true);
         }
+    }
+
+    private void moveTopic(ITopic topic, int toIndex) {
+        ITopic oldParent = topic.getParent();
+        int oldIndex = topic.getIndex();
+        String oldType = topic.getType();
+        Point toPosition = calculateTargetPosition(topic);
+        boolean needsReorganize = needsReorganize(topic, toIndex, oldParent,
+                oldIndex, oldType);
+//        if (needsReorganize) {
+//            if (!isCached(oldParent)) {
+//                for (ITopicRange range : getSubRanges(oldParent)) {
+//                    cacheOldRangedTopics(range, oldParent);
+//                }
+//            }
+//            deleteTopic(topic, true);
+//        }
 
         add(new ModifyPositionCommand(topic, MindMapUtils
                 .toModelPosition(toPosition)), !needsReorganize);
-
         if (needsReorganize) {
             addTopic(topic, getTargetParent(), toIndex, getTargetType(), true);
             if (rangesToMove != null && !rangesToMove.isEmpty()) {
@@ -159,7 +191,6 @@ public class TopicMoveCommandBuilder extends DeleteCommandBuilder {
                 }
             }
         }
-
     }
 
     private void addTopic(ITopic topic, ITopic toParent, int toIndex,
@@ -358,9 +389,15 @@ public class TopicMoveCommandBuilder extends DeleteCommandBuilder {
                 && (oldType == null || !oldType.equals(getTargetType())))
             return true;
 
-        if (ITopic.ATTACHED.equals(oldType) && oldIndex != toIndex)
+        if (ITopic.ATTACHED.equals(oldType)
+                && oldIndex != getValidAttachedIndex(oldParent, toIndex))
             return true;
         return false;
+    }
+
+    private int getValidAttachedIndex(ITopic parent, int index) {
+        int size = parent.getChildren(ITopic.ATTACHED).size();
+        return index >= size ? index - 1 : index;
     }
 
     protected boolean isCached(ITopic parent) {

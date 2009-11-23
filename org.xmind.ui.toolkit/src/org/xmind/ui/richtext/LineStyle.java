@@ -20,6 +20,12 @@ import org.eclipse.swt.SWT;
  */
 public class LineStyle implements Cloneable {
 
+    public static final String NONE_STYLE = "none"; //$NON-NLS-1$
+
+    public static final String BULLET = "bullet"; //$NON-NLS-1$
+
+    public static final String NUMBER = "number"; //$NON-NLS-1$
+
     public static final int DEFAULT_ALIGNMENT = SWT.LEFT;
 
     public int lineIndex;
@@ -27,6 +33,12 @@ public class LineStyle implements Cloneable {
     public int alignment = DEFAULT_ALIGNMENT;
 
     public int indent = 0;
+
+//    public boolean bullet = false;
+
+//    public boolean number = false;
+
+    public String bulletStyle = NONE_STYLE;
 
     public LineStyle() {
         this(0);
@@ -44,17 +56,20 @@ public class LineStyle implements Cloneable {
         LineStyle that = (LineStyle) obj;
         return this.lineIndex == that.lineIndex
                 && this.alignment == that.alignment
-                && this.indent == that.indent;
+                && this.indent == that.indent
+                && this.bulletStyle == that.bulletStyle;
     }
 
     public boolean similarTo(LineStyle that) {
         if (that == null)
             return false;
-        return this.alignment == that.alignment && this.indent == that.indent;
+        return this.alignment == that.alignment && this.indent == that.indent
+                && this.bulletStyle == that.bulletStyle;
     }
 
     public boolean isUnstyled() {
-        return this.alignment == DEFAULT_ALIGNMENT && this.indent == 0;
+        return this.alignment == DEFAULT_ALIGNMENT && this.indent == 0
+                && NONE_STYLE.equals(this.bulletStyle);
     }
 
     public Object clone() {
@@ -64,6 +79,7 @@ public class LineStyle implements Cloneable {
             LineStyle clone = new LineStyle(this.lineIndex);
             clone.alignment = this.alignment;
             clone.indent = this.indent;
+            clone.bulletStyle = this.bulletStyle;
             return clone;
         }
     }
@@ -85,6 +101,8 @@ public class LineStyle implements Cloneable {
         }
         sb.append(",indent="); //$NON-NLS-1$
         sb.append(indent);
+        sb.append(",bulletStyle="); //$NON-NLS-1$
+        sb.append(bulletStyle);
         sb.append("}"); //$NON-NLS-1$
         return sb.toString();
     }

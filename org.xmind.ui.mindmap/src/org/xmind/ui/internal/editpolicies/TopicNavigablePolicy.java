@@ -15,22 +15,13 @@ package org.xmind.ui.internal.editpolicies;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.xmind.core.IBoundary;
-import org.xmind.core.ITopic;
 import org.xmind.gef.Request;
 import org.xmind.gef.graphicalpolicy.IStructure;
 import org.xmind.gef.part.IPart;
 import org.xmind.ui.branch.INavigableBranchStructureExtension;
-import org.xmind.ui.mindmap.IBoundaryPart;
 import org.xmind.ui.mindmap.IBranchPart;
-import org.xmind.ui.mindmap.ILabelPart;
-import org.xmind.ui.mindmap.IRelationshipPart;
 import org.xmind.ui.mindmap.ISheetPart;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -39,14 +30,6 @@ import org.xmind.ui.util.MindMapUtils;
 public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
 
     private boolean ignoreCache = true;
-
-    private IBranchPart tempPart = null;
-
-    private boolean isSummaryPart = false;
-
-    private IBoundaryPart[] EMPTY = new IBoundaryPart[0];
-
-    private Map<IBranchPart, List<IBoundaryPart>> map = null;
 
     public boolean understands(String requestType) {
         return super.understands(requestType)
@@ -228,168 +211,24 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
     }
 
     private IPart findNextOrPrevTopic(IPart current, boolean nextOrPrev) {
-        refreshMap(current);
-        if (nextOrPrev) {
-            IPart nextPart = findSuccedingPart(current);
-            if (map != null)
-                map.clear();
-            return nextPart;
-        }
-        IPart prevPart = findPrecedingPart(current);
-        if (map != null)
-            map.clear();
-        return prevPart;
-    }
-
-    private IPart findSuccedingPart(IPart current) {
         if (current instanceof ITopicPart) {
-            ITopicPart topicPart = (ITopicPart) current;
-            IBranchPart branch = topicPart.getOwnerBranch();
-            ILabelPart labelPart = getLabelPart(branch);
-            if (labelPart != null)
-                return labelPart;
-            return getNextPart(branch);
-        } else if (current instanceof ILabelPart) {
-            IBranchPart branch = ((ILabelPart) current).getOwnedBranch();
-            return getNextPart(branch);
-        } else if (current instanceof IRelationshipPart) {
-            IRelationshipPart toFindPart = (IRelationshipPart) current;
-            IRelationshipPart findPart = findPrevOrNextRelationPart(toFindPart,
-                    true);
-            if (toFindPart == findPart)
-                return findPart.getOwnerSheet().getCentralBranch()
-                        .getTopicPart();
-            else
-                return findPart;
-        } else if (current instanceof IBoundaryPart) {
-            IBoundaryPart boundaryPart = (IBoundaryPart) current;
-            return getSucceedingPart1(boundaryPart);
+            IBranchPart branch = ((ITopicPart) current).getOwnerBranch();
+            if (branch != null) {
+                IBranchPart result;
+                if (nextOrPrev) {
+                    result = findFirstChild(branch);
+                    if (result == null) {
+                        result = findSucceedingSiblingOrAncestor(branch);
+                    }
+                } else {
+                    result = findPrecedingBranch(branch);
+                }
+                if (result != null) {
+                    return result.getTopicPart();
+                }
+            }
         }
         return current;
-    }
-
-    private IPart getNextPart(IBranchPart branch) {
-        IPart child = getFirstChildPart(branch);
-        if (child != null)
-            return child;
-        IBranchPart branchPart = findSucceedingSiblingOrAncestor(branch);
-        return getSucceedingPart(branchPart, branch);
-    }
-
-    private IPart getSucceedingPart1(IBoundaryPart current) {
-        refreshMap(current);
-        IBoundary boundary = current.getBoundary();
-        IBranchPart branch = current.getOwnedBranch();
-        if (boundary.isMasterBoundary()) {
-            return branch.getTopicPart();
-        }
-        int index = boundary.getStartIndex();
-        IBoundaryPart retPart = null;
-        List<IBoundaryPart> list = map.get(branch);
-        if (list != null) {
-            for (IBoundaryPart boundaryPart : list) {
-                if (boundaryPart == current) {
-                    if (retPart != null)
-                        retPart = null;
-                    continue;
-                }
-                int startIndex = boundaryPart.getBoundary().getStartIndex();
-                if (index != startIndex) {
-                    continue;
-                } else {
-                    if (retPart == null)
-                        retPart = boundaryPart;
-                    int endIndex = boundaryPart.getBoundary().getEndIndex();
-                    if (endIndex >= retPart.getBoundary().getEndIndex())
-                        retPart = boundaryPart;
-                }
-            }
-        }
-        if (retPart == null) {
-            List<IBranchPart> branches = current.getEnclosingBranches();
-            return branches.get(0).getTopicPart();
-        }
-        return retPart;
-    }
-
-    private IPart getFirstChildPart(IBranchPart current) {
-        List<IBranchPart> subBranches = current.getSubBranches();
-        if (!subBranches.isEmpty()) {
-            IBranchPart childBranch = subBranches.get(0);
-            if (hasBoundaryPart(current)) {
-                IBoundaryPart part = getBoundaryPart(current, childBranch);
-                if (part != null)
-                    return part;
-            }
-            return childBranch.getTopicPart();
-        }
-        return null;
-    }
-
-    private IPart getSucceedingPart(IBranchPart succeedPart,
-            IBranchPart currentPart) {
-        refreshMap(succeedPart);
-        if (succeedPart.isCentral()) {
-            IRelationshipPart part = getRelationshipPart(succeedPart);
-            if (part != null) {
-                tempPart = currentPart;
-                return part;
-            }
-        }
-        IBranchPart parentBranch = succeedPart.getParentBranch();
-        if (parentBranch == null)
-            parentBranch = succeedPart;
-        if (isSummaryPart) {
-            parentBranch = succeedPart;
-            isSummaryPart = false;
-        }
-        IBoundaryPart part = getBoundaryPart(parentBranch, succeedPart);
-        if (part != null)
-            return part;
-
-        return succeedPart.getTopicPart();
-    }
-
-    private ILabelPart getLabelPart(IBranchPart branch) {
-        ILabelPart labelPart = branch.getLabel();
-        if (labelPart != null)
-            return labelPart;
-        return null;
-    }
-
-    private IRelationshipPart getRelationshipPart(IBranchPart branch) {
-        ISheetPart sheetPart = (ISheetPart) branch.getParent();
-        List<IRelationshipPart> relations = sheetPart.getRelationships();
-        if (relations.size() > 0)
-            return relations.get(0);
-        return null;
-    }
-
-    private IBoundaryPart getBoundaryPart(IBranchPart parent,
-            IBranchPart current) {
-        IBoundaryPart retPart = null;
-        ITopic topic = current.getTopic();
-        List<ITopic> children = parent.getTopic().getAllChildren();
-        int index1 = children.indexOf(topic);
-        if (map == null)
-            return retPart;
-        List<IBoundaryPart> list = map.get(parent);
-        if (list != null)
-            for (IBoundaryPart boundaryPart : list) {
-                IBoundary boundary = boundaryPart.getBoundary();
-                int startIndex = boundary.getStartIndex();
-                if (startIndex != index1)
-                    continue;
-                else {
-                    if (retPart == null)
-                        retPart = boundaryPart;
-                    int endIndex = boundary.getEndIndex();
-                    int index2 = retPart.getBoundary().getEndIndex();
-                    if (endIndex >= index2)
-                        retPart = boundaryPart;
-                }
-            }
-        return retPart;
     }
 
     private IBranchPart findFirstChild(IBranchPart current) {
@@ -415,12 +254,10 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
             int lastBranchIndex = branches.size() - 1;
             branches = parent.getSummaryBranches();
             if (branches.size() > 0 && index == lastBranchIndex) {
-                isSummaryPart = true;
                 return branches.get(0);
             }
             index = branches.indexOf(current);
             if (index >= 0 && index < branches.size() - 1) {
-                isSummaryPart = true;
                 return branches.get(index + 1);
             }
 
@@ -447,134 +284,6 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
         return current;
     }
 
-    private boolean hasBoundaryPart(IBranchPart current) {
-        List<IBoundaryPart> boundaries = current.getBoundaries();
-        if (boundaries.isEmpty()) {
-            return false;
-        }
-        return true;
-    }
-
-    private IPart findPrecedingPart(IPart current) {
-        if (current instanceof ITopicPart) {
-            ITopicPart topicPart = (ITopicPart) current;
-            IBranchPart branch = topicPart.getOwnerBranch();
-            if (branch != null) {
-                if (branch.isCentral())
-                    return null;
-                IBranchPart prevBranch = findPrecedingBranch(branch);
-                return getPrecedingPart(prevBranch, branch);
-            }
-        } else if (current instanceof ILabelPart) {
-            IBranchPart branch = ((ILabelPart) current).getOwnedBranch();
-            return branch.getTopicPart();
-        } else if (current instanceof IRelationshipPart) {
-            IRelationshipPart toFindPart = (IRelationshipPart) current;
-            IRelationshipPart findPart = findPrevOrNextRelationPart(toFindPart,
-                    false);
-            if (toFindPart == findPart)
-                return getPrecedingPart1(tempPart);
-            else
-                return findPart;
-
-        } else if (current instanceof IBoundaryPart) {
-            IBoundaryPart boundaryPart = (IBoundaryPart) current;
-            return getPrevPart(boundaryPart);
-        }
-        return current;
-    }
-
-    private IPart getPrevPart(IBoundaryPart current) {
-        refreshMap(current);
-        IBoundary boundary = current.getBoundary();
-        IBranchPart branch = current.getOwnedBranch();
-        if (boundary.isMasterBoundary()) {
-            IBranchPart prevBranch = findPrecedingBranch(branch);
-            return getPrecedingPart1(prevBranch);
-        }
-        int index1 = boundary.getStartIndex();
-        IBoundaryPart retPart = null;
-        if (map != null) {
-            List<IBoundaryPart> list = map.get(branch);
-            if (list != null) {
-                for (IBoundaryPart boundaryPart : list) {
-                    if (current == boundaryPart)
-                        break;
-                    int startIndex = boundaryPart.getBoundary().getStartIndex();
-                    if (startIndex != index1) {
-                        continue;
-                    } else {
-                        if (retPart == null)
-                            retPart = boundaryPart;
-                        int endIndex = boundaryPart.getBoundary().getEndIndex();
-                        int index2 = retPart.getBoundary().getEndIndex();
-                        if (endIndex <= index2)
-                            retPart = boundaryPart;
-                    }
-                }
-            }
-        }
-        if (retPart == null) {
-            List<IBranchPart> branches = current.getEnclosingBranches();
-            IBranchPart branchPart = branches.get(0);
-            IBranchPart prevBranch = findPrecedingBranch(branchPart);
-            return getPrecedingPart1(prevBranch);
-        }
-        return retPart;
-    }
-
-    private IPart getPrecedingPart(IBranchPart prevBranch, IBranchPart branch) {
-        refreshMap(branch);
-        if (prevBranch == branch && prevBranch.isCentral())
-            return prevBranch.getTopicPart();
-        IBranchPart parent = branch.getParentBranch();
-        if (parent == null)
-            parent = branch;
-        if (isSummaryPart) {
-            parent = branch;
-            isSummaryPart = false;
-        }
-        IBoundaryPart part = getPreBoundaryPart(parent, branch);
-        if (part != null)
-            return part;
-        return getPrecedingPart1(prevBranch);
-    }
-
-    private IBoundaryPart getPreBoundaryPart(IBranchPart parent,
-            IBranchPart current) {
-        IBoundaryPart retPart = null;
-        ITopic topic = current.getTopic();
-        List<ITopic> children = parent.getTopic().getAllChildren();
-        int index1 = children.indexOf(topic);
-        if (map == null)
-            return retPart;
-        List<IBoundaryPart> list = map.get(parent);
-        if (list != null) {
-            for (IBoundaryPart boundaryPart : list) {
-                IBoundary boundary = boundaryPart.getBoundary();
-                int startIndex = boundary.getStartIndex();
-                if (index1 != startIndex)
-                    continue;
-                else {
-                    if (retPart == null)
-                        retPart = boundaryPart;
-                    int endIndex = boundary.getEndIndex();
-                    int index2 = retPart.getBoundary().getEndIndex();
-                    if (endIndex <= index2)
-                        retPart = boundaryPart;
-                }
-            }
-        }
-        return retPart;
-    }
-
-    private IPart getPrecedingPart1(IBranchPart branch) {
-        IPart labelPart = getLabelPart(branch);
-        if (labelPart != null)
-            return labelPart;
-        return branch.getTopicPart();
-    }
-
     private IBranchPart findPrecedingBranch(IBranchPart current) {
         IBranchPart parent = current.getParentBranch();
         if (parent != null) {
@@ -588,11 +297,9 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
             branches = parent.getSummaryBranches();
             index = branches.indexOf(current);
             if (index == 0) {
-                isSummaryPart = true;
                 return parent.getSubBranches().get(lastBranchIndex);
             }
             if (index > 0) {
-                isSummaryPart = true;
                 return findLastDescendant(branches.get(index - 1));
             }
             return parent;
@@ -605,6 +312,8 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
                     IBranchPart lastFloating = floatingBranches
                             .get(floatingBranches.size() - 1);
                     return findLastDescendant(lastFloating);
+                } else {
+                    return findLastDescendant(current);
                 }
             } else if (floatingBranches.contains(current)) {
                 int index = floatingBranches.indexOf(current);
@@ -630,76 +339,4 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
         return branch;
     }
 
-    private IRelationshipPart findPrevOrNextRelationPart(
-            IRelationshipPart current, boolean nextOrPrev) {
-        ISheetPart sheetPart = current.getOwnerSheet();
-        if (sheetPart != null) {
-            List<IRelationshipPart> relationships = sheetPart
-                    .getRelationships();
-            int index = relationships.indexOf(current);
-            if (nextOrPrev) {
-                if (index >= 0 && index < relationships.size() - 1)
-                    return relationships.get(index + 1);
-            } else {
-                if (index > 0)
-                    return relationships.get(index - 1);
-            }
-        }
-        return current;
-    }
-
-    private void refreshMap(IPart source) {
-        IBranchPart current = null;
-        if (source instanceof IBranchPart) {
-            current = (IBranchPart) source;
-        } else if (source instanceof ILabelPart) {
-            current = ((ILabelPart) source).getOwnedBranch();
-        } else if (source instanceof IBoundaryPart) {
-            current = ((IBoundaryPart) source).getOwnedBranch();
-        } else if (source instanceof ITopicPart) {
-            current = ((ITopicPart) source).getOwnerBranch();
-        }
-        if (current == null)
-            return;
-        if (hasBoundaryPart(current)) {
-            if (map == null)
-                map = new HashMap<IBranchPart, List<IBoundaryPart>>();
-            List<IBoundaryPart> boundaries = current.getBoundaries();
-            List<IBoundaryPart> list = reSort(boundaries.toArray(EMPTY));
-            map.put(current, list);
-        }
-        IBranchPart parent = current.getParentBranch();
-        if (parent != null && hasBoundaryPart(parent)) {
-            if (map == null)
-                map = new HashMap<IBranchPart, List<IBoundaryPart>>();
-            List<IBoundaryPart> list1 = parent.getBoundaries();
-            List<IBoundaryPart> list2 = reSort(list1.toArray(EMPTY));
-            map.put(parent, list2);
-        }
-    }
-
-    private List<IBoundaryPart> reSort(IBoundaryPart[] boundaries) {
-        List<IBoundaryPart> boundaryList = new ArrayList<IBoundaryPart>(
-                boundaries.length);
-        for (int i = 0; i < boundaries.length; i++)
-            boundaryList.add(boundaries[i]);
-
-        Collections.sort(boundaryList, new Comparator<IBoundaryPart>() {
-            public int compare(IBoundaryPart o1, IBoundaryPart o2) {
-                IBoundary b1 = o1.getBoundary();
-                int startIndex1 = b1.getStartIndex();
-                int endIndex1 = b1.getEndIndex();
-                IBoundary b2 = o2.getBoundary();
-                int startIndex2 = b2.getStartIndex();
-                int endIndex2 = b2.getEndIndex();
-
-                if (startIndex1 != startIndex2)
-                    return startIndex1 - startIndex2;
-                else if (startIndex1 == startIndex2)
-                    return endIndex2 - endIndex1;
-                return 0;
-            }
-        });
-        return boundaryList;
-    }
 }

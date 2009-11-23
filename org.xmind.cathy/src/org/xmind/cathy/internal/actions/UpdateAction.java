@@ -16,9 +16,8 @@ package org.xmind.cathy.internal.actions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
-import org.eclipse.update.ui.UpdateJob;
-import org.eclipse.update.ui.UpdateManagerUI;
 import org.xmind.cathy.internal.WorkbenchMessages;
+import org.xmind.cathy.internal.jobs.CheckUpdatesJob;
 
 /**
  * @author briansun
@@ -46,9 +45,9 @@ public class UpdateAction extends Action implements IWorkbenchAction {
      */
     @Override
     public void run() {
-        UpdateJob job = new UpdateJob(WorkbenchMessages.Update_jobName, false,
-                false);
-        UpdateManagerUI.openInstaller(window.getShell(), job);
+        if (window == null)
+            return;
+        new CheckUpdatesJob(window.getWorkbench(), true).schedule();
     }
 
     /**

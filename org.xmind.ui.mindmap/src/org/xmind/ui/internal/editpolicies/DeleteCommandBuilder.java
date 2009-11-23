@@ -56,6 +56,8 @@ public class DeleteCommandBuilder extends CommandBuilder {
 
     private Set<Object> deleted = null;
 
+//    private ITopicRefCounter topicLinkRef = null;
+
     public DeleteCommandBuilder(IViewer viewer, CommandBuilder delegate) {
         super(viewer, delegate);
     }
@@ -124,6 +126,12 @@ public class DeleteCommandBuilder extends CommandBuilder {
         return deleting == null ? EMPTY : deleting;
     }
 
+//    protected void deleteTopic(ITopic topic, boolean isCutPrev,
+//            boolean sourceCollectable) {
+////        modifyTopicLinkRef(topic, isCutPrev);
+//        deleteTopic(topic, sourceCollectable);
+//    }
+
     protected void deleteTopic(ITopic topic, boolean sourceCollectable) {
         if (!startDeleting(topic))
             return;
@@ -145,8 +153,8 @@ public class DeleteCommandBuilder extends CommandBuilder {
         }
         add(new DeleteTopicCommand(topic), sourceCollectable);
 
-        endDeleting();
         addDeleted(topic);
+        endDeleting();
     }
 
     protected void deleteTopicInRanges(ITopic topic, Set<ITopicRange> ranges,
@@ -192,6 +200,36 @@ public class DeleteCommandBuilder extends CommandBuilder {
             deleteRelByRelEnd(boundary);
         }
     }
+
+//    private void modifyTopicLinkRef(ITopic topic, boolean isCutPrev) {
+//        if (topicLinkRef == null) {
+//            IWorkbook workbook = topic.getOwnedWorkbook();
+//            topicLinkRef = (ITopicRefCounter) workbook
+//                    .getAdapter(ITopicRefCounter.class);
+//        }
+//
+//        String targetId = topic.getId();
+//        List<ITopic> linkedTopics = topicLinkRef.getLinkTopics(targetId);
+//        if (linkedTopics != null && !linkedTopics.isEmpty()) {
+//            ModifyTopicHyperlinkCommand command = new ModifyTopicHyperlinkCommand(
+//                    linkedTopics, null);
+//            add(command, false);
+//
+//            if (!isCutPrev) {
+////            topicLinkRef.removeTopicLinks(targetId);
+//                ModifyTopicLinkCommand cmd = new ModifyTopicLinkCommand(
+//                        linkedTopics, null);
+//                add(cmd, false);
+//            }
+//        }
+//
+//        List<ITopic> children = topic.getAllChildren();
+//        if (children != null && !children.isEmpty()) {
+//            for (ITopic child : children) {
+//                modifyTopicLinkRef(child, isCutPrev);
+//            }
+//        }
+//    }
 
     protected void deleteRelByRelEnd(IRelationshipEnd end) {
         if (hasRelationship()) {

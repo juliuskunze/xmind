@@ -122,7 +122,7 @@ public abstract class CategorizedViewer extends StructuredViewer {
         for (Composite section : sections) {
             resetWidth(width, section);
         }
-        //container.reflow(true);
+        container.reflow(true);
     }
 
     private void resetWidth(int width, Control control) {
@@ -183,6 +183,7 @@ public abstract class CategorizedViewer extends StructuredViewer {
                     }
                 }
             }
+            relayout();
         }
     }
 

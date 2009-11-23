@@ -116,6 +116,7 @@ public class TopicExtensionImpl extends TopicExtension implements
         if (n != null) {
             ((ResourceRefImpl) ref).addNotify(topic.getRealizedWorkbook());
             //TODO fire resource ref added
+            topic.updateModifiedTime();
         }
     }
 
@@ -140,6 +141,7 @@ public class TopicExtensionImpl extends TopicExtension implements
                 implementation.removeChild(refsEle);
             if (n != null) {
                 //TODO fire resource ref removed
+                topic.updateModifiedTime();
             }
         }
     }

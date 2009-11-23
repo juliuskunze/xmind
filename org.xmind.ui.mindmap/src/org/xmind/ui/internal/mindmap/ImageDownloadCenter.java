@@ -52,7 +52,7 @@ import org.xmind.ui.mindmap.MindMapUI;
  */
 public class ImageDownloadCenter {
 
-    private class ImageDownloadProcess extends UIJobChangeListener {
+    protected class ImageDownloadProcess extends UIJobChangeListener {
 
         private ITopic topic;
 

@@ -576,8 +576,8 @@ public class PageSetupDialog extends TitleAreaDialog {
         forReferenceLabel
                 .setText(DialogMessages.PageSetupDialog_JustForReference);
         forReferenceLabel.setFont(FontUtils.getNewHeight(
-                JFaceResources.DEFAULT_FONT,
-                "carbon".equals(SWT.getPlatform()) ? 9 : 7)); //$NON-NLS-1$
+                JFaceResources.DEFAULT_FONT, "carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                        || "cocoa".equals(SWT.getPlatform()) ? 9 : 7)); //$NON-NLS-1$
         forReferenceLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
                 true, false));
     }

@@ -18,6 +18,8 @@ import org.xmind.core.Core;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
+import org.xmind.core.event.ICoreEventSupport;
+import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.ui.actions.MindMapActionFactory;
 import org.xmind.ui.mindmap.AbstractIconTipContributor;
 import org.xmind.ui.mindmap.ITopicPart;
@@ -41,10 +43,27 @@ public class HyperlinkIconTipContributor extends AbstractIconTipContributor {
     protected void registerTopicEvent(ITopicPart topicPart, ITopic topic,
             ICoreEventRegister register) {
         register.register(Core.TopicHyperlink);
+        register.setNextSupport((ICoreEventSupport) topic.getOwnedWorkbook()
+                .getAdapter(ICoreEventSupport.class));
+        register.register(Core.TopicAdd);
+        register.register(Core.TopicRemove);
+
     }
 
     protected void handleTopicEvent(ITopicPart topicPart, CoreEvent event) {
-        topicPart.refresh();
+        if (Core.TopicAdd.equals(event.getType())
+                || Core.TopicRemove.equals(event.getType())) {
+            String hyperlink = topicPart.getTopic().getHyperlink();
+            if (HyperlinkUtils.isInternalURL(hyperlink)) {
+                Object target = HyperlinkUtils.findElement(hyperlink, topicPart
+                        .getTopic().getOwnedWorkbook());
+                if (target == event.getTarget()) {
+                    topicPart.refresh();
+                }
+            }
+        } else {
+            topicPart.refresh();
+        }
     }
 
 }

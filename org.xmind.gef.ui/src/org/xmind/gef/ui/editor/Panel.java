@@ -112,11 +112,12 @@ public class Panel implements IPanel {
             layout.numColumns = numColumns;
 
             Control last = null;
-            adaptContributions(TOP, numColumns, last);
-            adaptContributions(LEFT, numColumns, last);
+            last = adaptContributions(TOP, numColumns, last);
+            last = adaptContributions(LEFT, numColumns, last);
 
             if (content != null) {
-                moveToLast(content);
+//                moveAfter(content, last);
+                last = content;
                 GridData data = getControlLayoutData(content);
                 defaultLayoutData(data);
                 data.exclude = false;
@@ -126,10 +127,11 @@ public class Panel implements IPanel {
                 data.verticalAlignment = SWT.FILL;
                 data.horizontalSpan = 1;
                 data.verticalSpan = 1;
+                last = content;
             }
 
-            adaptContributions(RIGHT, numColumns, last);
-            adaptContributions(BOTTOM, numColumns, last);
+            last = adaptContributions(RIGHT, numColumns, last);
+            last = adaptContributions(BOTTOM, numColumns, last);
 
             container.layout();
         }
@@ -145,7 +147,8 @@ public class Panel implements IPanel {
             for (IPanelContribution contribution : list) {
                 Control c = contribution.getControl();
                 if (c != null && !c.isDisposed()) {
-                    moveToLast(c);
+                    moveAfter(c, last);
+                    last = c;
                     boolean visible = contribution.isVisible();
                     c.setVisible(visible);
                     GridData data = getControlLayoutData(c);
@@ -190,8 +193,11 @@ public class Panel implements IPanel {
         return (GridData) data;
     }
 
-    private static void moveToLast(Control current) {
-        current.moveBelow(null);
+    private static void moveAfter(Control current, Control last) {
+        if (last == null)
+            current.moveAbove(null);
+        else
+            current.moveBelow(last);
     }
 
     private int calcNumColumns() {
@@ -239,7 +245,7 @@ public class Panel implements IPanel {
 
     protected void createControls(Composite parent) {
         if (container == null || !containerExists()) {
-            container = new Composite(parent, SWT.NO_FOCUS);
+            container = new Composite(parent, SWT.NONE);
 
             if (contributions != null) {
                 for (List<IPanelContribution> list : contributions.values()) {

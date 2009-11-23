@@ -88,6 +88,10 @@ public class WorkbookSaver {
         return file;
     }
 
+    public void setFile(String file) {
+        this.file = file;
+    }
+
     /**
      * 
      * @throws IOException

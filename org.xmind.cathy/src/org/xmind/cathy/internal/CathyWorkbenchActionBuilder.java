@@ -86,25 +86,11 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
     private IWorkbenchAction findAction;
 
-//    private IWorkbenchAction welcomeAction;
-
-//    private IWorkbenchAction helpAction;
-
-//    private IWorkbenchAction tryProAction;
-
-//    private IWorkbenchAction inviteAction;
-//
-//    private IWorkbenchAction feedbackAction;
-
     private IWorkbenchAction updateAction;
 
     private IWorkbenchAction aboutAction;
 
     private IContributionItem reopenEditors;
-
-//    private IWorkbenchAction signInAction;
-//
-//    private IWorkbenchAction showAccountAction;
 
     private IAction keyAssistAction;
 
@@ -193,39 +179,12 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         updateAction = new UpdateAction("org.xmind.ui.update", window); //$NON-NLS-1$
         register(updateAction);
 
-//        welcomeAction = new WelcomeAction(window);
-//        register(welcomeAction);
-//
-//        if (!isPro()) {
-//            tryProAction = new TryProAction("org.xmind.ui.trypro", window); //$NON-NLS-1$
-//            register(tryProAction);
-//        }
-
-//        feedbackAction = new XMindNetAction("org.xmind.ui.feedback", window, //$NON-NLS-1$
-//                "http://www.xmind.net/xmind/feedback/", //$NON-NLS-1$ 
-//                WorkbenchMessages.Feedback_text,
-//                WorkbenchMessages.Feedback_toolTip);
-//        register(feedbackAction);
-//
-//        inviteAction = new XMindNetAction("org.xmind.ui.invite", window, //$NON-NLS-1$
-//                "http://www.xmind.net/xmind/invite/", //$NON-NLS-1$ 
-//                WorkbenchMessages.Invite_text, WorkbenchMessages.Invite_toolTip);
-//        register(inviteAction);
-
-//        helpAction = new HelpAction(window);
-//        register(helpAction);
-
         aboutAction = ActionFactory.ABOUT.create(window);
         register(aboutAction);
 
         keyAssistAction = new ShowKeyAssistAction();
         register(keyAssistAction);
 
-//        signInAction = new SignInAction(window);
-//        register(signInAction);
-//
-//        showAccountAction = new ShowAccountAction(window);
-//        register(showAccountAction);
     }
 
     private static boolean isPro() {
@@ -292,7 +251,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         // looking for it when Cmd-Q is invoked (or Quit is chosen from the
         // application menu.
         ActionContributionItem exitItem = new ActionContributionItem(exitAction);
-        exitItem.setVisible(!"carbon".equals(SWT.getPlatform())); //$NON-NLS-1$
+        exitItem.setVisible(!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                && !"cocoa".equals(SWT.getPlatform())); //$NON-NLS-1$
         menu.add(exitItem);
 
         menu.add(new GroupMarker(IWorkbenchActionConstants.FILE_END));
@@ -328,7 +288,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         ActionContributionItem openPreferencesItem = new ActionContributionItem(
                 openPreferencesAction);
-        openPreferencesItem.setVisible(!"carbon".equals(SWT.getPlatform())); //$NON-NLS-1$
+        openPreferencesItem.setVisible(!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                && !"cocoa".equals(SWT.getPlatform())); //$NON-NLS-1$
         menu.add(openPreferencesItem);
         menu.add(new GroupMarker(IWorkbenchActionConstants.EDIT_END));
         return menu;
@@ -345,19 +306,10 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new GroupMarker("group.intro.ext")); //$NON-NLS-1$
 
         menu.add(new Separator("group.main")); //$NON-NLS-1$
-//        menu.add(helpAction);
         menu.add(new GroupMarker("group.assist")); //$NON-NLS-1$
         menu.add(keyAssistAction);
         menu.add(new GroupMarker("group.xmind")); //$NON-NLS-1$
-//        menu.add(feedbackAction);
-//        menu.add(inviteAction);
         menu.add(new Separator());
-
-//        menu.add(new GroupMarker("group.account")); //$NON-NLS-1$
-//        menu.add(signInAction);
-//        menu.add(showAccountAction);
-//        menu.add(new GroupMarker("account.ext")); //$NON-NLS-1$
-//        menu.add(new Separator());
 
         menu.add(new GroupMarker(IWorkbenchActionConstants.HELP_START));
         menu.add(new GroupMarker("group.main.ext")); //$NON-NLS-1$
@@ -369,8 +321,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         if (!isPro()) {
             menu.add(new GroupMarker("group.upgrade")); //$NON-NLS-1$
         }
-//        if (tryProAction != null)
-//            menu.add(tryProAction);
         menu.add(new GroupMarker(IWorkbenchActionConstants.HELP_END));
         menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
@@ -378,7 +328,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         ActionContributionItem aboutItem = new ActionContributionItem(
                 aboutAction);
-        aboutItem.setVisible(!"carbon".equals(SWT.getPlatform())); //$NON-NLS-1$
+        aboutItem.setVisible(!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                && !"cocoa".equals(SWT.getPlatform())); //$NON-NLS-1$
         menu.add(aboutItem);
         menu.add(new GroupMarker("about.ext")); //$NON-NLS-1$
         return menu;

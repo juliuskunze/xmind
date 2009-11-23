@@ -11,27 +11,28 @@
  */
 package net.xmind.signin.internal;
 
-import java.util.Properties;
+import net.xmind.signin.XMindNetEntry;
+import net.xmind.signin.util.IDataStore;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.SWTError;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.OpenWindowListener;
 import org.eclipse.swt.browser.StatusTextEvent;
 import org.eclipse.swt.browser.StatusTextListener;
 import org.eclipse.swt.browser.WindowEvent;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.xmind.ui.browser.BrowserSupport;
 import org.xmind.ui.browser.IBrowser;
 import org.xmind.ui.browser.IBrowserSupport;
@@ -42,78 +43,49 @@ import org.xmind.ui.internal.browser.InternalBrowserView;
 /**
  * @author briansun
  */
-@SuppressWarnings("restriction")
 public class SignInDialog extends Dialog implements StatusTextListener,
         OpenWindowListener {
 
-    private static final String SIGN_IN_URL = "http://www.xmind.net/xmind/signin/"; //$NON-NLS-1$
-
-    private static final String USER = "user"; //$NON-NLS-1$
-
-    private static final String TOKEN = "token"; //$NON-NLS-1$
-
-    private static final String REMEMBER = "remember"; //$NON-NLS-1$
+    //private static final String SIGN_IN_URL = "http://www.xmind.net/xmind/signin/"; //$NON-NLS-1$
+    private static final String SIGN_IN_URL = "http://www.xmind.net/xmind/go?r=http%3A%2F%2Fwww.xmind.net%2Fxmind%2Fsignin2%2F"; //$NON-NLS-1$
 
     private Browser browser;
 
-    private String userID = null;
+    private IDataStore data = null;
 
-    private String token = null;
+    private String message;
 
-    private boolean shouldRemember = false;
+    private boolean infoRetrieved = false;
 
     /**
      * @param parentWindow
      */
     public SignInDialog(Shell parent) {
+        this(parent, null);
+    }
+
+    public SignInDialog(Shell parent, String message) {
         super(parent);
         setBlockOnOpen(true);
         setShellStyle(SWT.TITLE | SWT.CLOSE | SWT.RESIZE
                 | SWT.APPLICATION_MODAL);
+        this.message = message;
     }
 
     public String getUserID() {
-        return userID;
+        return data == null ? null : data.getString(XMindNetEntry.USER_ID);
     }
 
     public String getToken() {
-        return token;
+        return data == null ? null : data.getString(XMindNetEntry.TOKEN);
     }
 
     public boolean shouldRemember() {
-        return shouldRemember;
+        return data == null ? false : data.getBoolean(UserInfoManager.REMEMBER);
     }
 
-    protected void configureShell(Shell newShell) {
-        super.configureShell(newShell);
-        newShell.setText(Messages.SignInDialog_title);
-    }
-
-    protected Point getInitialLocation(Point initialSize) {
-        Rectangle area = Display.getCurrent().getClientArea();
-        return new Point(area.x + (area.width - initialSize.x) / 2, area.y
-                + (area.height - initialSize.y) / 2);
-    }
-
-    /**
-     * @see org.eclipse.jface.dialogs.Dialog#createContents(org.eclipse.swt.widgets.Composite)
-     */
-    @Override
-    protected Control createContents(Composite parent) {
-        try {
-            browser = new Browser(parent, SWT.MOZILLA);
-        } catch (SWTError e) {
-            browser = new Browser(parent, SWT.NONE);
-        }
-        browser.setLayoutData(new GridData(GridData.FILL_BOTH));
-        browser.addStatusTextListener(this);
-        browser.addOpenWindowListener(this);
-
-        browser.setUrl(SIGN_IN_URL);
-
-        if ("carbon".equals(SWT.getPlatform())) //$NON-NLS-1$
-            browser.refresh();
-        return browser;
+    public IDataStore getData() {
+        return data;
     }
 
     protected Browser getBrowser() {
@@ -121,11 +93,101 @@ public class SignInDialog extends Dialog implements StatusTextListener,
     }
 
     /**
-     * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
+     * @see org.eclipse.jface.dialogs.Dialog#createContents(org.eclipse.swt.widgets.Composite)
      */
     @Override
-    protected Point getInitialSize() {
-        return new Point(540, 365);
+    protected Control createContents(Composite parent) {
+        Composite composite = new Composite(parent, SWT.NONE);
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gridData.widthHint = SWT.DEFAULT;
+        gridData.heightHint = SWT.DEFAULT;
+        composite.setLayoutData(gridData);
+
+        GridLayout gridLayout = new GridLayout(1, false);
+        gridLayout.marginWidth = 0;
+        gridLayout.marginHeight = 0;
+        gridLayout.verticalSpacing = 0;
+        gridLayout.horizontalSpacing = 0;
+        composite.setLayout(gridLayout);
+
+        if (message != null) {
+            createMessageArea(composite);
+            createSeparator(composite);
+        }
+        createBrowser(composite);
+        return composite;
+    }
+
+    private void createBrowser(Composite parent) {
+//        try {
+//            browser = new Browser(parent, SWT.MOZILLA);
+//        } catch (SWTError e) {
+//        }
+        browser = new Browser(parent, SWT.NONE);
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gridData.widthHint = 560;
+        gridData.heightHint = "gtk".equals(SWT.getPlatform()) ? 278 : 252; //$NON-NLS-1$
+        gridData.minimumWidth = 560;
+        gridData.minimumHeight = 242;
+        browser.setLayoutData(gridData);
+        browser.addStatusTextListener(this);
+        browser.addOpenWindowListener(this);
+
+        browser.setUrl(SIGN_IN_URL);
+
+        if ("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                || "cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
+            browser.refresh();
+
+        browser.setFocus();
+    }
+
+    private void createMessageArea(Composite parent) {
+        Composite composite = new Composite(parent, SWT.NONE);
+        GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        gridData.widthHint = 540;
+        gridData.heightHint = SWT.DEFAULT;
+        composite.setLayoutData(gridData);
+
+        GridLayout gridLayout = new GridLayout(2, false);
+        gridLayout.marginWidth = 15;
+        gridLayout.marginHeight = 10;
+        gridLayout.verticalSpacing = 5;
+        gridLayout.horizontalSpacing = 10;
+        composite.setLayout(gridLayout);
+        composite.setBackground(parent.getDisplay().getSystemColor(
+                SWT.COLOR_WHITE));
+        createMessageIcon(composite);
+        createMessageLabel(composite);
+    }
+
+    private void createSeparator(Composite parent) {
+        Label sep = new Label(parent, SWT.SEPARATOR | SWT.HORIZONTAL);
+        GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        gridData.widthHint = SWT.DEFAULT;
+        gridData.heightHint = SWT.DEFAULT;
+        sep.setLayoutData(gridData);
+    }
+
+    private void createMessageIcon(Composite parent) {
+        Label icon = new Label(parent, SWT.NONE);
+        GridData gridData = new GridData(SWT.BEGINNING, SWT.CENTER, false,
+                false);
+        gridData.widthHint = SWT.DEFAULT;
+        gridData.heightHint = SWT.DEFAULT;
+        icon.setLayoutData(gridData);
+        icon.setBackground(parent.getBackground());
+        icon.setImage(parent.getDisplay().getSystemImage(SWT.ICON_INFORMATION));
+    }
+
+    private void createMessageLabel(Composite parent) {
+        Label label = new Label(parent, SWT.WRAP);
+        GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        gridData.widthHint = SWT.DEFAULT;
+        gridData.heightHint = SWT.DEFAULT;
+        label.setLayoutData(gridData);
+        label.setBackground(parent.getBackground());
+        label.setText(message);
     }
 
     /**
@@ -136,29 +198,45 @@ public class SignInDialog extends Dialog implements StatusTextListener,
         // use html buttons
     }
 
+    protected void configureShell(Shell newShell) {
+        super.configureShell(newShell);
+        newShell.setText(Messages.SignInDialog_title);
+    }
+
+    protected Point getInitialLocation(Point initialSize) {
+        return super.getInitialLocation(initialSize);
+//        Rectangle area = Display.getCurrent().getClientArea();
+//        return new Point(area.x + (area.width - initialSize.x) / 2, area.y
+//                + (area.height - initialSize.y) / 2);
+    }
+
+    /**
+     * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
+     */
+    @Override
+    protected Point getInitialSize() {
+        return super.getInitialSize();//new Point(540, 365);
+    }
+
+    protected IDialogSettings getDialogBoundsSettings() {
+        return null;//Activator.getDefault().getDialogSettings();
+    }
+
     /**
      * @see org.eclipse.swt.browser.StatusTextListener#changed(org.eclipse.swt.browser.StatusTextEvent)
      */
     public void changed(StatusTextEvent event) {
-        checkCommand(event.text);
+        if (infoRetrieved)
+            return;
+        infoRetrieved = checkCommand(event.text);
     }
 
     private boolean checkCommand(String text) {
-        String[] commandLines = text.split(";"); //$NON-NLS-1$
-        Properties commands = new Properties();
-        for (String commandLine : commandLines) {
-            int index = commandLine.indexOf('=');
-            if (index >= 0) {
-                commands.setProperty(commandLine.substring(0, index),
-                        commandLine.substring(index + 1));
-            }
-        }
-        String code = commands.getProperty("xmind_status"); //$NON-NLS-1$
-        if ("200".equals(code)) { //$NON-NLS-1$
-            String json = commands.getProperty("xmind_json"); //$NON-NLS-1$
-            if (json != null) {
-                return executeJSON(json);
-            }
+        XMindCommand command = new XMindCommand(text);
+        if (!command.parse())
+            return false;
+        if ("200".equals(command.getCode())) { //$NON-NLS-1$
+            return executeJSON(command.getJSON());
         }
         return false;
     }
@@ -167,7 +245,9 @@ public class SignInDialog extends Dialog implements StatusTextListener,
      * @param json2
      * @return
      */
-    private boolean executeJSON(String json) {
+    private boolean executeJSON(IDataStore json) {
+        if (json == null)
+            return false;
         try {
             return setUserNameAndToken(json);
         } catch (JSONException e) {
@@ -175,19 +255,21 @@ public class SignInDialog extends Dialog implements StatusTextListener,
         return false;
     }
 
-    private boolean setUserNameAndToken(String jsonSource) throws JSONException {
-        JSONObject json = new JSONObject(jsonSource);
-        String userID = json.getString(USER);
-        String token = json.getString(TOKEN);
+    private boolean setUserNameAndToken(IDataStore json) throws JSONException {
+        String userID = json.getString(XMindNetEntry.USER_ID);
+        String token = json.getString(XMindNetEntry.TOKEN);
         if (userID == null || token == null || "".equals(userID) //$NON-NLS-1$
                 || "".equals(token)) //$NON-NLS-1$
             return false;
 
-        this.userID = userID;
-        this.token = token;
-        this.shouldRemember = json.getBoolean(REMEMBER);
-        setReturnCode(OK);
-        return close();
+        this.data = json;
+        Display.getCurrent().asyncExec(new Runnable() {
+            public void run() {
+                setReturnCode(OK);
+                close();
+            }
+        });
+        return true;
     }
 
     public void open(WindowEvent event) {

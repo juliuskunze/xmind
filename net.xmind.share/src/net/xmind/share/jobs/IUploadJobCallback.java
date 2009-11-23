@@ -15,10 +15,10 @@ package net.xmind.share.jobs;
 
 public interface IUploadJobCallback {
 
-    void onSuccess();
-
-    void onCancle();
-
-    void onError();
+//    void onSuccess();
+//
+//    void onCancle();
+//
+//    void onError();
 
 }

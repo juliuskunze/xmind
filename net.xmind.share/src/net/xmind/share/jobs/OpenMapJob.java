@@ -13,9 +13,6 @@
  *******************************************************************************/
 package net.xmind.share.jobs;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.swt.program.Program;
 import org.eclipse.ui.PlatformUI;
 import org.xmind.ui.browser.BrowserSupport;
@@ -37,28 +34,28 @@ public class OpenMapJob implements Runnable {
     }
 
     public void run() {
-        HttpClient client = new HttpClient();
-
-        int result;
-        do {
-
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e1) {
-            }
-
-            GetMethod method = new GetMethod(url);
-            try {
-                result = client.executeMethod(method);
-            } catch (Exception e) {
-                result = -1;
-            }
-
-            if (result == 404)
-                // some error occurred
-                return;
-
-        } while (result != HttpStatus.SC_OK);
+//        HttpClient client = new HttpClient();
+//
+//        int result;
+//        do {
+//
+//            try {
+//                Thread.sleep(50);
+//            } catch (InterruptedException e1) {
+//            }
+//
+//            GetMethod method = new GetMethod(url);
+//            try {
+//                result = client.executeMethod(method);
+//            } catch (Exception e) {
+//                result = -1;
+//            }
+//
+//            if (result == 404)
+//                // some error occurred
+//                return;
+//
+//        } while (result != HttpStatus.SC_OK);
 
         openURL();
     }

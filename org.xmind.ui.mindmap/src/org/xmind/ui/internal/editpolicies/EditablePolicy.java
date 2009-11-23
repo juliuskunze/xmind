@@ -63,6 +63,10 @@ public class EditablePolicy extends DeletablePolicy {
 
     private static final String DEFAULT_DND_CLIENT_ID = MindMapUI.DND_MINDMAP_ELEMENT;
 
+//    private boolean isCutPrev = false;
+
+//    private Map<Object, Object> transferMap = null;
+
     public boolean understands(String requestType) {
         return super.understands(requestType)
                 || GEF.REQ_COPY.equals(requestType)
@@ -153,7 +157,8 @@ public class EditablePolicy extends DeletablePolicy {
                         Object object = client.toTransferData(elements, viewer);
                         if (object != null) {
                             data.add(object);
-                            transfers.add(client.getTransfer());
+                            Transfer transfer = client.getTransfer();
+                            transfers.add(transfer);
                         }
                     }
                 }
@@ -172,7 +177,7 @@ public class EditablePolicy extends DeletablePolicy {
         List<Object> models = MindMapUtils.getRealModels(sources);
         if (models.isEmpty())
             return;
-
+//        isCutPrev = true;
         performCopy(models.toArray(), request.getTargetViewer());
         delete(request);
     }
@@ -213,10 +218,16 @@ public class EditablePolicy extends DeletablePolicy {
 
         paste(request, elements, viewer, target, MindMapUtils.getRealModels(
                 request.getTargets()).toArray(), targetWorkbook);
+
+//        if (transferMap != null) {
+//            transferMap.clear();
+//            transferMap = null;
+//        }
     }
 
     protected void paste(Request request, Object[] elements, IViewer viewer,
             IPart targetPart, Object[] targets, IWorkbook targetWorkbook) {
+
         ICloneData result = targetWorkbook.clone(Arrays.asList(elements));
         if (!result.hasCloned())
             return;
@@ -297,6 +308,10 @@ public class EditablePolicy extends DeletablePolicy {
                 }
             }
         }
+
+//        if (isCutPrev)
+//            modifyTopicLinksRef(elements, targetWorkbook, cmds, result);
+
         if (cmds.isEmpty())
             return;
 
@@ -305,6 +320,47 @@ public class EditablePolicy extends DeletablePolicy {
         saveAndRun(cmd, request.getTargetDomain());
         select(cmd.getSources(), viewer);
     }
+
+//    private void modifyTopicLinksRef(Object[] elements,
+//            IWorkbook targetWorkbook, List<Command> cmds, ICloneData result) {
+//
+//        ITopicRefCounter topicLinkRef = (ITopicRefCounter) targetWorkbook
+//                .getAdapter(ITopicRefCounter.class);
+//        for (Object element : elements) {
+//            if (element instanceof ITopic) {
+//                ITopic originTopic = (ITopic) transferMap.get(element);
+//                ITopic clonedTopic = (ITopic) result.get(element);
+//                modifyTopicLink(originTopic, clonedTopic, topicLinkRef, cmds);
+//            }
+//        }
+//    }
+
+//    private void modifyTopicLink(ITopic originTopic, ITopic clonedTopic,
+//            ITopicRefCounter topicLinkRef, List<Command> cmds) {
+
+//        String oldHref = originTopic.getId();
+//        List<ITopic> topicLinks = topicLinkRef.getLinkTopics(oldHref);
+//        if (topicLinks != null && !topicLinks.isEmpty()) {
+//            String newHref = clonedTopic.getId();
+////            ModifyTopicLinkCommand cmd = new ModifyTopicLinkCommand(topicLinks,
+////                    newHref);
+////            cmds.add(cmd);
+////            topicLinkRef.modifyTargetLink(oldHref, newHref);
+//
+//            ModifyTopicHyperlinkCommand command = new ModifyTopicHyperlinkCommand(
+//                    topicLinks, "xmind:#" + newHref); //$NON-NLS-1$
+//            cmds.add(command);
+//        }
+//
+//        List<ITopic> children = originTopic.getAllChildren();
+//        if (children != null && !children.isEmpty()) {
+//            for (int i = 0; i < children.size(); i++) {
+//                ITopic oTopic = children.get(i);
+//                ITopic eTopic = clonedTopic.getAllChildren().get(i);
+//                modifyTopicLink(oTopic, eTopic, topicLinkRef, cmds);
+//            }
+//        }
+//    }
 
     private List<ITopic> getSiblingTopics(Object[] targets) {
         ITopic start = null;
@@ -404,6 +460,9 @@ public class EditablePolicy extends DeletablePolicy {
         Transfer transfer = client.getTransfer();
         if (transfer == null)
             return null;
+//        if (transfer instanceof MindMapElementTransfer) {
+//            transferMap = ((MindMapElementTransfer) transfer).getTransferMap();
+//        }
         for (TransferData type : types) {
             if (transfer.isSupportedType(type)) {
                 Object contents = clipboard.getContents(transfer);

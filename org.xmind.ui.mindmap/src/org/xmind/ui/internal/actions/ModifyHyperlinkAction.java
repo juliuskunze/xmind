@@ -14,20 +14,48 @@
 package org.xmind.ui.internal.actions;
 
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Shell;
 import org.xmind.core.Core;
+import org.xmind.gef.GEF;
+import org.xmind.gef.Request;
 import org.xmind.gef.ui.actions.ISelectionAction;
-import org.xmind.gef.ui.actions.RequestAction;
+import org.xmind.gef.ui.actions.PageAction;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.actions.MindMapActionFactory;
+import org.xmind.ui.internal.dialogs.HyperlinkDialog;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.MindMapUtils;
 
-public class ModifyHyperlinkAction extends RequestAction implements
+public class ModifyHyperlinkAction extends PageAction implements
         ISelectionAction {
 
     public ModifyHyperlinkAction(IGraphicalEditorPage page) {
-        super(MindMapActionFactory.MODIFY_HYPERLINK.getId(), page,
-                MindMapUI.REQ_MODIFY_HYPERLINK);
+        super(MindMapActionFactory.MODIFY_HYPERLINK.getId(), page);
+    }
+
+    @Override
+    public void run() {
+        if (isDisposed())
+            return;
+
+        Shell parentShell = getEditor().getSite().getShell();
+        ISelection selection = getPage().getSelectionProvider().getSelection();
+        if (selection instanceof IStructuredSelection) {
+            HyperlinkDialog dialog = new HyperlinkDialog(parentShell,
+                    getEditor(), (IStructuredSelection) selection);
+            int retCode = dialog.open();
+            if (retCode == HyperlinkDialog.OK) {
+                modifyHyperlink(dialog.getValue());
+            } else if (retCode == HyperlinkDialog.REMOVE) {
+                modifyHyperlink(null);
+            }
+        }
+    }
+
+    private void modifyHyperlink(String newHyperlink) {
+        sendRequest(new Request(MindMapUI.REQ_MODIFY_HYPERLINK).setParameter(
+                GEF.PARAM_TEXT, newHyperlink));
     }
 
     public void setSelection(ISelection selection) {

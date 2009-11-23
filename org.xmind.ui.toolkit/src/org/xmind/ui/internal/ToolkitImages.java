@@ -58,6 +58,10 @@ public class ToolkitImages {
 
     public static final String ZOOM_OUT = "zoomout.gif"; //$NON-NLS-1$
 
+    public static final String BULLET = "bullet.gif"; //$NON-NLS-1$
+
+    public static final String NUMBER = "number.gif"; //$NON-NLS-1$
+
     private static Map<String, ImageDescriptor> cache = new HashMap<String, ImageDescriptor>();
 
     public static ImageDescriptor getImageDescriptor(String path) {

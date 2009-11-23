@@ -22,6 +22,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.graphics.Path;
 import org.eclipse.swt.graphics.PathData;
 import org.eclipse.swt.graphics.Pattern;
@@ -34,18 +35,18 @@ import org.eclipse.swt.graphics.TextLayout;
  */
 public class Rotate90Graphics extends Graphics {
 
-    private Graphics real;
+    private Graphics graphics;
 
     private Pattern lastBgPattern = null;
 
     private Pattern lastFgPattern = null;
 
     public Rotate90Graphics(Graphics realGraphics) {
-        this.real = realGraphics;
+        this.graphics = realGraphics;
     }
 
     protected Graphics getGraphics() {
-        return real;
+        return graphics;
     }
 
     protected float[] rotate(float x, float y) {
@@ -145,7 +146,7 @@ public class Rotate90Graphics extends Graphics {
     }
 
     public void clipRect(Rectangle r) {
-        real.clipRect(rotate(r));
+        graphics.clipRect(rotate(r));
     }
 
     public void dispose() {
@@ -160,29 +161,29 @@ public class Rotate90Graphics extends Graphics {
     }
 
     public void drawArc(int x, int y, int w, int h, int offset, int length) {
-        real.drawArc(-y - h, x, h, w, offset, length);
+        graphics.drawArc(-y - h, x, h, w, offset, length);
     }
 
     public void drawFocus(int x, int y, int w, int h) {
-        real.drawFocus(-y - h, x, h, w);
+        graphics.drawFocus(-y - h, x, h, w);
     }
 
     public void drawImage(Image srcImage, int x1, int y1, int w1, int h1,
             int x2, int y2, int w2, int h2) {
         boolean statePushed = false;
         try {
-            real.pushState();
+            graphics.pushState();
             statePushed = true;
         } catch (Throwable t) {
             statePushed = false;
         }
-        real.rotate(90);
-        real.drawImage(srcImage, x1, y1, w1, h1, x2, y2, w2, h2);
-        real.rotate(-90);
+        graphics.rotate(90);
+        graphics.drawImage(srcImage, x1, y1, w1, h1, x2, y2, w2, h2);
+        graphics.rotate(-90);
         if (statePushed) {
             try {
-                real.restoreState();
-                real.popState();
+                graphics.restoreState();
+                graphics.popState();
             } catch (Throwable t) {
             }
         }
@@ -191,80 +192,80 @@ public class Rotate90Graphics extends Graphics {
     public void drawImage(Image srcImage, int x, int y) {
         boolean statePushed = false;
         try {
-            real.pushState();
+            graphics.pushState();
             statePushed = true;
         } catch (Throwable t) {
             statePushed = false;
         }
-        real.rotate(90);
-        real.drawImage(srcImage, x, y);
-        real.rotate(-90);
+        graphics.rotate(90);
+        graphics.drawImage(srcImage, x, y);
+        graphics.rotate(-90);
         if (statePushed) {
             try {
-                real.restoreState();
-                real.popState();
+                graphics.restoreState();
+                graphics.popState();
             } catch (Throwable t) {
             }
         }
     }
 
     public void drawLine(int x1, int y1, int x2, int y2) {
-        real.drawLine(-y1, x1, -y2, x2);
+        graphics.drawLine(-y1, x1, -y2, x2);
     }
 
     public void drawOval(int x, int y, int w, int h) {
-        real.drawOval(-y - h, x, h, w);
+        graphics.drawOval(-y - h, x, h, w);
     }
 
     public void drawPath(Path path) {
         Path p2 = rotate((Path) path);
-        real.drawPath(p2);
+        graphics.drawPath(p2);
         p2.dispose();
     }
 
     public void drawPoint(int x, int y) {
-        real.drawPoint(-y, x);
+        graphics.drawPoint(-y, x);
     }
 
     public void drawPolygon(int[] points) {
-        real.drawPolygon(rotate(points));
+        graphics.drawPolygon(rotate(points));
     }
 
     public void drawPolygon(PointList points) {
-        real.drawPolygon(rotate(points));
+        graphics.drawPolygon(rotate(points));
     }
 
     public void drawPolyline(int[] points) {
-        real.drawPolyline(rotate(points));
+        graphics.drawPolyline(rotate(points));
     }
 
     public void drawPolyline(PointList points) {
-        real.drawPolyline(rotate(points));
+        graphics.drawPolyline(rotate(points));
     }
 
     public void drawRectangle(int x, int y, int width, int height) {
-        real.drawRectangle(-y - height, x, height, width);
+        graphics.drawRectangle(-y - height, x, height, width);
     }
 
     public void drawRoundRectangle(Rectangle r, int arcWidth, int arcHeight) {
-        real.drawRoundRectangle(rotate(r), arcHeight, arcWidth);
+        graphics.drawRoundRectangle(rotate(r), arcHeight, arcWidth);
     }
 
     public void drawString(String s, int x, int y) {
         boolean statePushed = false;
         try {
-            real.pushState();
+            graphics.pushState();
             statePushed = true;
         } catch (Throwable t) {
             statePushed = false;
         }
-        real.rotate(90);
-        real.drawString(s, x, y);
-        real.rotate(-90);
+        graphics.rotate(90);
+        graphics.drawString(s, x, y);
+        graphics.rotate(-90);
         if (statePushed) {
             try {
-                real.restoreState();
-                real.popState();
+                graphics.restoreState();
+                graphics.popState();
             } catch (Throwable t) {
             }
         }
@@ -273,18 +274,18 @@ public class Rotate90Graphics extends Graphics {
     public void drawText(String s, int x, int y, int style) {
         boolean statePushed = false;
         try {
-            real.pushState();
+            graphics.pushState();
             statePushed = true;
         } catch (Throwable t) {
             statePushed = false;
         }
-        real.rotate(90);
-        real.drawText(s, x, y, style);
-        real.rotate(-90);
+        graphics.rotate(90);
+        graphics.drawText(s, x, y, style);
+        graphics.rotate(-90);
         if (statePushed) {
             try {
-                real.restoreState();
-                real.popState();
+                graphics.restoreState();
+                graphics.popState();
             } catch (Throwable t) {
             }
         }
@@ -293,18 +294,18 @@ public class Rotate90Graphics extends Graphics {
     public void drawText(String s, int x, int y) {
         boolean statePushed = false;
         try {
-            real.pushState();
+            graphics.pushState();
             statePushed = true;
         } catch (Throwable t) {
             statePushed = false;
         }
-        real.rotate(90);
-        real.drawText(s, x, y);
-        real.rotate(-90);
+        graphics.rotate(90);
+        graphics.drawText(s, x, y);
+        graphics.rotate(-90);
         if (statePushed) {
             try {
-                real.restoreState();
-                real.popState();
+                graphics.restoreState();
+                graphics.popState();
             } catch (Throwable t) {
             }
         }
@@ -315,73 +316,73 @@ public class Rotate90Graphics extends Graphics {
             Color selectionBackground) {
         boolean statePushed = false;
         try {
-            real.pushState();
+            graphics.pushState();
             statePushed = true;
         } catch (Throwable t) {
             statePushed = false;
         }
-        real.rotate(90);
-        real.drawTextLayout(layout, x, y, selectionStart, selectionEnd,
+        graphics.rotate(90);
+        graphics.drawTextLayout(layout, x, y, selectionStart, selectionEnd,
                 selectionForeground, selectionBackground);
-        real.rotate(-90);
+        graphics.rotate(-90);
         if (statePushed) {
             try {
-                real.restoreState();
-                real.popState();
+                graphics.restoreState();
+                graphics.popState();
             } catch (Throwable t) {
             }
         }
     }
 
     public void fillArc(int x, int y, int w, int h, int offset, int length) {
-        real.fillArc(-y - h, x, h, w, offset, length);
+        graphics.fillArc(-y - h, x, h, w, offset, length);
     }
 
     public void fillGradient(int x, int y, int w, int h, boolean vertical) {
-        real.fillGradient(-y - h, x, h, w, !vertical);
+        graphics.fillGradient(-y - h, x, h, w, !vertical);
     }
 
     public void fillOval(int x, int y, int w, int h) {
-        real.fillOval(-y - h, x, h, w);
+        graphics.fillOval(-y - h, x, h, w);
     }
 
     public void fillPath(Path path) {
         Path p2 = rotate((Path) path);
-        real.fillPath(p2);
+        graphics.fillPath(p2);
         p2.dispose();
     }
 
     public void fillPolygon(int[] points) {
-        real.fillPolygon(rotate(points));
+        graphics.fillPolygon(rotate(points));
     }
 
     public void fillPolygon(PointList points) {
-        real.fillPolygon(rotate(points));
+        graphics.fillPolygon(rotate(points));
     }
 
     public void fillRectangle(int x, int y, int width, int height) {
-        real.fillRectangle(-y - height, x, height, width);
+        graphics.fillRectangle(-y - height, x, height, width);
     }
 
     public void fillRoundRectangle(Rectangle r, int arcWidth, int arcHeight) {
-        real.fillRoundRectangle(rotate(r), arcHeight, arcWidth);
+        graphics.fillRoundRectangle(rotate(r), arcHeight, arcWidth);
     }
 
     public void fillString(String s, int x, int y) {
         boolean statePushed = false;
         try {
-            real.pushState();
+            graphics.pushState();
             statePushed = true;
         } catch (Throwable t) {
             statePushed = false;
         }
-        real.rotate(90);
-        real.fillString(s, x, y);
-        real.rotate(-90);
+        graphics.rotate(90);
+        graphics.fillString(s, x, y);
+        graphics.rotate(-90);
         if (statePushed) {
             try {
-                real.restoreState();
-                real.popState();
+                graphics.restoreState();
+                graphics.popState();
             } catch (Throwable t) {
             }
         }
@@ -390,41 +391,41 @@ public class Rotate90Graphics extends Graphics {
     public void fillText(String s, int x, int y) {
         boolean statePushed = false;
         try {
-            real.pushState();
+            graphics.pushState();
             statePushed = true;
         } catch (Throwable t) {
             statePushed = false;
         }
-        real.rotate(90);
-        real.fillText(s, x, y);
-        real.rotate(-90);
+        graphics.rotate(90);
+        graphics.fillText(s, x, y);
+        graphics.rotate(-90);
         if (statePushed) {
             try {
-                real.restoreState();
-                real.popState();
+                graphics.restoreState();
+                graphics.popState();
             } catch (Throwable t) {
             }
         }
     }
 
     public double getAbsoluteScale() {
-        return real.getAbsoluteScale();
+        return graphics.getAbsoluteScale();
     }
 
     public int getAlpha() {
-        return real.getAlpha();
+        return graphics.getAlpha();
     }
 
     public int getAntialias() {
-        return real.getAntialias();
+        return graphics.getAntialias();
     }
 
     public Color getBackgroundColor() {
-        return real.getBackgroundColor();
+        return graphics.getBackgroundColor();
     }
 
     public Rectangle getClip(Rectangle rect) {
-        rect = real.getClip(rect);
+        rect = graphics.getClip(rect);
         int rx = rect.y;
         int ry = -rect.x - rect.width;
         int rw = rect.height;
@@ -437,83 +438,83 @@ public class Rotate90Graphics extends Graphics {
     }
 
     public int getFillRule() {
-        return real.getFillRule();
+        return graphics.getFillRule();
     }
 
     public Font getFont() {
-        return real.getFont();
+        return graphics.getFont();
     }
 
     public FontMetrics getFontMetrics() {
-        return real.getFontMetrics();
+        return graphics.getFontMetrics();
     }
 
     public Color getForegroundColor() {
-        return real.getForegroundColor();
+        return graphics.getForegroundColor();
     }
 
     public int getInterpolation() {
-        return real.getInterpolation();
+        return graphics.getInterpolation();
     }
 
     public int getLineCap() {
-        return real.getLineCap();
+        return graphics.getLineCap();
     }
 
     public int getLineJoin() {
-        return real.getLineJoin();
+        return graphics.getLineJoin();
     }
 
     public int getLineStyle() {
-        return real.getLineStyle();
+        return graphics.getLineStyle();
     }
 
     public int getLineWidth() {
-        return real.getLineWidth();
+        return graphics.getLineWidth();
     }
 
     public int getTextAntialias() {
-        return real.getTextAntialias();
+        return graphics.getTextAntialias();
     }
 
     public boolean getXORMode() {
-        return real.getXORMode();
+        return graphics.getXORMode();
     }
 
     public void popState() {
-        real.popState();
+        graphics.popState();
     }
 
     public void pushState() {
-        real.pushState();
+        graphics.pushState();
     }
 
     public void restoreState() {
-        real.restoreState();
+        graphics.restoreState();
     }
 
     public void rotate(float degrees) {
-        real.rotate(degrees);
+        graphics.rotate(degrees);
     }
 
     public void scale(double amount) {
-        real.scale(amount);
+        graphics.scale(amount);
     }
 
     public void scale(float horizontal, float vertical) {
-        real.scale(horizontal, vertical);
+        graphics.scale(horizontal, vertical);
     }
 
     public void setAlpha(int alpha) {
-        real.setAlpha(alpha);
+        graphics.setAlpha(alpha);
     }
 
     public void setAntialias(int value) {
-        real.setAntialias(value);
+        graphics.setAntialias(value);
     }
 
     public void setBackgroundColor(Color rgb) {
-        real.setBackgroundColor(rgb);
+        graphics.setBackgroundColor(rgb);
     }
 
     public void setBackgroundPattern(Pattern pattern) {
@@ -523,37 +524,37 @@ public class Rotate90Graphics extends Graphics {
         }
         if (pattern instanceof GradientPattern) {
             Pattern p = rotate((GradientPattern) pattern);
-            real.setBackgroundPattern(p);
+            graphics.setBackgroundPattern(p);
             lastBgPattern = p;
         } else if (pattern instanceof ImagePattern) {
             Pattern p = rotate((ImagePattern) pattern);
-            real.setBackgroundPattern(p);
+            graphics.setBackgroundPattern(p);
             lastBgPattern = p;
         } else {
-            real.setBackgroundPattern(pattern);
+            graphics.setBackgroundPattern(pattern);
         }
     }
 
     public void setClip(Path path) {
         Path p2 = rotate((Path) path);
-        real.setClip(p2);
+        graphics.setClip(p2);
         p2.dispose();
     }
 
     public void setClip(Rectangle r) {
-        real.setClip(rotate(r));
+        graphics.setClip(rotate(r));
     }
 
     public void setFillRule(int rule) {
-        real.setFillRule(rule);
+        graphics.setFillRule(rule);
     }
 
     public void setFont(Font f) {
-        real.setFont(f);
+        graphics.setFont(f);
     }
 
     public void setForegroundColor(Color rgb) {
-        real.setForegroundColor(rgb);
+        graphics.setForegroundColor(rgb);
     }
 
     public void setForegroundPattern(Pattern pattern) {
@@ -563,59 +564,99 @@ public class Rotate90Graphics extends Graphics {
         }
         if (pattern instanceof GradientPattern) {
             Pattern p = rotate((GradientPattern) pattern);
-            real.setForegroundPattern(p);
+            graphics.setForegroundPattern(p);
             lastFgPattern = p;
         } else if (pattern instanceof ImagePattern) {
             Pattern p = rotate((ImagePattern) pattern);
-            real.setForegroundPattern(p);
+            graphics.setForegroundPattern(p);
             lastFgPattern = p;
         } else {
-            real.setForegroundPattern(pattern);
+            graphics.setForegroundPattern(pattern);
         }
     }
 
     public void setInterpolation(int interpolation) {
-        real.setInterpolation(interpolation);
+        graphics.setInterpolation(interpolation);
     }
 
     public void setLineCap(int cap) {
-        real.setLineCap(cap);
+        graphics.setLineCap(cap);
     }
 
     public void setLineDash(int[] dash) {
-        real.setLineDash(dash);
+        graphics.setLineDash(dash);
     }
 
     public void setLineJoin(int join) {
-        real.setLineJoin(join);
+        graphics.setLineJoin(join);
     }
 
     public void setLineStyle(int style) {
-        real.setLineStyle(style);
+        graphics.setLineStyle(style);
     }
 
     public void setLineWidth(int width) {
-        real.setLineWidth(width);
+        graphics.setLineWidth(width);
     }
 
     public void setTextAntialias(int value) {
-        real.setTextAntialias(value);
+        graphics.setTextAntialias(value);
     }
 
     public void setXORMode(boolean b) {
-        real.setXORMode(b);
+        graphics.setXORMode(b);
     }
 
     public void shear(float horz, float vert) {
-        real.shear(horz, vert);
+        graphics.shear(horz, vert);
     }
 
     public void translate(float dx, float dy) {
-        real.translate(-dy, dx);
+        graphics.translate(-dy, dx);
     }
 
     public void translate(int dx, int dy) {
-        real.translate(-dy, dx);
+        graphics.translate(-dy, dx);
+    }
+
+    // ==========================================================
+    //    Since 3.5
+    // ==========================================================
+
+    public boolean getAdvanced() {
+        return graphics.getAdvanced();
+    }
+
+    public float getLineWidthFloat() {
+        return graphics.getLineWidthFloat();
+    }
+
+    public LineAttributes getLineAttributes() {
+        return graphics.getLineAttributes();
+    }
+
+    public float getLineMiterLimit() {
+        return graphics.getLineMiterLimit();
+    }
+
+    public void setAdvanced(boolean advanced) {
+        graphics.setAdvanced(advanced);
+    }
+
+    public void setLineMiterLimit(float miterLimit) {
+        graphics.setLineMiterLimit(miterLimit);
+    }
+
+    public void setLineWidthFloat(float width) {
+        graphics.setLineWidthFloat(width);
+    }
+
+    public void setLineAttributes(LineAttributes attributes) {
+        graphics.setLineAttributes(attributes);
+    }
+
+    public void setLineDash(float[] value) {
+        graphics.setLineDash(value);
     }
 
 }

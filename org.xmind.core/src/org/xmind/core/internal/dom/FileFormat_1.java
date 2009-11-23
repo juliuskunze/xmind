@@ -30,6 +30,7 @@ import static org.xmind.core.internal.dom.DOMConstants.ATTR_VERSION;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_WIDTH;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_X;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_Y;
+import static org.xmind.core.internal.dom.DOMConstants.TAG_A;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_BOUNDARIES;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_BOUNDARY;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_IMG;
@@ -38,7 +39,6 @@ import static org.xmind.core.internal.dom.DOMConstants.TAG_LABELS;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_MARKER;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_NOTES;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_NUMBERING;
-import static org.xmind.core.internal.dom.DOMConstants.TAG_P;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_POSITION;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_PREFIX;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_RELATIONSHIP;
@@ -54,8 +54,11 @@ import static org.xmind.core.internal.zip.ArchiveConstants.META_XML;
 import static org.xmind.core.internal.zip.ArchiveConstants.STYLES_XML;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
@@ -73,6 +76,7 @@ import org.xmind.core.IAdaptable;
 import org.xmind.core.IBoundary;
 import org.xmind.core.IFileEntry;
 import org.xmind.core.IHtmlNotesContent;
+import org.xmind.core.IHyperlinkSpan;
 import org.xmind.core.IImage;
 import org.xmind.core.IImageSpan;
 import org.xmind.core.IManifest;
@@ -81,19 +85,23 @@ import org.xmind.core.INumbering;
 import org.xmind.core.IParagraph;
 import org.xmind.core.IPlainNotesContent;
 import org.xmind.core.IRelationship;
-import org.xmind.core.IResourceRef;
 import org.xmind.core.ISheet;
+import org.xmind.core.ISpanList;
 import org.xmind.core.ITextSpan;
 import org.xmind.core.ITitled;
 import org.xmind.core.ITopic;
-import org.xmind.core.ITopicExtension;
-import org.xmind.core.ITopicExtensionElement;
+import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.compatibility.FileFormat;
 import org.xmind.core.io.IInputSource;
+import org.xmind.core.io.IOutputTarget;
+import org.xmind.core.io.IStorage;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerGroup;
+import org.xmind.core.style.IStyle;
+import org.xmind.core.style.IStyleSheet;
 import org.xmind.core.style.IStyled;
 import org.xmind.core.util.DOMUtils;
+import org.xmind.core.util.FileUtils;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.core.util.IXMLLoader;
 
@@ -135,8 +143,8 @@ public class FileFormat_1 extends FileFormat {
 
     private String defaultMarkerGroupId;
 
-    public FileFormat_1(IInputSource source, IXMLLoader loader) {
-        super(source, loader);
+    public FileFormat_1(IInputSource source, IXMLLoader loader, IStorage storage) {
+        super(source, loader, storage);
     }
 
     public boolean identifies() {
@@ -156,6 +164,9 @@ public class FileFormat_1 extends FileFormat {
 
     public WorkbookImpl load() throws CoreException, IOException {
         WorkbookImpl wb = new WorkbookImpl(loader.createDocument());
+        if (storage != null)
+            wb.setTempStorage(storage);
+
         DOMUtils.setAttribute(wb.getWorkbookElement(), ATTR_VERSION, VERSION);
 
         if (source.hasEntry(META_XML)) {
@@ -170,6 +181,14 @@ public class FileFormat_1 extends FileFormat {
             manifest.setWorkbook(wb);
             wb.setManifest(manifest);
             manifest.getFileEntries();
+            if (storage != null) {
+                IOutputTarget target = storage.getOutputTarget();
+                for (Iterator<String> entries = source.getEntries(); entries
+                        .hasNext();) {
+                    String path = entries.next();
+                    copyEntry(source, target, path);
+                }
+            }
         }
 
         if (source.hasEntry(STYLES_XML)) {
@@ -182,6 +201,52 @@ public class FileFormat_1 extends FileFormat {
 
         loadWorkbookContent(wb, contentDocument);
         return wb;
+    }
+
+    private void copyEntry(IInputSource source, IOutputTarget target,
+            String entryPath) throws CoreException {
+        try {
+            InputStream in = getInputStream(source, entryPath);
+            if (in != null) {
+                OutputStream out = getOutputStream(target, entryPath);
+                if (out != null) {
+                    try {
+                        FileUtils.transfer(in, out, true);
+                    } finally {
+                        long time = source.getEntryTime(entryPath);
+                        if (time >= 0) {
+                            target.setEntryTime(entryPath, time);
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Core.getLogger().log(e);
+        } catch (CoreException e) {
+            if (e.getType() == Core.ERROR_WRONG_PASSWORD
+                    || e.getType() == Core.ERROR_CANCELLATION)
+                throw e;
+            Core.getLogger().log(e);
+        }
+    }
+
+    private InputStream getInputStream(IInputSource source, String entryPath)
+            throws CoreException {
+        if (!source.hasEntry(entryPath))
+            return null;
+
+        InputStream in = source.getEntryStream(entryPath);
+        if (in == null)
+            return null;
+
+        return in;
+    }
+
+    private OutputStream getOutputStream(IOutputTarget target, String entryPath) {
+        if (!target.isEntryAvaialble(entryPath))
+            return null;
+
+        return target.getEntryStream(entryPath);
     }
 
     private void upgradeStyleSheet(Document ssDocument) {
@@ -292,7 +357,7 @@ public class FileFormat_1 extends FileFormat {
     private void loadSheet(ISheet sheet, Element sheetEle, WorkbookImpl workbook) {
         loadId(sheet, sheetEle, workbook);
         loadTitle(sheet, sheetEle);
-        loadStyle(sheet, sheetEle);
+        loadSheetStyle(sheet, sheetEle, workbook);
         String themeId = DOMUtils.getAttribute(sheetEle, ATTR_THEME);
         sheet.setThemeId(themeId);
 
@@ -314,6 +379,44 @@ public class FileFormat_1 extends FileFormat {
                 loadRelationship(rel, relEle, workbook);
             }
         }
+    }
+
+    private void loadSheetStyle(ISheet sheet, Element sheetEle,
+            IWorkbook workbook) {
+        String styleId = DOMUtils.getAttribute(sheetEle, ATTR_STYLE_ID);
+        IStyleSheet styleSheet = workbook.getStyleSheet();
+        IStyle style = styleSheet.findStyle(styleId);
+        if (style != null) {
+            String type = style.getType();
+            if ("map".equals(type)) { //$NON-NLS-1$
+                String p = style.getProperty("background"); //$NON-NLS-1$
+                String url = findAttachmentUrl(p, workbook);
+                style.setProperty("background", url); //$NON-NLS-1$
+            }
+        }
+        sheet.setStyleId(styleId);
+    }
+
+    private String findAttachmentUrl(String url, IWorkbook workbook) {
+        if (HyperlinkUtils.isAttachmentURL(url)) {
+            String attId = HyperlinkUtils.toAttachmentPath(url);
+            if (attId.startsWith("#")) { //$NON-NLS-1$
+                attId = attId.substring(1, attId.length());
+            }
+            IFileEntry entry = findAttachmentEntry(attId, workbook
+                    .getManifest());
+            if (entry != null) {
+                InputStream is = entry.getInputStream();
+                String path = entry.getPath();
+                try {
+                    IFileEntry fileEntry = workbook.getManifest()
+                            .createAttachmentFromStream(is, path);
+                    return HyperlinkUtils.toAttachmentURL(fileEntry.getPath());
+                } catch (IOException e) {
+                }
+            }
+        }
+        return url;
     }
 
     private void loadTopic(ITopic topic, Element topicEle, WorkbookImpl workbook) {
@@ -339,42 +442,9 @@ public class FileFormat_1 extends FileFormat {
     private void loadHyperlink(ITopic topic, Element topicEle) {
         String url = DOMUtils.getAttribute(topicEle, ATTR_HREF);
         if (url != null) {
-            if (HyperlinkUtils.isAttachmentURL(url)) {
-                url = readAttachment(topic, url);
-            } else if (url.startsWith("xaap:")) { //$NON-NLS-1$
-                url = readAudioNotes(topic, url);
-            }
+            url = readAttachment(topic, url);
         }
         topic.setHyperlink(url);
-    }
-
-    /**
-     * Read audio notes content.
-     * 
-     * @param topic
-     * @param url
-     * @return
-     */
-    private String readAudioNotes(ITopic topic, String url) {
-        String path = HyperlinkUtils.trimURLContent(url);
-        if (path.startsWith("#")) { //$NON-NLS-1$
-            path = path.substring(1);
-        }
-        IManifest manifest = topic.getOwnedWorkbook().getManifest();
-        IFileEntry entry = findAttachmentEntry(path, manifest);
-        ITopicExtension extension = topic
-                .createExtension("org.xmind.ui.audionotes"); //$NON-NLS-1$
-        IResourceRef resRef = topic.getOwnedWorkbook().createResourceRef(
-                IResourceRef.FILE_ENTRY, path);
-        extension.addResourceRef(resRef);
-        ITopicExtensionElement content = extension.getContent();
-        if (entry != null) {
-            long size = entry.getSize();
-            ITopicExtensionElement fileSizeEle = content
-                    .getCreatedChild("file-size"); //$NON-NLS-1$
-            fileSizeEle.setTextContent(String.valueOf(size));
-        }
-        return null;
     }
 
     /**
@@ -515,23 +585,24 @@ public class FileFormat_1 extends FileFormat {
 
     private void loadRichNotes(ITopic topic, Element topicEle, Element richEle,
             IHtmlNotesContent content, WorkbookImpl workbook) {
-        Iterator<Element> it = DOMUtils.childElementIterByTag(richEle, TAG_P);
+        Iterator<Element> it = DOMUtils.childElementIterByTag(richEle,
+                DOMConstants.TAG_P);
         while (it.hasNext()) {
             Element pEle = it.next();
             IParagraph p = content.createParagraph();
-            loadParagraph(topic, topicEle, pEle, p, content, workbook);
+            loadSpanList(topic, topicEle, pEle, p, content, workbook);
             content.addParagraph(p);
         }
     }
 
-    private void loadParagraph(ITopic topic, Element topicEle, Element pEle,
-            IParagraph p, IHtmlNotesContent content, WorkbookImpl workbook) {
-        NodeList ns = pEle.getChildNodes();
+    private void loadSpanList(ITopic topic, Element topicEle, Element listEle,
+            ISpanList list, IHtmlNotesContent content, WorkbookImpl workbook) {
+        NodeList ns = listEle.getChildNodes();
         for (int i = 0; i < ns.getLength(); i++) {
             Node n = ns.item(i);
             if (n instanceof Text) {
                 ITextSpan span = content.createTextSpan(n.getTextContent());
-                p.addSpan(span);
+                list.addSpan(span);
             } else if (n instanceof Element) {
                 Element e = (Element) n;
                 String tag = e.getTagName();
@@ -539,27 +610,25 @@ public class FileFormat_1 extends FileFormat {
                     String url = findImageUrl(e, workbook);
                     if (url != null) {
                         IImageSpan span = content.createImageSpan(url);
-                        p.addSpan(span);
+                        list.addSpan(span);
+                    }
+                } else if (TAG_A.equals(tag)) {
+                    String href = e.getAttribute(ATTR_HREF);
+                    if (href != null) {
+                        IHyperlinkSpan hyperlinkSpan = content
+                                .createHyperlinkSpan(href);
+                        list.addSpan(hyperlinkSpan);
+                        loadSpanList(topic, topicEle, e, hyperlinkSpan,
+                                content, workbook);
                     }
                 } else {
                     ITextSpan span = content.createTextSpan(e.getTextContent());
                     span.setStyleId(DOMUtils.getAttribute(e, ATTR_STYLE_ID));
-                    p.addSpan(span);
+                    list.addSpan(span);
                 }
             }
         }
     }
-
-//    private void loadRichNotes(ITopic topic, Element topicEle, Element ele,
-//            WorkbookImpl workbook) {
-//        if (TAG_IMG.equals(ele.getTagName())) {
-//            setAttribute(ele, ATTR_SRC, findImageUrl(ele, workbook));
-//        }
-//        Iterator<Element> it = childElementIter(ele);
-//        while (it.hasNext()) {
-//            loadRichNotes(topic, topicEle, it.next(), workbook);
-//        }
-//    }
 
     private void loadMarkers(ITopic topic, Element topicEle,
             WorkbookImpl workbook) {
@@ -639,7 +708,8 @@ public class FileFormat_1 extends FileFormat {
     }
 
     private IFileEntry findAttachmentEntry(String attId, IManifest manifest) {
-        for (IFileEntry entry : manifest.getFileEntries()) {
+        List<IFileEntry> fileEntries = manifest.getFileEntries();
+        for (IFileEntry entry : fileEntries) {
             if (entry.getPath().contains(attId))
                 return entry;
         }

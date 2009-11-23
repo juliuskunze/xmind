@@ -267,35 +267,6 @@ public class FontUtils {
         }.run();
     }
 
-//    private static class FontKey {
-//
-//        String symbolicName;
-//
-//        boolean bold;
-//
-//        boolean italic;
-//
-//    }
-//
-//    private FontKey generateKey(Font font) {
-//        if (font == null || font.isDisposed())
-//            return null;
-//
-//        FontData[] fontData = font.getFontData();
-//        if (fontData.length == 0)
-//            return null;
-//
-//        FontKey fontKey = new FontKey();
-//        fontKey.symbolicName = fontData[0].getName()
-//                + "@size=" + fontData[0].getHeight(); //$NON-NLS-1$
-//        int style = fontData[0].getStyle();
-//        
-//    }
-//
-//    private FontKey generateKey(String key) {
-//
-//    }
-
     public static Font getFont(String key, FontData[] fontData) {
         if (key == null) {
             key = toString(fontData);
@@ -669,7 +640,7 @@ public class FontUtils {
 
         String newKey;
         if (newHeight < 0)
-            newKey = key;
+            newKey = key + "@bold"; //$NON-NLS-1$
         else
             newKey = key + "@bold,height=" + newHeight; //$NON-NLS-1$
 
@@ -697,8 +668,8 @@ public class FontUtils {
             return null;
 
         String newKey;
-        if (relativeHeight < 0)
-            newKey = key;
+        if (relativeHeight == 0)
+            newKey = key + "@bold"; //$NON-NLS-1$
         else
             newKey = key + "@bold,height+=" + relativeHeight; //$NON-NLS-1$
 

@@ -13,11 +13,13 @@
  *******************************************************************************/
 package org.xmind.gef.tool;
 
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.xmind.gef.GEF;
 import org.xmind.gef.Request;
 import org.xmind.gef.event.KeyEvent;
 import org.xmind.gef.event.MouseEvent;
 import org.xmind.gef.part.IGraphicalEditPart;
+import org.xmind.gef.part.IPart;
 
 /**
  * @author Brian Sun
@@ -26,6 +28,8 @@ import org.xmind.gef.part.IGraphicalEditPart;
 public abstract class EditTool extends GraphicalTool implements ISourceTool {
 
     private IGraphicalEditPart source;
+
+    private boolean remainActive = false;
 
     public IGraphicalEditPart getSource() {
         return source;
@@ -42,12 +46,12 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
     protected void onActivated(ITool prevTool) {
         super.onActivated(prevTool);
         refreshStatus();
-        if (getSource() != null) {
-            if (!startEditing(getSource())) {
-                changeActiveTool(GEF.TOOL_DEFAULT);
-                return;
-            }
-        }
+    }
+
+    @Override
+    protected void onDeactivated(ITool nextTool) {
+        finishEditing();
+        super.onDeactivated(nextTool);
     }
 
     /**
@@ -57,6 +61,24 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
         getStatus().setStatus(GEF.ST_CONTROL_PRESSED, false);
         getStatus().setStatus(GEF.ST_SHIFT_PRESSED, false);
         getStatus().setStatus(GEF.ST_ALT_PRESSED, false);
+    }
+
+    protected void handleEditRequest(Request request) {
+        IPart target = request.getPrimaryTarget();
+        if (target instanceof IGraphicalEditPart) {
+            IGraphicalEditPart newSource = (IGraphicalEditPart) target;
+            if (newSource != getSource()) {
+                remainActive = true;
+                finishEditing();
+                remainActive = false;
+            }
+            setSource(newSource);
+            getTargetViewer().setSelection(new StructuredSelection(newSource),
+                    true);
+            if (!startEditing(getSource())) {
+                changeActiveTool(GEF.TOOL_DEFAULT);
+            }
+        }
     }
 
     /**
@@ -69,11 +91,13 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
     }
 
     protected void cancelEditing() {
-        changeActiveTool(GEF.TOOL_DEFAULT);
+        if (!remainActive)
+            changeActiveTool(GEF.TOOL_DEFAULT);
     }
 
     protected void finishEditing() {
-        changeActiveTool(GEF.TOOL_DEFAULT);
+        if (!remainActive)
+            changeActiveTool(GEF.TOOL_DEFAULT);
     }
 
     protected boolean isViewRequest(String reqType) {
@@ -94,7 +118,7 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
         }
         String requestType = request.getType();
         if (GEF.REQ_EDIT.equals(requestType)) {
-            return;
+            handleEditRequest(request);
         } else if (GEF.REQ_SELECT_ALL.equals(requestType)) {
             selectAll();
         } else if (GEF.REQ_COPY.equals(requestType)) {

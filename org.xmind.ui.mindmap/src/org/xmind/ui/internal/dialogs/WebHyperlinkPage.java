@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IEditorPart;
 import org.xmind.ui.dialogs.HyperlinkPage;
 
 public class WebHyperlinkPage extends HyperlinkPage implements Listener {
@@ -23,7 +24,7 @@ public class WebHyperlinkPage extends HyperlinkPage implements Listener {
     public WebHyperlinkPage() {
     }
 
-    public void init(IStructuredSelection selection) {
+    public void init(IEditorPart editor, IStructuredSelection selection) {
     }
 
     /**

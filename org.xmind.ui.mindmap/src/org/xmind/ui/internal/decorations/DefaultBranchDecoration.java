@@ -67,6 +67,8 @@ public class DefaultBranchDecoration extends AbstractDecoration implements
         graphics.setLineWidth(connections.getLineWidth());
         if (!paintingShadow)
             graphics.setForegroundColor(connections.getLineColor());
+        if (graphics.getForegroundColor() == null)
+            graphics.setForegroundColor(ColorConstants.black);
         graphics.setAlpha(connections.getAlpha());
         Path p = new Path(Display.getCurrent());
         p.moveTo(p1);

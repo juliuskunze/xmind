@@ -25,7 +25,6 @@ import org.xmind.ui.internal.spellsupport.SpellingSupport;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.texteditor.FloatingTextEditTool;
 import org.xmind.ui.texteditor.FloatingTextEditor;
-import org.xmind.ui.texteditor.StyledTextContentAdapter;
 import org.xmind.ui.util.MindMapUtils;
 
 public abstract class MindMapEditToolBase extends FloatingTextEditTool {
@@ -46,8 +45,7 @@ public abstract class MindMapEditToolBase extends FloatingTextEditTool {
     protected void hookEditorControl(FloatingTextEditor editor,
             ITextViewer textViewer) {
         super.hookEditorControl(editor, textViewer);
-        StyledTextContentAdapter adapter = new StyledTextContentAdapter();
-        SpellingSupport.getInstance().install(textViewer, adapter);
+        SpellingSupport.getInstance().install(textViewer);
     }
 
     protected abstract String getInitialText(IPart source);

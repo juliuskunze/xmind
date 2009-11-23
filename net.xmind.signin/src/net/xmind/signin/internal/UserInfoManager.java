@@ -11,17 +11,15 @@
  */
 package net.xmind.signin.internal;
 
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 import net.xmind.signin.ISignInListener;
+import net.xmind.signin.util.IDataStore;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
@@ -29,169 +27,157 @@ import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.osgi.util.NLS;
+import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.xmind.ui.browser.IBrowserViewer;
 
 public class UserInfoManager {
 
-    private static class SignInCallback implements ISignInListener {
+    private class XMindCommandListener implements PropertyChangeListener {
 
-        private ISignInListener realCallback;
+        public void propertyChange(java.beans.PropertyChangeEvent evt) {
+            if (!IBrowserViewer.PROPERTY_STATUS.equals(evt.getPropertyName()))
+                return;
 
-        private Display display;
+            XMindCommand command = new XMindCommand((String) evt.getNewValue());
+            if (!command.parse())
+                return;
 
-        private boolean block;
-
-        /**
-         * 
-         */
-        public SignInCallback(ISignInListener realCallback, boolean block) {
-            this.realCallback = realCallback;
-            this.block = block;
-            this.display = Display.getCurrent();
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see
-         * net.xmind.signin.ISignInListener#postSignIn(java.util.Properties)
-         */
-        public void postSignIn(final Properties userInfo) {
-            if (display != null) {
-                Runnable runnable = new Runnable() {
-                    public void run() {
-                        SafeRunner.run(new ISafeRunnable() {
-                            public void run() throws Exception {
-                                realCallback.postSignIn(userInfo);
-                            }
-
-                            public void handleException(Throwable exception) {
-                                // do nothing
-                            }
-                        });
-                    }
-                };
-                if (block) {
-                    display.syncExec(runnable);
-                } else {
-                    display.asyncExec(runnable);
-                }
-            } else {
-                realCallback.postSignIn(userInfo);
-            }
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see net.xmind.signin.ISignInListener#postSignOut()
-         */
-        public void postSignOut() {
-            if (display != null) {
-                Runnable runnable = new Runnable() {
-                    public void run() {
-                        SafeRunner.run(new ISafeRunnable() {
-                            public void run() throws Exception {
-                                realCallback.postSignOut();
-                            }
-
-                            public void handleException(Throwable exception) {
-                                // do nothing
-                            }
-                        });
-                    }
-                };
-                if (block) {
-                    display.syncExec(runnable);
-                } else {
-                    display.asyncExec(runnable);
-                }
-            } else {
-                realCallback.postSignOut();
+            if ("signout".equals(command.getCommand())) { //$NON-NLS-1$
+                signOut(false);
+            } else if ("200".equals(command.getCode())) { //$NON-NLS-1$
+                saveUserInfo(command.getJSON());
+                firePostSignIn(data);
             }
         }
 
     }
 
-    public static final String USER_ID = "USER_ID"; //$NON-NLS-1$
+    private class SignInJob extends Job {
 
-    public static final String TOKEN = "TOKEN"; //$NON-NLS-1$
+        private final String message;
 
-    private static final String SIGN_OUT_URL = "http://www.xmind.net/_res/token/%s/%s"; //$NON-NLS-1$
+        public SignInJob(String message) {
+            super("Sign in to xmind.net"); //$NON-NLS-1$
+            this.message = message;
+            setSystem(true);
+        }
+
+        protected IStatus run(IProgressMonitor monitor) {
+            return doSignIn(monitor, message);
+        }
+    }
+
+//    private class SignOutJob extends Job {
+//
+//        private final String oldUserID;
+//
+//        private final String oldToken;
+//
+//        private SignOutJob(String oldUserID, String oldToken) {
+//            super(NLS.bind(Messages.SignOut_jobName, oldUserID));
+//            this.oldUserID = oldUserID;
+//            this.oldToken = oldToken;
+//            setSystem(true);
+//        }
+//
+//        protected IStatus run(IProgressMonitor monitor) {
+//            return doSignOut(oldUserID, oldToken, monitor);
+//        }
+//    }
+
+    public static final String USER_ID = "user"; //$NON-NLS-1$
+
+    public static final String TOKEN = "token"; //$NON-NLS-1$
+
+    public static final String REMEMBER = "remember"; //$NON-NLS-1$
+
+    //private static final String SIGN_OUT_URL = "http://www.xmind.net/_res/token/%s/%s"; //$NON-NLS-1$
 
     private static UserInfoManager instance = null;
 
     private IPreferenceStore prefStore;
 
-    private String userID;
-
-    private String token;
+    private Properties data;
 
     private List<ISignInListener> listeners;
 
     private List<ISignInListener> callbacks;
 
-    private Job asyncSignInJob = null;
+    private Job signInJob = null;
+
+    private XMindCommandListener xmindCommandListener = null;
 
     private UserInfoManager(IPreferenceStore prefStore) {
         this.prefStore = prefStore;
-        this.userID = prefStore.getString(USER_ID);
-        if ("".equals(this.userID)) //$NON-NLS-1$
-            this.userID = null;
-        this.token = prefStore.getString(TOKEN);
-        if ("".equals(this.token)) //$NON-NLS-1$
-            this.token = null;
+
+        // Clear previously stored info
+        prefStore.setToDefault("USER_ID"); //$NON-NLS-1$
+        prefStore.setToDefault("TOKEN"); //$NON-NLS-1$
+
+        this.data = new Properties();
+        String userID = prefStore.getString(USER_ID);
+        if ("".equals(userID)) //$NON-NLS-1$
+            userID = null;
+        String token = prefStore.getString(TOKEN);
+        if ("".equals(token)) //$NON-NLS-1$
+            token = null;
+        if (userID != null)
+            data.setProperty(USER_ID, userID);
+        if (token != null)
+            data.setProperty(TOKEN, token);
     }
 
     public Properties signIn() {
-        final Properties[] result = new Properties[1];
-        result[0] = null;
-        signIn(new ISignInListener() {
-            public void postSignOut() {
-            }
-
-            public void postSignIn(Properties userInfo) {
-                result[0] = userInfo;
-            }
-        }, true);
-        return result[0];
+        return signIn((String) null);
     }
 
-    public void signIn(ISignInListener callback) {
-        signIn(callback, true);
+    public Properties signIn(String message) {
+        signIn(null, true, message);
+        return getUserInfo();
     }
 
-    public void signIn(final ISignInListener callback, boolean block) {
-        if (callback == null)
-            return;
+//    public void signIn(ISignInListener callback) {
+//        signIn(callback, false, null);
+//    }
 
+    public void signIn(ISignInListener calllback, boolean block) {
+        signIn(calllback, block, null);
+    }
+
+    public void signIn(final ISignInListener callback, boolean block,
+            String message) {
         if (hasSignedIn()) {
-            callback.postSignIn(getUserInfo());
+            if (callback != null)
+                callback.postSignIn(getUserInfo());
             return;
         }
 
-        if (callbacks != null && callbacks.contains(callback))
-            return;
-
-        if (callbacks == null)
-            callbacks = new ArrayList<ISignInListener>();
-        callbacks.add(new SignInCallback(callback, block));
+        if (callback != null) {
+            if (callbacks == null)
+                callbacks = new ArrayList<ISignInListener>();
+            callbacks.add(callback);
+        }
 
         Display display = block ? Display.getCurrent() : null;
 
-        startAsyncSignInJob();
+        startSignInJob(message);
 
         if (block) {
-            while (asyncSignInJob != null) {
+            while (signInJob != null) {
                 if (display == null) {
+                    // not in UI thread
                     try {
                         Thread.sleep(1);
                     } catch (InterruptedException ignore) {
                         break;
                     }
                 } else {
+                    // in UI thread
                     if (!display.readAndDispatch()) {
                         display.sleep();
                     }
@@ -203,76 +189,91 @@ public class UserInfoManager {
     /**
      * 
      */
-    private void startAsyncSignInJob() {
-        if (asyncSignInJob == null) {
-            asyncSignInJob = createAsyncSignInJob();
-            asyncSignInJob.addJobChangeListener(new JobChangeAdapter() {
+    private void startSignInJob(String message) {
+        if (signInJob == null) {
+            signInJob = new SignInJob(message);
+            signInJob.addJobChangeListener(new JobChangeAdapter() {
                 public void done(IJobChangeEvent event) {
-                    asyncSignInJob = null;
+                    signInJob = null;
                 }
             });
-            asyncSignInJob.schedule();
+            signInJob.schedule();
         }
-    }
-
-    /**
-     * @return
-     */
-    private Job createAsyncSignInJob() {
-        Job job = new Job("Sign In To XMind.net") { //$NON-NLS-1$
-            @Override
-            protected IStatus run(IProgressMonitor monitor) {
-                doSignInJob();
-                return Status.OK_STATUS;
-            }
-
-        };
-        job.setSystem(true);
-        return job;
     }
 
     /**
      * 
      */
-    private void doSignInJob() {
-        IDisplayProvider displayProvider = getDisplayProvider();
-        try {
-            displayProvider.getDisplay().syncExec(new Runnable() {
-                public void run() {
-                    SignInDialog dialog = new SignInDialog(null);
-                    int retCode = dialog.open();
-                    if (retCode == SignInDialog.OK) {
-                        saveUserInfo(dialog.getUserID(), dialog.getToken(),
-                                dialog.shouldRemember());
-                    } else {
-                        clearUserInfo();
-                    }
+    private IStatus doSignIn(final IProgressMonitor monitor,
+            final String message) {
+        if (!PlatformUI.isWorkbenchRunning())
+            return new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    "No workbench is running."); //$NON-NLS-1$
+
+        final IWorkbench workbench = PlatformUI.getWorkbench();
+        if (workbench == null)
+            return new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    "No workbench is available."); //$NON-NLS-1$
+
+        final Display display = workbench.getDisplay();
+        if (display == null || display.isDisposed())
+            return new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    "No display is available."); //$NON-NLS-1$
+
+        final SignInDialog[] dialogs = new SignInDialog[1];
+        final boolean[] done = new boolean[1];
+        done[0] = false;
+        display.asyncExec(new Runnable() {
+            public void run() {
+                IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+                final Shell shell = window == null ? null : window.getShell();
+                if (shell != null)
+                    shell.setActive();
+
+                SignInDialog dialog = new SignInDialog(shell, message);
+                dialogs[0] = dialog;
+                int code = dialog.open();
+                dialogs[0] = null;
+
+                if (monitor.isCanceled())
+                    return;
+
+                if (code == SignInDialog.OK) {
+                    saveUserInfo(dialog.getData());
+                } else {
+                    clearUserInfo();
                 }
-            });
-        } catch (Throwable e) {
-            Activator.log(e);
-        } finally {
-            displayProvider.dispose();
+                done[0] = true;
+            }
+        });
+
+        // block job thread
+        while (!done[0] && !monitor.isCanceled()) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                break;
+            }
         }
 
-        Properties userInfo = getUserInfo();
-        notifyCallbacks(userInfo);
-        if (userInfo != null) {
-            firePostSignIn(userInfo);
+        if (monitor.isCanceled()) {
+            if (dialogs[0] != null) {
+                display.asyncExec(new Runnable() {
+                    public void run() {
+                        dialogs[0].close();
+                    }
+                });
+            }
+            return Status.CANCEL_STATUS;
         }
-    }
 
-    private IDisplayProvider getDisplayProvider() {
-        if (PlatformUI.isWorkbenchRunning())
-            return new DisplayProvider(PlatformUI.getWorkbench().getDisplay());
+        notifyCallbacks(data.isEmpty() ? null : data);
+        if (data != null && data.containsKey(USER_ID)
+                && data.containsKey(TOKEN)) {
+            firePostSignIn(data);
+        }
 
-        Display display = Display.getCurrent();
-        if (display != null)
-            return new DisplayProvider(display);
-
-        display = Display.getDefault();
-        return new DisplayProvider(display, display.getThread() == Thread
-                .currentThread());
+        return Status.OK_STATUS;
     }
 
     private void notifyCallbacks(Properties userInfo) {
@@ -281,7 +282,7 @@ public class UserInfoManager {
             ISignInListener callback = callbacks.get(i);
             if (callback != null) {
                 if (userInfo != null) {
-                    callback.postSignIn(userInfo);
+                    callback.postSignIn(new Properties(userInfo));
                 } else {
                     callback.postSignOut();
                 }
@@ -292,36 +293,35 @@ public class UserInfoManager {
     }
 
     public Properties getUserInfo() {
-        if (userID == null || token == null)
-            return null;
-
-        Properties info = new Properties();
-        info.setProperty(USER_ID, userID);
-        info.setProperty(TOKEN, token);
-        return info;
+        return data.isEmpty() ? null : new Properties(data);
     }
 
-    private void saveUserInfo(String userID, String token, boolean remember) {
+    private void saveUserInfo(IDataStore store) {
+        String userID = store.getString(USER_ID);
+        String token = store.getString(TOKEN);
         if (userID == null || token == null)
             throw new IllegalArgumentException();
-        this.userID = userID;
-        this.token = token;
-        if (remember) {
+        this.data.clear();
+        this.data.putAll(store.toMap());
+        if (Boolean.parseBoolean(store.getString(REMEMBER))) {
             prefStore.setValue(USER_ID, userID);
             prefStore.setValue(TOKEN, token);
+        } else {
+            prefStore.setToDefault(USER_ID);
+            prefStore.setToDefault(TOKEN);
         }
     }
 
     public boolean hasSignedIn() {
-        return userID != null && token != null;
+        return getUserID() != null && getToken() != null;
     }
 
     public String getUserID() {
-        return userID;
+        return data.getProperty(USER_ID);
     }
 
     public String getToken() {
-        return token;
+        return data.getProperty(TOKEN);
     }
 
     public void signOut() {
@@ -329,42 +329,49 @@ public class UserInfoManager {
     }
 
     private void signOut(boolean notifyServer) {
-        final String oldUserID = this.userID;
-        final String oldToken = this.token;
+//        final String oldUserID = getUserID();
+//        final String oldToken = getToken();
+
         clearUserInfo();
 
-        if (notifyServer && oldUserID != null && oldToken != null) {
-            Job signOutJob = new Job(NLS.bind(Messages.SignOut_jobName,
-                    oldUserID)) {
-                protected IStatus run(IProgressMonitor monitor) {
-                    String url = String.format(SIGN_OUT_URL, oldUserID,
-                            oldToken);
-                    HttpMethod method = new PostMethod(url);
-                    method.setRequestHeader("Content-Type", //$NON-NLS-1$
-                            "application/x-www-form-urlencoded; charset=UTF-8"); //$NON-NLS-1$
-                    method.setRequestHeader("AuthToken", token); //$NON-NLS-1$
-                    method.setRequestHeader("accept", "application/json"); //$NON-NLS-1$ //$NON-NLS-2$
-
-                    HttpClient client = new HttpClient();
-                    try {
-                        client.executeMethod(method);
-                    } catch (Exception e) {
-                        Activator.log(e);
-                    }
-                    return new Status(IStatus.OK, Activator.PLUGIN_ID,
-                            "Sign out finished"); //$NON-NLS-1$
-                }
-            };
-            signOutJob.setSystem(true);
-            signOutJob.schedule();
-        }
+//        if (notifyServer && oldUserID != null && oldToken != null) {
+//            new SignOutJob(oldUserID, oldToken).schedule();
+//        }
 
         firePostSignOut();
     }
 
+//    private IStatus doSignOut(String oldUserID, String oldToken,
+//            IProgressMonitor monitor) {
+//        IWorkbench workbench = PlatformUI.getWorkbench();
+//        if (workbench != null) {
+//            final Display display = workbench.getDisplay();
+//            if (display != null) {
+//                display.asyncExec(new Runnable() {
+//                    public void run() {
+//                        SignOutDialog.getInstance().open();
+//                    }
+//                });
+//            }
+//        }
+//        String url = String.format(SIGN_OUT_URL, oldUserID, oldToken);
+//        HttpMethod method = new PostMethod(url);
+//        method.setRequestHeader("Content-Type", //$NON-NLS-1$
+//                "application/x-www-form-urlencoded; charset=UTF-8"); //$NON-NLS-1$
+//        method.setRequestHeader("AuthToken", oldToken); //$NON-NLS-1$
+//        method.setRequestHeader("accept", "application/json"); //$NON-NLS-1$ //$NON-NLS-2$
+//
+//        HttpClient client = new HttpClient();
+//        try {
+//            client.executeMethod(method);
+//        } catch (Exception e) {
+//            Activator.log(e);
+//        }
+//        return Status.OK_STATUS;
+//    }
+
     private void clearUserInfo() {
-        this.userID = null;
-        this.token = null;
+        this.data.clear();
         prefStore.setToDefault(USER_ID);
         prefStore.setToDefault(TOKEN);
     }
@@ -388,20 +395,35 @@ public class UserInfoManager {
         listeners.remove(listener);
     }
 
-    protected void firePostSignIn(Properties userInfo) {
+    protected void firePostSignIn(final Properties userInfo) {
         if (listeners == null)
             return;
-        for (Object listener : listeners.toArray()) {
-            ((ISignInListener) listener).postSignIn(userInfo);
+        for (final Object listener : listeners.toArray()) {
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    ((ISignInListener) listener).postSignIn(new Properties(
+                            userInfo));
+                }
+            });
         }
     }
 
     protected void firePostSignOut() {
         if (listeners == null)
             return;
-        for (Object listener : listeners.toArray()) {
-            ((ISignInListener) listener).postSignOut();
+        for (final Object listener : listeners.toArray()) {
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    ((ISignInListener) listener).postSignOut();
+                }
+            });
         }
     }
 
+    PropertyChangeListener getXMindCommandListener() {
+        if (xmindCommandListener == null) {
+            xmindCommandListener = new XMindCommandListener();
+        }
+        return xmindCommandListener;
+    }
 }

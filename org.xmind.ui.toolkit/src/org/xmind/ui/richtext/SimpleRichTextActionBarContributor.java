@@ -15,6 +15,7 @@ package org.xmind.ui.richtext;
 
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -139,9 +140,26 @@ public class SimpleRichTextActionBarContributor extends
         menu.add(new Separator());
         menu.add(indentAction);
         menu.add(outdentAction);
+    }
+
+    @Override
+    public void fillContextMenu(IMenuManager menu) {
+        MenuManager fontMenu = new MenuManager(
+                RichTextMessages.ACTIONBAR_FONT_MENU_TEXT);
+        fontMenu.add(boldAction);
+        fontMenu.add(italicAction);
+        fontMenu.add(underlineAction);
+        fontMenu.add(strikeoutAction);
+        menu.add(fontMenu);
+        MenuManager alignMenu = new MenuManager(
+                RichTextMessages.ACTIONBAR_ALIGN_MENU_TEXT);
+        alignMenu.add(alignLeftAction);
+        alignMenu.add(alignCenterAction);
+        alignMenu.add(alignRightAction);
+        menu.add(alignMenu);
         menu.add(new Separator());
-        menu.add(foregroundPicker.getAction());
-        menu.add(backgroundPicker.getAction());
+        menu.add(indentAction);
+        menu.add(outdentAction);
     }
 
     public void fillToolBar(IToolBarManager toolbar) {

@@ -19,6 +19,7 @@ import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.xmind.core.style.IStyle;
 import org.xmind.gef.draw2d.graphics.GraphicsUtils;
 import org.xmind.ui.style.Styles;
@@ -28,6 +29,8 @@ public class ThemeFigure extends Figure {
     private static final Rectangle RECT = new Rectangle();
 
     private IStyle theme = null;
+
+    private Image defaultImage = null;
 
     public ThemeFigure() {
     }
@@ -43,6 +46,28 @@ public class ThemeFigure extends Figure {
         this.theme = theme;
         repaint();
     }
+
+    public Image getDefaultImage() {
+        return defaultImage;
+    }
+
+    public void setDefaultImage(Image defaultImage) {
+        if (defaultImage == this.defaultImage)
+            return;
+        this.defaultImage = defaultImage;
+        repaint();
+    }
+
+//    public boolean isDefault() {
+//        return isDefault;
+//    }
+//
+//    public void setDefault(boolean isDefault) {
+//        if (isDefault == this.isDefault)
+//            return;
+//        this.isDefault = isDefault;
+//        repaint();
+//    }
 
     public void paint(Graphics graphics) {
         GraphicsUtils.fixGradientBugForCarbon(graphics, this);
@@ -101,6 +126,13 @@ public class ThemeFigure extends Figure {
         StyleFigureUtils.drawTopic(graphics, centralBounds, centralStyle,
                 StyleFigureUtils.defaultCentralStyle, false);
 
+        if (defaultImage != null) {
+//            org.eclipse.swt.graphics.Rectangle imgBounds = defaultImage
+//                    .getBounds();
+//            int w = imgBounds.width;
+//            int h = imgBounds.height;
+            graphics.drawImage(defaultImage, r.x + 1, r.y + 1);
+        }
     }
 
     public static Rectangle centralBounds(Rectangle r) {

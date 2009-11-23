@@ -99,6 +99,7 @@ import org.xmind.ui.internal.actions.ResetPositionAction;
 import org.xmind.ui.internal.actions.SaveAttachmentAsAction;
 import org.xmind.ui.internal.actions.SelectBrothersAction;
 import org.xmind.ui.internal.actions.SelectChildrenAction;
+import org.xmind.ui.internal.actions.SortRequestAction;
 import org.xmind.ui.internal.actions.TileAction;
 import org.xmind.ui.internal.actions.TraverseAction;
 import org.xmind.ui.internal.actions.ZoomInAction;
@@ -543,6 +544,20 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
         CreateSummaryAction createSummaryAction = new CreateSummaryAction(this);
         actionRegistry.addAction(createSummaryAction);
 
+//        SortAsAlphaAction sortAsAlphaAction = new SortAsAlphaAction(this);
+//        actionRegistry.addAction(sortAsAlphaAction);
+//        addSelectionAction(sortAsAlphaAction);
+//
+//        SortAsPriorityAction sortAsPriorityAction = new SortAsPriorityAction(
+//                this);
+//        actionRegistry.addAction(sortAsPriorityAction);
+//        addSelectionAction(sortAsPriorityAction);
+//
+//        SortAsModifyDateAction sortAsModifyDateAction = new SortAsModifyDateAction(
+//                this);
+//        actionRegistry.addAction(sortAsModifyDateAction);
+//        addSelectionAction(sortAsModifyDateAction);
+
         EditTitleAction editTitleAction = new EditTitleAction(this);
         actionRegistry.addAction(editTitleAction);
         addSelectionAction(editTitleAction);
@@ -610,6 +625,9 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
         addAlignmentAction(PositionConstants.TOP, actionRegistry);
         addAlignmentAction(PositionConstants.MIDDLE, actionRegistry);
         addAlignmentAction(PositionConstants.BOTTOM, actionRegistry);
+        addSortAction(ActionConstants.SORT_TITLE_ID, actionRegistry);
+        addSortAction(ActionConstants.SORT_PRIORITY_ID, actionRegistry);
+        addSortAction(ActionConstants.SORT_MODIFIED_ID, actionRegistry);
 
         PrintMapAction printMapAction = new PrintMapAction(this);
         actionRegistry.addAction(printMapAction);
@@ -619,6 +637,12 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
             IActionRegistry actionRegistry) {
         AlignmentRequestAction action = new AlignmentRequestAction(this,
                 alignment);
+        actionRegistry.addAction(action);
+        addSelectionAction(action);
+    }
+
+    private void addSortAction(String sortId, IActionRegistry actionRegistry) {
+        SortRequestAction action = new SortRequestAction(this, sortId);
         actionRegistry.addAction(action);
         addSelectionAction(action);
     }

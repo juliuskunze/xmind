@@ -26,8 +26,6 @@ import org.xmind.ui.internal.InternalMindMapUI;
 
 public class MindMapUI {
 
-    public static final String TIPS_FADE_DELAY = "tips fade delay"; // //$NON-NLS-1$
-
     public static final String PLUGIN_ID = "org.xmind.ui"; //$NON-NLS-1$
 
     public static final String MINDMAP_EDITOR_ID = "org.xmind.ui.MindMapEditor"; //$NON-NLS-1$
@@ -39,6 +37,8 @@ public class MindMapUI {
     public static final String VIEW_STYLES = "org.xmind.ui.StylesView"; //$NON-NLS-1$
 
     public static final String VIEW_THEMES = "org.xmind.ui.ThemesView"; //$NON-NLS-1$
+
+    public static final String VIEW_BROSWER = "org.xmind.ui.BrowserView"; //$NON-NLS-1$
 
     public static final String POPUP_DIALOG_SETTINGS_ID = "org.xmind.ui.popupDialog"; //$NON-NLS-1$
 
@@ -96,6 +96,7 @@ public class MindMapUI {
 
     public static final String REQ_SHOW_LEGEND = "show legend"; //$NON-NLS-1$
     public static final String REQ_HIDE_LEGEND = "hide legend"; //$NON-NLS-1$
+
     public static final String REQ_SHOW_NOTES = "show notes"; //$NON-NLS-1$
     public static final String REQ_EDIT_LABEL = "edit label"; //$NON-NLS-1$
     public static final String REQ_EDIT_LEGEND_ITEM = "edit legend item"; //$NON-NLS-1$
@@ -163,6 +164,8 @@ public class MindMapUI {
     public static final String POLICY_MAP = "org.xmind.ui.editPolicy.map"; //$NON-NLS-1$
     public static final String POLICY_LEGEND_ITEM_MODIFIABLE = "org.xmind.ui.editPolicy.legendItemModifiable"; //$NON-NLS-1$
     public static final String POLICY_DROP_TARGET = "org.xmind.ui.editPolicy.dropTarget"; //$NON-NLS-1$
+
+    public static final String POLICY_SORTABLE = "org.xmind.ui.editPolicy.topicSortable"; //$NON-NLS-1$
 
     public static final Object LAYER_TITLE = "org.xmind.ui.layer.title"; //$NON-NLS-1$
     public static final Object LAYER_UNDO = "org.xmind.ui.layer.undo"; //$NON-NLS-1$
@@ -382,16 +385,6 @@ public class MindMapUI {
      * when searching text to replace.
      */
     public static final String PARAM_IGNORE_CASE = "ignoreCase"; //$NON-NLS-1$
-
-//    /**
-//     * Request parameter: whether the last operation ended inside a topic part.
-//     * 
-//     * <dl>
-//     * <dt>Values:</dt>
-//     * <dd>{@link ITopicPart}, or <code>null</code></dd>
-//     * </dl>
-//     */
-//    public static final String PARAM_INSIDE_TOPIC = "insideTopic"; //$NON-NLS-1$
 
     /**
      * The maximum zoom scale (value=<code>500(%)</code>).

@@ -16,11 +16,15 @@ package org.xmind.ui.internal.views;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Insets;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.xmind.core.style.IStyle;
@@ -29,12 +33,14 @@ import org.xmind.gef.GEF;
 import org.xmind.gef.part.GraphicalEditPart;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.part.IPartFactory;
+import org.xmind.gef.tool.ITool;
 import org.xmind.gef.util.Properties;
 import org.xmind.ui.gallery.FramePart;
 import org.xmind.ui.gallery.GalleryEditTool;
 import org.xmind.ui.gallery.GalleryLayout;
 import org.xmind.ui.gallery.GallerySelectTool;
 import org.xmind.ui.gallery.GalleryViewer;
+import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.texteditor.FloatingTextEditor;
 
@@ -69,6 +75,7 @@ public class ThemesViewer extends GalleryViewer {
         protected void updateView() {
             super.updateView();
             ((ThemeFigure) getFigure()).setTheme(getStyle());
+            ((ThemeFigure) getFigure()).setDefaultImage(getDefaultImage());
 
             Properties properties = ((GalleryViewer) getSite().getViewer())
                     .getProperties();
@@ -79,6 +86,21 @@ public class ThemesViewer extends GalleryViewer {
             }
         }
 
+        protected void register() {
+            registerModel(getStyle().getId());
+            super.register();
+        }
+
+        @Override
+        protected void unregister() {
+            super.unregister();
+            unregisterModel(getStyle().getId());
+        }
+
+        private Image getDefaultImage() {
+            return ((ThemesViewer) getSite().getViewer())
+                    .getDefaultImage(getStyle());
+        }
     }
 
     private static class ThemePartFactory implements IPartFactory {
@@ -102,10 +124,11 @@ public class ThemesViewer extends GalleryViewer {
             if (!super.isTitleEditable(p))
                 return false;
             IStyle theme = (IStyle) p.getModel();
-            return theme != MindMapUI.getResourceManager().getDefaultTheme()
+            return theme != MindMapUI.getResourceManager().getBlankTheme()
                     && theme.getOwnedStyleSheet() != MindMapUI
                             .getResourceManager().getSystemThemeSheet();
         }
+
     }
 
     private static class ThemeNameEditTool extends GalleryEditTool {
@@ -125,6 +148,10 @@ public class ThemesViewer extends GalleryViewer {
         }
 
     }
+
+    private IStyle defaultTheme = null;
+
+    private Image defaultImage = null;
 
     public ThemesViewer(Composite parent) {
         super();
@@ -150,10 +177,70 @@ public class ThemesViewer extends GalleryViewer {
         final Display display = parent.getDisplay();
         getControl().setBackground(
                 display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+
+        getControl().addDisposeListener(new DisposeListener() {
+            public void widgetDisposed(DisposeEvent e) {
+                if (defaultImage != null) {
+                    defaultImage.dispose();
+                    defaultImage = null;
+                }
+            }
+        });
     }
 
     public void setSelection(ISelection selection) {
         super.setSelection(selection, true);
+    }
+
+    public IStyle getDefaultTheme() {
+        return defaultTheme;
+    }
+
+    public void setDefaultTheme(IStyle defaultTheme) {
+        IStyle oldTheme = this.defaultTheme;
+        this.defaultTheme = defaultTheme;
+
+        updateThemePart(oldTheme);
+        updateThemePart(defaultTheme);
+    }
+
+    private Image getDefaultImage(IStyle theme) {
+        return (theme == this.defaultTheme) ? getDefaultImage() : null;
+    }
+
+    private Image getDefaultImage() {
+        if (defaultImage == null) {
+            ImageDescriptor desc = MindMapUI.getImages().get(
+                    IMindMapImages.STAR, true);
+            if (desc != null) {
+                try {
+                    defaultImage = desc.createImage(false, getControl()
+                            .getDisplay());
+                } catch (Throwable e) {
+                    //e.printStackTrace();
+                }
+            }
+        }
+        return defaultImage;
+    }
+
+    private void updateThemePart(IStyle theme) {
+        ThemePart part = findThemePart(theme);
+        if (part != null)
+            part.update();
+    }
+
+    private ThemePart findThemePart(IStyle style) {
+        if (style == null)
+            return null;
+        return (ThemePart) getPartRegistry().getPartByModel(style.getId());
+    }
+
+    public void startEditing(IStyle theme) {
+        EditDomain domain = getEditDomain();
+        ITool tool = domain.getDefaultTool();
+        ((GallerySelectTool) tool).getStatus().setStatus(GEF.ST_ACTIVE, true);
+        ((GallerySelectTool) tool).handleRequest(GEF.REQ_EDIT, this);
     }
 
 }

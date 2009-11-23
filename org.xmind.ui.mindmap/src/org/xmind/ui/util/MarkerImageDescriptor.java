@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.ImageData;
 import org.xmind.core.marker.IMarker;
@@ -68,10 +67,13 @@ public class MarkerImageDescriptor extends ImageDescriptor {
                 result = new ImageData(in);
                 result = performScale(result);
             } catch (SWTException e) {
-                if (e.code != SWT.ERROR_INVALID_IMAGE) {
-                    throw e;
-                    // fall through otherwise
-                }
+                Logger.log(e, "Unable to create image from marker: [" //$NON-NLS-1$
+                        + this.markerId + "] " //$NON-NLS-1$
+                        + (marker != null ? marker.getResourcePath() : "")); //$NON-NLS-1$
+                // if (e.code != SWT.ERROR_INVALID_IMAGE) {
+                //  throw e;
+                //  // fall through otherwise
+                // }
             } finally {
                 try {
                     in.close();

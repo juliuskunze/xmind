@@ -69,6 +69,7 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
         TopicExtensionElementImpl child = new TopicExtensionElementImpl(
                 childImpl, topic, extension);
         registerChild(child);
+        topic.updateModifiedTime();
         return child;
     }
 
@@ -99,6 +100,7 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
         if (childImpl.getParentNode() == implementation) {
             unregisterChild(c);
             implementation.removeChild(childImpl);
+            topic.updateModifiedTime();
         }
     }
 
@@ -111,6 +113,8 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
         for (int i = 0; i < children.length; i++) {
             implementation.removeChild(children[i]);
         }
+        if (children.length > 0)
+            topic.updateModifiedTime();
     }
 
     public void deleteChildren() {
@@ -153,6 +157,7 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
 
     public void setAttribute(String attrName, String attrValue) {
         DOMUtils.setAttribute(implementation, attrName, attrValue);
+        topic.updateModifiedTime();
     }
 
     public void setTextContent(String text) {
@@ -160,6 +165,7 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
         if (text == null) {
             if (c != null) {
                 implementation.removeChild(c);
+                topic.updateModifiedTime();
             }
         } else {
             if (c != null && c.getNodeType() == Node.TEXT_NODE) {
@@ -168,6 +174,7 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
                 Node t = implementation.getOwnerDocument().createTextNode(text);
                 implementation.insertBefore(t, c);
             }
+            topic.updateModifiedTime();
         }
     }
 

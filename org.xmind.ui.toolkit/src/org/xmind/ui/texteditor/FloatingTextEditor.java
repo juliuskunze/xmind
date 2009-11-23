@@ -650,6 +650,10 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
     }
 
     public void replaceText(String text) {
+        replaceText(text, false);
+    }
+
+    public void replaceText(String text, boolean select) {
         if (isClosed() || document == null)
             return;
 
@@ -658,7 +662,11 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
             document.replace(range.x, range.y, text);
         } catch (BadLocationException e) {
         }
-        textViewer.setSelectedRange(range.x + text.length(), 0);
+        if (select) {
+            textViewer.setSelectedRange(range.x, text.length());
+        } else {
+            textViewer.setSelectedRange(range.x + text.length(), 0);
+        }
     }
 
     public void setInitialLocation(Point initialLocation) {

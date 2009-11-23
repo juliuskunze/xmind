@@ -17,6 +17,7 @@ public class BlockCipherInputStream extends FilterInputStream {
     private int outOffset;
 
     private final boolean isStream;
+
     private boolean eof;
 
     private int lastRead = -1;

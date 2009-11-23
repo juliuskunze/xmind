@@ -29,12 +29,15 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.Bundle;
 import org.xmind.core.Core;
+import org.xmind.core.IManifest;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.IWorkbookBuilder;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegistration;
 import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.event.ICoreEventSupport;
 import org.xmind.core.internal.MarkerGroup;
+import org.xmind.core.internal.dom.StyleSheetImpl;
 import org.xmind.core.internal.event.CoreEventSupport;
 import org.xmind.core.internal.zip.ArchiveConstants;
 import org.xmind.core.marker.AbstractMarkerResource;
@@ -48,6 +51,7 @@ import org.xmind.core.style.IStyleSheet;
 import org.xmind.core.util.FileUtils;
 import org.xmind.ui.mindmap.IResourceManager;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.prefs.PrefConstants;
 import org.xmind.ui.util.Logger;
 import org.xmind.ui.util.ResourceFinder;
 
@@ -187,7 +191,7 @@ public class MindMapResourceManager implements IResourceManager {
 
     }
 
-    private static class RecentMarkerGroup extends MarkerGroup implements
+    protected static class RecentMarkerGroup extends MarkerGroup implements
             ICoreEventSource {
 
         public static final RecentMarkerGroup instance = new RecentMarkerGroup();
@@ -275,6 +279,8 @@ public class MindMapResourceManager implements IResourceManager {
     private IStyleSheet systemStyleSheet = null;
 
     private IWorkbook userStylesContainer = null;
+
+    private IStyle blankTheme = null;
 
     private IStyle defaultTheme = null;
 
@@ -469,8 +475,8 @@ public class MindMapResourceManager implements IResourceManager {
         if (stylesContainer == null) {
             FileUtils.ensureDirectory(file);
             stylesContainer = Core.getWorkbookBuilder().createWorkbook();
-            stylesContainer.setTempLocation(path);
         }
+        stylesContainer.setTempLocation(path);
         return stylesContainer;
     }
 
@@ -484,13 +490,56 @@ public class MindMapResourceManager implements IResourceManager {
         }
     }
 
+    public IStyle getBlankTheme() {
+        if (blankTheme == null) {
+            blankTheme = Core.getStyleSheetBuilder().createStyleSheet()
+                    .createStyle(IStyle.THEME);
+            blankTheme.setName(MindMapMessages.DefaultTheme_title);
+        }
+        return blankTheme;
+    }
+
     public IStyle getDefaultTheme() {
         if (defaultTheme == null) {
-            defaultTheme = Core.getStyleSheetBuilder().createStyleSheet()
-                    .createStyle(IStyle.THEME);
-            defaultTheme.setName(MindMapMessages.DefaultTheme_title);
+            defaultTheme = findDefaultTheme();
         }
         return defaultTheme;
+    }
+
+    private IStyle findDefaultTheme() {
+        if (Platform.isRunning()) {
+            String defaultId = MindMapUIPlugin.getDefault()
+                    .getPreferenceStore()
+                    .getString(PrefConstants.DEFUALT_THEME);
+            if (defaultId != null && !"".equals(defaultId)) { //$NON-NLS-1$
+                IStyle theme = getSystemThemeSheet().findStyle(defaultId);
+                if (theme == null) {
+//                    theme = getUserStyleSheet().findStyle(defaultId);
+                    theme = getUserThemeSheet().findStyle(defaultId);
+                }
+                if (theme != null)
+                    return theme;
+            }
+        }
+        return getBlankTheme();
+    }
+
+    public void setDefaultTheme(String id) {
+        IStyle theme = null;
+        if (id != null && !"".equals(id)) { //$NON-NLS-1$
+            theme = getBlankTheme();
+            if (!id.equals(theme.getId())) {
+                theme = getSystemThemeSheet().findStyle(id);
+                if (theme == null) {
+                    theme = getUserThemeSheet().findStyle(id);
+                }
+            }
+        }
+        if (theme == null)
+            id = null;
+        this.defaultTheme = theme;
+        MindMapUIPlugin.getDefault().getPreferenceStore().setValue(
+                PrefConstants.DEFUALT_THEME, id);
     }
 
     public IStyleSheet getSystemThemeSheet() {
@@ -538,28 +587,31 @@ public class MindMapResourceManager implements IResourceManager {
         if (userThemesContainer == null) {
             userThemesContainer = createUserThemeContainer();
         }
-        return userThemesContainer.getStyleSheet();
+        IStyleSheet styleSheet = userThemesContainer.getStyleSheet();
+        IManifest manifest = userThemesContainer.getManifest();
+        ((StyleSheetImpl) styleSheet).setManifest(manifest);
+        return styleSheet;
     }
 
     private IWorkbook createUserThemeContainer() {
         IWorkbook stylesContainer = null;
         String path = Core.getWorkspace().getAbsolutePath(
-                USER_THEME_TEMP_LOCATION);
+                USER_THEME_TEMP_LOCATION); //styles/userThemes
         File file = new File(path);
+        IWorkbookBuilder workbookBuilder = Core.getWorkbookBuilder();
         if (file.exists() && file.isDirectory()
                 && new File(file, ArchiveConstants.CONTENT_XML).exists()) {
             try {
-                stylesContainer = Core.getWorkbookBuilder()
-                        .loadFromTempLocation(path);
+                stylesContainer = workbookBuilder.loadFromTempLocation(path);
             } catch (Exception e) {
                 Logger.log(e, "Failed to load user themes from: " + file); //$NON-NLS-1$
             }
         }
         if (stylesContainer == null) {
             FileUtils.ensureDirectory(file);
-            stylesContainer = Core.getWorkbookBuilder().createWorkbook();
-            stylesContainer.setTempLocation(path);
+            stylesContainer = workbookBuilder.createWorkbook();
         }
+        stylesContainer.setTempLocation(path);
         return stylesContainer;
     }
 

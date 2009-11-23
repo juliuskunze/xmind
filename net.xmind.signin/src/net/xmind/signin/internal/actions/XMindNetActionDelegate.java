@@ -13,6 +13,9 @@
  *******************************************************************************/
 package net.xmind.signin.internal.actions;
 
+import java.net.URI;
+import java.net.URLEncoder;
+
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.util.SafeRunnable;
 import org.xmind.ui.browser.BrowserSupport;
@@ -56,9 +59,20 @@ public class XMindNetActionDelegate {
                 IBrowserSupport.AS_EDITOR, BROWSER_ID);
         SafeRunner.run(new SafeRunnable() {
             public void run() throws Exception {
-                browser.openURL(url);
+                browser.openURL(makeURL(url));
             }
         });
+    }
+
+    private static final String makeURL(String url) {
+        if (!url.startsWith("file:")) {
+            try {
+                return "http://www.xmind.net/xmind/go?r=" //$NON-NLS-1$
+                        + URLEncoder.encode(new URI(url).toString(), "UTF-8"); //$NON-NLS-1$
+            } catch (Exception ignore) {
+            }
+        }
+        return url;
     }
 
 }

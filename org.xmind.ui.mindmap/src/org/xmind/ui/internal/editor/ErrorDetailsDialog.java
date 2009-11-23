@@ -70,7 +70,8 @@ public class ErrorDetailsDialog extends Dialog {
                 | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
         logControl.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         logControl.setText(getLogText());
-        if ("carbon".equals(SWT.getPlatform())) { //$NON-NLS-1$
+        if ("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                || "cocoa".equals(SWT.getPlatform())) { //$NON-NLS-1$
             logControl.setFont(FontUtils.getRelativeHeight(
                     JFaceResources.DIALOG_FONT, 1));
         }
@@ -127,7 +128,7 @@ public class ErrorDetailsDialog extends Dialog {
 
         ps.println("Time: " + String.format("%1$tF %1$tT", time)); //$NON-NLS-1$ //$NON-NLS-2$
 
-        ps.print("XMind: 3.0.3"); //$NON-NLS-1$
+        ps.print("XMind: 3.1.0"); //$NON-NLS-1$
         if (isPro()) {
             ps.println(" Pro"); //$NON-NLS-1$
         } else {

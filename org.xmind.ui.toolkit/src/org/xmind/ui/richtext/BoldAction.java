@@ -24,14 +24,14 @@ public class BoldAction extends Action implements IRichTextAction {
 
     public BoldAction(IRichTextEditViewer viewer) {
         this(viewer, RichTextMessages.BoldAction_text, ToolkitImages
-                .get(ToolkitImages.BOLD),
-                RichTextMessages.BoldAction_toolTip);
+                .get(ToolkitImages.BOLD), RichTextMessages.BoldAction_toolTip);
     }
 
     public BoldAction(IRichTextEditViewer viewer, String text,
             ImageDescriptor image, String tooltip) {
         super(text, AS_CHECK_BOX);
         this.viewer = viewer;
+        setId(TextActionConstants.BOLD_ID);
         setImageDescriptor(image);
         setToolTipText(tooltip);
     }

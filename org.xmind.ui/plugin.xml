@@ -47,6 +47,11 @@
             id="org.xmind.ui.category.mindmap"
             name="%commandCategory.editMindMap.name">
       </category>
+      <category
+            description="Commands for editing text"
+            id="org.xmind.ui.category.text.edit"
+            name="Text Edit">
+      </category>
       <command
             categoryId="org.xmind.ui.category.mindmap"
             description="%command.insertTopic.description"
@@ -334,6 +339,71 @@
             id="org.xmind.ui.command.insertSheetFrom"
             name="%command.createSheetFrom.name">
       </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="Font text"
+            id="org.xmind.ui.command.text.font"
+            name="Font">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="Bold text"
+            id="org.xmind.ui.command.text.bold"
+            name="Bold">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="Italic text"
+            id="org.xmind.ui.command.text.italic"
+            name="Italic">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="Underline text"
+            id="org.xmind.ui.command.text.underline"
+            name="Underline">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="Strikeout text"
+            id="org.xmind.ui.command.text.strikeout"
+            name="StrikeOut">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="LeftAlign text"
+            id="org.xmind.ui.command.text.leftAlign"
+            name="LeftAlign">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="CenterAlign text"
+            id="org.xmind.ui.command.text.centerAlign"
+            name="CenterAlign">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="RightAlign text"
+            id="org.xmind.ui.command.text.rightAlign"
+            name="RightAlign">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="Bullet text"
+            id="org.xmind.ui.command.text.bullet"
+            name="Bullet">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="Indent text"
+            id="org.xmind.ui.command.text.indent"
+            name="Indent"></command>
+      <command
+            categoryId="org.xmind.ui.category.text.edit"
+            description="Outdent text"
+            id="org.xmind.ui.command.text.outdent"
+            name="Outdent">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.contexts">
@@ -366,6 +436,12 @@
             id="org.xmind.ui.context.mindmap.traverse"
             name="%context.traversing.name"
             parentId="org.xmind.ui.context.mindmap">
+      </context>
+      <context
+            description="%context.inNotesView.description"
+            id="org.xmind.ui.context.notes.edit"
+            name="%context.inNotesView.name"
+            parentId="org.eclipse.ui.contexts.window">
       </context>
    </extension>
    <extension
@@ -689,6 +765,90 @@
             contextId="org.xmind.ui.context.mindmap.edit"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="M1+M3+T">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.font"
+            contextId="org.xmind.ui.context.notes.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+T">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.bold"
+            contextId="org.xmind.ui.context.notes.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+B">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.italic"
+            contextId="org.xmind.ui.context.notes.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+I">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.underline"
+            contextId="org.xmind.ui.context.notes.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+U">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.leftAlign"
+            contextId="org.xmind.ui.context.notes.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+L">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.centerAlign"
+            contextId="org.xmind.ui.context.notes.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+D">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.rightAlign"
+            contextId="org.xmind.ui.context.notes.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+R">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.bold"
+            contextId="org.xmind.ui.context.notesPopup"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+B">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.italic"
+            contextId="org.xmind.ui.context.notesPopup"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+I">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.underline"
+            contextId="org.xmind.ui.context.notesPopup"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+U">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.leftAlign"
+            contextId="org.xmind.ui.context.notesPopup"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+L">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.centerAlign"
+            contextId="org.xmind.ui.context.notesPopup"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+D">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.text.rightAlign"
+            contextId="org.xmind.ui.context.notesPopup"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+R">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.commitNotes"
+            contextId="org.xmind.ui.context.notes.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+CR">
       </key>
    </extension>
    <extension
@@ -2156,6 +2316,10 @@
       <editPolicy
             class="org.xmind.ui.internal.editpolicies.DropTargetPolicy"
             id="org.xmind.ui.editPolicy.dropTarget">
+      </editPolicy>
+      <editPolicy
+            class="org.xmind.ui.internal.editpolicies.TopicSortablePolicy"
+            id="org.xmind.ui.editPolicy.topicSortable">
       </editPolicy>
    </extension>
    <extension

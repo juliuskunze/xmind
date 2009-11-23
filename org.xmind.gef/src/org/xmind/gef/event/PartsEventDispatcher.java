@@ -286,6 +286,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
 
     private RangeModel verticalRangeModel = null;
 
+    private boolean mouseHovering = false;
+
     /**
      * @param domain
      */
@@ -668,6 +670,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchMouseEntered(org.eclipse.swt.events.MouseEvent me) {
         if (!isActive())
             return;
+        mouseHovering = false;
         hookScrollBars();
         cancelToolTipShowing();
         receive(me);
@@ -692,6 +695,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         unhookScrollBars();
         if (!isActive())
             return;
+        mouseHovering = false;
         cancelToolTipShowing();
         hideToolTip();
         receive(me);
@@ -783,6 +787,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchMouseHover(org.eclipse.swt.events.MouseEvent me) {
         if (!isActive())
             return;
+
+        mouseHovering = true;
         cancelToolTipShowing();
         receive(me);
         ITool tool = getActiveTool();
@@ -810,8 +816,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void updateToolTip() {
         if (control == null || control.isDisposed())
             return;
-        if (getToolTipHelper().isShowing() && currentMouseEvent != null) {
-            hideToolTip();
+        hideToolTip();
+        if (mouseHovering && currentMouseEvent != null) {
             updateToolTip(currentMouseEvent);
         }
     }
@@ -882,6 +888,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         }
         /* IMPORTANT: end IF. */
 
+        mouseHovering = false;
         cancelToolTipShowing();
 
         receive(me);

@@ -158,6 +158,7 @@ public class SheetPart extends MindMapPartBase implements ISheetPart {
         if (legend.isVisible()) {
             list.add(new ViewerModel(LegendPart.class, legend));
         }
+
         ITopic rootTopic = getCentralTopic();
         list.add(new ViewerModel(BranchPart.class, rootTopic));
         for (ITopic floatingTopic : rootTopic.getChildren(ITopic.DETACHED)) {
@@ -254,6 +255,7 @@ public class SheetPart extends MindMapPartBase implements ISheetPart {
             register.setNextSource((ICoreEventSource) legend);
             register.register(Core.Visibility);
         }
+
     }
 
     public void handleCoreEvent(CoreEvent event) {
@@ -300,6 +302,7 @@ public class SheetPart extends MindMapPartBase implements ISheetPart {
         if (legend != null) {
             legend.refresh();
         }
+
     }
 
     protected boolean isFigureAnimatable() {

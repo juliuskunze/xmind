@@ -45,6 +45,9 @@ public class DialogMessages extends NLS {
     public static String ConfirmWorkbookVersion_message;
     public static String ConfirmWorkbookVersion_SaveAs;
 
+    public static String InfoFileNotExists_title;
+    public static String InfoFileNotExists_message;
+
     public static String HyperlinkDialog_title;
     public static String HyperlinkDialog_description;
     public static String HyperlinkDialog_Remove;
@@ -52,7 +55,7 @@ public class DialogMessages extends NLS {
     public static String HyperlinkDialog_MultipleTopics_value;
     public static String HyperlinkDialog_windowTitle;
 
-    public static String HyperlinkDialog2_FailCreatePage_message;
+    public static String HyperlinkDialog_FailCreatePage_message;
 
     public static String NotesPopup_GotoNotesView_text;
 
@@ -103,6 +106,7 @@ public class DialogMessages extends NLS {
     public static String FileHyperlinkPage_ChooseFolder_text;
 
     public static String FileHyperlinkPage_FileNotExists_message;
+    public static String FileHyperlinkPage_RelativeWarning_message;
 
     public static String FileHyperlinkPage_label;
 
@@ -127,6 +131,17 @@ public class DialogMessages extends NLS {
     public static String FindReplaceDialog_Replace_text;
     public static String FindReplaceDialog_ReplaceAll_text;
     public static String FindReplaceDialog_StringNotFound;
+
+    public static String FileHyperlinkPage_WarningDialog_message;
+    public static String FileHyperlinkPage_WarningDialog_Title;
+    public static String FileHyperlinkPage_WarningDialog_OKButton_Label;
+    public static String FileHyperlinkPage_WarningDialog_CancelButton_Label;
+    public static String FileHyperlinkPage_HrefGroup_Text;
+    public static String FileHyperlinkPage_AbsoluteButton_Text;
+    public static String FileHyperlinkPage_RelativeButton_Text;
+
+    public static String SortMessageDialog_Messages;
+    public static String SortMessageDialog_Title;
 
     static {
         // initialize resource bundle

@@ -2,16 +2,19 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.xmind.cathy;singleton:=true
-Bundle-Version: 3.0.3.qualifier
+Bundle-Version: 3.1.0.qualifier
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui,
  org.xmind.ui,
- org.eclipse.update.ui,
- org.eclipse.core.expressions,
  net.xmind.signin,
  org.xmind.ui.imports,
  org.xmind.core.io,
- org.xmind.ui.toolkit
+ org.xmind.ui.toolkit,
+ org.eclipse.core.filesystem,
+ org.eclipse.core.resources,
+ org.apache.commons.httpclient,
+ org.xmind.ui.browser,
+ org.json
 Bundle-Vendor: %providerName
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: J2SE-1.5

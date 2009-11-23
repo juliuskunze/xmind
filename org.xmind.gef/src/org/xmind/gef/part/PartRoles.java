@@ -44,6 +44,9 @@ public class PartRoles {
         setRole(GEF.REQ_COPYTO, GEF.ROLE_MOVABLE);
         setRole(GEF.REQ_RESIZE, GEF.ROLE_MOVABLE);
         setRole(GEF.REQ_ALIGN, GEF.ROLE_MOVABLE);
+
+        setRole(GEF.REQ_SORT, GEF.ROLE_SORTABLE);
+
         setRole(GEF.REQ_MOVE_NEXT, GEF.ROLE_MOVABLE);
         setRole(GEF.REQ_MOVE_PREV, GEF.ROLE_MOVABLE);
         setRole(GEF.REQ_MOVE_UP, GEF.ROLE_MOVABLE);

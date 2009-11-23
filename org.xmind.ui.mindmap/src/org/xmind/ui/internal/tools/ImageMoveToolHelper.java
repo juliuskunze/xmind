@@ -13,7 +13,6 @@
  *******************************************************************************/
 package org.xmind.ui.internal.tools;
 
-import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Layer;
 import org.eclipse.draw2d.RectangleFigure;
@@ -37,23 +36,23 @@ public class ImageMoveToolHelper extends ToolHelperBase {
 
     private static class AlphaRectangle extends RectangleFigure {
 
-        private int alpha;
-
-        public void setAlpha(int alpha) {
-            if (alpha == this.alpha)
-                return;
-            this.alpha = alpha;
-            repaint();
-        }
-
-        public int getAlpha() {
-            return alpha;
-        }
-
-        public void paintFigure(Graphics graphics) {
-            graphics.setAlpha(getAlpha());
-            super.paintFigure(graphics);
-        }
+//        private int alpha;
+//
+//        public void setAlpha(int alpha) {
+//            if (alpha == this.alpha)
+//                return;
+//            this.alpha = alpha;
+//            repaint();
+//        }
+//        
+//        public Integer getAlpha() {
+//            return alpha;
+//        }
+//
+//        public void paintFigure(Graphics graphics) {
+//            graphics.setAlpha(getAlpha());
+//            super.paintFigure(graphics);
+//        }
     }
 
     private static final int LINE_WIDTH = 2;

@@ -67,7 +67,10 @@ public class Log {
                     is.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                CathyPlugin
+                        .log(
+                                e,
+                                "Failed to load properties from log file: " + file.getAbsolutePath()); //$NON-NLS-1$
             }
         }
     }
@@ -85,7 +88,10 @@ public class Log {
                 out.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            CathyPlugin
+                    .log(
+                            e,
+                            "Failed to save properties to log file: " + file.getAbsolutePath()); //$NON-NLS-1$
         }
     }
 
@@ -98,14 +104,18 @@ public class Log {
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (!"".equals(line.trim())) //$NON-NLS-1$
+                    if ("macosx".equals(Platform.getOS())) //$NON-NLS-1$
+                        line = new String(line.getBytes(), "utf-16"); //$NON-NLS-1$
+                    line = line.trim();
+                    if (!"".equals(line)) //$NON-NLS-1$
                         lines.add(line);
                 }
             } finally {
                 reader.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            CathyPlugin.log(e,
+                    "Failed to read log file: " + file.getAbsolutePath()); //$NON-NLS-1$
         }
         return lines.toArray(new String[lines.size()]);
     }
@@ -134,7 +144,8 @@ public class Log {
                 writer.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            CathyPlugin.log(e,
+                    "Failed to write log file: " + file.getAbsolutePath()); //$NON-NLS-1$
         }
     }
 
@@ -152,7 +163,7 @@ public class Log {
         try {
             url = FileLocator.toFileURL(url);
         } catch (IOException e) {
-            e.printStackTrace();
+            //ignore this exception
         }
         File file = new File(url.getFile(), name);
         Log log = new Log(file);

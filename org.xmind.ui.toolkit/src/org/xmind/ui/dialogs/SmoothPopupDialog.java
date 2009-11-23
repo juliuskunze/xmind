@@ -94,7 +94,7 @@ public class SmoothPopupDialog extends Window {
 
     }
 
-    private class PullDownTask implements Runnable {
+    protected class PullDownTask implements Runnable {
 
         Display display;
 

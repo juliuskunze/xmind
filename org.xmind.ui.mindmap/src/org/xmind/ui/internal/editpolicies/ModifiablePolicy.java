@@ -391,11 +391,57 @@ public class ModifiablePolicy extends MindMapPolicyBase {
         if (topics.isEmpty())
             return;
 
+//        modifyHyperlinkRef(topics, hyperlink, request);
+
         ModifyTopicHyperlinkCommand cmd = new ModifyTopicHyperlinkCommand(
                 topics, hyperlink);
         cmd.setLabel(CommandMessages.Command_ModifyTopicHyperlink);
         saveAndRun(cmd, request.getTargetDomain());
     }
+
+//    private void modifyHyperlinkRef(List<ITopic> topics, String newHref,
+//            Request request) {
+//        String newTargetId = null;
+//        if (newHref != null && newHref.startsWith("xmind:#")) //$NON-NLS-1$
+//            newTargetId = newHref.substring(7);
+//
+//        ModifyTopicLinkCommand command = new ModifyTopicLinkCommand(topics,
+//                newTargetId);
+//        saveAndRun(command, request.getTargetDomain());
+//    }
+
+//    private void modifyHyperlinkRef(List<ITopic> topics, String newHref,
+//            Request request) {
+////        ITopicHyperlinkRef topicLinkRef = null;
+//        for (ITopic topic : topics) {
+////            if (topicLinkRef == null) {
+////                IWorkbook workbook = topic.getOwnedWorkbook();
+////                topicLinkRef = (ITopicHyperlinkRef) workbook
+////                        .getAdapter(ITopicHyperlinkRef.class);
+////            }
+//            modifyTopicLinkRef(topic, newHref, request);
+//        }
+//    }
+
+//    private void modifyTopicLinkRef(ITopic topic, String newHref,
+//            Request request) {
+//        String oldHref = topic.getHyperlink();
+//
+//        String oldTargetId = null;
+//        if (oldHref != null && oldHref.startsWith("xmind:#")) //$NON-NLS-1$
+//            oldTargetId = oldHref.substring(7);
+//
+//        String newTargetId = null;
+//        if (newHref != null && newHref.startsWith("xmind:#")) //$NON-NLS-1$
+//            newTargetId = newHref.substring(7);
+////
+////        topicLinkRef.modifyTopicLinks(oldTargetId, newTargetId, topic.getId());
+//        //TODO:
+//
+//        ModifyTopicLinkCommand command = new ModifyTopicLinkCommand(topic,
+//                newTargetId);
+//        saveAndRun(command, request.getTargetDomain());
+//    }
 
     private void modifyText(Request request) {
         if (!request.hasParameter(GEF.PARAM_TEXT))

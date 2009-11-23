@@ -37,6 +37,7 @@ import org.xmind.core.IManifest;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.FileEntry;
 import org.xmind.core.internal.security.Crypto;
+import org.xmind.core.io.IInputSource;
 import org.xmind.core.io.IStorage;
 import org.xmind.core.util.DOMUtils;
 
@@ -159,9 +160,12 @@ public class FileEntryImpl extends FileEntry {
         if (isDirectory())
             return null;
         IStorage storage = getStorage();
+        //storag is nothing
         if (storage != null) {
             try {
-                return storage.getInputSource().getEntryStream(getPath());
+                IInputSource inputSource = storage.getInputSource();
+                String path = getPath();
+                return inputSource.getEntryStream(path);
             } catch (CoreException e) {
                 Core.getLogger().log(e);
             }

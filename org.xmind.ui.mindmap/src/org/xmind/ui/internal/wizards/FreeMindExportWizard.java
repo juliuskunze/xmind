@@ -40,9 +40,9 @@ import org.xmind.ui.wizards.AbstractMindMapExportWizard;
 public class FreeMindExportWizard extends AbstractMindMapExportWizard {
     private static final String PAGE_NAME = "org.xmind.ui.export.freemindeExportWizard"; //$NON-NLS-1$
 
-    private static final String SECTION_NAME = "org.xmind.ui.export.freemind"; //$NON-NLS-1$
+    private static final String SELECTION_NAME = "org.xmind.ui.export.freemind"; //$NON-NLS-1$
 
-    private static final String FILE_TEXT = ".mm"; //$NON-NLS-1$
+    private static final String FILE_EXT = ".mm"; //$NON-NLS-1$
 
     private class FreeMindExportWizardPage extends AbstractExportPage {
 
@@ -55,7 +55,7 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
         protected String getSuggestedFileName() {
             IMindMap mindMap = getCastedWizard().getSourceMindMap();
             String fileName = mindMap.getCentralTopic().getTitleText();
-            return fileName + FILE_TEXT;
+            return fileName + FILE_EXT;
         }
 
         protected FreeMindExportWizard getCastedWizard() {
@@ -72,7 +72,6 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
             Control fileGroup = createFileControls(composite);
             fileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                     false));
-
             updateStatus();
         }
 
@@ -80,7 +79,7 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
         protected void setDialogFilters(FileDialog dialog,
                 List<String> filterNames, List<String> filterExtensions) {
             filterNames.add(0, WizardMessages.FreeMindPage_filterName);
-            filterExtensions.add(0, "*" + FILE_TEXT); //$NON-NLS-1$
+            filterExtensions.add(0, "*" + FILE_EXT); //$NON-NLS-1$
             super.setDialogFilters(dialog, filterNames, filterExtensions);
         }
     }
@@ -90,7 +89,7 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
     public FreeMindExportWizard() {
         setWindowTitle(WizardMessages.FreeMindWizard_windowTitle);
         setDialogSettings(MindMapUIPlugin.getDefault().getDialogSettings(
-                SECTION_NAME));
+                SELECTION_NAME));
         setDefaultPageImageDescriptor(MindMapUI.getImages().getWizBan(
                 IMindMapImages.WIZ_EXPORT));
     }
@@ -109,6 +108,7 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
         monitor.beginTask(null, 100);
         exporter.setMonitor(new SubProgressMonitor(monitor, 99));
         exporter.build();
+        launchTargetFile(true, monitor, display, parentShell);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
     @Override
     protected boolean isExtensionCompatible(String path, String extension) {
         return super.isExtensionCompatible(path, extension)
-                && FILE_TEXT.equalsIgnoreCase(extension);
+                && FILE_EXT.equalsIgnoreCase(extension);
     }
 
     @Override

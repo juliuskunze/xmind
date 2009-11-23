@@ -18,6 +18,7 @@ import java.io.IOException;
 import org.xmind.core.CoreException;
 import org.xmind.core.internal.dom.WorkbookImpl;
 import org.xmind.core.io.IInputSource;
+import org.xmind.core.io.IStorage;
 import org.xmind.core.util.IXMLLoader;
 
 public abstract class FileFormat {
@@ -26,10 +27,13 @@ public abstract class FileFormat {
 
     protected IXMLLoader loader;
 
-    public FileFormat(IInputSource source, IXMLLoader loader) {
+    protected IStorage storage;
+
+    public FileFormat(IInputSource source, IXMLLoader loader, IStorage storage) {
         super();
         this.source = source;
         this.loader = loader;
+        this.storage = storage;
     }
 
     public abstract boolean identifies();

@@ -111,7 +111,8 @@ public class NotesHyperlinkDialog extends Dialog {
 
         Label label = new Label(area, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-        label.setText(MindMapMessages.NotesHyperlinkDialog_hyperlinkReference_text);
+        label
+                .setText(MindMapMessages.NotesHyperlinkDialog_hyperlinkReference_text);
 
         Text text = new Text(area, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
         text.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));

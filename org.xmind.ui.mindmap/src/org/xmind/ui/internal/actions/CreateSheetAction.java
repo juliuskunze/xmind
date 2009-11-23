@@ -17,6 +17,8 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IEditorInput;
 import org.xmind.core.ISheet;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.style.IStyle;
+import org.xmind.core.style.IStyleSheet;
 import org.xmind.gef.ui.actions.EditorAction;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.ui.actions.MindMapActionFactory;
@@ -24,8 +26,11 @@ import org.xmind.ui.commands.CommandMessages;
 import org.xmind.ui.commands.CreateSheetCommand;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.editor.WorkbookEditorInput;
+import org.xmind.ui.mindmap.MindMapUI;
 
 public class CreateSheetAction extends EditorAction {
+
+    private IGraphicalEditor editor;
 
     public CreateSheetAction(IGraphicalEditor editor) {
 
@@ -34,16 +39,15 @@ public class CreateSheetAction extends EditorAction {
     }
 
     public void run() {
-
         if (isDisposed())
             return;
 
-        IGraphicalEditor ed = getEditor();
-        if (ed != null) {
-            IWorkbook workbook = (IWorkbook) ed.getAdapter(IWorkbook.class);
+        editor = getEditor();
+        if (editor != null) {
+            IWorkbook workbook = (IWorkbook) editor.getAdapter(IWorkbook.class);
 
             if (workbook == null) {
-                IEditorInput input = ed.getEditorInput();
+                IEditorInput input = editor.getEditorInput();
                 if (input instanceof WorkbookEditorInput) {
                     workbook = ((WorkbookEditorInput) input).getContents();
                 }
@@ -58,12 +62,38 @@ public class CreateSheetAction extends EditorAction {
 
         CreateSheetCommand command = new CreateSheetCommand(workbook, null);
         command.setLabel(CommandMessages.Command_CreateSheet);
+
         saveAndRun(command);
+
         ISheet sheet = (ISheet) command.getSource();
         if (sheet != null) {
             decorateCreatedSheet(sheet);
         }
+//        IStyle theme = MindMapUI.getResourceManager().getDefaultTheme();
+//        if (theme != null)
+//            setSheetTheme(theme);
     }
+
+//    private void setSheetTheme(IStyle theme) {
+//        if (editor == null)
+//            return;
+//        IGraphicalEditorPage page = editor.getActivePageInstance();
+//        if (page == null)
+//            return;
+//        IGraphicalViewer viewer = page.getViewer();
+//        if (viewer == null)
+//            return;
+//        ISheetPart sheetPart = (ISheetPart) viewer.getAdapter(ISheetPart.class);
+//        if (sheetPart == null)
+//            return;
+//        EditDomain domain = page.getEditDomain();
+//        if (domain == null)
+//            return;
+//        Request request = new Request(MindMapUI.REQ_MODIFY_THEME);
+//        request.setPrimaryTarget(sheetPart);
+//        request.setParameter(MindMapUI.PARAM_RESOURCE, theme);
+//        domain.handleRequest(request);
+//    }
 
     protected void decorateCreatedSheet(ISheet sheet) {
 
@@ -72,5 +102,12 @@ public class CreateSheetAction extends EditorAction {
 
         sheet.getRootTopic().setTitleText(
                 MindMapMessages.TitleText_CentralTopic);
+
+        IStyle theme = MindMapUI.getResourceManager().getDefaultTheme();
+        IStyleSheet styleSheet = sheet.getOwnedWorkbook().getStyleSheet();
+        IStyle importStyle = styleSheet.importStyle(theme);
+        if (importStyle != null)
+            sheet.setThemeId(importStyle.getId());
     }
+
 }

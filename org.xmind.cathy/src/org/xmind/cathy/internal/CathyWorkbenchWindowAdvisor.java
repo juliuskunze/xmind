@@ -13,52 +13,21 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.CoolBarManager;
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.util.SafeRunnable;
-import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
-import org.eclipse.ui.dialogs.ListSelectionDialog;
 import org.eclipse.ui.internal.WorkbenchWindow;
-import org.xmind.cathy.internal.actions.SimpleOpenAction;
-import org.xmind.ui.internal.editor.WorkbookEditorInput;
-import org.xmind.ui.internal.editor.WorkbookRefManager;
+import org.xmind.cathy.internal.jobs.CheckOpenFilesJob;
+import org.xmind.cathy.internal.jobs.StartupJob;
 import org.xmind.ui.internal.workbench.Util;
-import org.xmind.ui.mindmap.IMindMapImages;
-import org.xmind.ui.mindmap.MindMapUI;
 
 public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
-
-    private class ListLabelProvider extends LabelProvider {
-        public String getText(Object element) {
-            if (element instanceof IEditorInput)
-                return ((IEditorInput) element).getName();
-            return null;
-        }
-
-        public Image getImage(Object element) {
-            if (element instanceof IEditorInput) {
-                ImageDescriptor image = MindMapUI.getImages().get(
-                        IMindMapImages.XMIND_ICON);
-                if (image != null)
-                    return image.createImage();
-            }
-            return null;
-        }
-    }
 
     public CathyWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer) {
         super(configurer);
@@ -80,7 +49,7 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
     public void postWindowOpen() {
         super.postWindowOpen();
-        final IWorkbenchWindow window = getWindowConfigurer().getWindow();
+        IWorkbenchWindow window = getWindowConfigurer().getWindow();
         if (window != null) {
             CoolBarManager coolBar = ((WorkbenchWindow) window)
                     .getCoolBarManager();
@@ -88,98 +57,20 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
                 coolBar.setLockLayout(true);
             }
 
-            window.getShell().getDisplay().asyncExec(new Runnable() {
-                public void run() {
-                    postOpen(window);
-                }
-            });
-        }
-    }
+            new StartupJob(window.getWorkbench()).schedule();
 
-    private void postOpen(final IWorkbenchWindow window) {
-        checkLog(window);
-        Object[] lastSession = checkLastSession();
-        if (lastSession != null && lastSession.length > 0) {
-            for (Object input : lastSession) {
-                new WorkbookEditorInput();
-                openEditor((IEditorInput) input, window);
-            }
-        } else {
-            openEditor(null, window);
-        }
-
-        window.getShell().getDisplay().asyncExec(new Runnable() {
-            public void run() {
-                WorkbookRefManager.getInstance().clearLastSession();
-            }
-        });
-    }
-
-    private void openEditor(final IEditorInput input,
-            final IWorkbenchWindow window) {
-        window.getShell().getDisplay().asyncExec(new Runnable() {
-            public void run() {
-                SafeRunner.run(new SafeRunnable() {
-                    public void run() throws Exception {
-                        IWorkbenchPage activePage = window.getActivePage();
-                        if (input != null) {
-                            activePage.openEditor(input,
-                                    MindMapUI.MINDMAP_EDITOR_ID);
-                        } else {
-                            if (window.getActivePage().getActiveEditor() == null)
-                                activePage.openEditor(
-                                        new WorkbookEditorInput(),
-                                        MindMapUI.MINDMAP_EDITOR_ID);
-                        }
+            Shell shell = window.getShell();
+            if (shell != null && !shell.isDisposed()) {
+                shell.addShellListener(new ShellAdapter() {
+                    @Override
+                    public void shellActivated(ShellEvent e) {
+                        new CheckOpenFilesJob(getWindowConfigurer()
+                                .getWorkbenchConfigurer().getWorkbench())
+                                .schedule();
                     }
                 });
             }
-        });
-    }
-
-    private Object[] checkLastSession() {
-        List<IEditorInput> session = WorkbookRefManager.getInstance()
-                .loadLastSession();
-        if (session == null || session.isEmpty())
-            return null;
-        ListSelectionDialog dialog = new ListSelectionDialog(null, session,
-                new ArrayContentProvider(), new ListLabelProvider(),
-                WorkbenchMessages.appWindow_ListSelectionDialog_Text);
-        dialog.setTitle(WorkbenchMessages.appWindow_ListSelectionDialog_Title);
-        dialog.setInitialElementSelections(session);
-        dialog.open();
-        return dialog.getResult();
-    }
-
-    private void checkLog(IWorkbenchWindow window) {
-        Log opening = Log.get(Log.OPENING);
-        if (opening.exists()) {
-            boolean presentation = false;
-            List<String> files = new ArrayList<String>();
-            String[] contents = opening.getContents();
-            for (String line : contents) {
-                if ("-p".equals(line)) { //$NON-NLS-1$
-                    presentation = true;
-                } else
-                    files.add(line);
-            }
-            if (files.isEmpty())
-                return;
-            for (String file : files) {
-                open(window, file, presentation);
-                if (presentation)
-                    presentation = false;
-            }
-            files.clear();
-            opening.delete();
         }
     }
 
-    private void open(IWorkbenchWindow window, String path, boolean presentation) {
-        File file = new File(path);
-        if (file.isFile() && file.canRead()) {
-            window.getShell().getDisplay().asyncExec(
-                    new SimpleOpenAction(window, path, presentation));
-        }
-    }
 }

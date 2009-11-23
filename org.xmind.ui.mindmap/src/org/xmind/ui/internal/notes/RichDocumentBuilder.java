@@ -181,21 +181,7 @@ public class RichDocumentBuilder {
         }
     }
 
-//    protected void readElement(Element ele) {
-//        String tag = ele.getTagName();
-//        if (DOMConstants.TAG_P.equals(tag)) {
-//            readParagraph(ele);
-//        } else if (DOMConstants.TAG_SPAN.equals(tag)) {
-//            readSpan(ele);
-//        } else if (DOMConstants.TAG_IMG.equals(tag)) {
-//            readImage(ele);
-//        } else {
-//            readElementChildren(ele);
-//        }
-//    }
-
     private void readContent(IHtmlNotesContent html) {
-
         for (IParagraph p : html.getParagraphs()) {
             readParagraph(p);
         }
@@ -235,10 +221,32 @@ public class RichDocumentBuilder {
             if (alignment != null) {
                 currentLineStyle.alignment = toSWTAlignment(alignment);
             }
+//            String bullet = style.getProperty(Styles.TextBullet);
+//            if (DEBUG)
+//                System.out.println("bullet: " + bullet); //$NON-NLS-1$
+//            if (bullet != null) {
+//                boolean isBullet = Styles.TEXT_STYLE_BULLET.equals(bullet) ? true
+//                        : false;
+//                currentLineStyle.bullet = isBullet;
+//            }
+            String bulletStyle = style.getProperty(Styles.TextBullet);
+            if (DEBUG)
+                System.out.println("bulletStyle: " + bulletStyle); //$NON-NLS-1$
+            if (bulletStyle != null) {
+                currentLineStyle.bulletStyle = getBulletStyle(bulletStyle);
+            }
         } else if (DEBUG) {
             System.out.println("no line style"); //$NON-NLS-1$
         }
         return currentLineStyle;
+    }
+
+    private String getBulletStyle(String bulletStyle) {
+        if (LineStyle.BULLET.equals(bulletStyle))
+            return LineStyle.BULLET;
+        else if (LineStyle.NUMBER.equals(bulletStyle))
+            return LineStyle.NUMBER;
+        return LineStyle.NONE_STYLE;
     }
 
     private void readParagraphContent(IParagraph p) {
@@ -342,6 +350,7 @@ public class RichDocumentBuilder {
                         .clone();
                 style.start = totalOffset;
                 style.length = length;
+//                style.data = image;
                 Rectangle rect = image.getBounds();
                 style.metrics = new GlyphMetrics(rect.height, 0, rect.width);
                 ImagePlaceHolder imagePlaceHolder = new ImagePlaceHolder(

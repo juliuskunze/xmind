@@ -135,7 +135,7 @@ public class FontDialog extends Dialog implements IFontChooser {
 
     }
 
-    private static final boolean CARBON = "carbon".equals(SWT.getPlatform()); //$NON-NLS-1$
+    private static final boolean CARBON = "carbon".equals(SWT.getPlatform()) || "cocoa".equals(SWT.getPlatform()); //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final int DEFAULT_GROUP_WIDTH = SWT.DEFAULT;
     private static final int DEFAULT_GROUP_HEIGHT = CARBON ? 200 : 185;
@@ -417,8 +417,10 @@ public class FontDialog extends Dialog implements IFontChooser {
      * @param parent
      */
     private void createFontControl(Group parent) {
+//        fontTree = new FilteredTree(parent, SWT.FULL_SELECTION,
+//                new PatternFilter());
         fontTree = new FilteredTree(parent, SWT.FULL_SELECTION,
-                new PatternFilter());
+                new PatternFilter(), true);
         fontTree.setEnabled(false);
         fontTree.getViewer().setContentProvider(new TreeArrayContentProvider());
         FontUtils.fetchAvailableFontNames(parent.getDisplay(),

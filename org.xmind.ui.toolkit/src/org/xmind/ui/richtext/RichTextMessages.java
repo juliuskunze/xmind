@@ -28,6 +28,8 @@ public class RichTextMessages extends NLS {
     public static String BackgroundAction_text;
     public static String BoldAction_text;
     public static String BoldAction_toolTip;
+    public static String BulletAction_Text;
+    public static String BulletAction_toolTip;
     public static String FontAction_text;
     public static String FontAction_toolTip;
     public static String ForegroundAction_text;
@@ -41,6 +43,10 @@ public class RichTextMessages extends NLS {
     public static String StrikeoutAction_toolTip;
     public static String UnderlineAction;
     public static String UnderlineAction_toolTip;
+
+    public static String ACTIONBAR_FONT_MENU_TEXT;
+    public static String ACTIONBAR_ALIGN_MENU_TEXT;
+
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, RichTextMessages.class);

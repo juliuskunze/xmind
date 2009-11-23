@@ -87,9 +87,6 @@ public class InsertImageAction extends PageAction implements ISelectionAction {
         request.setPrimaryTarget(topicPart);
         request.setParameter(GEF.PARAM_PATH, new String[] { path });
         domain.handleRequest(request);
-//        PathRequest request = new PathRequest(MindMapUI.REQ_ADD_IMAGE, path);
-//        request.setSource(topicPart);
-//        tool.handleRequest(request);
     }
 
     public void setSelection(ISelection selection) {

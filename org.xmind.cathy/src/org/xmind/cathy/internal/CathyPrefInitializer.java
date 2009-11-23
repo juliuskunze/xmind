@@ -30,6 +30,7 @@ public class CathyPrefInitializer extends AbstractPreferenceInitializer {
         node.putBoolean(CathyPlugin.AUTO_SAVE_ENABLED, false);
         node.putInt(CathyPlugin.AUTO_SAVE_INTERVALS, 5);
         node.putBoolean(CathyPlugin.RESTORE_LAST_SESSION, false);
+        node.putBoolean(CathyPlugin.CHECK_UPDATES_ON_STARTUP, true);
     }
 
 }

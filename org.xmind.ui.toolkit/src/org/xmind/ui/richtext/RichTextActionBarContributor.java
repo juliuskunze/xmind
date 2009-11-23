@@ -13,8 +13,8 @@
  *******************************************************************************/
 package org.xmind.ui.richtext;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -25,14 +25,14 @@ public abstract class RichTextActionBarContributor implements
 
     private IRichTextEditViewer viewer;
 
-    private List<IRichTextAction> richTextActions = new ArrayList<IRichTextAction>();
+    private Map<String, IRichTextAction> richTextActions = new HashMap<String, IRichTextAction>();
 
     public IRichTextEditViewer getViewer() {
         return viewer;
     }
 
     public void dispose() {
-        for (IRichTextAction action : richTextActions) {
+        for (IRichTextAction action : richTextActions.values()) {
             action.dispose();
         }
         richTextActions.clear();
@@ -45,6 +45,9 @@ public abstract class RichTextActionBarContributor implements
     public void fillToolBar(IToolBarManager toolbar) {
     }
 
+    public void fillContextMenu(IMenuManager menu) {
+    }
+
     public void init(IRichTextEditViewer viewer) {
         this.viewer = viewer;
         makeActions(viewer);
@@ -53,11 +56,16 @@ public abstract class RichTextActionBarContributor implements
     protected abstract void makeActions(IRichTextEditViewer viewer);
 
     protected void addRichTextAction(IRichTextAction action) {
-        richTextActions.add(action);
+        if (action != null && action.getId() != null)
+            richTextActions.put(action.getId(), action);
+    }
+
+    public IRichTextAction getRichTextAction(String id) {
+        return richTextActions.get(id);
     }
 
     public void selectionChanged(ISelection selection, boolean enabled) {
-        for (IRichTextAction action : richTextActions) {
+        for (IRichTextAction action : richTextActions.values()) {
             action.selctionChanged(viewer, selection);
             action.setEnabled(enabled);
         }

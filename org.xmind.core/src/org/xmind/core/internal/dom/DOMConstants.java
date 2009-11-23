@@ -44,7 +44,7 @@ public class DOMConstants {
     public static final String ATTR_FONT_WEIGHT = "fo:font-weight"; //$NON-NLS-1$
     public static final String ATTR_FULL_PATH = "full-path"; //$NON-NLS-1$
 
-    public static final String ATTR_HYPER = "href"; //$NON-NLS-1$
+    public static final String ATTR_TIMESTAMP = "timestamp"; //$NON-NLS-1$
 
     public static final String ATTR_HEIGHT = "svg:height"; //$NON-NLS-1$
     public static final String ATTR_HREF = "xlink:href"; //$NON-NLS-1$
@@ -81,6 +81,9 @@ public class DOMConstants {
     public static final String ATTR_STYLE_ID = "style-id"; //$NON-NLS-1$
     public static final String ATTR_STYLE_FAMILY = "style-family"; //$NON-NLS-1$
     public static final String ATTR_TEXT_ALIGN = "fo:text-align"; //$NON-NLS-1$
+
+    public static final String ATTR_TEXT_BULLET = "fo:text-bullet"; //$NON-NLS-1$
+
     public static final String ATTR_THEME = "theme"; //$NON-NLS-1$
     public static final String ATTR_TOPIC_ID = "topic-id"; //$NON-NLS-1$
     public static final String ATTR_TYPE = "type"; //$NON-NLS-1$
@@ -104,7 +107,7 @@ public class DOMConstants {
     public static final String TAG_AUTOMATIC_STYLES = "automatic-styles"; //$NON-NLS-1$
     public static final String TAG_BOUNDARIES = "boundaries"; //$NON-NLS-1$
     public static final String TAG_BOUNDARY = "boundary"; //$NON-NLS-1$
-    public static final String ATTR_CHECKSUM_TYPE = "checksum-typr";//$NON-NLS-1$
+    public static final String ATTR_CHECKSUM_TYPE = "checksum-type";//$NON-NLS-1$
     public static final String TAG_CHILDREN = "children"; //$NON-NLS-1$
     public static final String TAG_CONTENT = "content"; //$NON-NLS-1$
     public static final String TAG_CONTROL_POINT = "control-point"; //$NON-NLS-1$
@@ -116,7 +119,6 @@ public class DOMConstants {
     public static final String TAG_FILE_ENTRY = "file-entry"; //$NON-NLS-1$
 
     public static final String TAG_IMG = "xhtml:img"; //$NON-NLS-1$
-
     public static final String TAG_KEY_DERIVATION = "key-derivation"; //$NON-NLS-1$
     public static final String TAG_LABEL = "label"; //$NON-NLS-1$
     public static final String TAG_LABELS = "labels"; //$NON-NLS-1$
@@ -134,6 +136,7 @@ public class DOMConstants {
     public static final String TAG_NOTES = "notes"; //$NON-NLS-1$
     public static final String TAG_NUMBERING = "numbering"; //$NON-NLS-1$
     public static final String TAG_P = "xhtml:p"; //$NON-NLS-1$
+
     public static final String TAG_POSITION = "position"; //$NON-NLS-1$
     public static final String TAG_PREFIX = "prefix"; //$NON-NLS-1$
     public static final String TAG_PROPERTIES = "properties"; //$NON-NLS-1$
@@ -160,6 +163,8 @@ public class DOMConstants {
 
     public static final String VAL_BOLD = "bold"; //$NON-NLS-1$
     public static final String VAL_BOTTOM = "bottom"; //$NON-NLS-1$
+    public static final String VAL_BULLET = "bullet"; //$NON-NLS-1$
+    public static final String VAL_NUMBER = "number"; //$NON-NLS-1$
     public static final String VAL_CENTER = "center"; //$NON-NLS-1$
     public static final String VAL_DEFAULT = "default"; //$NON-NLS-1$
     public static final String VAL_FOLDED = "folded"; //$NON-NLS-1$

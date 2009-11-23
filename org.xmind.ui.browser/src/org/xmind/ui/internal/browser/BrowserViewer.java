@@ -13,6 +13,7 @@ package org.xmind.ui.internal.browser;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -159,13 +160,17 @@ public class BrowserViewer implements IBrowserViewer {
         }
     }
 
-    private class BrowserListener implements LocationListener,
+    protected class BrowserListener implements LocationListener,
             OpenWindowListener, VisibilityWindowListener, CloseWindowListener,
             ProgressListener, TitleListener, StatusTextListener {
 
         private String locationText;
 
         private String titleText;
+
+        private String statusText;
+
+        private boolean redirect = true;
 
         public void hook(Browser browser) {
             browser.addLocationListener(this);
@@ -221,6 +226,17 @@ public class BrowserViewer implements IBrowserViewer {
             if (!"about:blank".equals(event.location)) { //$NON-NLS-1$
                 event.doit = firePropertyChangingEvent(PROPERTY_LOCATION,
                         locationText, event.location, event.doit);
+                if (event.doit && redirect
+                        && !event.location.startsWith("file:")) { //$NON-NLS-1$
+                    try {
+                        event.location = "http://www.xmind.net/xmind/go?r=" //$NON-NLS-1$
+                                + new URI(event.location).toString();
+                    } catch (Exception e) {
+                        // ignore
+                    } finally {
+                        redirect = false;
+                    }
+                }
             }
         }
 
@@ -366,6 +382,9 @@ public class BrowserViewer implements IBrowserViewer {
                         .getStatusLineManager();
                 status.setMessage(event.text);
             }
+            String oldStatus = statusText;
+            statusText = event.text;
+            firePropertyChangeEvent(PROPERTY_STATUS, oldStatus, statusText);
         }
 
     }

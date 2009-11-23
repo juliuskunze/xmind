@@ -37,23 +37,18 @@ public class ZigzagRelationshipDecoration extends
         if (tcp.x == tp.x) {
             if (scp.x == sp.x) {
                 tcp.y = scp.y = (scp.y + tcp.y) / 2;
-
-                //               System.out.println("11");
             } else if (scp.y == sp.y) {
                 tcp.y = scp.y = sp.y;
                 scp.x = tp.x;
-                //               System.out.println("22");
             }
         } else if (tcp.y == tp.y) {
             if (scp.y == sp.y) {
                 tcp.x = scp.x = (tcp.x + scp.x) / 2;
 //                tcp.x = scp.x = (tp.x + sp.x) / 2;
 //                tcp.y = scp.y = sp.y;
-//                System.out.println("33");
             } else if (scp.x == sp.x) {
                 tcp.x = scp.x = sp.x;
                 scp.y = tp.y;
-                //              System.out.println("44");
             }
         }
         shape.moveTo(sp);

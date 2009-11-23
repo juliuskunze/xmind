@@ -155,6 +155,8 @@ public class Styles {
 
     public static final String TextAlign = DOMConstants.ATTR_TEXT_ALIGN;
 
+    public static final String TextBullet = DOMConstants.ATTR_TEXT_BULLET;
+
     /**
      * A property key used to describing the opacity of a object. The value
      * varies from <code>0.0</code> to <code>1.0</code>. A lower value means
@@ -286,6 +288,15 @@ public class Styles {
      */
     public static final String TEXT_DECORATION_LINE_THROUGH = DOMConstants.VAL_LINE_THROUGH;
 
+    /**
+     * 
+     */
+    public static final String TEXT_STYLE_BULLET = DOMConstants.VAL_BULLET;
+
+    /**
+     * 
+     */
+    public static final String TEXT_STYLE_NUMBER = DOMConstants.VAL_NUMBER;
     /**
      * This property value indicating that the width of a line tapers from one
      * end to the other.

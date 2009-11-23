@@ -720,7 +720,7 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         return null;
     }
 
-    protected void setPartRegistry(PartRegistry partRegistry) {
+    public void setPartRegistry(PartRegistry partRegistry) {
         this.partRegistry = partRegistry;
     }
 

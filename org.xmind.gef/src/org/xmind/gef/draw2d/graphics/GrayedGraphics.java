@@ -25,6 +25,7 @@ import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.graphics.Path;
 import org.eclipse.swt.graphics.Pattern;
 import org.eclipse.swt.graphics.RGB;
@@ -504,6 +505,46 @@ public class GrayedGraphics extends Graphics {
 
     public void translate(int dx, int dy) {
         delegate.translate(dx, dy);
+    }
+
+    // ==========================================================
+    //    Since 3.5
+    // ==========================================================
+
+    public boolean getAdvanced() {
+        return delegate.getAdvanced();
+    }
+
+    public float getLineMiterLimit() {
+        return delegate.getLineMiterLimit();
+    }
+
+    public LineAttributes getLineAttributes() {
+        return delegate.getLineAttributes();
+    }
+
+    public float getLineWidthFloat() {
+        return delegate.getLineWidthFloat();
+    }
+
+    public void setAdvanced(boolean advanced) {
+        delegate.setAdvanced(advanced);
+    }
+
+    public void setLineMiterLimit(float miterLimit) {
+        delegate.setLineMiterLimit(miterLimit);
+    }
+
+    public void setLineWidthFloat(float width) {
+        delegate.setLineWidthFloat(width);
+    }
+
+    public void setLineAttributes(LineAttributes attributes) {
+        delegate.setLineAttributes(attributes);
+    }
+
+    public void setLineDash(float[] value) {
+        delegate.setLineDash(value);
     }
 
 }

@@ -111,8 +111,9 @@ public class LinePropertySectionPartBase extends StyledPropertySectionPart {
         lineWidthViewer
                 .addSelectionChangedListener(new LineWidthSelectionChangedListener());
 
-        lineColorPicker = new ColorPicker(ColorPicker.AUTO | ColorPicker.CUSTOM
-                | ColorPicker.NONE, PaletteContents.getDefault());
+        lineColorPicker = new ColorPicker(
+                ColorPicker.AUTO | ColorPicker.CUSTOM, PaletteContents
+                        .getDefault());
         lineColorPicker.getAction().setToolTipText(
                 PropertyMessages.LineColor_toolTip);
         lineColorPicker.addOpenListener(new LineColorOpenListener());

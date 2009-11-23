@@ -42,9 +42,10 @@ import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.mindmap.IMindMap;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.MindMapUI;
-import org.xmind.ui.wizards.IExporter;
-import org.xmind.ui.wizards.AbstractMindMapExportWizard;
+import org.xmind.ui.util.Logger;
 import org.xmind.ui.wizards.AbstractMindMapExportPage;
+import org.xmind.ui.wizards.AbstractMindMapExportWizard;
+import org.xmind.ui.wizards.IExporter;
 
 public class TextExportWizard extends AbstractMindMapExportWizard {
 
@@ -55,6 +56,13 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
     private static final String EXT_TEXT_FILE = ".txt"; //$NON-NLS-1$
 
     private static final String FILTER_TEXT = "*.txt"; //$NON-NLS-1$
+
+    private static class UnicodePrintStream extends PrintStream {
+        public UnicodePrintStream(OutputStream out)
+                throws UnsupportedEncodingException {
+            super(out, false, "utf-8"); //$NON-NLS-1$
+        }
+    }
 
     private class TextExportPage extends AbstractMindMapExportPage {
 
@@ -83,7 +91,7 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
 
                 ByteArrayOutputStream byteOut = new ByteArrayOutputStream(50);
                 OutputStream out = wrapMonitor(byteOut, monitor);
-                PrintStream ps = new PrintStream(out);
+                PrintStream ps = createPrintStream(out);
                 ((TextExporter) exporter).setPrintStream(ps);
                 if (!exporter.canStart()) {
                     return new Status(
@@ -153,7 +161,15 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
                             WizardMessages.TextExportPage_GeneratePreview_Canceled);
                 }
 
-                refreshControl(byteOut.toString());
+                if (ps instanceof UnicodePrintStream) {
+                    try {
+                        refreshControl(byteOut.toString("utf-8")); //$NON-NLS-1$
+                    } catch (UnsupportedEncodingException e) {
+                        refreshControl(byteOut.toString());
+                    }
+                } else {
+                    refreshControl(byteOut.toString());
+                }
                 monitor.done();
                 return new Status(IStatus.OK, MindMapUIPlugin.PLUGIN_ID,
                         WizardMessages.TextExportPage_GeneratePreview_Completed);
@@ -283,12 +299,7 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
             throw new InvocationTargetException(e);
         }
         out = wrapMonitor(out, monitor);
-        PrintStream ps;
-        try {
-            ps = new PrintStream(out, false, "utf-8"); //$NON-NLS-1$
-        } catch (UnsupportedEncodingException e) {
-            ps = new PrintStream(out);
-        }
+        PrintStream ps = createPrintStream(out);
         ((TextExporter) exporter).setPrintStream(ps);
         if (!exporter.canStart()) {
             page
@@ -333,6 +344,15 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
 
         launchTargetFile(true, monitor, display, parentShell);
         monitor.done();
+    }
+
+    private static PrintStream createPrintStream(OutputStream out) {
+        try {
+            return new UnicodePrintStream(out);
+        } catch (UnsupportedEncodingException e) {
+            Logger.log(e, "Unable to export text with utf-8 encoding."); //$NON-NLS-1$
+        }
+        return new PrintStream(out);
     }
 
     protected IExporter createExporter() {

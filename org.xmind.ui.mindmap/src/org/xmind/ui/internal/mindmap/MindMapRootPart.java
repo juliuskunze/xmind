@@ -152,7 +152,7 @@ public class MindMapRootPart extends GraphicalRootEditPart implements
             pane = getLayeredPane();
 
         if (before == null)
-            pane.add(layer, before);
+            pane.add(layer, key);
         else
             pane.addLayerBefore(layer, key, before);
     }

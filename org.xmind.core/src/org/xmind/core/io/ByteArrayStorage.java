@@ -31,7 +31,7 @@ import org.xmind.core.CoreException;
  */
 public class ByteArrayStorage implements IStorage {
 
-    private class ByteArrayInputSource implements IInputSource {
+    protected class ByteArrayInputSource implements IInputSource {
 
         /*
          * (non-Javadoc)
@@ -140,7 +140,7 @@ public class ByteArrayStorage implements IStorage {
 
     }
 
-    private class ByteArrayOutputTarget implements IOutputTarget {
+    protected class ByteArrayOutputTarget implements IOutputTarget {
 
         private class ByteArrayOutputStream2 extends ByteArrayOutputStream {
 

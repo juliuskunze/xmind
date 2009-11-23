@@ -77,7 +77,15 @@ public class BrowserPref {
         }
         getPreferenceStore().setValue(PREF_INTERNAL_WEB_BROWSER_HISTORY,
                 sb.toString());
-        BrowserPlugin.getDefault().savePluginPreferences();
+//        BrowserPlugin.getDefault().savePluginPreferences();
+//        InstanceScope instanceScope = new InstanceScope();
+//        String bundId = String.valueOf(BrowserPlugin.getDefault().getBundle()
+//                .getBundleId());
+//        try {
+//            instanceScope.getNode(bundId).flush();
+//        } catch (BackingStoreException e) {
+//            e.printStackTrace();
+//        }
     }
 
     /**
@@ -121,7 +129,7 @@ public class BrowserPref {
      */
     public static void setBrowserChoice(int choice) {
         getPreferenceStore().setValue(PREF_BROWSER_CHOICE, choice);
-        BrowserPlugin.getDefault().savePluginPreferences();
+//        BrowserPlugin.getDefault().savePluginPreferences();
     }
 
 }

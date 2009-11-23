@@ -97,6 +97,7 @@ public interface IMindMapImages {
     String SHOWALL = "showall.gif"; //$NON-NLS-1$
     String SHOWOTHER = "showother.gif"; //$NON-NLS-1$
     String SMART_MODE = "smartmode_co.gif"; //$NON-NLS-1$
+    String STOP = "nav_stop.gif"; //$NON-NLS-1$
     String STRIKETHROUGH = "strikethrough.gif"; //$NON-NLS-1$
     String STYLES = "javaassist_co.gif"; //$NON-NLS-1$
     String SUMMARY = "summary.gif"; //$NON-NLS-1$
@@ -112,10 +113,10 @@ public interface IMindMapImages {
     String WORKBOOK = "workbook.gif"; //$NON-NLS-1$
     String URL = "link_obj.gif"; //$NON-NLS-1$
 
+    String ALAPHA = "alpha.gif"; //$NON-NLS-1$
+
     String UNLOCK = "unlock.gif"; //$NON-NLS-1$
     String NUMBERING_INHERIT = "inherited.gif"; //$NON-NLS-1$
-
-    String STOP = "nav_stop.gif"; //$NON-NLS-1$
 
     String ALIGN_CENTER = "align_center.gif"; //$NON-NLS-1$
     String ALIGN_LEFT = "align_left.gif"; //$NON-NLS-1$
@@ -134,6 +135,10 @@ public interface IMindMapImages {
 
     String UNDO = "undo.gif"; //$NON-NLS-1$
     String REDO = "redo.gif"; //$NON-NLS-1$
+
+    String DEFAULT_THEME = "defaultTheme.gif"; //$NON-NLS-1$
+
+    String STAR = "star.gif"; //$NON-NLS-1$
 
 //    String BRAINY = "brainy.16.gif"; //$NON-NLS-1$
 //    String BRAINY_FILE = "xmap_file.gif"; //$NON-NLS-1$

@@ -50,4 +50,5 @@ public interface IManifest extends IWorkbookComponent, IAdaptable {
             throws IOException;
 
     IEncryptionData getEncryptionData(String entryPath);
+
 }

@@ -27,6 +27,8 @@ public interface IBrowserViewer {
 
     String PROPERTY_LOCATION = "location"; //$NON-NLS-1$
 
+    String PROPERTY_STATUS = "status"; //$NON-NLS-1$
+
     boolean setURL(String url);
 
     boolean setText(String html);

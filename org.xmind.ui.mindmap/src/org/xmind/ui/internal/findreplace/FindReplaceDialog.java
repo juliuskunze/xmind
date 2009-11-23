@@ -18,6 +18,8 @@ import static org.eclipse.jface.dialogs.IDialogConstants.CLOSE_ID;
 import static org.eclipse.jface.dialogs.IDialogConstants.CLOSE_LABEL;
 import static org.eclipse.jface.dialogs.IDialogConstants.HORIZONTAL_SPACING;
 import static org.eclipse.jface.dialogs.IDialogConstants.VERTICAL_SPACING;
+import static org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider.PARAM_CURRENT_MAP;
+import static org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider.PARAM_FORWARD;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -36,6 +39,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
@@ -45,6 +49,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogMessages;
 
 /**
@@ -52,11 +57,15 @@ import org.xmind.ui.internal.dialogs.DialogMessages;
  */
 public class FindReplaceDialog extends Dialog implements IPartListener {
 
+    private static final String SETTINGS_SECTION_NAME = "org.xmind.ui.findreplace"; //$NON-NLS-1$
+
+    private static final String P_PARAMETER = "parameter"; //$NON-NLS-1$
+
     private static final String EMPTY = ""; //$NON-NLS-1$
 
     private static final String STRING_NOT_FOUND = DialogMessages.FindReplaceDialog_StringNotFound;
 
-    private static Map<Shell, FindReplaceDialog> SINGLETONS = new HashMap<Shell, FindReplaceDialog>();
+    private static Map<IWorkbenchWindow, FindReplaceDialog> SINGLETONS = new HashMap<IWorkbenchWindow, FindReplaceDialog>();
 
     private static final int TEXT_WIDTH = 120;
 
@@ -68,7 +77,45 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     private static List<String> FindHistory = new ArrayList<String>();
     private static List<String> ReplaceHistory = new ArrayList<String>();
 
-    private IFindReplaceOperationProvider operationProvider;
+    private class EventHandler implements Listener {
+
+        public void handleEvent(Event event) {
+            if (event.type == SWT.Modify) {
+                updateOperationButtons();
+                infoLabel.setText(EMPTY);
+            } else if (event.type == SWT.FocusIn) {
+                if (event.widget instanceof Combo) {
+                    Combo input = (Combo) event.widget;
+                    input.setSelection(new Point(0, input.getText().length()));
+                }
+            } else if (event.type == SWT.Selection) {
+                Button b = (Button) event.widget;
+                if (opButtons != null && opButtons.containsValue(b)) {
+                    buttonPressed((Integer) b.getData());
+                } else if (paramWidgets != null) {
+                    List<Button> list = paramWidgets.get(b.getData());
+                    if (list.contains(b)) {
+                        int param = ((Integer) b.getData()).intValue();
+                        if (b.getSelection()) {
+                            parameter |= param;
+                        } else {
+                            parameter &= ~param;
+                        }
+                        if (operationProvider != null) {
+                            operationProvider.setParameter(param, b
+                                    .getSelection());
+                        }
+                        updateOperationButtons();
+                    }
+                }
+            }
+        }
+
+    }
+
+    private IWorkbenchWindow window;
+
+    private IWorkbenchPart currentPart;
 
     private Combo findInput;
 
@@ -80,23 +127,24 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
 
     private Map<Integer, List<Button>> paramWidgets = new HashMap<Integer, List<Button>>();
 
+    private Listener eventHandler = new EventHandler();
+
+    private IFindReplaceOperationProvider operationProvider;
+
+    private int parameter = PARAM_FORWARD | PARAM_CURRENT_MAP;
+
     private String initialFindText = null;
 
-    private IWorkbenchWindow window;
-
-    private IWorkbenchPart currentPart;
-
-    private FindReplaceDialog(IWorkbenchWindow window) {
+    protected FindReplaceDialog(final IWorkbenchWindow window) {
         super(window.getShell());
+        this.window = window;
         setShellStyle(SWT.TITLE | SWT.MODELESS | SWT.CLOSE);
-        final Shell shell = window.getShell();
-        SINGLETONS.put(shell, this);
-        shell.addDisposeListener(new DisposeListener() {
+        SINGLETONS.put(window, this);
+        window.getShell().addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent e) {
-                SINGLETONS.remove(shell);
+                SINGLETONS.remove(window);
             }
         });
-        this.window = window;
     }
 
     /**
@@ -112,6 +160,25 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
 
     public void setInitialFindText(String initialFindText) {
         this.initialFindText = initialFindText;
+    }
+
+    private void loadParameter() {
+        IDialogSettings ds = MindMapUIPlugin.getDefault().getDialogSettings(
+                SETTINGS_SECTION_NAME);
+        if (ds != null) {
+            try {
+                parameter = ds.getInt(P_PARAMETER);
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    private void saveParameter() {
+        IDialogSettings ds = MindMapUIPlugin.getDefault().getDialogSettings(
+                SETTINGS_SECTION_NAME);
+        if (ds != null) {
+            ds.put(P_PARAMETER, parameter);
+        }
     }
 
     /**
@@ -203,7 +270,8 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
         labelWidget
                 .setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 
-        Combo input = new Combo(parent, SWT.SINGLE | SWT.BORDER | SWT.DROP_DOWN);
+        final Combo input = new Combo(parent, SWT.SINGLE | SWT.BORDER
+                | SWT.DROP_DOWN);
         GridData layoutData = new GridData(SWT.FILL, SWT.CENTER, true, true);
         layoutData.widthHint = TEXT_WIDTH;
         input.setLayoutData(layoutData);
@@ -214,13 +282,8 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
             input.setText(initText);
         else if (!history.isEmpty())
             input.setText(history.get(0));
-
-        input.addListener(SWT.Modify, new Listener() {
-            public void handleEvent(Event event) {
-                updateOperationButtons();
-                infoLabel.setText(EMPTY);
-            }
-        });
+        input.addListener(SWT.Modify, eventHandler);
+        input.addListener(SWT.FocusIn, eventHandler);
         return input;
     }
 
@@ -285,30 +348,20 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
         button.setText(text);
         button.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         addParameterWidget(paramId, button);
-//        if (operationProvider != null)
-//            button
-//                    .setSelection((operationProvider.getParameter() & paramId) != 0);
-        button.setData(paramId);
-        button.addListener(SWT.Selection, new Listener() {
-            public void handleEvent(Event event) {
-                Button b = (Button) event.widget;
-                if (operationProvider != null)
-                    operationProvider.setParameter((Integer) b.getData(), b
-                            .getSelection());
-                updateOperationButtons();
-            }
-        });
+        button.setData(Integer.valueOf(paramId));
+        button.addListener(SWT.Selection, eventHandler);
         return button;
     }
 
     private void addParameterWidget(final int paramId, final Button widget) {
-        List<Button> widgets = paramWidgets.get(paramId);
+        Integer key = Integer.valueOf(paramId);
+        List<Button> widgets = paramWidgets.get(key);
         if (widgets == null) {
             widgets = new ArrayList<Button>();
-            paramWidgets.put(paramId, widgets);
+            paramWidgets.put(key, widgets);
         }
         widgets.add(widget);
-        paramWidgets.put(paramId, widgets);
+        paramWidgets.put(key, widgets);
         widget.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent e) {
                 removeParameterWidget(paramId, widget);
@@ -317,11 +370,12 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     }
 
     private void removeParameterWidget(int paramId, Button widget) {
-        List<Button> widgets = paramWidgets.get(paramId);
+        Integer key = Integer.valueOf(paramId);
+        List<Button> widgets = paramWidgets.get(key);
         if (widgets != null) {
             widgets.remove(widget);
             if (widgets.isEmpty()) {
-                paramWidgets.remove(paramId);
+                paramWidgets.remove(key);
             }
         }
     }
@@ -344,7 +398,7 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     private boolean hasParameter(int paramId) {
         if (operationProvider == null)
             return false;
-        int bit = operationProvider.getParameter() & paramId;
+        int bit = parameter & paramId;
         return bit != 0;
     }
 
@@ -375,11 +429,7 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
         button.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         button.setText(text);
         button.setData(id);
-        button.addListener(SWT.Selection, new Listener() {
-            public void handleEvent(Event event) {
-                buttonPressed((Integer) event.widget.getData());
-            }
-        });
+        button.addListener(SWT.Selection, eventHandler);
         if (defaultButton) {
             Shell shell = parent.getShell();
             if (shell != null) {
@@ -391,7 +441,7 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     }
 
     protected void registerOperationButton(final int id, final Button widget) {
-        opButtons.put(id, widget);
+        opButtons.put(Integer.valueOf(id), widget);
         widget.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent e) {
                 unregisterOperationButton(id, widget);
@@ -401,8 +451,9 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     }
 
     private void unregisterOperationButton(int id, Button widget) {
-        if (opButtons.get(id) == widget) {
-            opButtons.remove(id);
+        Integer key = Integer.valueOf(id);
+        if (opButtons.get(key) == widget) {
+            opButtons.remove(key);
         }
     }
 
@@ -413,7 +464,7 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     protected Button getButton(int id) {
         Button button = super.getButton(id);
         if (button == null)
-            button = opButtons.get(id);
+            button = opButtons.get(Integer.valueOf(id));
         return button;
     }
 
@@ -485,7 +536,16 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
         } else {
             setInfoText(STRING_NOT_FOUND);
         }
-        findInput.setFocus();
+        final Shell shell = getShell();
+        final Display display = shell.getDisplay();
+        display.asyncExec(new Runnable() {
+            public void run() {
+                if (!shell.isDisposed()) {
+                    shell.setActive();
+                    findInput.setFocus();
+                }
+            }
+        });
     }
 
     /**
@@ -495,7 +555,7 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
         saveHistories();
         if (operationProvider == null)
             return;
-        boolean all = (operationProvider.getParameter() & IFindReplaceOperationProvider.PARAM_ALL) != 0;
+        boolean all = (parameter & IFindReplaceOperationProvider.PARAM_ALL) != 0;
         operationProvider.setParameter(IFindReplaceOperationProvider.PARAM_ALL,
                 true);
         if (operationProvider.find(getFindText())) {
@@ -530,7 +590,7 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
         saveHistories();
         if (operationProvider == null)
             return;
-        boolean all = (operationProvider.getParameter() & IFindReplaceOperationProvider.PARAM_ALL) != 0;
+        boolean all = (parameter & IFindReplaceOperationProvider.PARAM_ALL) != 0;
         operationProvider.setParameter(IFindReplaceOperationProvider.PARAM_ALL,
                 true);
         if (operationProvider.replace(getFindText(), getReplaceText())) {
@@ -628,7 +688,8 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     }
 
     protected boolean canReplaceAll() {
-        return canFindAll()
+        return getFindText() != null
+                && !EMPTY.equals(getFindText())
                 && getReplaceText() != null
                 && operationProvider != null
                 && operationProvider.canReplaceAll(getFindText(),
@@ -642,9 +703,11 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
         newShell.setText(DialogMessages.FindReplaceDialog_windowTitle);
+        loadParameter();
         startListeningToPartChanges();
         newShell.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent e) {
+                saveParameter();
                 stopListeningToPartChanges();
             }
         });
@@ -657,6 +720,9 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     public void setOperationProvider(
             IFindReplaceOperationProvider operationProvider) {
         this.operationProvider = operationProvider;
+        if (operationProvider != null) {
+            operationProvider.setParameter(parameter);
+        }
     }
 
     /**
@@ -700,8 +766,7 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     }
 
     public static FindReplaceDialog getInstance(IWorkbenchWindow window) {
-        Shell shell = window.getShell();
-        FindReplaceDialog instance = SINGLETONS.get(shell);
+        FindReplaceDialog instance = SINGLETONS.get(window);
         if (instance != null)
             return instance;
         return new FindReplaceDialog(window);

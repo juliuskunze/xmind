@@ -29,6 +29,7 @@ import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
 import org.xmind.gef.command.ICommandStack;
 import org.xmind.ui.commands.CommandBuilder;
+import org.xmind.ui.commands.CommandMessages;
 import org.xmind.ui.commands.ModifyFoldedCommand;
 import org.xmind.ui.commands.ModifyLabelCommand;
 import org.xmind.ui.commands.ModifyPositionCommand;
@@ -169,8 +170,11 @@ public class PropertyCommandBuilder extends CommandBuilder {
             if (value == null || value instanceof Integer) {
                 int width = value == null ? ITopic.UNSPECIFIED
                         : ((Integer) value).intValue();
-                add(new ModifyTopicTitleWidthCommand((ITopic) source, width),
-                        sourceCollectable);
+                ModifyTopicTitleWidthCommand command = new ModifyTopicTitleWidthCommand(
+                        (ITopic) source, width);
+                command.setLabel(CommandMessages.Command_ModifyWidth);
+                add(command, sourceCollectable);
+
                 return true;
             }
         }

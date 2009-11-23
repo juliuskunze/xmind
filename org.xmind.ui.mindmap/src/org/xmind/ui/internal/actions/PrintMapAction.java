@@ -14,7 +14,6 @@
 package org.xmind.ui.internal.actions;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.printing.PrintDialog;
 import org.eclipse.swt.printing.PrinterData;
@@ -63,7 +62,7 @@ public class PrintMapAction extends PageAction {
 
         while (true) {
             int open = pageSetupDialog.open();
-            if (open == Window.CANCEL)
+            if (open == PageSetupDialog.CANCEL)
                 return;
 
             PrintDialog printDialog = new PrintDialog(parentShell);

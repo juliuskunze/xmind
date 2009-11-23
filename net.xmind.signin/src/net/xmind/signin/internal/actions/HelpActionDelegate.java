@@ -33,7 +33,7 @@ import org.osgi.framework.Bundle;
 public class HelpActionDelegate extends XMindNetActionDelegate implements
         IWorkbenchWindowActionDelegate {
 
-    private static final String ONLINE_HELP_URL = "http://www.xmind.net/"; //$NON-NLS-1$
+    private static final String ONLINE_HELP_URL = "http://www.xmind.net/help"; //$NON-NLS-1$
 
     private IWorkbenchWindow window;
 

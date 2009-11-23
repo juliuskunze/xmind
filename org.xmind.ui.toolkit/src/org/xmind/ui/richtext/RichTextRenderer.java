@@ -26,6 +26,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextInputListener;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.IUndoManager;
@@ -35,10 +36,14 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.Bullet;
 import org.eclipse.swt.custom.PaintObjectEvent;
 import org.eclipse.swt.custom.PaintObjectListener;
+import org.eclipse.swt.custom.ST;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
@@ -47,6 +52,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+import org.xmind.ui.viewers.SWTUtils;
 
 /**
  * @author Frank Shaka
@@ -113,7 +119,7 @@ public class RichTextRenderer implements IRichTextRenderer {
         initialize(viewer);
     }
 
-    private void initialize(TextViewer viewer) {
+    private void initialize(final TextViewer viewer) {
         this.documentChangeHandler = new DocumentListener();
         this.richDocumentChangeHandler = new RichDocumentListener();
         IDocument doc = viewer.getDocument();
@@ -170,15 +176,17 @@ public class RichTextRenderer implements IRichTextRenderer {
         viewer.getTextWidget().addPaintObjectListener(
                 new PaintObjectListener() {
                     public void paintObject(PaintObjectEvent event) {
-                        if (document == null)
-                            return;
-                        StyleRange sr = event.style;
-                        int start = sr.start;
+//                        if (document == null)
+//                            return;
+
+                        StyleRange style = event.style;
+                        int start = style.start;
                         Image image = document.findImage(start);
-                        if (image != null) {
+//                        Image image = (Image) style.data;
+                        if (image != null && !image.isDisposed()) {
                             GC gc = event.gc;
                             int x = event.x;
-                            GlyphMetrics metrics = sr.metrics;
+                            GlyphMetrics metrics = style.metrics;
                             if (metrics != null) {
                                 int y = event.y + event.ascent - metrics.ascent;
                                 gc.drawImage(image, x, y);
@@ -186,6 +194,73 @@ public class RichTextRenderer implements IRichTextRenderer {
                         }
                     }
                 });
+
+        viewer.getTextWidget().addKeyListener(new KeyListener() {
+            public void keyReleased(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+                if (SWTUtils.matchKey(e.stateMask, e.keyCode, 0, SWT.CR)) {
+                    if (document == null)
+                        return;
+                    handEntryKey();
+                } else if (SWTUtils.matchKey(e.stateMask, e.keyCode, 0, SWT.BS)) {
+                    if (document == null)
+                        return;
+                    handleBackspaceKey();
+                }
+            }
+        });
+    }
+
+    private void handEntryKey() {
+        if (LineStyle.NONE_STYLE.equals(selectionLineStyle.bulletStyle))
+            return;
+        List<LineStyle> lineStyles = getModifiableLineStyles();
+        if (lineStyles == null || lineStyles.isEmpty())
+            return;
+        Point point = getSelectedLineRange();
+        int startLine = point.x;
+        if (find(startLine)) {
+            LineStyle lineStyle = findLineStyleAt(startLine);
+            lineStyles.remove(lineStyle);
+            lineStyles.remove(findLineStyleAt(startLine - 1));
+            document.setLineStyles(lineStyles.toArray(EMPTY_LINE_STYLES));
+        }
+    }
+
+    private boolean find(int startLine) {
+        try {
+            IRegion r1 = document.getLineInformation(startLine - 1);
+            String content1 = document.get(r1.getOffset(), r1.getLength());
+            if (!"".equals(content1)) //$NON-NLS-1$
+                return false;
+            String style1 = findLineStyleAt(startLine - 1).bulletStyle;
+            if (LineStyle.NONE_STYLE.equals(style1))
+                return false;
+            IRegion r = document.getLineInformation(startLine);
+            String content2 = document.get(r.getOffset(), r.getLength());
+            if (!"".equals(content2)) //$NON-NLS-1$
+                return false;
+            String style2 = findLineStyleAt(startLine).bulletStyle;
+            if (LineStyle.NONE_STYLE.equals(style2))
+                return false;
+            return true;
+        } catch (BadLocationException e) {
+        }
+        return false;
+    }
+
+    private void handleBackspaceKey() {
+        try {
+            IRegion lineInfo = document.getLineInformation(0);
+            if (lineInfo.getLength() == 0 && lineInfo.getOffset() == 0) {
+                getBulletModifier(LineStyle.NONE_STYLE).updateViewer(viewer, 0,
+                        1);
+
+            }
+        } catch (BadLocationException e1) {
+        }
     }
 
     private void initialize() {
@@ -201,7 +276,7 @@ public class RichTextRenderer implements IRichTextRenderer {
         asyncRefreshing = true;
         Display.getCurrent().asyncExec(new Runnable() {
             public void run() {
-                refreshViewer();///////////////////
+                refreshViewer();
                 asyncRefreshing = false;
             }
         });
@@ -209,8 +284,7 @@ public class RichTextRenderer implements IRichTextRenderer {
 
     private void refreshViewer() {
         if (document != null && viewer != null) {
-
-            refreshViewer(document.getTextStyles());//////////////////////////////
+            refreshViewer(document.getTextStyles());
 
             viewer.invalidateTextPresentation();
             LineStyle[] lineStyles = document.getLineStyles();
@@ -222,11 +296,17 @@ public class RichTextRenderer implements IRichTextRenderer {
                 if (lineStyle != null && i == lineStyle.lineIndex) {
                     getAlignmentModifier(lineStyle.alignment).updateViewer(
                             viewer, lineStyle.lineIndex, 1);
+
+                    getBulletModifier(lineStyle.bulletStyle).updateViewer(
+                            viewer, lineStyle.lineIndex, 1);
                     lineStyleIndex++;
                     lineStyle = lineStyleIndex >= lineStyles.length ? null
                             : lineStyles[lineStyleIndex];
+
                 } else {
                     getAlignmentModifier(SWT.LEFT).updateViewer(viewer, i, 1);
+                    getBulletModifier(LineStyle.NONE_STYLE).updateViewer(
+                            viewer, i, 1);
                 }
             }
         }
@@ -280,6 +360,10 @@ public class RichTextRenderer implements IRichTextRenderer {
             selectionLineStyle = (LineStyle) lineStyle.clone();
         }
         selectionLineStyle.lineIndex = startLine;
+
+        LineStyle style = findLineStyleAt(startLine);
+        if (style != null)
+            selectionLineStyle.bulletStyle = style.bulletStyle;
     }
 
     private LineStyle findLineStyleAt(int startLine) {
@@ -330,8 +414,28 @@ public class RichTextRenderer implements IRichTextRenderer {
         return getSelectionLineStyle().indent;
     }
 
+    public boolean getBulletSelectionParagraph() {
+        LineStyle lineStyle = getSelectionLineStyle();
+        return LineStyle.BULLET.equals(lineStyle.bulletStyle);
+    }
+
+    public boolean getNumberSelectionParagraph() {
+        LineStyle lineStyle = getSelectionLineStyle();
+        return LineStyle.NUMBER.equals(lineStyle.bulletStyle);
+    }
+
     public void indentSelectionParagraph() {
         modifySelectionLineStyles(getIndentModifier(1));
+    }
+
+    public void bulletSelectionParagraph(boolean bullet) {
+        String bulletStyle = bullet ? LineStyle.BULLET : LineStyle.NONE_STYLE;
+        modifySelectionLineStyles(getBulletModifier(bulletStyle));
+    }
+
+    public void numberSelectionParagraph(boolean number) {
+        String bulletStyle = number ? LineStyle.NUMBER : LineStyle.NONE_STYLE;
+        modifySelectionLineStyles(getBulletModifier(bulletStyle));
     }
 
     public void insertHyperlink(String href) {
@@ -412,10 +516,6 @@ public class RichTextRenderer implements IRichTextRenderer {
                     oldHyperlinks.remove(i);
                     break;
                 }
-//                if (start > hyperStart && end <= hyperEnd) {
-//                    oldHyperlinks.remove(i);
-//                    break;
-//                }
             }
         }
 
@@ -663,6 +763,7 @@ public class RichTextRenderer implements IRichTextRenderer {
 
     private StyleRange createImageStyle(int start, int length, Image image) {
         StyleRange style = (StyleRange) selectionTextStyle.clone();
+//        style.data = image;
         style.start = start;
         style.length = length;
         Rectangle rect = image.getBounds();
@@ -975,7 +1076,7 @@ public class RichTextRenderer implements IRichTextRenderer {
             int endLine = startLine + lineCount;
             try {
                 for (int line = startLine; line < endLine; line++) {
-                    RichTextUtils.modifyDocumentIndent(document, line,
+                    RichTextUtils.modifyDocumentIndent(viewer, document, line,
                             deltaIndent);
                 }
             } catch (BadLocationException e) {
@@ -989,4 +1090,38 @@ public class RichTextRenderer implements IRichTextRenderer {
         return indentModifier;
     }
 
+    private static LineStyleModifier bulletModifier = new LineStyleModifier() {
+        protected boolean modify(LineStyle style, Object value) {
+            String v = (String) value;
+            if (style.bulletStyle.equals(v))
+                return false;
+            style.bulletStyle = v;
+            return true;
+        }
+
+        protected void updateViewer(TextViewer viewer, int startLine,
+                int lineCount, Object value) {
+            String v = (String) value;
+            StyledText styledText = viewer.getTextWidget();
+            StyleRange style = new StyleRange();
+            style.metrics = new GlyphMetrics(0, 0, 50);
+            styledText.setLineBullet(startLine, lineCount, null);
+
+            if (v.equals(LineStyle.BULLET)) {
+                Bullet bullet = new Bullet(style);
+                styledText.setLineBullet(startLine, lineCount, bullet);
+            } else if (v.equals(LineStyle.NUMBER)) {
+//                Bullet bullet = styledText.getLineBullet(startLine);
+//                if (bullet.type != ST.BULLET_CUSTOM)
+                Bullet bullet = new Bullet(ST.BULLET_CUSTOM, style);
+                styledText.setLineBullet(startLine, lineCount, bullet);
+            } else
+                styledText.setLineBullet(startLine, lineCount, null);
+        }
+    };
+
+    private static ILineStyleModifier getBulletModifier(String bullet) {
+        bulletModifier.setValue(bullet);
+        return bulletModifier;
+    }
 }

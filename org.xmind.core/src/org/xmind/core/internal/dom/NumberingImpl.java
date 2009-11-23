@@ -155,6 +155,7 @@ public class NumberingImpl extends Numbering implements ICoreEventSource {
         setAttribute(ATTR_NUMBER_FORMAT, format);
         String newValue = getNumberFormat();
         fireValueChange(Core.NumberFormat, oldValue, newValue);
+        ownedTopic.updateModifiedTime();
     }
 
     public void setPrefix(String prefix) {
@@ -162,6 +163,7 @@ public class NumberingImpl extends Numbering implements ICoreEventSource {
         setText(TAG_PREFIX, prefix);
         String newValue = getPrefix();
         fireValueChange(Core.NumberingPrefix, oldValue, newValue);
+        ownedTopic.updateModifiedTime();
     }
 
     public void setPrependsParentNumbers(boolean prepend) {
@@ -169,6 +171,7 @@ public class NumberingImpl extends Numbering implements ICoreEventSource {
         setAttribute(ATTR_PREPENDING_NUMBERS, prepend ? null : VAL_NONE);
         Boolean newValue = Boolean.valueOf(prependsParentNumbers());
         fireValueChange(Core.NumberPrepending, oldValue, newValue);
+        ownedTopic.updateModifiedTime();
     }
 
     public void setSuffix(String suffix) {
@@ -176,6 +179,7 @@ public class NumberingImpl extends Numbering implements ICoreEventSource {
         setText(TAG_SUFFIX, suffix);
         String newValue = getSuffix();
         fireValueChange(Core.NumberingSuffix, oldValue, newValue);
+        ownedTopic.updateModifiedTime();
     }
 
     private void fireValueChange(String eventType, Object oldValue,

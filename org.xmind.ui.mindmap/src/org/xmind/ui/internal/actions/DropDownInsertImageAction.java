@@ -15,59 +15,91 @@ package org.xmind.ui.internal.actions;
 
 import java.util.List;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuCreator;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
-import org.xmind.ui.actions.DelegatingAction;
 import org.xmind.ui.internal.MindMapMessages;
 
-public class DropDownInsertImageAction extends DelegatingAction implements
-        IMenuCreator {
+public class DropDownInsertImageAction extends Action implements
+        IWorkbenchAction, IPropertyChangeListener {
+
+    private class InsertImageMenuCreator implements IMenuCreator {
+
+        private Menu menu;
+
+        public Menu getMenu(Control parent) {
+            if (menu != null) {
+                menu.dispose();
+            }
+
+            menu = new Menu(parent);
+            fillMenu(menu);
+            return menu;
+        }
+
+        public Menu getMenu(Menu parent) {
+            if (menu != null) {
+                menu.dispose();
+            }
+            menu = new Menu(parent);
+            fillMenu(menu);
+            return menu;
+        }
+
+        private void fillMenu(Menu menu) {
+            for (IWorkbenchAction action : imageActionExtensions) {
+                ActionContributionItem item = new ActionContributionItem(action);
+                item.fill(menu, -1);
+            }
+        }
+
+        public void dispose() {
+            if (menu != null) {
+                menu.dispose();
+                menu = null;
+            }
+        }
+
+    }
+
+    private IAction sourceAction;
 
     private List<IWorkbenchAction> imageActionExtensions;
 
-    private Menu menu;
-
-    public DropDownInsertImageAction(IAction delegate,
+    public DropDownInsertImageAction(IAction sourceAction,
             List<IWorkbenchAction> imageActionExtensions) {
-        super(delegate, AS_DROP_DOWN_MENU, TEXT, IMAGE, TOOL_TIP_TEXT);
+        super(MindMapMessages.InsertImage_text, AS_DROP_DOWN_MENU);
         setId("org.xmind.ui.insertImageDropDown"); //$NON-NLS-1$
-        setActionDefinitionId(null);
+        this.sourceAction = sourceAction;
         this.imageActionExtensions = imageActionExtensions;
-        setMenuCreator(this);
+        setMenuCreator(new InsertImageMenuCreator());
+        if (sourceAction != null)
+            sourceAction.addPropertyChangeListener(this);
+        setEnabled(sourceAction != null && sourceAction.isEnabled());
     }
 
-    public Menu getMenu(Control parent) {
-        if (menu != null) {
-            menu.dispose();
+    public void run() {
+        if (sourceAction != null) {
+            sourceAction.run();
         }
-
-        menu = new Menu(parent);
-        fillMenu(menu);
-        return menu;
     }
 
-    public Menu getMenu(Menu parent) {
-        if (menu != null) {
-            menu.dispose();
+    public void dispose() {
+        if (sourceAction != null) {
+            sourceAction.removePropertyChangeListener(this);
+            sourceAction = null;
         }
-        menu = new Menu(parent);
-        fillMenu(menu);
-        return menu;
     }
 
-    private void fillMenu(Menu menu) {
-        for (IWorkbenchAction action : imageActionExtensions) {
-            ActionContributionItem item = new ActionContributionItem(action);
-            item.fill(menu, -1);
-            if ("org.xmind.ui.insertImage".equals(action.getId())) { //$NON-NLS-1$
-                ((MenuItem) item.getWidget())
-                        .setText(MindMapMessages.InsertImageFromFile_text);
-            }
+    public void propertyChange(PropertyChangeEvent event) {
+        if (ENABLED.equals(event.getProperty())) {
+            this.setEnabled(sourceAction != null && sourceAction.isEnabled());
         }
     }
 

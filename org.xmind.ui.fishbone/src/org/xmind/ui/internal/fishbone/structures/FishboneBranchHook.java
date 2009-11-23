@@ -13,126 +13,134 @@
  *******************************************************************************/
 package org.xmind.ui.internal.fishbone.structures;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.eclipse.draw2d.FigureListener;
 import org.eclipse.draw2d.IFigure;
-import org.xmind.core.Core;
-import org.xmind.core.IBoundary;
-import org.xmind.core.ISummary;
-import org.xmind.core.ITopic;
-import org.xmind.core.event.CoreEvent;
-import org.xmind.core.event.ICoreEventListener;
-import org.xmind.core.event.ICoreEventRegistration;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.draw2d.IDecoratedFigure;
 import org.xmind.gef.draw2d.decoration.IDecoration;
+import org.xmind.gef.part.IPartListener;
+import org.xmind.gef.part.PartEvent;
 import org.xmind.ui.branch.IBranchHook;
+import org.xmind.ui.mindmap.IBoundaryPart;
 import org.xmind.ui.mindmap.IBranchPart;
+import org.xmind.ui.mindmap.IBranchRangePart;
+import org.xmind.ui.mindmap.IRangeListener;
+import org.xmind.ui.mindmap.ISummaryPart;
+import org.xmind.ui.mindmap.RangeEvent;
 
-public class FishboneBranchHook implements IBranchHook, ICoreEventListener,
-        FigureListener {
+public class FishboneBranchHook implements IBranchHook, FigureListener,
+        IPartListener, IRangeListener {
 
     private IBranchPart branch;
 
-    private List<ICoreEventRegistration> topicListeners = new ArrayList<ICoreEventRegistration>();
-
-    private Map<Object, List<ICoreEventRegistration>> rangeListeners = new HashMap<Object, List<ICoreEventRegistration>>();
+//    private List<ICoreEventRegistration> topicListeners = new ArrayList<ICoreEventRegistration>();
+//
+//    private Map<Object, List<ICoreEventRegistration>> rangeListeners = new HashMap<Object, List<ICoreEventRegistration>>();
 
     public void hook(IBranchPart branch) {
         this.branch = branch;
         branch.getFigure().addFigureListener(this);
-        ITopic topic = branch.getTopic();
-        if (topic instanceof ICoreEventSource) {
-            ICoreEventSource source = (ICoreEventSource) topic;
-            topicListeners.add(source.registerCoreEventListener(
-                    Core.BoundaryAdd, this));
-            topicListeners.add(source.registerCoreEventListener(
-                    Core.BoundaryRemove, this));
-            topicListeners.add(source.registerCoreEventListener(
-                    Core.SummaryAdd, this));
-            topicListeners.add(source.registerCoreEventListener(
-                    Core.SummaryRemove, this));
-            topicListeners.add(source.registerCoreEventListener(Core.TopicAdd,
-                    this));
-            topicListeners.add(source.registerCoreEventListener(
-                    Core.TopicRemove, this));
+        branch.addPartListener(this);
+        for (IBoundaryPart b : branch.getBoundaries()) {
+            b.addRangeListener(this);
         }
-        for (IBoundary boundary : topic.getBoundaries()) {
-            registerRangeListeners(boundary);
+        for (ISummaryPart s : branch.getSummaries()) {
+            s.addRangeListener(this);
         }
-        for (ISummary summary : topic.getSummaries()) {
-            registerRangeListeners(summary);
-        }
+//        ITopic topic = branch.getTopic();
+//        if (topic instanceof ICoreEventSource) {
+//            ICoreEventSource source = (ICoreEventSource) topic;
+//            topicListeners.add(source.registerCoreEventListener(
+//                    Core.BoundaryAdd, this));
+//            topicListeners.add(source.registerCoreEventListener(
+//                    Core.BoundaryRemove, this));
+//            topicListeners.add(source.registerCoreEventListener(
+//                    Core.SummaryAdd, this));
+//            topicListeners.add(source.registerCoreEventListener(
+//                    Core.SummaryRemove, this));
+//            topicListeners.add(source.registerCoreEventListener(Core.TopicAdd,
+//                    this));
+//            topicListeners.add(source.registerCoreEventListener(
+//                    Core.TopicRemove, this));
+//        }
+//        for (IBoundary boundary : topic.getBoundaries()) {
+//            registerRangeListeners(boundary);
+//        }
+//        for (ISummary summary : topic.getSummaries()) {
+//            registerRangeListeners(summary);
+//        }
     }
 
     public void unhook(IBranchPart branch) {
-        unregister(topicListeners);
-        for (List<ICoreEventRegistration> regs : rangeListeners.values()) {
-            unregister(regs);
+//        unregister(topicListeners);
+//        for (List<ICoreEventRegistration> regs : rangeListeners.values()) {
+//            unregister(regs);
+//        }
+        for (IBoundaryPart b : branch.getBoundaries()) {
+            b.removeRangeListener(this);
         }
+        for (ISummaryPart s : branch.getSummaries()) {
+            s.removeRangeListener(this);
+        }
+        branch.removePartListener(this);
         branch.getFigure().removeFigureListener(this);
         updateSubBranches(branch);
     }
 
-    private void unregister(List<ICoreEventRegistration> listeners) {
-        for (ICoreEventRegistration reg : listeners) {
-            reg.unregister();
-        }
-    }
+//    private void unregister(List<ICoreEventRegistration> listeners) {
+//        for (ICoreEventRegistration reg : listeners) {
+//            reg.unregister();
+//        }
+//    }
 
-    public void handleCoreEvent(CoreEvent event) {
-        String type = event.getType();
-        if (Core.BoundaryAdd.equals(type) || Core.SummaryAdd.equals(type)) {
-            Object range = event.getTarget();
-            registerRangeListeners(range);
-            updateSubBranches(branch);
-        } else if (Core.BoundaryRemove.equals(type)
-                || Core.SummaryRemove.equals(type)) {
-            Object range = event.getTarget();
-            List<ICoreEventRegistration> list = rangeListeners.remove(range);
-            if (list != null) {
-                unregister(list);
-            }
-            updateSubBranches(branch);
-        } else if (Core.Range.equals(type)) {// || Core.EndIndex.equals(type)) {
-//        } else if (Core.Range.equals(type) || Core.EndIndex.equals(type)) {
-            if (isHeadBranch(branch)) {
-                branch.getFigure().invalidate();
-                branch.update();
-                updateSubBranches(branch);
-            }
-        } else if (Core.TopicAdd.equals(type) || Core.TopicRemove.equals(type)) {
-            if (ITopic.ATTACHED.equals(event.getData())) {
-                updateSubBranches(branch);
-            }
-        }
-    }
+//    public void handleCoreEvent(CoreEvent event) {
+//        String type = event.getType();
+//        if (Core.BoundaryAdd.equals(type) || Core.SummaryAdd.equals(type)) {
+//            Object range = event.getTarget();
+//            registerRangeListeners(range);
+//            updateSubBranches(branch);
+//        } else if (Core.BoundaryRemove.equals(type)
+//                || Core.SummaryRemove.equals(type)) {
+//            Object range = event.getTarget();
+//            List<ICoreEventRegistration> list = rangeListeners.remove(range);
+//            if (list != null) {
+//                unregister(list);
+//            }
+//            updateSubBranches(branch);
+//        } else if (Core.Range.equals(type)) {// || Core.EndIndex.equals(type)) {
+////        } else if (Core.Range.equals(type) || Core.EndIndex.equals(type)) {
+//            if (isHeadBranch(branch)) {
+//                branch.getFigure().invalidate();
+//                branch.update();
+//                updateSubBranches(branch);
+//            }
+//        } else if (Core.TopicAdd.equals(type) || Core.TopicRemove.equals(type)) {
+//            if (ITopic.ATTACHED.equals(event.getData())) {
+//                updateSubBranches(branch);
+//            }
+//        }
+//    }
 
-    private boolean isHeadBranch(IBranchPart branch) {
-        IBranchPart parent = branch.getParentBranch();
-        if (parent == null)
-            return true;
-        String parentPolicyId = parent.getBranchPolicyId();
-        return !branch.getBranchPolicyId().equals(parentPolicyId);
-//        String structureId = (String) branch.getCacheManager().getCache(
-//                IBranchPolicy.CACHE_STRUCTURE_ALGORITHM_ID);
-//        return Fishbone.STRUCTURE_LEFT_HEADED.equals(structureId)
-//                || Fishbone.STRUCTURE_RIGHT_HEADED.equals(structureId);
-    }
+//    private boolean isHeadBranch(IBranchPart branch) {
+//        IBranchPart parent = branch.getParentBranch();
+//        if (parent == null)
+//            return true;
+//        String parentPolicyId = parent.getBranchPolicyId();
+//        return !branch.getBranchPolicyId().equals(parentPolicyId);
+////        String structureId = (String) branch.getCacheManager().getCache(
+////                IBranchPolicy.CACHE_STRUCTURE_ALGORITHM_ID);
+////        return Fishbone.STRUCTURE_LEFT_HEADED.equals(structureId)
+////                || Fishbone.STRUCTURE_RIGHT_HEADED.equals(structureId);
+//    }
 
-    private void registerRangeListeners(Object range) {
-        if (range instanceof ICoreEventSource) {
-            ICoreEventSource source = (ICoreEventSource) range;
-            List<ICoreEventRegistration> list = new ArrayList<ICoreEventRegistration>();
-            list.add(source.registerCoreEventListener(Core.Range, this));
-            //list.add(source.registerCoreEventListener(Core.EndIndex, this));
-            rangeListeners.put(range, list);
-        }
-    }
+//    private void registerRangeListeners(Object range) {
+//        if (range instanceof ICoreEventSource) {
+//            ICoreEventSource source = (ICoreEventSource) range;
+//            List<ICoreEventRegistration> list = new ArrayList<ICoreEventRegistration>();
+//            list.add(source.registerCoreEventListener(Core.Range, this));
+//            //list.add(source.registerCoreEventListener(Core.EndIndex, this));
+//            rangeListeners.put(range, list);
+//        }
+//    }
 
     public void figureMoved(IFigure source) {
         IDecoration decoration = ((IDecoratedFigure) branch.getFigure())
@@ -151,6 +159,30 @@ public class FishboneBranchHook implements IBranchHook, ICoreEventListener,
 
     private void flushChildStructureType(IBranchPart subBranch) {
         subBranch.getBranchPolicy().flushStructureCache(subBranch, false, true);
+    }
+
+    public void childAdded(PartEvent event) {
+        if (event.child instanceof IBranchPart) {
+            updateSubBranches(branch);
+        } else if (event.child instanceof ISummaryPart
+                || event.child instanceof IBoundaryPart) {
+            updateSubBranches(branch);
+            ((IBranchRangePart) event.child).addRangeListener(this);
+        }
+    }
+
+    public void childRemoving(PartEvent event) {
+        if (event.child instanceof IBranchPart) {
+            updateSubBranches(branch);
+        } else if (event.child instanceof ISummaryPart
+                || event.child instanceof IBoundaryPart) {
+            updateSubBranches(branch);
+            ((IBranchRangePart) event.child).removeRangeListener(this);
+        }
+    }
+
+    public void rangeChanged(RangeEvent event) {
+        updateSubBranches(branch);
     }
 
 }

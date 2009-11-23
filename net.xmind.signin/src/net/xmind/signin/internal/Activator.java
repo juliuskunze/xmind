@@ -13,7 +13,6 @@
  *******************************************************************************/
 package net.xmind.signin.internal;
 
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -46,8 +45,6 @@ public class Activator extends AbstractUIPlugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
-
-        UserInfoVerifier.getInstance();
     }
 
     /*

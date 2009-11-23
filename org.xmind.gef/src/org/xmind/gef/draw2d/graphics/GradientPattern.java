@@ -45,7 +45,11 @@ public class GradientPattern extends Pattern {
      */
     public GradientPattern(Device device, float x1, float y1, float x2,
             float y2, Color color1, int alpha1, Color color2, int alpha2) {
-        super(device, x1, y1, x2, y2, color1, alpha1, color2, alpha2);
+        super(device, GraphicsUtils.isCarbonSnowLeopard() ? (int) x1 : x1,
+                GraphicsUtils.isCarbonSnowLeopard() ? (int) y1 : y1,
+                GraphicsUtils.isCarbonSnowLeopard() ? (int) x2 : x2,
+                GraphicsUtils.isCarbonSnowLeopard() ? (int) y2 : y2, color1,
+                alpha1, color2, alpha2);
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;

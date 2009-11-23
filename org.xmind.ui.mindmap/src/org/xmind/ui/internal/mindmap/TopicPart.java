@@ -135,6 +135,8 @@ public class TopicPart extends NodePart implements ITopicPart {
                 MindMapUI.POLICY_TOPIC_TRAVERSABLE);
         reqHandler.installEditPolicy(GEF.ROLE_DROP_TARGET,
                 MindMapUI.POLICY_DROP_TARGET);
+        reqHandler.installEditPolicy(GEF.ROLE_SORTABLE,
+                MindMapUI.POLICY_SORTABLE);
         if (!isCentral() && !ITopic.SUMMARY.equals(getTopic().getType())) {
             reqHandler.installEditPolicy(GEF.ROLE_MOVABLE,
                     MindMapUI.POLICY_TOPIC_MOVABLE);

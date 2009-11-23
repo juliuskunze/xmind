@@ -55,27 +55,27 @@ import org.xmind.ui.util.ICancelable;
 public class UndoRedoTipsService extends GraphicalViewerService implements
         ICommandStackListener {
 
-    private static class FrameFigure extends PathFigure {
+//    private static class FrameFigure extends PathFigure {
 
-        private int alpha = 0xff;
+//        private int alpha = 0xff;
+//
+//        public int getAlpha() {
+//            return alpha;
+//        }
+//
+//        public void setAlpha(int alpha) {
+//            if (alpha == this.alpha)
+//                return;
+//            this.alpha = alpha;
+//            repaint();
+//        }
+//
+//        public void paintFigure(Graphics graphics) {
+//            graphics.setAlpha(getAlpha());
+//            super.paintFigure(graphics);
+//        }
 
-        public int getAlpha() {
-            return alpha;
-        }
-
-        public void setAlpha(int alpha) {
-            if (alpha == this.alpha)
-                return;
-            this.alpha = alpha;
-            repaint();
-        }
-
-        public void paintFigure(Graphics graphics) {
-            graphics.setAlpha(getAlpha());
-            super.paintFigure(graphics);
-        }
-
-    }
+//    }
 
     /**
      * 
@@ -110,11 +110,10 @@ public class UndoRedoTipsService extends GraphicalViewerService implements
             Rectangle rect = getPaintRectangle(figure, insets);
             Rectangle inner = rect.getCropped(getInsets(figure));
             Path p = new Path(Display.getCurrent());
-            p.moveTo(inner.x, inner.y);
             p.addArc(inner.x - r, inner.y, d, d, 90, 180);
-            p.lineTo(inner.right(), inner.bottom());
-            p.addArc(inner.right() - r, inner.y, d, d, -90, 180);
-            p.close();
+            p.addRectangle(inner);
+            p.addArc(inner.right() - r, inner.y, d, d, 270, 180);
+            graphics.setFillRule(SWT.FILL_WINDING);
             graphics.setBackgroundColor(color);
             graphics.fillPath(p);
             p.dispose();
@@ -127,7 +126,7 @@ public class UndoRedoTipsService extends GraphicalViewerService implements
 
         private String label;
 
-        private FrameFigure frame;
+        private PathFigure frame;
 
         private ITransparentableFigure title;
 
@@ -150,7 +149,7 @@ public class UndoRedoTipsService extends GraphicalViewerService implements
             }
         }
 
-        private FrameFigure createFrameFigure() {
+        private PathFigure createFrameFigure() {
             if (getFrameLayer() == null)
                 return null;
 
@@ -159,7 +158,7 @@ public class UndoRedoTipsService extends GraphicalViewerService implements
                 return null;
 
             Rectangle frameBounds = srcFigure.getBounds().getExpanded(4, 4);
-            FrameFigure figure = new FrameFigure();
+            PathFigure figure = new PathFigure();
             getFrameLayer().add(figure);
 
             figure.setFill(false);

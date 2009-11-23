@@ -22,6 +22,8 @@ import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Layer;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Pattern;
+import org.eclipse.swt.widgets.Display;
 import org.xmind.core.ISheet;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.util.HyperlinkUtils;
@@ -44,7 +46,7 @@ public class SheetDecorator extends Decorator {
 
     private static final String CACHE_WALLPAPER_KEY = "org.xmind.ui.cache.wallpaperKey"; //$NON-NLS-1$
 
-    private static class WallpaperImageRegistry {
+    protected static class WallpaperImageRegistry {
         private static class Key {
             IWorkbook workbook;
             String entryPath;
@@ -230,7 +232,19 @@ public class SheetDecorator extends Decorator {
         return (int) Math.round(opacity * 255);
     }
 
-    private Image getWallpaper(IGraphicalPart part, IStyleSelector ss) {
+    /**
+     * Create a new wallpaper pattern or return no pattern.
+     * 
+     * @param part
+     * @param ss
+     * @return
+     */
+    private Pattern getWallpaper(IGraphicalPart part, IStyleSelector ss) {
+        Image image = getWallpaperImage(part, ss);
+        return image == null ? null : new Pattern(Display.getCurrent(), image);
+    }
+
+    private Image getWallpaperImage(IGraphicalPart part, IStyleSelector ss) {
         if (imageRegistry == null)
             imageRegistry = new WallpaperImageRegistry();
         return imageRegistry.getImage(part, ss);
@@ -240,6 +254,10 @@ public class SheetDecorator extends Decorator {
         IGraphicalViewer viewer = (IGraphicalViewer) part.getSite().getViewer();
         Layer layer = viewer.getLayer(GEF.LAYER_BACKGROUND);
         if (layer instanceof BackgroundLayer) {
+            Pattern wallpaper = ((BackgroundLayer) layer).getWallpaper();
+            if (wallpaper != null) {
+                wallpaper.dispose();
+            }
             ((BackgroundLayer) layer).setWallpaper(null);
         }
         if (imageRegistry != null) {

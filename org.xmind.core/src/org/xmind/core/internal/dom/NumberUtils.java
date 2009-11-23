@@ -13,11 +13,17 @@
  *******************************************************************************/
 package org.xmind.core.internal.dom;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
+
 /**
  * @author briansun
  * 
  */
 public class NumberUtils {
+
+    private static DateFormat dateFormat = null;
 
     /**
      * @param string
@@ -72,5 +78,28 @@ public class NumberUtils {
             }
         }
         return defaultLong;
+    }
+
+    private static DateFormat getDateFormat() {
+        if (dateFormat == null)
+            dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
+                    DateFormat.MEDIUM);
+        return dateFormat;
+    }
+
+    public static String formatDate(long time) {
+        Date date = new Date(time);
+        return getDateFormat().format(date);
+    }
+
+    public static long parseDate(String time) {
+        if (time == null)
+            return System.currentTimeMillis();
+        try {
+            Date date = getDateFormat().parse(time);
+            return date.getTime();
+        } catch (ParseException e) {
+            return System.currentTimeMillis();
+        }
     }
 }

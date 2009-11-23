@@ -13,12 +13,12 @@
  *******************************************************************************/
 package org.xmind.ui.internal.notes;
 
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.TextViewer;
-import org.eclipse.swt.graphics.Point;
+import org.eclipse.jface.text.IFindReplaceTarget;
+import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.part.IContributedContentsView;
 import org.xmind.ui.internal.findreplace.AbstractFindReplaceOperationProvider;
-import org.xmind.ui.richtext.IRichDocument;
-import org.xmind.ui.richtext.IRichTextEditViewer;
+import org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider;
 
 /**
  * 
@@ -27,146 +27,118 @@ import org.xmind.ui.richtext.IRichTextEditViewer;
 public class NotesFindReplaceOperationProvider extends
         AbstractFindReplaceOperationProvider {
 
-    private static int parameter = PARAM_FORWARD | PARAM_CURRENT_MAP;
+    private IViewPart view;
 
-    private NotesViewer viewer = null;
+    private boolean findingInEditor = false;
 
-    private TextViewer textViewer = null;
+    public NotesFindReplaceOperationProvider(IViewPart view) {
+        this.view = view;
+    }
 
-    private IRichDocument document;
+    protected IFindReplaceTarget getFindReplaceTarget() {
+        return (IFindReplaceTarget) view.getAdapter(IFindReplaceTarget.class);
+    }
 
-    private String text = null;
-
-    private int offset = 0;
-
-    public NotesFindReplaceOperationProvider(NotesViewer viewer) {
-        this.viewer = viewer;
-
+    protected boolean findAll(String toFind) {
+        return false;
     }
 
     @Override
-    protected boolean findAll(String toFind) {
-        refreshText(viewer);
-        if (!isCaseSensitive()) {
-            text = text.toLowerCase();
-            toFind.toLowerCase();
-        }
-        int lastIndex = text.lastIndexOf(toFind);
-        if (lastIndex == -1)
+    public boolean find(String toFind) {
+        if (findingInEditor)
             return false;
-        selectText(lastIndex, toFind.length());
-        return true;
+        return super.find(toFind);
     }
 
     @Override
     protected boolean findNext(String toFind) {
-        refreshText(viewer);
-        offset = getCurrentOffset();
-        if (offset < 0)
-            return false;
-        findNextSubText(toFind);
-        if (offset < 0)
-            return false;
-        selectText(offset, toFind.length());
-        return true;
+        return findInNotes(toFind) || findInEditor(toFind);
     }
 
-    private void findNextSubText(String toFind) {
-        int offset1 = isForward() ? 0 : text.length();
-        int index = indexOf(text, toFind, offset);
-        if (index == -1) {
-            int firstIndex = indexOf(text, toFind, offset1);
-            this.offset = firstIndex;
-        } else
-            this.offset = index;
+    private boolean findInNotes(String toFind) {
+        return findInNotes(getFindReplaceTarget(), toFind);
     }
 
-    private int getCurrentOffset() {
-        Point range = textViewer.getSelectedRange();
-        if (range.y > 0)
-            return isForward() ? range.x + range.y : range.x;
-        return text == null ? -1 : getNewOffset(text);
+    private boolean findInNotes(IFindReplaceTarget target, String toFind) {
+        if (target != null && target.canPerformFind()) {
+            int offset = target.findAndSelect(isForward() ? target
+                    .getSelection().x
+                    + target.getSelection().y : target.getSelection().x - 1,
+                    toFind, isForward(), isCaseSensitive(), isWholeWord());
+            return offset >= 0;
+        }
+        return false;
+    }
+
+    private boolean findInEditor(String toFind) {
+        IContributedContentsView contributed = (IContributedContentsView) view
+                .getAdapter(IContributedContentsView.class);
+        if (contributed != null) {
+            IWorkbenchPart contributing = contributed.getContributingPart();
+            if (contributing != null) {
+                IFindReplaceOperationProvider frProvider = (IFindReplaceOperationProvider) contributing
+                        .getAdapter(IFindReplaceOperationProvider.class);
+                if (frProvider != null) {
+                    findingInEditor = true;
+                    try {
+                        boolean found = frProvider.find(toFind);
+                        if (found) {
+                            view.getSite().getPage().activate(contributing);
+                        }
+                        return found;
+                    } finally {
+                        findingInEditor = false;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     @Override
     protected boolean replaceAll(String toFind, String toReplaceWith) {
-        if (toReplaceWith == null || "".equals(toReplaceWith)) //$NON-NLS-1$
-            return false;
-        refreshText(viewer);
-        int index = getOffsetInText(toFind);
-        boolean found = index != -1 ? true : false;
-        while (found) {
-            index = getOffsetInText(toFind);
-            if (index == -1)
-                break;
-            try {
-                document.replace(index, toFind.length(), toReplaceWith);
-            } catch (BadLocationException e) {
-                e.printStackTrace();
+        IFindReplaceTarget target = getFindReplaceTarget();
+        boolean found = target.findAndSelect(0, toFind, true,
+                isCaseSensitive(), isWholeWord()) >= 0;
+        if (found) {
+            while (replaceInNotes(target, toFind, toReplaceWith)) {
             }
         }
-        int lastIndex = text.lastIndexOf(toReplaceWith);
-        selectText(lastIndex, toReplaceWith.length());
         return found;
-    }
-
-    private int getOffsetInText(String toFind) {
-        String str = document.get();
-        if (!isCaseSensitive()) {
-            str = str.toLowerCase();
-            toFind = toFind.toLowerCase();
-        }
-        return str.indexOf(toFind);
     }
 
     @Override
     protected boolean replaceNext(String toFind, String toReplaceWith) {
-        Point range = textViewer.getSelectedRange();
-        int start = range.x;
-        int length = range.y;
-        if (length == 0)
-            return false;
-        try {
-            String str = document.get(start, length);
-            if (!toFind.equals(str))
-                return false;
-            document.replace(start, length, toReplaceWith);
-        } catch (BadLocationException e) {
-            e.printStackTrace();
+        return replaceInNotes(toFind, toReplaceWith) || findInEditor(toFind);
+    }
+
+    private boolean replaceInNotes(String toFind, String toReplaceWith) {
+        return replaceInNotes(getFindReplaceTarget(), toFind, toReplaceWith);
+    }
+
+    private boolean replaceInNotes(IFindReplaceTarget target, String toFind,
+            String toReplaceWith) {
+        if (target != null && target.canPerformFind() && target.isEditable()) {
+            target.replaceSelection(toReplaceWith);
         }
-        textViewer.setSelectedRange(start, toReplaceWith.length());
-        return findNext(toFind);
+        return findInNotes(target, toFind);
     }
 
     public boolean canFind(String toFind) {
-//        return toFind != null && text != null && !"".equals(text.trim());
         return toFind != null;
     }
 
+    public boolean canFindAll(String toFind) {
+        return false;
+    }
+
     public boolean canReplace(String toFind, String toReplaceWith) {
-        // TODO Auto-generated method stub
         return canFind(toFind);
     }
 
-    public int getParameter() {
-        return parameter;
+    @Override
+    public boolean canReplaceAll(String toFind, String toReplaceWith) {
+        return super.canReplaceAll(toFind, toReplaceWith);
     }
 
-    public void setParameter(int op, boolean value) {
-        parameter &= ~op;
-        if (value)
-            parameter |= op;
-    }
-
-    protected void selectText(int offset, int length) {
-        if (textViewer != null)
-            textViewer.setSelectedRange(offset, length);
-    }
-
-    private void refreshText(NotesViewer viewer) {
-        IRichTextEditViewer imple = viewer.getImplementation();
-        this.textViewer = imple.getTextViewer();
-        this.document = imple.getDocument();
-        this.text = document.get();
-    }
 }

@@ -387,3 +387,7 @@ ul.interested {
 ul.interested li {
 	list-style: square inside;
 }
+.help-index li.New a {
+	background:transparent url(images/new-icon.gif) no-repeat scroll right center;
+	padding-right:25px;
+}

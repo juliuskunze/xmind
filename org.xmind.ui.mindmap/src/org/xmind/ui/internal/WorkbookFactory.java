@@ -22,6 +22,8 @@ import org.xmind.core.Core;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.style.IStyle;
+import org.xmind.ui.mindmap.MindMapUI;
 
 public class WorkbookFactory {
 
@@ -37,6 +39,12 @@ public class WorkbookFactory {
                 .getSheets().size()));
         ITopic rootTopic = sheet.getRootTopic();
         rootTopic.setTitleText(MindMapMessages.TitleText_CentralTopic);
+
+        IStyle theme = MindMapUI.getResourceManager().getDefaultTheme();
+        IStyle importStyle = workbook.getStyleSheet().importStyle(theme);
+        if (importStyle != null)
+            sheet.setThemeId(importStyle.getId());
+
         return workbook;
     }
 

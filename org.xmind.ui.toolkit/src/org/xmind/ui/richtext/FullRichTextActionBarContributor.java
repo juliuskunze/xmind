@@ -15,6 +15,7 @@ package org.xmind.ui.richtext;
 
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -46,6 +47,12 @@ public class FullRichTextActionBarContributor extends
     private IRichTextAction alignCenterAction;
 
     private IRichTextAction alignRightAction;
+
+//    private IRichTextAction bulletAction;
+
+//    private IRichTextAction numberAction;
+
+//    private BulletActionGroup bulletGroup;
 
     private IRichTextAction indentAction;
 
@@ -81,6 +88,16 @@ public class FullRichTextActionBarContributor extends
 
         alignRightAction = new AlignRightAction(viewer);
         addRichTextAction(alignRightAction);
+
+//        numberAction = new NumberAction(viewer);
+//        addRichTextAction(numberAction);
+
+//        bulletAction = new BulletAction(viewer);
+//        addRichTextAction(bulletAction);
+
+//        bulletGroup = new BulletActionGroup();
+//        bulletGroup.add(numberAction);
+//        bulletGroup.add(bulletAction);
 
         indentAction = new IndentAction(viewer);
         addRichTextAction(indentAction);
@@ -145,9 +162,29 @@ public class FullRichTextActionBarContributor extends
         menu.add(new Separator());
         menu.add(indentAction);
         menu.add(outdentAction);
+    }
+
+    public void fillContextMenu(IMenuManager menu) {
+        menu.add(fontAction);
+        MenuManager fontMenu = new MenuManager(
+                RichTextMessages.ACTIONBAR_FONT_MENU_TEXT);
+        fontMenu.add(boldAction);
+        fontMenu.add(italicAction);
+        fontMenu.add(underlineAction);
+        fontMenu.add(strikeoutAction);
+        menu.add(fontMenu);
+        MenuManager alignMenu = new MenuManager(
+                RichTextMessages.ACTIONBAR_ALIGN_MENU_TEXT);
+        alignMenu.add(alignLeftAction);
+        alignMenu.add(alignCenterAction);
+        alignMenu.add(alignRightAction);
+        menu.add(alignMenu);
         menu.add(new Separator());
-        menu.add(foregroundPicker.getAction());
-        menu.add(backgroundPicker.getAction());
+//        menu.add(bulletAction);
+//        menu.add(numberAction);
+        menu.add(new Separator());
+        menu.add(indentAction);
+        menu.add(outdentAction);
     }
 
     public void fillToolBar(IToolBarManager toolbar) {
@@ -158,6 +195,9 @@ public class FullRichTextActionBarContributor extends
         toolbar.add(strikeoutAction);
         toolbar.add(new Separator());
         toolbar.add(alignGroup);
+//        toolbar.add(new Separator());
+//        toolbar.add(numberAction);
+//        toolbar.add(bulletAction);
         toolbar.add(new Separator());
         toolbar.add(indentAction);
         toolbar.add(outdentAction);

@@ -50,7 +50,7 @@ public class MindMapExportContentProvider implements IExportAreaProvider {
 
     private Properties properties;
 
-    private int margin = -1;
+    private Integer margin = null;
 
     private Point origin;
 
@@ -128,7 +128,7 @@ public class MindMapExportContentProvider implements IExportAreaProvider {
         this.properties = properties;
     }
 
-    public void setMargin(int margin) {
+    public void setMargin(Integer margin) {
         this.margin = margin;
     }
 
@@ -215,8 +215,8 @@ public class MindMapExportContentProvider implements IExportAreaProvider {
     }
 
     private int getMargin() {
-        if (margin >= 0)
-            return margin;
+        if (margin != null)
+            return margin.intValue();
         if (properties != null) {
             Object margin = properties.get(IMindMapViewer.VIEWER_MARGIN);
             if (margin instanceof Integer)

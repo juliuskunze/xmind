@@ -21,6 +21,8 @@ public class ActionConstants {
 
     public static final String M_INSERT = PREFIX + "insert"; //$NON-NLS-1$
 
+    public static final String M_SORT = PREFIX + "sortSubtopics"; //$NON-NLS-1$
+
     public static final String M_MODIFY = PREFIX + "modify"; //$NON-NLS-1$
 
     public static final String M_TOOLS = PREFIX + "tools"; //$NON-NLS-1$
@@ -129,6 +131,16 @@ public class ActionConstants {
     public static final String ALIGNMENT_MIDDLE_ID = PREFIX + "align_middle"; //$NON-NLS-1$
 
     public static final String ALIGNMENT_BOTTOM_ID = PREFIX + "align_bottom"; //$NON-NLS-1$
+
+    public static final String SORT_GROUP_ID = PREFIX + "sort"; //$NON-NLS-1$
+
+    public static final String SORT_EXT = PREFIX + "sort.ext"; //$NON-NLS-1$
+
+    public static final String SORT_TITLE_ID = PREFIX + "sort_title"; //$NON-NLS-1$
+
+    public static final String SORT_PRIORITY_ID = PREFIX + "sort_priority"; //$NON-NLS-1$
+
+    public static final String SORT_MODIFIED_ID = PREFIX + "sort_modified"; //$NON-NLS-1$ 
 
     public static final String MARKER_GROUP_MENU = PREFIX + "markerGroup"; //$NON-NLS-1$
 

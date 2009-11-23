@@ -16,9 +16,6 @@ package net.xmind.signin;
 import java.util.Properties;
 
 import net.xmind.signin.internal.UserInfoManager;
-import net.xmind.signin.internal.UserInfoVerifier;
-
-import org.eclipse.core.runtime.IStatus;
 
 public class XMindNetEntry {
 
@@ -55,12 +52,17 @@ public class XMindNetEntry {
         return UserInfoManager.getDefault().signIn();
     }
 
-    public static void signIn(ISignInListener callback) {
-        UserInfoManager.getDefault().signIn(callback);
+    public static Properties signIn(String message) {
+        return UserInfoManager.getDefault().signIn(message);
     }
 
     public static void signIn(ISignInListener callback, boolean block) {
         UserInfoManager.getDefault().signIn(callback, block);
+    }
+
+    public static void signIn(ISignInListener callback, boolean block,
+            String message) {
+        UserInfoManager.getDefault().signIn(callback, block, message);
     }
 
     public static void signOut() {
@@ -81,31 +83,6 @@ public class XMindNetEntry {
 
     public static void removeSignInListener(ISignInListener listener) {
         UserInfoManager.getDefault().removeSignInListener(listener);
-    }
-
-    public static void verify() {
-        UserInfoVerifier.getInstance().verify();
-    }
-
-    public static void verify(IVerifyListener callback) {
-        UserInfoVerifier.getInstance().verify(callback);
-    }
-
-    /**
-     * Returns the result of the last verification.
-     * 
-     * @return the result of the last verification.
-     */
-    public static IStatus getValidity() {
-        return UserInfoVerifier.getInstance().getValidity();
-    }
-
-    public static void addVerifyListener(IVerifyListener listener) {
-        UserInfoVerifier.getInstance().addVerifyListener(listener);
-    }
-
-    public static void removeVerifyListener(IVerifyListener listener) {
-        UserInfoVerifier.getInstance().removeVerifyListener(listener);
     }
 
 }

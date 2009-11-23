@@ -47,6 +47,10 @@ public interface IRichTextRenderer {
 
     Hyperlink[] getSelectionHyperlinks();
 
+    boolean getBulletSelectionParagraph();
+
+    boolean getNumberSelectionParagraph();
+
     void indentSelectionParagraph();
 
     void insertHyperlink(String href);
@@ -74,6 +78,10 @@ public interface IRichTextRenderer {
     void setSelectionFontUnderline(boolean underline);
 
     void setSelectionForeground(Color color);
+
+    void bulletSelectionParagraph(boolean bullet);
+
+    void numberSelectionParagraph(boolean number);
 
     /**
      * SWT.LEFT, SWT.CENTER, SWT.RIGHT

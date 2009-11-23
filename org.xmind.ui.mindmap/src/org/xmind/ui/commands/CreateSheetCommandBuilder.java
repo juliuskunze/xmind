@@ -18,10 +18,12 @@ import java.util.Set;
 
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IEditorInput;
+import org.xmind.core.IBoundary;
 import org.xmind.core.ICloneData;
 import org.xmind.core.IControlPoint;
 import org.xmind.core.IRelationship;
 import org.xmind.core.ISheet;
+import org.xmind.core.ISummary;
 import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
 import org.xmind.gef.IViewer;
@@ -74,6 +76,12 @@ public class CreateSheetCommandBuilder extends CommandBuilder {
         ISheet sheet = (ISheet) command.getSource();
         if (sheet == null)
             return;
+        ISheet oldSheet = topic.getOwnedSheet();
+        if (oldSheet != null) {
+            String themeId = oldSheet.getThemeId();
+            if (themeId != null)
+                sheet.setThemeId(themeId);
+        }
         ICloneData cloneData = command.getCloneData();
 
         sheet.setTitleText(NLS.bind(MindMapMessages.TitleText_Sheet, sheet
@@ -95,7 +103,7 @@ public class CreateSheetCommandBuilder extends CommandBuilder {
         if (structure != null)
             rootTopic.setStructureClass(structure);
 
-        ISheet ownedSheet = topic.getOwnedSheet();
+        ISheet ownedSheet = oldSheet;
         Set<IRelationship> relationships = ownedSheet.getRelationships();
         if (relationships.size() > 0)
             addRelations(relationships, sheet, cloneData);
@@ -118,10 +126,10 @@ public class CreateSheetCommandBuilder extends CommandBuilder {
             String id2 = (String) cloneData.get(end2Id);
             if (id1 == null || id2 == null)
                 continue;
-            ITopic topic1 = workbook.findTopic(id1);
-            ITopic topic2 = workbook.findTopic(id2);
+            Object node1 = workbook.getElementById(id1);
+            Object node2 = workbook.getElementById(id2);
 
-            createNewRelationship(sheet, relationship, topic1, topic2);
+            createNewRelationship(sheet, relationship, node1, node2);
         }
     }
 
@@ -131,14 +139,28 @@ public class CreateSheetCommandBuilder extends CommandBuilder {
      * @param topic4
      */
     private void createNewRelationship(ISheet sheet,
-            IRelationship relationship, ITopic topic1, ITopic topic2) {
+            IRelationship relationship, Object node1, Object node2) {
 
-        if (topic1 == null || topic2 == null)
+        if (node1 == null || node2 == null)
             return;
-        IRelationship newRelationship = workbook.createRelationship(topic1,
-                topic2);
+        IRelationship newRelationship = workbook.createRelationship();
+        String id1 = getNodeId(node1);
+        newRelationship.setEnd1Id(id1);
+        String id2 = getNodeId(node2);
+        newRelationship.setEnd2Id(id2);
+
         decorateRelationship(relationship, newRelationship);
         sheet.addRelationship(newRelationship);
+    }
+
+    private String getNodeId(Object node) {
+        if (node instanceof ITopic)
+            return ((ITopic) node).getId();
+        else if (node instanceof IBoundary)
+            return ((IBoundary) node).getId();
+        else if (node instanceof ISummary)
+            return ((ISummary) node).getTopicId();
+        return null;
     }
 
     /**
@@ -147,6 +169,7 @@ public class CreateSheetCommandBuilder extends CommandBuilder {
      */
     private void decorateRelationship(IRelationship oldRelationship,
             IRelationship newRelationship) {
+
         IControlPoint oldPoint0 = oldRelationship.getControlPoint(0);
         IControlPoint newPoint0 = newRelationship.getControlPoint(0);
         newPoint0.setPolarAmount(oldPoint0.getPolarAmount());

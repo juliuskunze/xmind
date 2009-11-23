@@ -15,6 +15,10 @@ package org.xmind.ui.internal.notes;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.xmind.core.Core;
 import org.xmind.core.INotes;
 import org.xmind.core.INotesContent;
@@ -22,7 +26,6 @@ import org.xmind.core.IPlainNotesContent;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.gef.IViewer;
 import org.xmind.gef.ui.actions.IActionRegistry;
 import org.xmind.ui.actions.DelegatingAction;
 import org.xmind.ui.actions.MindMapActionFactory;
@@ -51,12 +54,22 @@ public class NotesIconTipContributor extends AbstractIconTipContributor {
             if (!topicPart.getStatus().isActive())
                 return;
 
-            IViewer viewer = topicPart.getSite().getViewer();
-            if (viewer == null || viewer.getControl().isDisposed())
+            IWorkbenchWindow window = PlatformUI.getWorkbench()
+                    .getActiveWorkbenchWindow();
+            if (window == null)
                 return;
 
-            NotesPopup popup = new NotesPopup(viewer.getControl().getShell(),
-                    topicPart, false);
+            IWorkbenchPage workbenchPage = window.getActivePage();
+            if (workbenchPage != null) {
+                IViewPart notesView = workbenchPage
+                        .findView(MindMapUI.VIEW_NOTES);
+                if (notesView != null) {
+                    workbenchPage.activate(notesView);
+                    return;
+                }
+            }
+
+            NotesPopup popup = new NotesPopup(window, topicPart, true, false);
             popup.open();
         }
     }

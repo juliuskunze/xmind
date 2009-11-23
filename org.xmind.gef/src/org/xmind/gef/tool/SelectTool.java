@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.xmind.gef.GEF;
@@ -404,9 +403,8 @@ public abstract class SelectTool extends GraphicalTool {
         } else if (GEF.REQ_EDIT.equals(requestType)
                 || GEF.REQ_EDIT_LABEL.equals(requestType)) {
             handleEditRequest(request);
-        } else {
+        } else
             super.handleTargetedRequest(request);
-        }
     }
 
     protected void handleSelectAll(IViewer viewer) {
@@ -504,25 +502,17 @@ public abstract class SelectTool extends GraphicalTool {
 
     protected void handleEditRequest(Request request) {
         startEditing(request.getPrimaryTarget(), request);
-        Object param = request.getParameter(GEF.PARAM_TEXT_SELECTION);
-        if (param instanceof ITextSelection) {
-            ITool tool = getDomain().getActiveTool();
-            if (tool instanceof ITextEditTool) {
-                ((ITextEditTool) tool).setTextSelection((ITextSelection) param);
-            }
-        }
     }
 
     protected void startEditing(IPart source, Request request) {
-        selectSingle(source);
+        //selectSingle(source);
         String editToolType = getEditTool(source, request);
         ITool et = getTool(editToolType);
-        if (et != null) {
-            if ((source instanceof IGraphicalEditPart)
-                    && (et instanceof ISourceTool)) {
-                ((ISourceTool) et).setSource((IGraphicalEditPart) source);
-            }
+        if (et != null && et != this) {
             changeActiveTool(editToolType);
+            if (et == getDomain().getActiveTool()) {
+                et.handleRequest(request);
+            }
         }
     }
 

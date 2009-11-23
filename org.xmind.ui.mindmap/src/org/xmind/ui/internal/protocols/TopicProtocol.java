@@ -6,10 +6,10 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.xmind.core.IIdentifiable;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.IProtocol;
@@ -28,7 +28,9 @@ public class TopicProtocol implements IProtocol {
         final IWorkbook workbook = MindMapUtils.findWorkbook(context);
         if (workbook == null)
             return null;
-        final Object element = findElement(uri, workbook);
+        final Object element = HyperlinkUtils.findElement(uri, workbook);
+//        if (element == null)
+//            return null;
         ImageDescriptor icon = getIcon(element);
         if (icon == null) {
             icon = MindMapUI.getImages().get(IMindMapImages.UNKNOWN_FILE, true);
@@ -134,66 +136,6 @@ public class TopicProtocol implements IProtocol {
 
     public boolean isHyperlinkModifiable(Object source, String uri) {
         return true;
-    }
-
-    /**
-     * 
-     * @param element
-     * @return
-     */
-    public static String toXmindURL(Object element) {
-        return toXmindURL(element, null);
-    }
-
-    /**
-     * 
-     * @param element
-     * @param workbook
-     * @return
-     */
-    private static String toXmindURL(Object element, IWorkbook workbook) {
-        if (element instanceof IIdentifiable) {
-            String id = ((IIdentifiable) element).getId();
-            String mainPath = getMainPath(element, workbook);
-            return "xmind:" + mainPath + "#" + id; //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        return null;
-    }
-
-    /**
-     * @param element
-     * @param workbook
-     * @return
-     */
-    private static String getMainPath(Object element, IWorkbook workbook) {
-        if (workbook != null) {
-            String file = workbook.getFile();
-            if (file != null) {
-                return file;
-            }
-        }
-        return ""; //$NON-NLS-1$
-    }
-
-    public static Object findElement(String uri, IWorkbook workbook) {
-        if (uri.startsWith("xmind:")) { //$NON-NLS-1$
-            String path = uri.substring(6);
-            if (path.startsWith("#")) { //$NON-NLS-1$
-                String id = path.substring(1);
-                Object element = workbook.getElementById(id);
-                if (element instanceof ITopic) {
-                    if (!isAttach((ITopic) element)) {
-                        element = null;
-                    }
-                }
-                return element;
-            }
-        }
-        return null;
-    }
-
-    private static boolean isAttach(ITopic topic) {
-        return topic.getPath().getWorkbook() == topic.getOwnedWorkbook();
     }
 
 }

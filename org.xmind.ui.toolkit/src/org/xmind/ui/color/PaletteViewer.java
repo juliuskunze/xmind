@@ -195,8 +195,8 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
                 autoToolBar = createItemBar();
             if (autoAction == null)
                 autoAction = createItemAction(IColorSelection.AUTO,
-                        PaletteMessages.PaletteViewer_Automatic, getAutoColor(),
-                        autoToolBar);
+                        PaletteMessages.PaletteViewer_Automatic,
+                        getAutoColor(), autoToolBar);
         } else {
             autoAction = null;
             if (autoToolBar != null) {
@@ -244,7 +244,8 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
                 customToolBar = createItemBar();
             if (customAction == null)
                 customAction = createItemAction(IColorSelection.CUSTOM,
-                        PaletteMessages.PaletteViewer_Custom, null, customToolBar);
+                        PaletteMessages.PaletteViewer_Custom, null,
+                        customToolBar);
         } else {
             customAction = null;
             if (customToolBar != null) {

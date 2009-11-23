@@ -34,6 +34,7 @@ public class MindMapMessages extends NLS {
     public static String InsertMenu;
     public static String ModifyMenu;
     public static String ToolsMenu;
+    public static String SortMenu;
 
     public static String TopicProtocol_GoToTopic_text;
     public static String MindMapMenu;
@@ -75,6 +76,8 @@ public class MindMapMessages extends NLS {
     public static String Command_InsertImage;
     public static String DeleteSheet_text;
     public static String DeleteSheet_toolTip;
+    public static String Delete_OtherSheets_text;
+    public static String Delete_OtherSheets_toolTip;
     public static String DrillDown_text;
     public static String DrillDown_toolTip;
     public static String DrillUp_text;
@@ -146,6 +149,7 @@ public class MindMapMessages extends NLS {
     public static String NotesHyperlinkDialog_display_text;
     public static String NotesHyperlinkDialog_hyperlinkReference_text;
     public static String NotesHyperlinkDialog_title;
+
     public static String InsertHyperlinkAction_text;
     public static String InserthyperlinkAction_toolTip;
     public static String NEWSheet_from_text;
@@ -200,6 +204,14 @@ public class MindMapMessages extends NLS {
     public static String MoveRight_toolTip;
     public static String ShowMarkerManager_text;
     public static String ShowMarkerManager_toolTip;
+
+    public static String SortByTitle_text;
+    public static String SortByTitle_toolTip;
+    public static String SortByPriority_text;
+    public static String SortByPriority_toolTip;
+    public static String SortByModifiedTime_text;
+    public static String SortByModifiedTime_toolTip;
+
     public static String ImageDownload_jobName;
 
     public static String ImportMarkers_text;
@@ -241,6 +253,9 @@ public class MindMapMessages extends NLS {
 
     public static String ThemesView_LinkWithEditor_text;
     public static String ThemesView_LinkWithEditor_toolTip;
+
+    public static String DefaultThemeAction_text;
+    public static String DefaultThemeAction_toolTip;
 
     public static String DefaultTheme_title;
 

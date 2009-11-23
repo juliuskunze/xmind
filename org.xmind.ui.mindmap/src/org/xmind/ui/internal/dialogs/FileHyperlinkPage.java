@@ -1,40 +1,76 @@
 package org.xmind.ui.internal.dialogs;
 
 import java.io.File;
-import java.net.URI;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IEditorPart;
+import org.xmind.core.IWorkbook;
 import org.xmind.ui.dialogs.HyperlinkPage;
-import org.xmind.ui.internal.protocols.FileProtocol;
+import org.xmind.ui.internal.editor.MME;
+import org.xmind.ui.internal.editor.WorkbookRef;
+import org.xmind.ui.internal.protocols.FilePathParser;
+import org.xmind.ui.mindmap.IWorkbookRef;
+import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.MindMapUtils;
 
 public class FileHyperlinkPage extends HyperlinkPage implements Listener {
+
+    private IEditorPart editor;
+
+    private String basePath;
+
+    private boolean relative;
+
+    private File file;
 
     private Composite composite;
 
     private Text pathInput;
 
+    private Button relativeButton;
+
+    private Button absoluteButton;
+
     private Button fileChooser;
 
     private Button folderChooser;
 
-    private boolean isModifyingValue = false;
+    private boolean ignoreModify = false;
+
+    private boolean warningFileNotExists = false;
+
+    private boolean warningRelative = false;
 
     public FileHyperlinkPage() {
     }
 
-    public void init(IStructuredSelection selection) {
+    public void init(IEditorPart editor, IStructuredSelection selection) {
+        this.editor = editor;
+        File workbookFile = MME.getFile(editor.getEditorInput());
+        if (workbookFile != null) {
+            this.basePath = workbookFile.getParent();
+        } else {
+            this.basePath = null;
+        }
     }
 
     public void createControl(Composite parent) {
@@ -43,33 +79,46 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
 
         createLabel(composite);
         createPathInput(composite);
+        createOptionsArea(composite);
         createPathChoosers(composite);
-
     }
 
-    /**
-     * @param parent
-     */
     private void createLabel(Composite parent) {
         Label label = new Label(parent, SWT.WRAP);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) label.getLayoutData()).widthHint = 380;
-        label
-                .setText(DialogMessages.FileHyperlinkPage_label);
+        label.setText(DialogMessages.FileHyperlinkPage_label);
     }
 
-    /**
-     * @param parent
-     */
     private void createPathInput(Composite parent) {
-        pathInput = new Text(composite, SWT.SINGLE | SWT.BORDER);
+        pathInput = new Text(parent, SWT.SINGLE | SWT.BORDER);
         pathInput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         pathInput.addListener(SWT.Modify, this);
     }
 
-    /**
-     * @param parent
-     */
+    private void createOptionsArea(Composite parent) {
+        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        Group group = new Group(parent, SWT.NONE);
+        group.setLayoutData(layoutData);
+        GridLayout layout = new GridLayout(2, true);
+
+        group.setLayout(layout);
+        group.setText(DialogMessages.FileHyperlinkPage_HrefGroup_Text);
+
+        absoluteButton = new Button(group, SWT.RADIO);
+        absoluteButton.setLayoutData(layoutData);
+        absoluteButton
+                .setText(DialogMessages.FileHyperlinkPage_AbsoluteButton_Text);
+        absoluteButton.setSelection(true);
+        absoluteButton.addListener(SWT.Selection, this);
+
+        relativeButton = new Button(group, SWT.RADIO);
+        relativeButton.setLayoutData(layoutData);
+        relativeButton
+                .setText(DialogMessages.FileHyperlinkPage_RelativeButton_Text);
+        relativeButton.addListener(SWT.Selection, this);
+    }
+
     private void createPathChoosers(Composite parent) {
         Composite composite = new Composite(parent, SWT.NONE);
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -100,9 +149,6 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
         }
     }
 
-    /**
-     * @param parent
-     */
     private void createFileChooser(Composite parent) {
         fileChooser = new Button(parent, SWT.PUSH);
         fileChooser.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false,
@@ -111,38 +157,188 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
         fileChooser.addListener(SWT.Selection, this);
     }
 
-    /**
-     * @param parent
-     */
     private void createFolderChooser(Composite parent) {
         folderChooser = new Button(parent, SWT.PUSH);
         folderChooser.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false,
                 false));
-        folderChooser.setText(DialogMessages.FileHyperlinkPage_ChooseFolder_text);
+        folderChooser
+                .setText(DialogMessages.FileHyperlinkPage_ChooseFolder_text);
         folderChooser.addListener(SWT.Selection, this);
     }
 
-    private String toFileURL() {
-        File file = new File(pathInput.getText());
-        URI uri = file.toURI();
-        return uri.toString();
-    }
-
+    @Override
     public void setValue(String value) {
         super.setValue(value);
-        if (!isModifyingValue) {
-            if (pathInput != null && !pathInput.isDisposed()) {
-                if (value == null) {
-                    pathInput.setText(""); //$NON-NLS-1$
-                } else {
-                    pathInput.setText(toFilePath(value));
+        String path = value == null ? null : FilePathParser.toPath(value);
+        relative = path == null ? false : FilePathParser.isPathRelative(path);
+        file = getFile(path);
+        if (pathInput != null && !pathInput.isDisposed()) {
+            ignoreModify = true;
+            pathInput
+                    .setText(file == null ? (path == null ? "" : path) : file.getAbsolutePath()); //$NON-NLS-1$
+            ignoreModify = false;
+        }
+        if (absoluteButton != null && !absoluteButton.isDisposed()) {
+            absoluteButton.setSelection(!relative);
+        }
+        if (relativeButton != null && !relativeButton.isDisposed()) {
+            relativeButton.setSelection(relative);
+        }
+    }
+
+    private File getFile(String path) {
+        if (path == null)
+            return null;
+        if (relative)
+            return basePath == null ? new File(System.getProperty("user.home"), //$NON-NLS-1$
+                    path) : new File(FilePathParser.toAbsolutePath(basePath,
+                    path));
+        return new File(path);
+    }
+
+    @Override
+    public boolean tryFinish() {
+        if (file != null && relative) {
+            if (basePath == null) {
+                /*------------------------------------
+                if (!MessageDialog.openConfirm(null,
+                        DialogMessages.FileHyperlinkPage_WarningDialog_Title,
+                        DialogMessages.FileHyperlinkPage_WarningDialog_message))
+                    return false;
+                 --------------------------------------*/
+
+                String workbookPath = openSaveDialog();
+                if (workbookPath == null)
+                    return false;
+
+                basePath = new File(workbookPath).getParent();
+                if (basePath == null)
+                    return false;
+
+                String relativePath = FilePathParser.toRelativePath(basePath,
+                        file.getAbsolutePath());
+                if (relativePath != null) {
+                    saveWorkbook(workbookPath);
+                    super
+                            .setValue(FilePathParser.toURI(relativePath,
+                                    relative));
                 }
+            }
+        }
+        return super.tryFinish();
+    }
+
+    private String openSaveDialog() {
+        IWorkbook workbook = (IWorkbook) editor.getAdapter(IWorkbook.class);
+        String name = workbook.getPrimarySheet().getRootTopic().getTitleText();
+        String proposalName = MindMapUtils.trimFileName(name);
+        return DialogUtils.save(composite.getShell(), proposalName,
+                new String[] { "*" + MindMapUI.FILE_EXT_XMIND }, //$NON-NLS-1$
+                new String[] { DialogMessages.WorkbookFilterName }, 0, null);
+    }
+
+    private void saveWorkbook(final String path) {
+        if (path != null) {
+            final IWorkbookRef workbookRef = (IWorkbookRef) editor
+                    .getAdapter(IWorkbookRef.class);
+            if (workbookRef != null && workbookRef instanceof WorkbookRef) {
+                BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
+                    public void run() {
+                        final String errorMessage = NLS.bind(
+                                DialogMessages.FailedToSaveWorkbook_message,
+                                path);
+                        SafeRunner.run(new SafeRunnable(errorMessage) {
+                            public void run() throws Exception {
+                                ((WorkbookRef) workbookRef).saveWorkbookAs(MME
+                                        .createFileEditorInput(path),
+                                        new NullProgressMonitor());
+                            }
+                        });
+                    }
+                });
             }
         }
     }
 
-    private String toFilePath(String url) {
-        return FileProtocol.toFilePath(url);
+    public void handleEvent(Event event) {
+        if (event.widget == pathInput) {
+            if (event.type == SWT.Modify) {
+                if (!ignoreModify) {
+                    setFile(pathInput.getText(), false);
+                }
+            }
+        } else if (event.widget == fileChooser) {
+            FileDialog dialog = createFileDialog();
+            String path = dialog.open();
+            if (path != null) {
+                setFile(path, true);
+            }
+        } else if (event.widget == folderChooser) {
+            DirectoryDialog dialog = createFolderDialog();
+            String path = dialog.open();
+            if (path != null) {
+                setFile(path, true);
+            }
+        } else if (event.widget == relativeButton) {
+            setRelative(true);
+        } else if (event.widget == absoluteButton) {
+            setRelative(false);
+        }
+    }
+
+    protected DirectoryDialog createFolderDialog() {
+        DirectoryDialog dialog = new DirectoryDialog(composite.getShell(),
+                SWT.OPEN | SWT.SINGLE);
+        dialog
+                .setText(DialogMessages.FileHyperlinkPage_OpenFileDialog_windowTitle);
+        return dialog;
+    }
+
+    protected FileDialog createFileDialog() {
+        FileDialog dialog = new FileDialog(composite.getShell(), SWT.OPEN
+                | SWT.SINGLE);
+        dialog
+                .setText(DialogMessages.FileHyperlinkPage_OpenFileDialog_windowTitle);
+        return dialog;
+    }
+
+    protected void setFile(String path, boolean updateWidget) {
+        boolean invalidPath = path == null || "".equals(path); //$NON-NLS-1$
+        file = invalidPath ? null : new File(path);
+        super.setValue(getURI());
+        setCanFinish(!invalidPath);
+        warningFileNotExists = !invalidPath && file != null && !file.exists();
+        updateWarningMessage();
+        if (updateWidget && pathInput != null && !pathInput.isDisposed()) {
+            ignoreModify = true;
+            pathInput.setText(path);
+            ignoreModify = false;
+        }
+    }
+
+    protected void setRelative(boolean relative) {
+        this.relative = relative;
+        warningRelative = (relative && basePath == null);
+        super.setValue(getURI());
+        updateWarningMessage();
+    }
+
+    private void updateWarningMessage() {
+        setMessage(
+                warningFileNotExists ? DialogMessages.FileHyperlinkPage_FileNotExists_message
+                        : (warningRelative ? DialogMessages.FileHyperlinkPage_RelativeWarning_message
+                                : null), WARNING);
+    }
+
+    private String getURI() {
+        if (file == null)
+            return null;
+        if (relative) {
+            if (basePath != null)
+                return FilePathParser.toURI(FilePathParser.toRelativePath(
+                        basePath, file.getAbsolutePath()), relative);
+        }
+        return FilePathParser.toURI(file.getAbsolutePath(), relative);
     }
 
     public void dispose() {
@@ -153,45 +349,7 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
     }
 
     public void setFocus() {
-        if (pathInput != null && !pathInput.isDisposed()) {
+        if (pathInput != null && !pathInput.isDisposed())
             pathInput.setFocus();
-        }
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.swt.widgets.Listener#handleEvent(org.eclipse.swt.widgets.
-     * Event)
-     */
-    public void handleEvent(Event event) {
-        if (event.widget == pathInput) {
-            isModifyingValue = true;
-            setValue(toFileURL());
-            isModifyingValue = false;
-            boolean exists = new File(pathInput.getText()).exists();
-            setCanFinish(exists);
-            setErrorMessage(exists ? null : DialogMessages.FileHyperlinkPage_FileNotExists_message);
-        } else if (event.widget == fileChooser) {
-            FileDialog fd = new FileDialog(composite.getShell(), SWT.OPEN
-                    | SWT.SINGLE);
-            fd.setText(DialogMessages.FileHyperlinkPage_OpenFileDialog_windowTitle);
-            String path = fd.open();
-            if (path != null) {
-                pathInput.setText(path);
-                pathInput.setFocus();
-            }
-        } else if (event.widget == folderChooser) {
-            DirectoryDialog dd = new DirectoryDialog(composite.getShell(),
-                    SWT.SINGLE | SWT.OPEN);
-            dd.setText(DialogMessages.FileHyperlinkPage_OpenDirectoryDialog_windowTitle);
-            String path = dd.open();
-            if (path != null) {
-                pathInput.setText(path);
-                pathInput.setFocus();
-            }
-        }
-    }
-
 }

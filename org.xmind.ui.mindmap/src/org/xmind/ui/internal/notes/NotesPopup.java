@@ -14,13 +14,17 @@
 package org.xmind.ui.internal.notes;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.bindings.Trigger;
@@ -29,22 +33,32 @@ import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.bindings.keys.SWTKeySupport;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.PopupDialog;
+import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.TextViewer;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchCommandConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.keys.IBindingService;
@@ -62,14 +76,25 @@ import org.xmind.ui.commands.ModifyNotesCommand;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogMessages;
+import org.xmind.ui.internal.spellsupport.SpellingSupport;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.richtext.Hyperlink;
+import org.xmind.ui.richtext.IRichDocument;
+import org.xmind.ui.richtext.IRichDocumentListener;
+import org.xmind.ui.richtext.IRichTextAction;
 import org.xmind.ui.richtext.IRichTextEditViewer;
+import org.xmind.ui.richtext.ImagePlaceHolder;
+import org.xmind.ui.richtext.LineStyle;
 import org.xmind.ui.richtext.SimpleRichTextActionBarContributor;
+import org.xmind.ui.richtext.TextActionConstants;
+import org.xmind.ui.texteditor.IMenuContributor;
+import org.xmind.ui.texteditor.ISpellingActivation;
 import org.xmind.ui.util.Logger;
 
-public class NotesPopup extends PopupDialog {
+public class NotesPopup extends PopupDialog implements IDocumentListener,
+        IRichDocumentListener, ISelectionChangedListener {
 
     private static final String CONTEXT_ID = "org.xmind.ui.context.notesPopup"; //$NON-NLS-1$
 
@@ -77,14 +102,41 @@ public class NotesPopup extends PopupDialog {
 
     private static final String CMD_COMMIT_NOTES = "org.xmind.ui.command.commitNotes"; //$NON-NLS-1$
 
-    private static final String CMD_UNDO = "org.eclipse.ui.edit.undo"; //$NON-NLS-1$
+    private class TextAction extends Action {
+        private int op;
 
-    private static final String CMD_REDO = "org.eclipse.ui.edit.redo"; //$NON-NLS-1$
+        private TextViewer textViewer;
 
-    private static final String CMD_SAVE = "org.eclipse.ui.file.save"; //$NON-NLS-1$
+        public TextAction(int op) {
+            this.op = op;
+        }
+
+        public void run() {
+            if (textViewer == null) {
+                textViewer = notesViewer.getImplementation().getTextViewer();
+            }
+            if (textViewer != null) {
+                if (textViewer.canDoOperation(op)) {
+                    textViewer.doOperation(op);
+                }
+            }
+        }
+
+        public void update(TextViewer textViewer) {
+            setEnabled(textViewer.canDoOperation(op));
+        }
+    }
 
     private class NotesPopupActionBarContributor extends
             SimpleRichTextActionBarContributor {
+
+        private Map<String, TextAction> textActions = new HashMap<String, TextAction>(
+                10);
+
+        private Map<String, IAction> actionHandlers = new HashMap<String, IAction>(
+                10);
+
+        private Collection<String> textCommandIds = new HashSet<String>(10);
 
         private class GotoNotesViewAction extends Action {
             public GotoNotesViewAction() {
@@ -101,6 +153,58 @@ public class NotesPopup extends PopupDialog {
             }
         }
 
+        protected void makeActions(IRichTextEditViewer viewer) {
+            super.makeActions(viewer);
+
+            addWorkbenchAction(ActionFactory.UNDO, ITextOperationTarget.UNDO);
+            addWorkbenchAction(ActionFactory.REDO, ITextOperationTarget.REDO);
+            addWorkbenchAction(ActionFactory.CUT, ITextOperationTarget.CUT);
+            addWorkbenchAction(ActionFactory.COPY, ITextOperationTarget.COPY);
+            addWorkbenchAction(ActionFactory.PASTE, ITextOperationTarget.PASTE);
+            addWorkbenchAction(ActionFactory.SELECT_ALL,
+                    ITextOperationTarget.SELECT_ALL);
+
+            registerTextCommand(TextActionConstants.BOLD_ID,
+                    "org.xmind.ui.command.text.bold"); //$NON-NLS-1$
+            registerTextCommand(TextActionConstants.ITALIC_ID,
+                    "org.xmind.ui.command.text.italic"); //$NON-NLS-1$
+            registerTextCommand(TextActionConstants.UNDERLINE_ID,
+                    "org.xmind.ui.command.text.underline"); //$NON-NLS-1$
+            registerTextCommand(TextActionConstants.LEFT_ALIGN_ID,
+                    "org.xmind.ui.command.text.leftAlign"); //$NON-NLS-1$
+            registerTextCommand(TextActionConstants.CENTER_ALIGN_ID,
+                    "org.xmind.ui.command.text.centerAlign"); //$NON-NLS-1$
+            registerTextCommand(TextActionConstants.RIGHT_ALIGN_ID,
+                    "org.xmind.ui.command.text.rightAlign"); //$NON-NLS-1$
+        }
+
+        private void addWorkbenchAction(ActionFactory factory, int textOp) {
+            IWorkbenchAction action = factory.create(window);
+            TextAction textAction = new TextAction(textOp);
+            textAction.setId(action.getId());
+            textAction.setActionDefinitionId(action.getActionDefinitionId());
+            textAction.setText(action.getText());
+            textAction.setToolTipText(action.getToolTipText());
+            textAction.setDescription(action.getDescription());
+            textAction.setImageDescriptor(action.getImageDescriptor());
+            textAction.setDisabledImageDescriptor(action
+                    .getDisabledImageDescriptor());
+            textAction
+                    .setHoverImageDescriptor(action.getHoverImageDescriptor());
+            action.dispose();
+            actionHandlers.put(action.getActionDefinitionId(), textAction);
+            textActions.put(textAction.getId(), textAction);
+        }
+
+        private void registerTextCommand(String actionId, String commandId) {
+            IRichTextAction action = getRichTextAction(actionId);
+            if (action != null) {
+                action.setActionDefinitionId(commandId);
+                actionHandlers.put(commandId, action);
+                textCommandIds.add(commandId);
+            }
+        }
+
         public void fillToolBar(IToolBarManager toolbar) {
             super.fillToolBar(toolbar);
             if (showGotoNotesView) {
@@ -108,6 +212,53 @@ public class NotesPopup extends PopupDialog {
                 toolbar.add(new GotoNotesViewAction());
             }
         }
+
+        public void fillContextMenu(IMenuManager menu) {
+            menu.add(getTextAction(ActionFactory.UNDO.getId()));
+            menu.add(getTextAction(ActionFactory.REDO.getId()));
+            menu.add(new Separator());
+            menu.add(getTextAction(ActionFactory.CUT.getId()));
+            menu.add(getTextAction(ActionFactory.COPY.getId()));
+            menu.add(getTextAction(ActionFactory.PASTE.getId()));
+            menu.add(new Separator());
+            menu.add(getTextAction(ActionFactory.SELECT_ALL.getId()));
+            menu.add(new Separator());
+            super.fillContextMenu(menu);
+            if (spellingActivation != null) {
+                IMenuContributor contributor = (IMenuContributor) spellingActivation
+                        .getAdapter(IMenuContributor.class);
+                if (contributor != null) {
+                    menu.add(new Separator());
+                    contributor.fillMenu(menu);
+                }
+            }
+        }
+
+        @Override
+        public void dispose() {
+            actionHandlers.clear();
+            textActions.clear();
+            super.dispose();
+        }
+
+        public void update(TextViewer textViewer) {
+            for (TextAction action : textActions.values()) {
+                action.update(textViewer);
+            }
+        }
+
+        public IAction getActionHandler(String commandId) {
+            return actionHandlers.get(commandId);
+        }
+
+        public IAction getTextAction(String actionId) {
+            return textActions.get(actionId);
+        }
+
+        public Collection<String> getTextCommandIds() {
+            return textCommandIds;
+        }
+
     }
 
     private class PopupKeyboardListener implements Listener {
@@ -132,6 +283,7 @@ public class NotesPopup extends PopupDialog {
             if (event.type == SWT.KeyDown) {
                 handleKeyDown(event);
             }
+            update();
         }
 
         private void handleKeyDown(Event event) {
@@ -249,6 +401,8 @@ public class NotesPopup extends PopupDialog {
 
     private NotesViewer notesViewer;
 
+    private NotesPopupActionBarContributor contributor;
+
     private RichDocumentNotesAdapter notesAdapter;
 
     private Map<TriggerSequence, String> triggerableCommands = new HashMap<TriggerSequence, String>(
@@ -263,6 +417,10 @@ public class NotesPopup extends PopupDialog {
     private boolean showGotoNotesView;
 
     private boolean editable;
+
+    private boolean updating = false;
+
+    private ISpellingActivation spellingActivation;
 
     public NotesPopup(IWorkbenchWindow window, ITopicPart topicPart,
             boolean editable, boolean showGotoNotesView) {
@@ -287,7 +445,8 @@ public class NotesPopup extends PopupDialog {
         Composite composite = (Composite) super.createDialogArea(parent);
         notesViewer = new NotesViewer();
         if (editable) {
-            notesViewer.setContributor(new NotesPopupActionBarContributor());
+            notesViewer
+                    .setContributor(contributor = new NotesPopupActionBarContributor());
         }
         int style = IRichTextEditViewer.DEFAULT_CONTROL_STYLE;
         if (!editable) {
@@ -313,10 +472,20 @@ public class NotesPopup extends PopupDialog {
                 }
             }
         });
-
+        notesViewer.getImplementation().addSelectionChangedListener(this);
+        notesViewer.getImplementation().getDocument().addDocumentListener(this);
+        notesViewer.getImplementation().getDocument().addRichDocumentListener(
+                this);
         new PopupKeyboardListener().hook(notesViewer.getImplementation()
                 .getFocusControl());
+        update();
+        addSpellCheck();
         return composite;
+    }
+
+    private void addSpellCheck() {
+        spellingActivation = SpellingSupport.getInstance().activateSpelling(
+                notesViewer.getImplementation().getTextViewer());
     }
 
     public NotesViewer getNotesViewer() {
@@ -372,9 +541,10 @@ public class NotesPopup extends PopupDialog {
     }
 
     public int open() {
-        bindingService = (IBindingService) PlatformUI.getWorkbench()
+        IWorkbench workbench = window.getWorkbench();
+        bindingService = (IBindingService) workbench
                 .getAdapter(IBindingService.class);
-        contextService = (IContextService) PlatformUI.getWorkbench()
+        contextService = (IContextService) workbench
                 .getAdapter(IContextService.class);
         if (bindingService != null) {
             registerWorkbenchCommands();
@@ -388,6 +558,7 @@ public class NotesPopup extends PopupDialog {
                 registerDialogCommands();
             }
         }
+
         return ret;
     }
 
@@ -401,12 +572,19 @@ public class NotesPopup extends PopupDialog {
             }
         }
         registerCommand(CMD_COMMIT_NOTES);
+        for (String commandId : contributor.getTextCommandIds()) {
+            registerCommand(commandId);
+        }
     }
 
     protected void registerWorkbenchCommands() {
-        registerCommand(CMD_UNDO);
-        registerCommand(CMD_REDO);
-        registerCommand(CMD_SAVE);
+        registerCommand(IWorkbenchCommandConstants.FILE_SAVE);
+        registerCommand(IWorkbenchCommandConstants.EDIT_UNDO);
+        registerCommand(IWorkbenchCommandConstants.EDIT_REDO);
+        registerCommand(IWorkbenchCommandConstants.EDIT_CUT);
+        registerCommand(IWorkbenchCommandConstants.EDIT_COPY);
+        registerCommand(IWorkbenchCommandConstants.EDIT_PASTE);
+        registerCommand(IWorkbenchCommandConstants.EDIT_SELECT_ALL);
     }
 
     protected TriggerSequence registerCommand(String commandId) {
@@ -420,34 +598,25 @@ public class NotesPopup extends PopupDialog {
     }
 
     protected boolean handleCommand(String commandId) {
-//        if("findReplace".equals(commandId))
-//            System.out.println();
-
         if (CMD_GOTO_NOTES_VIEW.equals(commandId)) {
             if (showGotoNotesView) {
                 gotoNotesView();
-            }
-            return true;
-        } else if (CMD_UNDO.equals(commandId)) {
-            TextViewer textViewer = notesViewer.getImplementation()
-                    .getTextViewer();
-            if (textViewer.canDoOperation(TextViewer.UNDO)) {
-                textViewer.doOperation(TextViewer.UNDO);
-            }
-            return true;
-        } else if (CMD_REDO.equals(commandId)) {
-            TextViewer textViewer = notesViewer.getImplementation()
-                    .getTextViewer();
-            if (textViewer.canDoOperation(TextViewer.REDO)) {
-                textViewer.doOperation(TextViewer.REDO);
             }
             return true;
         } else if (CMD_COMMIT_NOTES.equals(commandId)) {
             setReturnCode(OK);
             close();
             return true;
-        } else if (CMD_SAVE.equals(commandId)) {
+        } else if (IWorkbenchCommandConstants.FILE_SAVE.equals(commandId)) {
             saveNotes();
+            return true;
+        }
+        IAction action = contributor.getActionHandler(commandId);
+        if (action != null && action.isEnabled()) {
+            if (action.getStyle() == IAction.AS_CHECK_BOX) {
+                action.setChecked(!action.isChecked());
+            }
+            action.run();
             return true;
         }
         return false;
@@ -510,4 +679,57 @@ public class NotesPopup extends PopupDialog {
         }
     }
 
+    public void documentAboutToBeChanged(DocumentEvent event) {
+    }
+
+    public void documentChanged(DocumentEvent event) {
+        update();
+    }
+
+    public void hyperlinkChanged(IRichDocument document,
+            Hyperlink[] oldHyperlinks, Hyperlink[] newHyperlinks) {
+        update();
+    }
+
+    public void imageChanged(IRichDocument document,
+            ImagePlaceHolder[] oldImages, ImagePlaceHolder[] newImages) {
+        update();
+    }
+
+    public void lineStyleChanged(IRichDocument document,
+            LineStyle[] oldLineStyles, LineStyle[] newLineStyles) {
+        update();
+    }
+
+    public void textStyleChanged(IRichDocument document,
+            StyleRange[] oldTextStyles, StyleRange[] newTextStyles) {
+        update();
+    }
+
+    public void selectionChanged(SelectionChangedEvent event) {
+        update();
+    }
+
+    private void update() {
+        if (updating)
+            return;
+        updating = true;
+        Display.getCurrent().asyncExec(new Runnable() {
+            public void run() {
+                updateTextActions();
+                updating = false;
+            }
+
+        });
+    }
+
+    private void updateTextActions() {
+        if (notesViewer == null || notesViewer.getControl().isDisposed()
+                || contributor != null)
+            return;
+        TextViewer textViewer = notesViewer.getImplementation().getTextViewer();
+        if (textViewer != null) {
+            contributor.update(textViewer);
+        }
+    }
 }

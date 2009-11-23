@@ -23,6 +23,7 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.TextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.graphics.Color;
@@ -200,6 +201,7 @@ public class RichTextUtils {
     public static LineStyle updateLineStylePositions(int startLine,
             int oldLineCount, int newLineCount, List<LineStyle> lineStyles,
             IDocument document) {
+
         int oldEndLine = startLine + oldLineCount;
         int deltaLines = newLineCount - oldLineCount;
         LineStyle firstInRange = null;
@@ -207,6 +209,12 @@ public class RichTextUtils {
         for (int i = 0; i < lineStyles.size();) {
             LineStyle current = lineStyles.get(i);
             int currentLineIndex = current.lineIndex;
+
+            if (currentLineIndex == 0) {
+                String content = document.get();
+                if ("".equals(content)) //$NON-NLS-1$
+                    current.bulletStyle = LineStyle.NONE_STYLE;
+            }
 
             if (currentLineIndex < startLine) {
                 i++;
@@ -632,17 +640,28 @@ public class RichTextUtils {
         }
     }
 
-    public static void modifyDocumentIndent(IDocument document, int line,
-            int deltaIndent) throws BadLocationException {
+    public static void modifyDocumentIndent(TextViewer viewer,
+            IDocument document, int line, int deltaIndent)
+            throws BadLocationException {
         if (deltaIndent == 0)
             return;
         IRegion region = document.getLineInformation(line);
         int lineOffset = region.getOffset();
+//        StyledText styledText = viewer.getTextWidget();
+//        styledText.setLineBullet(lineOffset, 1, null);
         if (deltaIndent > 0) {
             char[] chars = new char[deltaIndent];
             Arrays.fill(chars, INDENT_CHAR);
             String value = String.valueOf(chars);
             document.replace(lineOffset, 0, value);
+
+//            Bullet bullet = styledText.getLineBullet(lineOffset);
+//            StyleRange style = new StyleRange();
+//            style.metrics = new GlyphMetrics(0, 0, 80);
+//            Bullet bullet = new Bullet(ST.BULLET_NUMBER | ST.BULLET_TEXT, style);
+//            bullet.text = ".";
+//            styledText.setLineBullet(lineOffset, 1, bullet);
+//            document.replace(0, 0, value);
         } else if (deltaIndent < 0) {
             int lineLength = region.getLength();
             String lineContent = document.get(lineOffset, lineLength);
@@ -758,7 +777,8 @@ public class RichTextUtils {
         if (f2 == null && f1 != null)
             return false;
 
-        if (!"carbon".equals(SWT.getPlatform())) //$NON-NLS-1$
+        if (!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
+                && !"cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
             return f1.equals(f2);
 
         if (f1.isDisposed() || f2.isDisposed())
@@ -768,6 +788,16 @@ public class RichTextUtils {
         FontData fd2 = f2.getFontData()[0];
         return fd1.equals(fd2);
     }
+
+//    public static List<LineStyle> reduceLineStyles(int startLine,
+//            List<LineStyle> lineStyles, IRichDocument document) {
+//        if (lineStyles == null || lineStyles.isEmpty())
+//            return null;
+//        LineStyle lineStyle = lineStyles.get(startLine - 1);
+//        lineStyle.bulletStyle = LineStyle.NONE_STYLE;
+//        lineStyles.remove(startLine);
+//        return lineStyles;
+//    }
 
     public static void replaceHyperlinkHref(IRichDocument doc,
             Hyperlink hyperlink, String newHref) {
@@ -789,4 +819,5 @@ public class RichTextUtils {
         doc.setHyperlinks(newHyperlinks.toArray(new Hyperlink[newHyperlinks
                 .size()]));
     }
+
 }

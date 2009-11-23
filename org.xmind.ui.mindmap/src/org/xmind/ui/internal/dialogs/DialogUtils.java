@@ -13,12 +13,14 @@
  *******************************************************************************/
 package org.xmind.ui.internal.dialogs;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.xmind.ui.util.ImageFormat;
@@ -80,4 +82,64 @@ public class DialogUtils {
                         DialogMessages.ConfirmRestart_Restart,
                         DialogMessages.ConfirmRestart_Continue }, 1).open() == MessageDialog.OK;
     }
+
+    public static String save(Shell shell, String title, String proposalName,
+            String[] filterExtensions, String[] filterNames, int filterIndex,
+            String path) {
+        FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+        dialog.setOverwrite(false);
+        dialog.setText(title == null ? DialogMessages.Save_title : title);
+        if (proposalName != null)
+            dialog.setFileName(proposalName);
+        if (path != null)
+            dialog.setFilterPath(path);
+        if (filterExtensions != null)
+            dialog.setFilterExtensions(filterExtensions);
+        if (filterNames != null)
+            dialog.setFilterNames(filterNames);
+        if (filterIndex >= 0)
+            dialog.setFilterIndex(filterIndex);
+        return save(shell, dialog);
+    }
+
+    public static String save(Shell shell, String proposalName,
+            String[] filterExtensions, String[] filterNames, int filterIndex,
+            String path) {
+        return save(shell, null, proposalName, filterExtensions, filterNames,
+                filterIndex, path);
+    }
+
+    public static String save(Shell shell, FileDialog dialog) {
+        String fileName = dialog.open();
+        if (fileName != null) {
+            int filterIndex = dialog.getFilterIndex();
+            if (filterIndex >= 0) {
+                String extension = dialog.getFilterExtensions()[filterIndex];
+                fileName = adaptFileName(fileName, extension);
+                if (new File(fileName).exists()
+                        && !DialogUtils.confirmOverwrite(shell, fileName))
+                    return save(shell, dialog);
+            }
+        }
+        return fileName;
+    }
+
+    private static String adaptFileName(String fileName, String extension) {
+        if (extension != null && !"".equals(extension)) { //$NON-NLS-1$
+            String defaultExt = null;
+            for (String ext : extension.split(";")) { //$NON-NLS-1$
+                ext = ext.trim();
+                if (ext.startsWith("*")) //$NON-NLS-1$
+                    ext = ext.substring(1);
+                if (defaultExt == null)
+                    defaultExt = ext;
+                if (fileName.endsWith(ext))
+                    return fileName;
+            }
+            if (defaultExt != null)
+                return fileName + defaultExt;
+        }
+        return fileName;
+    }
+
 }

@@ -28,6 +28,7 @@ public class WorkbenchMessages extends NLS {
     public static String GeneralPrefPage_title;
     public static String RecentFiles_label;
     public static String RestoreLastSession_label;
+    public static String CheckUpdates_label;
     public static String AutoSave_label;
     public static String AutoSave_Minutes;
 
@@ -57,13 +58,30 @@ public class WorkbenchMessages extends NLS {
     public static String Invite_text;
     public static String Invite_toolTip;
 
-    public static String ProChecker_CheckPro_jobName;
-
-    public static String Update_jobName;
-
     public static String Update_text;
-
     public static String Update_toolTip;
+
+    public static String CheckOpenFilesJob_jobName;
+    public static String CheckOpenFilesJob_CheckFiles_name;
+    public static String CheckOpenFilesJob_ReadFiles_name;
+    public static String CheckOpenFilesJob_OpenFiles_name;
+    public static String CheckOpenFilesJob_FailsToOpen_message;
+    public static String CheckOpenFilesJob_ShowPresentation_name;
+
+    public static String CheckRecoverFilesJob_jobName;
+    public static String CheckRecoverFilesJob_LoadFiles_name;
+    public static String CheckRecoverFilesJob_FilterFiles_name;
+    public static String CheckRecoverFilesJob_RecoverFiles_name;
+
+    public static String CheckUpdatesJob_jobName;
+    public static String CheckUpdatesJob_Fail_message;
+    public static String CheckUpdatesJob_NewUpdate_message;
+    public static String CheckUpdatesJob_NewUpdate_info_message;
+    public static String CheckUpdatesJob_NewUpdate_moreDownloads_text;
+
+    public static String StartupJob_jobName;
+    public static String StartupJob_OpenBootstrapEditor_name;
+    public static String StartupJob_CheckAppUpdate_name;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, WorkbenchMessages.class);

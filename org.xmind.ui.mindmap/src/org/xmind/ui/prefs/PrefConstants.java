@@ -59,5 +59,9 @@ public class PrefConstants {
      * 
      */
     public static final String UNDO_REDO_TIPS_FADE_DELAY = "undoRedoTipsFadeDelay"; //$NON-NLS-1$
+    /**
+     * 
+     */
+    public static final String DEFUALT_THEME = "defaultTheme"; //$NON-NLS-1$
 
 }

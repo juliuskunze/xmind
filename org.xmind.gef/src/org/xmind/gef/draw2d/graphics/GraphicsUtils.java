@@ -13,13 +13,12 @@
  *******************************************************************************/
 package org.xmind.gef.draw2d.graphics;
 
-import java.lang.reflect.Field;
-
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Rectangle;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
@@ -31,115 +30,34 @@ import org.xmind.gef.GEF;
  */
 public class GraphicsUtils {
 
-//    public static void closeAdvanced(Graphics g) {
-//        GC gc = findGC(g);
-//        if (gc != null)
-//            gc.setAdvanced(false);
-//    }
-//
-//    public static void openAdvanced(Graphics g) {
-//        GC gc = findGC(g);
-//        if (gc != null)
-//            gc.setAdvanced(true);
-//    }
-//
-//    public static boolean setClipping(Graphics g, Region region) {
-//        GC gc = findGC(g);
-//        if (gc != null) {
-//            gc.setClipping(region);
-//            return true;
-//        }
-//        return false;
-//    }
-//
-//    private static Graphics findSWTGraphics(Graphics g) {
-//        while (!(g instanceof SWTGraphics)) {
-//            if (g == null)
-//                return null;
-//            if (g instanceof MapModeGraphics)
-//                g = ((MapModeGraphics) g).getGraphics();
-//            else if (g instanceof ScaledGraphics)
-//                g = ((ScaledGraphics) g).getGraphics();
-//            else if (g instanceof AlphaGraphics)
-//                g = ((AlphaGraphics) g).getDelegate();
-//            else if (g instanceof Rotate90Graphics)
-//                g = ((Rotate90Graphics) g).getGraphics();
-////            else if (g instanceof GrayedGraphics)
-////                g = ((GrayedGraphics) g).getDelegate();
-//            else {
-//                Graphics delegatingGraphics = null;
-//                try {
-//                    Field[] fields = g.getClass().getDeclaredFields();
-//                    for (Field f : fields) {
-//                        Class<?> c = f.getDeclaringClass();
-//                        if (Graphics.class.isAssignableFrom(c)) {
-//                            f.setAccessible(true);
-//                            delegatingGraphics = (Graphics) (f.get(g));
-//                        }
-//                    }
-//                    continue;
-//                } catch (Exception e) {
-//                }
-//                if (delegatingGraphics == null || delegatingGraphics == g)
-//                    return null;
-//                g = delegatingGraphics;
-//            }
-//        }
-//        return g;
-//    }
-//
-//    public static GC findGC(Graphics g) {
-//        g = findSWTGraphics(g);
-//        if (g == null)
-//            return null;
-//        Class c = SWTGraphics.class;
-//        try {
-//            Field f = c.getDeclaredField("gc"); //$NON-NLS-1$
-//            f.setAccessible(true);
-//            return (GC) (f.get(g));
-//        } catch (Throwable e) {
-//            Logger.log("Cannot find a field called 'gc' in this graphics: " //$NON-NLS-1$
-//                    + g, e);
-//        }
-//        return null;
-//    }
+    private static Boolean IS_CARBON_SNOW_LEOPARD = null;
 
-    public static GC findGC2(Graphics g) {
+    public static boolean isCarbonSnowLeopard() {
+        if (IS_CARBON_SNOW_LEOPARD == null) {
+            if ("carbon".equals(SWT.getPlatform())) { //$NON-NLS-1$
+                String osVersion = System.getProperty("os.version"); //$NON-NLS-1$
+                if (osVersion != null) {
+                    String[] parts = osVersion.split("\\."); //$NON-NLS-1$
+                    if (isGreater(parts[0], 10)) {
+                        if (parts.length > 1) {
+                            IS_CARBON_SNOW_LEOPARD = Boolean.valueOf(isGreater(
+                                    parts[1], 6));
+                        }
+                    }
+                }
+            }
+            if (IS_CARBON_SNOW_LEOPARD == null)
+                IS_CARBON_SNOW_LEOPARD = Boolean.FALSE;
+        }
+        return IS_CARBON_SNOW_LEOPARD.booleanValue();
+    }
+
+    private static boolean isGreater(String str, int value) {
         try {
-            while (g != null) {
-                Object o = findGCOrGraphics(g);
-                if (o == null)
-                    return null;
-                if (o instanceof GC)
-                    return (GC) o;
-                if (o instanceof Graphics)
-                    g = (Graphics) o;
-            }
-        } catch (Throwable t) {
+            return Integer.parseInt(str) >= value;
+        } catch (NumberFormatException e) {
         }
-        return null;
-    }
-
-    private static Object findGCOrGraphics(Graphics g) throws Exception {
-        Field[] fs = g.getClass().getDeclaredFields();
-        for (Field f : fs) {
-            Class<?> c = f.getType();
-            if (GC.class.isAssignableFrom(c)) {
-                return getFieldObject(f, g);
-            } else if (Graphics.class.isAssignableFrom(c)) {
-                Object g2 = getFieldObject(f, g);
-                return g2 == g ? null : g2;
-            }
-        }
-        return null;
-    }
-
-    private static Object getFieldObject(Field f, Object o) throws Exception {
-        boolean acc = f.isAccessible();
-        f.setAccessible(true);
-        Object ret = f.get(o);
-        f.setAccessible(acc);
-        return ret;
+        return false;
     }
 
     public static void fixGradientBugForCarbon(Graphics graphics, IFigure figure) {
@@ -156,41 +74,6 @@ public class GraphicsUtils {
             graphics.popState();
         }
     }
-
-//    public static void preserveAdvancedAndRun(Graphics g, boolean advanced,
-//            final Runnable runnable) {
-//        g.pushState();
-//        GC gc = findGC(g);
-//        boolean oldAd = gc.getAdvanced();
-//        gc.setAdvanced(advanced);
-//        SafeRunner.run(new SafeRunnable() {
-//            public void run() throws Exception {
-//                runnable.run();
-//            }
-//        });
-////        g.setAntialias( SWT.OFF );
-////        g.setAntialias( SWT.ON );
-//        gc.setAdvanced(oldAd);
-////        g.setAlpha( 0xff - g.getAlpha() );
-////        g.setAlpha( 0xff - g.getAlpha() );
-//        g.popState();
-//        g.restoreState();
-//    }
-//
-//    public static void closeAdvancedAndRun(Graphics g, final Runnable runnable) {
-//        g.pushState();
-//        GC gc = findGC(g);
-//        boolean advanced = gc.getAdvanced();
-//        gc.setAdvanced(false);
-//        SafeRunner.run(new SafeRunnable() {
-//            public void run() throws Exception {
-//                runnable.run();
-//            }
-//        });
-//        gc.setAdvanced(advanced);
-//        g.popState();
-//        g.restoreState();
-//    }
 
     private static final GraphicsUtils normal = new GraphicsUtils(false);
     private static final GraphicsUtils advanced = new GraphicsUtils(true);

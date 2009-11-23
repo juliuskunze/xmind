@@ -16,6 +16,7 @@ package org.xmind.ui.internal.workbench;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Monitor;
 
 public class Util {
 
@@ -24,9 +25,17 @@ public class Util {
 
     public static Point getInitialWindowSize() {
         Display display = Display.getCurrent();
-        Rectangle clientArea = display.getClientArea();
+        Rectangle clientArea = getClientArea(display);
         return new Point(Math.min(clientArea.width, 1280), Math.min(
                 clientArea.height, 768));
+    }
+
+    public static Rectangle getClientArea(Display display) {
+        Monitor[] monitors = display.getMonitors();
+        if (monitors != null && monitors.length > 0) {
+            return monitors[0].getClientArea();
+        }
+        return display.getClientArea();
     }
 
 }

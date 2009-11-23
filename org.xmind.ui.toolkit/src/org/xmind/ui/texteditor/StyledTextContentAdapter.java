@@ -85,4 +85,13 @@ public class StyledTextContentAdapter implements IControlContentAdapter2 {
         return ((StyledText) control).getTextRange(start, length);
     }
 
+    public void replaceControlContents(Control control, int start, int length,
+            String newText) {
+        ((StyledText) control).replaceTextRange(start, length, newText);
+    }
+
+    public Rectangle getTextBounds(Control control, int start, int length) {
+        return ((StyledText) control).getTextBounds(start, start + length - 1);
+    }
+
 }

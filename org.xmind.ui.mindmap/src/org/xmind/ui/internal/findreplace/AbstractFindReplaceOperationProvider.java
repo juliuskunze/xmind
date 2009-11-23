@@ -19,6 +19,8 @@ package org.xmind.ui.internal.findreplace;
 public abstract class AbstractFindReplaceOperationProvider implements
         IFindReplaceOperationProvider {
 
+    private int parameter = 0;
+
     /**
      * @see cn.brainy.ui.mindmap.dialogs.IFindReplaceOperationProvider#find(java.lang.String)
      */
@@ -50,6 +52,8 @@ public abstract class AbstractFindReplaceOperationProvider implements
      * @return
      */
     protected int indexOf(String text, String toFind, int offset) {
+        if (text == null)
+            return -1;
         if (!isCaseSensitive()) {
             text = text.toLowerCase();
             toFind = toFind.toLowerCase();
@@ -125,6 +129,21 @@ public abstract class AbstractFindReplaceOperationProvider implements
      */
     public boolean canReplaceAll(String toFind, String toReplaceWith) {
         return canReplace(toFind, toReplaceWith) && !isWorkbook();
+    }
+
+    public int getParameter() {
+        return this.parameter;
+    }
+
+    public void setParameter(int op, boolean value) {
+        if (value)
+            this.parameter |= op;
+        else
+            this.parameter &= ~op;
+    }
+
+    public void setParameter(int parameter) {
+        this.parameter = parameter;
     }
 
 }

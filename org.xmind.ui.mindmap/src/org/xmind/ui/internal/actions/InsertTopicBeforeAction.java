@@ -38,7 +38,8 @@ public class InsertTopicBeforeAction extends RequestAction implements
     }
 
     public void setSelection(ISelection selection) {
-        setEnabled(MindMapUtils.isSingleTopic(selection));
+        setEnabled(MindMapUtils.isSingleTopic(selection)
+                && !MindMapUtils.hasCentralTopic(selection, getViewer()));
     }
 
 }

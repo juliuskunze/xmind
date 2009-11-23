@@ -20,7 +20,6 @@ import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Path;
 import org.eclipse.swt.widgets.Display;
-
 import org.xmind.gef.draw2d.geometry.PrecisionDimension;
 import org.xmind.gef.draw2d.geometry.PrecisionRectangle;
 
@@ -35,6 +34,24 @@ public class PathFigure extends Shape {
     private boolean outline = true;
     private boolean fill = true;
     private int tolerance = 0;
+
+//    private int alpha = 0xff;
+//
+//    public int getAlpha() {
+//        return alpha;
+//    }
+//
+//    public void setAlpha(int alpha) {
+//        if (alpha == this.alpha)
+//            return;
+//        this.alpha = alpha;
+//        repaint();
+//    }
+//  @Override
+//  public void paintFigure(Graphics graphics) {
+//      graphics.setAlpha(alpha);
+//      super.paintFigure(graphics);
+//  }
 
     /**
      * 

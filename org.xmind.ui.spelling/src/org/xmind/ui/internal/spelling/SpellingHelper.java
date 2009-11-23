@@ -11,13 +11,18 @@
  */
 package org.xmind.ui.internal.spelling;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.text.ITextListener;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.TextEvent;
@@ -25,99 +30,259 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Menu;
 import org.xmind.ui.texteditor.IControlContentAdapter2;
+import org.xmind.ui.texteditor.IMenuContributor;
+import org.xmind.ui.texteditor.ISpellingActivation;
+import org.xmind.ui.texteditor.ISpellingSupport;
+import org.xmind.ui.texteditor.StyledTextContentAdapter;
 
 import com.swabunga.spell.event.SpellCheckEvent;
 import com.swabunga.spell.event.SpellCheckListener;
 import com.swabunga.spell.event.SpellChecker;
 import com.swabunga.spell.event.StringWordTokenizer;
 
-public class SpellingHelper implements Listener, SpellCheckListener {
-    private class SpellData {
-        int start;
-        int length;
-        String content;
+public class SpellingHelper implements ISpellingActivation, Listener,
+        ITextListener {
 
-        public SpellData(int start, String content) {
-            super();
-            this.start = start;
-            this.content = content;
+    private static final long CHECK_DELAY = 200;
+
+    private class SuggestionAction extends Action {
+
+        private SpellCheckEvent range;
+
+        private String suggestion;
+
+        public SuggestionAction(SpellCheckEvent range, String suggestion) {
+            super(range.getInvalidWord() + " -> " + suggestion); //$NON-NLS-1$
+            this.range = range;
+            this.suggestion = suggestion;
         }
 
-        public boolean equals(Object obj) {
-            if (obj == this)
-                return true;
-            if (!(obj instanceof SpellData))
-                return false;
-            SpellData sd = (SpellData) obj;
-            return this.start == sd.start && sd.content.equals(this.content);
-        }
-    }
-
-    private class TextListener implements ITextListener {
-
-        public void textChanged(TextEvent event) {
-//            String text = event.getText();//the string later input
-//            String repText = event.getReplacedText();//to be replaced string 
-//            int length = event.getLength();//the length to be replaced string
-//            int offset1 = event.getOffset();//the position of input string
-//            System.out.println(text + "," + repText + "," + length + ","
-//                    + offset1);
-
-            offset = event.getOffset();
-            input = event.getText();
-            replaced = event.getReplacedText();
-//            System.out.println(offset1);
-            check();
+        public void run() {
+            if (!isActive())
+                return;
+            String old = contentAdapter.getControlContents(control);
+            int oldLength = old.length();
+            int start = range.getWordContextPosition();
+            String invalidWord = range.getInvalidWord();
+            int invalidLength = invalidWord.length();
+            if (start < oldLength && start + invalidLength <= oldLength) {
+                contentAdapter.replaceControlContents(control, start,
+                        invalidLength, suggestion);
+                check(Display.getCurrent());
+            }
         }
     }
 
-    private static final int DEFAULT_CHECK_DELAY = 500;
+    private class NewWordAction extends Action {
+
+        private SpellCheckEvent range;
+
+        public NewWordAction(SpellCheckEvent range) {
+            super(Messages.addToDictionary);
+            this.range = range;
+        }
+
+        public void run() {
+            addToDict(Display.getCurrent(), range);
+        }
+
+    }
+
+    private static class NoSuggestionAction extends Action {
+        public NoSuggestionAction() {
+            super(Messages.noSpellSuggestion);
+            setEnabled(false);
+        }
+    }
+
+    private class SpellingMenuContributor implements IMenuContributor {
+
+        private SpellCheckEvent getCurrentRange() {
+            int pos = contentAdapter.getCursorPosition(control);
+            for (Entry<Integer, SpellCheckEvent> en : ranges.entrySet()) {
+                SpellCheckEvent range = en.getValue();
+                int start = en.getKey().intValue();
+                int length = range.getInvalidWord().length();
+                if (start <= pos && pos <= start + length) {
+                    return range;
+                }
+            }
+            return null;
+        }
+
+        public void fillMenu(IMenuManager menu) {
+            SpellCheckEvent range = getCurrentRange();
+            if (range != null) {
+                List list = range.getSuggestions();
+                if (list.isEmpty()) {
+                    menu.add(new NoSuggestionAction());
+                } else {
+                    for (Object o : list) {
+                        String suggestion = o.toString();
+                        menu.add(new SuggestionAction(range, suggestion));
+                    }
+                }
+                menu.add(new Separator());
+                menu.add(new NewWordAction(range));
+            }
+        }
+
+    }
+
+    private class CheckJob extends Job implements SpellCheckListener {
+
+        private Display display;
+
+        private long start = -1;
+
+        private boolean rescheduling = false;
+
+        public CheckJob() {
+            super(Messages.spellCheckProgress_Text);
+            setSystem(false);
+        }
+
+        public synchronized void check(Display display) {
+            if (display == null || display.isDisposed() || !isActive())
+                return;
+
+            if (start == -1) {
+                // not scheduled
+                this.display = display;
+                schedule();
+            } else if (start == -2) {
+                // working
+                rescheduling = true;
+            } else {
+                // scheduling
+                start = System.currentTimeMillis();
+            }
+        }
+
+        public void dispose() {
+            rescheduling = false;
+            cancel();
+        }
+
+        protected IStatus run(IProgressMonitor monitor) {
+            try {
+                return doRun(monitor);
+            } finally {
+                start = -1;
+                if (rescheduling) {
+                    rescheduling = false;
+                    schedule();
+                }
+            }
+        }
+
+        protected IStatus doRun(IProgressMonitor monitor) {
+            start = System.currentTimeMillis();
+            if (monitor.isCanceled() || display.isDisposed() || !isActive())
+                return Status.CANCEL_STATUS;
+
+            while (System.currentTimeMillis() < start + CHECK_DELAY) {
+                if (monitor.isCanceled() || display.isDisposed() || !isActive())
+                    return Status.CANCEL_STATUS;
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    return Status.CANCEL_STATUS;
+                }
+            }
+            start = -2;
+            if (monitor.isCanceled() || display.isDisposed() || !isActive())
+                return Status.CANCEL_STATUS;
+
+            final String[] context = new String[1];
+            display.syncExec(new Runnable() {
+                public void run() {
+                    context[0] = contentAdapter.getControlContents(control);
+                }
+            });
+
+            if (monitor.isCanceled() || display.isDisposed() || !isActive())
+                return Status.CANCEL_STATUS;
+
+            if (context[0] != null) {
+                ranges.clear();
+
+                spellChecker.addSpellCheckListener(this);
+                spellChecker.checkSpelling(new StringWordTokenizer(context[0]));
+                spellChecker.removeSpellCheckListener(this);
+
+                if (monitor.isCanceled() || display.isDisposed() || !isActive())
+                    return Status.CANCEL_STATUS;
+
+                redraw(display);
+            }
+
+            return Status.OK_STATUS;
+        }
+
+        public void spellingError(SpellCheckEvent event) {
+            int start = event.getWordContextPosition();
+            ranges.put(Integer.valueOf(start), event);
+        }
+
+    }
+
+    private static class Line {
+
+        int x1, x2, y;
+
+    }
+
+    private ISpellingSupport support;
+
+    private ITextViewer viewer;
 
     private Control control;
 
     private IControlContentAdapter2 contentAdapter;
 
-    private Map<Integer, SpellCheckEvent> ranges = new HashMap<Integer, SpellCheckEvent>();
-//
-//    private List<Integer> list = new ArrayList<Integer>();
-//    private List<SpellCheckEvent> errorWords = new ArrayList<SpellCheckEvent>();
-    private List<SpellData> cache = new ArrayList<SpellData>();
-//    private List<SpellCheckEvent> words = new ArrayList<SpellCheckEvent>();
-
-    private Menu menu = null;
-
-    private Runnable checkJob;
-
     private SpellChecker spellChecker;
 
-    private int start = 0;
+    private Map<Integer, SpellCheckEvent> ranges = new HashMap<Integer, SpellCheckEvent>();
 
-    private int offset = 0;
+    private SpellingMenuContributor contributor;
 
-    private String input = null;
+    private CheckJob job = null;
 
-    private String replaced = null;
+    private boolean disposed = false;
 
-    private ITextViewer textViewer;
+    private static Map<Integer, Line> lineCache = new HashMap<Integer, Line>();
 
-//    public SpellingHelper(Control control,
-//            IControlContentAdapter2 contentAdapter) {
-//        this.control = control;
-//        this.contentAdapter = contentAdapter;
-//        init();
-//    }
+    public SpellingHelper(ISpellingSupport support, ITextViewer viewer) {
+        this.support = support;
+        this.viewer = viewer;
+        this.control = viewer.getTextWidget();
+        this.contentAdapter = new StyledTextContentAdapter();
+        init(viewer);
+    }
 
-    public SpellingHelper(ITextViewer textViewer,
-            IControlContentAdapter2 contentAdapter) {
-        this.textViewer = textViewer;
-        this.control = textViewer.getTextWidget();
-        this.contentAdapter = contentAdapter;
+    public SpellingHelper(ISpellingSupport support, Control control,
+            IControlContentAdapter2 adapter) {
+        this.support = support;
+        this.viewer = null;
+        this.control = control;
+        this.contentAdapter = adapter;
+        init(control);
+    }
+
+    private void init(ITextViewer viewer) {
+        viewer.addTextListener(this);
+        init();
+    }
+
+    private void init(Control control) {
+        control.addListener(SWT.Modify, this);
         init();
     }
 
@@ -125,354 +290,188 @@ public class SpellingHelper implements Listener, SpellCheckListener {
      * 
      */
     private void init() {
-//        control.addListener(SWT.Modify, this);
         control.addListener(SWT.Paint, this);
-//        control.addListener(SWT.MenuDetect, this);
         control.addListener(SWT.Dispose, this);
+        final Display display = Display.getCurrent();
         SpellCheckerAgent.visitSpellChecker(new ISpellCheckerVisitor() {
             public void handleWith(SpellChecker spellChecker) {
-                if (control.isDisposed())
+                if (control == null || control.isDisposed() || disposed)
                     return;
                 SpellingHelper.this.spellChecker = spellChecker;
-                spellChecker.addSpellCheckListener(SpellingHelper.this);
-                check();
+                check(display);
             }
         });
-        ITextListener textListener = new TextListener();
-        textViewer.addTextListener(textListener);
     }
 
-//    protected void checkMenu(int x, int y) {
-//        SpellCheckEvent range = findRange(x, y);
-//        if (range != null) {
-//            showMenu(range);
-//        }
-//    }
-
-//    private SpellCheckEvent findRange(int x, int y) {
-//        Point p = control.toControl(x, y);
-//        int pos = contentAdapter.getOffsetAtLocation(control, p);
-//        for (SpellCheckEvent range : ranges.values()) {
-//            int start = range.getWordContextPosition();
-//            int length = range.getInvalidWord().length();
-//            if (start < pos && pos < start + length) {
-//                return range;
-//            }
-//        }
-//
-//        return null;
-//    }
+    /**
+     * @param range
+     */
+    private void addToDict(final Display display, final SpellCheckEvent range) {
+        SpellCheckerAgent.visitSpellChecker(new ISpellCheckerVisitor() {
+            public void handleWith(SpellChecker spellChecker) {
+                if (!isActive())
+                    return;
+                spellChecker.addToDictionary(range.getInvalidWord());
+                check(display);
+            }
+        });
+    }
 
     /**
-     * @param pos
+     * @param gc
      */
-    @SuppressWarnings("unchecked")
-//    private void showMenu(final SpellCheckEvent range) {
-//        if (menu != null) {
-//            menu.dispose();
-//        }
-//        menu = new Menu(control);
-//        control.setMenu(menu);
-//        List list = range.getSuggestions();
-//        if (list.isEmpty()) {
-//            MenuItem mi = new MenuItem(menu, SWT.NONE);
-//            mi.setText(Messages.noSpellSuggestion);
-//            mi.setEnabled(false);
-//        } else {
-//            for (Object o : list) {
-//                final String suggestion = o.toString();
-//                final MenuItem mi = new MenuItem(menu, SWT.NONE);
-//                mi.setText("  " + suggestion); //$NON-NLS-1$
-//                mi.addListener(SWT.Selection, new Listener() {
-//                    public void handleEvent(Event event) {
-//                        modifySuggestion(range, suggestion);
-//                    }
-//                });
-//            }
-//        }
-//
-//        new MenuItem(menu, SWT.SEPARATOR);
-//
-//        MenuItem mi = new MenuItem(menu, SWT.NONE);
-//        mi.setText(Messages.addToDictionary);
-//        mi.addListener(SWT.Selection, new Listener() {
-//            public void handleEvent(Event event) {
-//                addToDict(range);
-//            }
-//        });
-//    }
-    /*
-     * *
-     * 
-     * @param range
-     */
-//    private void addToDict(final SpellCheckEvent range) {
-//        SpellCheckerAgent.visitSpellChecker(new ISpellCheckerVisitor() {
-//            public void handleWith(SpellChecker spellChecker) {
-//                if (control.isDisposed())
-//                    return;
-//                spellChecker.addToDictionary(range.getInvalidWord());
-//                check();
-//                control.redraw();
-//            }
-//        });
-//    }
-    /*
-     * *
-     * 
-     * @param range
-     * 
-     * @param suggestion
-     */
-//    private void modifySuggestion(SpellCheckEvent range, String suggestion) {
-//        if (control.isDisposed())
-//            return;
-//
-//        String old = contentAdapter.getControlContents(control);
-//        int oldLength = old.length();
-//        int start = range.getWordContextPosition();
-//        String invalidWord = range.getInvalidWord();
-//        int invalidLength = invalidWord.length();
-//        if (start < oldLength && start + invalidLength <= oldLength) {
-//            String newText = old.substring(0, start) + suggestion
-//                    + old.substring(start + invalidWord.length(), old.length());
-//            contentAdapter.setControlContents(control, newText, start
-//                    + suggestion.length());
-//            check();
-//        }
-//    }
     private void paintSpellError(GC gc) {
+        if (ranges.isEmpty())
+            return;
+
         int lineStyle = gc.getLineStyle();
         int lineWidth = gc.getLineWidth();
         Color lineColor = gc.getForeground();
         gc.setLineWidth(2);
         gc.setLineStyle(SWT.LINE_DOT);
-        gc.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_RED));
+        gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
+        int charCount = contentAdapter.getControlContents(control).length();
+        Rectangle clipping = gc.getClipping();
+        lineCache.clear();
+        for (Object obj : ranges.values().toArray()) {
+            SpellCheckEvent range = (SpellCheckEvent) obj;
+            int start = range.getWordContextPosition();
+            if (start < 0 || start >= charCount)
+                continue;
 
-        String contents = contentAdapter.getControlContents(control);
-        int charCount = contents.length();
-//        for (SpellCheckEvent spellEvent : ranges.values()) {
-//            int start = spellEvent.getWordContextPosition();
-//            if (start >= 0 && start < charCount) {
-//                int length = Math.min(spellEvent.getInvalidWord().length(),
-//                        charCount - start);
-        for (SpellData spell : cache) {
-            int start = spell.start;
-            if (start >= 0 && start < charCount) {
-                int length = Math
-                        .min(spell.content.length(), charCount - start);
+            int length = Math.min(range.getInvalidWord().length(), charCount
+                    - start);
+            if (length <= 0)
+                continue;
 
-                for (int i = 0; i < length; i++) {
-                    Point p2 = contentAdapter.getLocationAtOffset(control,
-                            start + i + 1);
-                    int h2 = contentAdapter.getLineHeightAtOffset(control,
-                            start + i + 1);
-                    p2.y += h2 - 1;
-
-                    Point p1 = contentAdapter.getLocationAtOffset(control,
-                            start + i);
-                    int h1 = contentAdapter.getLineHeightAtOffset(control,
-                            start + i);
-                    p1.y += h1 - 1;
-                    if (p1.y != p2.y) {
-                        Point size = gc.stringExtent(contentAdapter
-                                .getControlContents(control, start + i, 1));
-                        p1.x = p2.x - size.x;
-                        p1.y = p2.y;
-                    }
-                    gc.drawLine(p1.x, p1.y, p2.x, p2.y);
-                }
-            }
+            drawLines(gc, start, start + length - 1, clipping);
         }
         gc.setLineWidth(lineWidth);
         gc.setLineStyle(lineStyle);
         gc.setForeground(lineColor);
     }
 
+    private void drawLines(GC gc, int start, int end, Rectangle clipping) {
+        Line startLine = getLine(gc, start);
+        Line endLine = getLine(gc, end);
+        if (startLine.y == endLine.y) {
+            gc.drawLine(startLine.x1, startLine.y, endLine.x2, endLine.y);
+        } else if (start < end) {
+            int mid = (start + end) / 2;
+            drawLines(gc, start, mid, clipping);
+            if (mid < end) {
+                drawLines(gc, mid + 1, end, clipping);
+            }
+        }
+    }
+
+    private Line getLine(GC gc, int offset) {
+        Line p = lineCache.get(Integer.valueOf(offset));
+        if (p == null) {
+            p = new Line();
+            Point loc = contentAdapter.getLocationAtOffset(control, offset + 1);
+            int h = contentAdapter.getLineHeightAtOffset(control, offset + 1);
+            p.y = loc.y + h - 1;
+            p.x2 = loc.x;
+            p.x1 = p.x2
+                    - gc.stringExtent(contentAdapter.getControlContents(
+                            control, offset, 1)).x;
+            lineCache.put(Integer.valueOf(offset), p);
+        }
+        return p;
+    }
+
     /**
      * 
      */
-    private void check() {
-        checkJob = new Runnable() {
-            public void run() {
-                if (checkJob != this)
-                    return;
-                if (!control.isDisposed()) {
-                    doCheck();
-                    control.redraw();
-                }
-                checkJob = null;
-            }
-        };
-        Display.getCurrent().timerExec(getCheckDelay(), checkJob);
-    }
-
-    protected int getCheckDelay() {
-        return DEFAULT_CHECK_DELAY;
-    }
-
-    private void doCheck() {
-//        ranges.clear();
-//        errorWords.clear();
-        if (spellChecker != null) {
-            String content = contentAdapter.getControlContents(control);
-//            showList("Before");
-//            for (SpellData d : cache) {
-//                System.out.println("Before " + d.start + " , " + d.content);
-//            }
-//            System.out.println();
-//            System.out.println("offset: " + offset);
-//            System.out.println("sd");
-            reSort();
-            start = getPrevWordStart(offset);
-//            int end = getNextWordEnd(offset);
-//            System.out.println("start: " + start);
-            refreshCache(offset);
-            content = content.substring(start);
-
-            spellChecker.checkSpelling(new StringWordTokenizer(content));
-        }
-    }
-
-    private void refreshCache(int offset) {
-        int changed = input.length();
-        if (replaced != null)
-            changed -= replaced.length();
-        if (cache.size() < 1)
+    private void check(Display display) {
+        if (!isActive())
             return;
-        for (int i = cache.size() - 1; i >= 0; i--) {
-            SpellData sd = cache.get(i);
-            if (sd.start >= offset) {
-                sd.start += changed;
-            } else
-                break;
-        }
-    }
-
-    private int getPrevWordStart(int offset) {
-        int ret = 0;
-//        SpellData data=null;
-        if (cache.isEmpty())
-            return ret;
-        for (SpellData sd : cache) {
-            if (sd.start <= offset) {
-                ret = sd.start;
-//                data=sd;
-            } else
-                break;
-        }
-//        if(data!=null) {
-//        }
-        return ret;
-    }
-
-//    private int getNextWordEnd(int offset) {
-//        int ret = 0;
-//        if (cache.isEmpty())
-//            return ret;
-//
-//        for (SpellData sd : cache) {
-//            int start = sd.start;
-//            int length = sd.content.length();
-//            if (offset <= start + length) {
-//
-//            }
-//        }
-//        return 0;
-//    }
-
-    /**
-     * @see cn.brainy.framework.Disposable#dispose()
-     */
-    protected void handleDispose() {
-        ranges.clear();
-        cache.clear();
-//        list.clear();
-//        errorWords.clear();
-        checkJob = null;
-        if (menu != null) {
-            menu.dispose();
-            menu = null;
-        }
-        if (spellChecker != null) {
-            spellChecker.removeSpellCheckListener(this);
-            spellChecker = null;
-        }
+        if (job == null)
+            job = new CheckJob();
+        job.check(display);
     }
 
     public void handleEvent(Event event) {
         if (control.isDisposed())
             return;
-
         int type = event.type;
         switch (type) {
-//        case SWT.Modify:
-//            check();
-//            break;
+        case SWT.Modify:
+            handleTextModified(event);
+            break;
         case SWT.Paint:
             paintSpellError(event.gc);
             break;
-//        case SWT.MenuDetect:
-//            checkMenu(event.x, event.y);
-//            break;
         case SWT.Dispose:
-            handleDispose();
+            handleWidgetDispose();
             break;
         }
     }
 
-    public void spellingError(SpellCheckEvent event) {
-        if (control.isDisposed())
-            return;
-        int start = event.getWordContextPosition();
-        start += this.start;
-        String word = event.getInvalidWord();
-
-        comparatorTo(start);//right
-        cache.add(new SpellData(start, word));//right
-
-        ranges.put(start, event);
-//        showList("After");
+    public ISpellingSupport getSpellingSupport() {
+        return support;
     }
 
-    private void comparatorTo(int start) {
-        reSort();
-        int num = -1;
-        for (int i = 0; i < cache.size(); i++) {
-            SpellData data = cache.get(i);
-            if (start == data.start) {
-                num = i;
-//                break;
-            }
+    public boolean isActive() {
+        return !disposed && spellChecker != null && control != null
+                && !control.isDisposed();
+    }
+
+    public Object getAdapter(Class adapter) {
+        if (adapter == IMenuContributor.class) {
+            if (contributor == null)
+                contributor = new SpellingMenuContributor();
+            return contributor;
         }
-        if (num > -1)
-            cache.remove(num);
+        return null;
     }
 
-//    private void showList(String str) {
-//        for (SpellCheckEvent s : ranges.values()) {
-//            int start = s.getWordContextPosition();
-//            int length = s.getInvalidWord().length();
-//            int caretOffset = contentAdapter.getCursorPosition(control);
-//            System.out.println(str + ": " + start + " " + length + " "
-//                    + caretOffset);
-//        }
-//        System.out.println();
-//    }
+    private void handleTextModified(Event event) {
+        check(event.display);
+    }
 
-    private void reSort() {
-        Collections.sort(cache, new Comparator<SpellData>() {
-            public int compare(SpellData o1, SpellData o2) {
-                int start1 = o1.start;
-                int start2 = o2.start;
-                int ret = start1 - start2;
-                if (ret == 0) {
-                    int length1 = o1.content.length();
-                    int length2 = o2.content.length();
-                    return length1 - length2;
+    private void handleWidgetDispose() {
+        deactivate();
+    }
+
+    private void deactivate() {
+        if (viewer != null) {
+            viewer.removeTextListener(this);
+            viewer = null;
+        }
+        if (control != null && !control.isDisposed()) {
+            control.removeListener(SWT.Modify, this);
+            control.removeListener(SWT.Paint, this);
+            control.removeListener(SWT.Dispose, this);
+            redraw(control.getDisplay());
+            control = null;
+        }
+        if (job != null) {
+            job.dispose();
+            job = null;
+        }
+        ranges.clear();
+        spellChecker = null;
+    }
+
+    void dispose() {
+        deactivate();
+        disposed = true;
+    }
+
+    private void redraw(Display display) {
+        display.asyncExec(new Runnable() {
+            public void run() {
+                if (control != null && !control.isDisposed()) {
+                    control.redraw();
                 }
-                return ret;
             }
         });
     }
+
+    public void textChanged(TextEvent event) {
+        check(Display.getCurrent());
+    }
+
 }

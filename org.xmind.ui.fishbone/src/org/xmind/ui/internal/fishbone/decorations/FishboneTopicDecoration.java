@@ -90,13 +90,36 @@ public class FishboneTopicDecoration extends AbstractTopicDecoration {
 
     protected Pattern createGradientPattern(IFigure figure, int alpha,
             Color bgColor) {
+        return super.createGradientPattern(figure, alpha, bgColor);
+    }
+
+    /**
+     * Create oblique background pattern for fishbone topics.
+     * 
+     * @param figure
+     *            the figure
+     * @param alpha
+     *            the alpha
+     * @param color
+     *            the color
+     * 
+     * @return a new gradient pattern
+     * @deprecated The gradient pattern on carbon (Mac OS X 10.6+) creates
+     *             gradient "blocks" when the starting point is not
+     *             vertical/horizontal to the ending point.
+     */
+    protected Pattern createObliquePattern(IFigure figure, int alpha,
+            Color color) {
+        Rectangle b = figure.getBounds();
+        double cx = b.x + b.width * 0.5;
+        double cy = b.y + b.height * 0.5;
         PrecisionPoint p1 = points.getPoint(0);
         PrecisionPoint p2 = points.getPoint(3);
         Pattern p = new GradientPattern(Display.getCurrent(), //
-                (float) p1.x, (float) p1.y, //
-                (float) p2.x, (float) p2.y,//
-                ColorUtils.gradientLighter(bgColor), alpha, //
-                bgColor, alpha);
+                (float) (cx + p1.x), (float) (cy + p1.y), //
+                (float) (cx + p2.x), (float) (cy + p2.y), //
+                ColorUtils.gradientLighter(color), alpha, //
+                color, alpha);
         return p;
     }
 

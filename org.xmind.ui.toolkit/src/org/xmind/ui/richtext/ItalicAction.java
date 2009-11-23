@@ -32,6 +32,7 @@ public class ItalicAction extends Action implements IRichTextAction {
             ImageDescriptor image, String tooltip) {
         super(text, AS_CHECK_BOX);
         this.viewer = viewer;
+        setId(TextActionConstants.ITALIC_ID);
         setImageDescriptor(image);
         setToolTipText(tooltip);
     }

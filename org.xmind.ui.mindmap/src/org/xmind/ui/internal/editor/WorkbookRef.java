@@ -17,9 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -27,12 +25,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IPartListener;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPart;
 import org.xmind.core.Core;
 import org.xmind.core.CoreException;
 import org.xmind.core.IEncryptionHandler;
@@ -50,21 +43,25 @@ import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.mindmap.IWorkbookRef;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.prefs.PrefConstants;
+import org.xmind.ui.util.Logger;
 
 /**
  * @author Frank Shaka
  * 
  */
-public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
-        IPartListener {
+public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
 
-    private static final List<IEditorPart> EMPTY_LIST = Collections.emptyList();
+    private static final List<IWorkbookReferrer> EMPTY_LIST = Collections
+            .emptyList();
+
+    private static final List<IEditorPart> EMPTY_EDITORS = Collections
+            .emptyList();
 
     private static final String SUBDIR_WORKBOOK = "workbooks"; //$NON-NLS-1$
 
     private Object key;
 
-    private List<IEditorPart> referrers;
+    private List<IWorkbookReferrer> referrers;
 
     private IWorkbook workbook;
 
@@ -76,7 +73,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
 
     private ICoreEventRegistration forceDirtyReg;
 
-    private Set<IWorkbenchPage> hookedPages;
+//    private Set<IWorkbenchPage> hookedPages;
 
     public WorkbookRef() {
         MindMapUIPlugin.getDefault().getPreferenceStore()
@@ -155,25 +152,29 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
 
     public void setSelection(ISelection selection, boolean reveal,
             boolean forceFocus) {
-        if (referrers != null && !referrers.isEmpty()) {
-            IEditorPart editor = referrers.get(0);
-            if (editor != null) {
-                ISelectionProvider selectionProvider = editor.getSite()
-                        .getSelectionProvider();
-                if (selectionProvider != null) {
-                    selectionProvider.setSelection(selection);
-                }
-                if (forceFocus) {
-                    editor.getSite().getPage().activate(editor);
-                    Shell shell = editor.getSite().getShell();
-                    if (shell != null && !shell.isDisposed()) {
-                        shell.setActive();
-                    }
-                } else if (reveal) {
-                    editor.getSite().getPage().bringToTop(editor);
-                }
-            }
+        IWorkbookReferrer referrer = getPrimaryReferrer();
+        if (referrer != null) {
+            referrer.setSelection(selection, reveal, forceFocus);
         }
+//        if (referrers != null && !referrers.isEmpty()) {
+//            IEditorPart editor = referrers.get(0);
+//            if (editor != null) {
+//                ISelectionProvider selectionProvider = editor.getSite()
+//                        .getSelectionProvider();
+//                if (selectionProvider != null) {
+//                    selectionProvider.setSelection(selection);
+//                }
+//                if (forceFocus) {
+//                    editor.getSite().getPage().activate(editor);
+//                    Shell shell = editor.getSite().getShell();
+//                    if (shell != null && !shell.isDisposed()) {
+//                        shell.setActive();
+//                    }
+//                } else if (reveal) {
+//                    editor.getSite().getPage().bringToTop(editor);
+//                }
+//            }
+//        }
     }
 
     /*
@@ -226,26 +227,31 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
         }
     }
 
-    public void addReferrer(IEditorPart referrer) {
+    public void addReferrer(IWorkbookReferrer referrer) {
         if (referrers == null)
-            referrers = new ArrayList<IEditorPart>(2);
+            referrers = new ArrayList<IWorkbookReferrer>(2);
         referrers.add(0, referrer);
-        addPartListener(referrer);
+//        addPartListener(referrer);
     }
 
-    private void addPartListener(IEditorPart editor) {
-        IWorkbenchPage page = editor.getSite().getPage();
-        if (hookedPages == null) {
-            hookedPages = new HashSet<IWorkbenchPage>(2);
-        }
-        if (!hookedPages.contains(page)) {
-            hookedPages.add(page);
-            page.addPartListener(this);
-        }
-    }
+//    private void addPartListener(IEditorPart editor) {
+//        IWorkbenchPage page = editor.getSite().getPage();
+//        if (hookedPages == null) {
+//            hookedPages = new HashSet<IWorkbenchPage>(2);
+//        }
+//        if (!hookedPages.contains(page)) {
+//            hookedPages.add(page);
+//            page.addPartListener(this);
+//        }
+//    }
 
-    public List<IEditorPart> getReferrers() {
+    public List<IWorkbookReferrer> getReferrers() {
         return referrers == null ? EMPTY_LIST : referrers;
+    }
+
+    public IWorkbookReferrer getPrimaryReferrer() {
+        return referrers == null || referrers.isEmpty() ? null : referrers
+                .get(0);
     }
 
     public int getNumReferrers() {
@@ -256,31 +262,42 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
         return referrers != null && !referrers.isEmpty();
     }
 
-    public void removeReferrer(IEditorPart referrer) {
+    public void removeReferrer(IWorkbookReferrer referrer) {
         if (referrers == null)
             return;
         referrers.remove(referrer);
-        removePartListener(referrer);
+//        removePartListener(referrer);
         if (referrers.isEmpty())
             referrers = null;
     }
 
-    private void removePartListener(IEditorPart editor) {
-        if (hookedPages == null)
-            return;
-        IWorkbenchPage page = editor.getSite().getPage();
-        if (hookedPages.remove(page)) {
-            page.removePartListener(this);
-        }
-        if (hookedPages.isEmpty()) {
-            hookedPages = null;
-        }
-    }
+//    private void removePartListener(IEditorPart editor) {
+//        if (hookedPages == null)
+//            return;
+//        IWorkbenchPage page = editor.getSite().getPage();
+//        if (hookedPages.remove(page)) {
+//            page.removePartListener(this);
+//        }
+//        if (hookedPages.isEmpty()) {
+//            hookedPages = null;
+//        }
+//    }
 
     public List<IEditorPart> getOpenedEditors() {
-        if (referrers == null)
-            return EMPTY_LIST;
-        return referrers;
+        if (referrers != null && !referrers.isEmpty()) {
+            List<IEditorPart> editors = new ArrayList<IEditorPart>(referrers
+                    .size());
+            for (IWorkbookReferrer r : referrers) {
+                if (r instanceof IEditorPart) {
+                    editors.add((IEditorPart) r);
+                }
+            }
+            return editors;
+        }
+        return EMPTY_EDITORS;
+//        if (referrers == null)
+//            return EMPTY_LIST;
+//        return referrers;
     }
 
     public void forceDirty() {
@@ -345,10 +362,68 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
         if (workbookSaver == null)
             throw new org.eclipse.core.runtime.CoreException(new Status(
                     IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
-                    "No workbook saver is set.")); //$NON-NLS-1$
-
+                    "No workbook saver has been set.")); //$NON-NLS-1$
+        savePreview(monitor);
         workbookSaver.save(monitor, workbook);
+        for (IWorkbookReferrer referrer : referrers) {
+            referrer.postSave(monitor);
+        }
     }
+
+    public void saveWorkbookAs(Object newKey, IProgressMonitor monitor)
+            throws IOException, CoreException,
+            org.eclipse.core.runtime.CoreException {
+        if (workbook == null)
+            throw new org.eclipse.core.runtime.CoreException(new Status(
+                    IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
+                    "No workbook to save.")); //$NON-NLS-1$
+        setKey(newKey);
+        setWorkbookLoader(null);
+        setWorkbookSaver(null);
+        WorkbookRefInitializer.getInstance().initialize(this, newKey,
+                getPrimaryReferrer());
+        if (workbookSaver == null)
+            throw new org.eclipse.core.runtime.CoreException(new Status(
+                    IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
+                    "No workbook saver has been set.")); //$NON-NLS-1$
+
+        WorkbookRefManager.getInstance().changeKey(this, newKey);
+
+        savePreview(monitor);
+        workbookSaver.save(monitor, workbook);
+        for (IWorkbookReferrer referrer : referrers) {
+            referrer.postSaveAs(newKey, monitor);
+        }
+    }
+
+    private void savePreview(IProgressMonitor monitor) {
+        IWorkbookReferrer referrer = getPrimaryReferrer();
+        if (referrer != null) {
+            try {
+                referrer.savePreivew(workbook, monitor);
+            } catch (Throwable e) {
+                Logger.log(e, "Failed to save preview picture."); //$NON-NLS-1$
+            }
+        }
+//        IPreviewSaver previewSaver = findPreviewSaver();
+//        if (previewSaver != null) {
+//            try {
+//                previewSaver.savePreivew(workbook, monitor);
+//            } catch (Throwable e) {
+//                Logger.log(e, "Failed to save preview picture."); //$NON-NLS-1$
+//            }
+//        }
+    }
+
+//    private IPreviewSaver findPreviewSaver() {
+//        for (IEditorPart editor : referrers) {
+//            IPreviewSaver previewSaver = (IPreviewSaver) editor
+//                    .getAdapter(IPreviewSaver.class);
+//            if (previewSaver != null)
+//                return previewSaver;
+//        }
+//        return null;
+//    }
 
     public void propertyChange(PropertyChangeEvent event) {
         if (commandStack != null) {
@@ -359,25 +434,31 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener,
         }
     }
 
-    public void partActivated(IWorkbenchPart part) {
-        if (referrers != null && referrers.remove(part)) {
-            referrers.add(0, (IEditorPart) part);
+    public void setPrimaryReferrer(IWorkbookReferrer referrer) {
+        if (referrers != null && referrers.remove(referrer)) {
+            referrers.add(0, referrer);
         }
     }
 
-    public void partBroughtToTop(IWorkbenchPart part) {
-        // do nothing
-    }
-
-    public void partClosed(IWorkbenchPart part) {
-        // do nothing
-    }
-
-    public void partDeactivated(IWorkbenchPart part) {
-        // do nothing
-    }
-
-    public void partOpened(IWorkbenchPart part) {
-        // do nothing
-    }
+//    public void partActivated(IWorkbenchPart part) {
+//        if (referrers != null && referrers.remove(part)) {
+//            referrers.add(0, (IEditorPart) part);
+//        }
+//    }
+//
+//    public void partBroughtToTop(IWorkbenchPart part) {
+//        // do nothing
+//    }
+//
+//    public void partClosed(IWorkbenchPart part) {
+//        // do nothing
+//    }
+//
+//    public void partDeactivated(IWorkbenchPart part) {
+//        // do nothing
+//    }
+//
+//    public void partOpened(IWorkbenchPart part) {
+//        // do nothing
+//    }
 }

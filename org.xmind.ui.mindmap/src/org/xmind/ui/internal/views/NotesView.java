@@ -14,17 +14,25 @@
 package org.xmind.ui.internal.views;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.eclipse.core.commands.AbstractHandler;
+import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.commands.ActionHandler;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.text.IFindReplaceTarget;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -32,8 +40,13 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.ui.IActionBars;
@@ -41,10 +54,15 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.ISaveablePart;
 import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
+import org.eclipse.ui.contexts.IContextActivation;
+import org.eclipse.ui.contexts.IContextService;
+import org.eclipse.ui.handlers.IHandlerActivation;
+import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.IContributedContentsView;
 import org.eclipse.ui.part.ViewPart;
 import org.xmind.core.Core;
@@ -73,6 +91,7 @@ import org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider;
 import org.xmind.ui.internal.notes.NotesFindReplaceOperationProvider;
 import org.xmind.ui.internal.notes.NotesViewer;
 import org.xmind.ui.internal.notes.RichDocumentNotesAdapter;
+import org.xmind.ui.internal.spellsupport.SpellingSupport;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -81,12 +100,14 @@ import org.xmind.ui.richtext.Hyperlink;
 import org.xmind.ui.richtext.IRichDocument;
 import org.xmind.ui.richtext.IRichDocumentListener;
 import org.xmind.ui.richtext.IRichTextAction;
-import org.xmind.ui.richtext.IRichTextActionBarContributor;
 import org.xmind.ui.richtext.IRichTextEditViewer;
 import org.xmind.ui.richtext.IRichTextRenderer;
 import org.xmind.ui.richtext.ImagePlaceHolder;
 import org.xmind.ui.richtext.LineStyle;
 import org.xmind.ui.richtext.RichTextUtils;
+import org.xmind.ui.richtext.TextActionConstants;
+import org.xmind.ui.texteditor.IMenuContributor;
+import org.xmind.ui.texteditor.ISpellingActivation;
 import org.xmind.ui.util.Logger;
 
 public class NotesView extends ViewPart implements IPartListener,
@@ -94,7 +115,46 @@ public class NotesView extends ViewPart implements IPartListener,
         IRichDocumentListener, IContributedContentsView,
         ISelectionChangedListener {
 
+    private static final String NOTES_EDIT_CONTEXT_ID = "org.xmind.ui.context.notes.edit"; //$NON-NLS-1$
+
     private static boolean DEBUG = false;
+
+    private class ContextActivator implements FocusListener, DisposeListener {
+        IContextActivation context;
+        IContextService service;
+
+        public ContextActivator(Control control) {
+            control.addFocusListener(this);
+            control.addDisposeListener(this);
+        }
+
+        public void focusLost(FocusEvent e) {
+            deactivateContext();
+        }
+
+        private void deactivateContext() {
+            if (service != null && context != null)
+                service.deactivateContext(context);
+            context = null;
+        }
+
+        public void focusGained(FocusEvent e) {
+            activateContext();
+        }
+
+        private void activateContext() {
+            if (service == null)
+                service = (IContextService) getSite().getService(
+                        IContextService.class);
+            if (service != null) {
+                context = service.activateContext(NOTES_EDIT_CONTEXT_ID);
+            }
+        }
+
+        public void widgetDisposed(DisposeEvent e) {
+            deactivateContext();
+        }
+    }
 
     private class InsertImageAction extends Action implements IRichTextAction {
 
@@ -279,15 +339,43 @@ public class NotesView extends ViewPart implements IPartListener,
             toolbar.add(insertImageAction);
             toolbar.add(insertHyperlinkAction);
         }
+
+        @Override
+        public void fillContextMenu(IMenuManager menu) {
+            menu.add(getGlobalAction(ActionFactory.UNDO.getId()));
+            menu.add(getGlobalAction(ActionFactory.REDO.getId()));
+            menu.add(new Separator());
+            menu.add(getGlobalAction(ActionFactory.CUT.getId()));
+            menu.add(getGlobalAction(ActionFactory.COPY.getId()));
+            menu.add(getGlobalAction(ActionFactory.PASTE.getId()));
+            menu.add(new Separator());
+            menu.add(getGlobalAction(ActionFactory.SELECT_ALL.getId()));
+            menu.add(new Separator());
+            super.fillContextMenu(menu);
+            if (spellingActivation != null) {
+                IMenuContributor contributor = (IMenuContributor) spellingActivation
+                        .getAdapter(IMenuContributor.class);
+                if (contributor != null) {
+                    menu.add(new Separator());
+                    contributor.fillMenu(menu);
+                }
+            }
+        }
     }
 
-//    private class SaveNotesJob implements IPreSaveListener {
-//    
-//        public boolean preSave(IWorkbenchPart part) {
-//            saveNotes();
-//            return true;
-//        }
-//    }
+    private class CommitNotesHandler extends AbstractHandler {
+
+        public Object execute(ExecutionEvent event) throws ExecutionException {
+            saveNotes();
+            IWorkbenchPage page = getSite().getPage();
+            if (page != null && contributingEditor != null
+                    && page == contributingEditor.getSite().getPage()) {
+                page.activate(contributingEditor);
+            }
+            return null;
+        }
+
+    }
 
     private class SaveNotesJob implements ICoreEventListener {
 
@@ -307,19 +395,30 @@ public class NotesView extends ViewPart implements IPartListener,
 
     private RichDocumentNotesAdapter adapter;
 
-    private IRichTextActionBarContributor contributor;
+    private NotesViewRichTextActionBarContributor contributor;
 
     private ICoreEventRegister eventRegister;
+
+    private IHandlerService handlerService;
+
+    private List<IHandlerActivation> handlerActivations;
+
+    private ISpellingActivation spellingActivation;
 
     private boolean savingNotes;
 
     private NotesFindReplaceOperationProvider notesOperationProvider = null;
 
-//    private IPreSaveListener saveNotesJob = null;
-//    private SaveNotesJob saveNotesJob = null;
     private ICoreEventRegistration saveNotesReg = null;
 
-    private List<String> textActionIds = new ArrayList<String>(7);
+    private Map<String, IWorkbenchAction> workbenchActions = new HashMap<String, IWorkbenchAction>(
+            7);
+
+    private List<TextAction> textActions = new ArrayList<TextAction>(7);
+
+    private IWorkbenchAction findReplaceAction;
+
+    private IHandlerActivation commitHandlerActivation;
 
     public IWorkbenchPart getContributingPart() {
         return contributingEditor;
@@ -327,59 +426,109 @@ public class NotesView extends ViewPart implements IPartListener,
 
     private boolean updating;
 
-    public void init(IViewSite site) throws PartInitException {
-        site.getPage().addSelectionListener(this);
-        super.init(site);
-    }
-
     public void createPartControl(Composite parent) {
         contributor = new NotesViewRichTextActionBarContributor();
-
         viewer = new NotesViewer();
         viewer.setContributor(contributor);
         viewer.createControl(parent);
-
-        contributor.fillMenu(getViewSite().getActionBars().getMenuManager());
+        viewer.getImplementation().addPostSelectionChangedListener(this);
         viewer.setInput(null);
 
-        createActions();
-        viewer.getImplementation().addPostSelectionChangedListener(this);
+        addSpellChecker();
 
-        // Listen to part activation events.
+        activateHandlers();
+        IActionBars actionBars = getViewSite().getActionBars();
+        createActions(actionBars);
+        contributor.fillMenu(actionBars.getMenuManager());
+        new ContextActivator(viewer.getImplementation().getFocusControl());
+
         getSite().getPage().addPartListener(this);
+        getSite().getPage().addSelectionListener(this);
         showBootstrapContent();
     }
 
-    private void createActions() {
-        TextAction undo = new TextAction(ITextOperationTarget.UNDO);
-        undo.setText(MindMapMessages.NotesView_UndoTyping_text);
-        undo.setToolTipText(MindMapMessages.NotesView_UndoTyping_toolTip);
-        setTextActionHandler(ActionFactory.UNDO.getId(), undo);
-
-        TextAction redo = new TextAction(ITextOperationTarget.REDO);
-        redo.setText(MindMapMessages.NotesView_RedoTyping_text);
-        redo.setToolTipText(MindMapMessages.NotesView_RedoTyping_toolTip);
-        setTextActionHandler(ActionFactory.REDO.getId(), redo);
-
-        setTextActionHandler(ActionFactory.SELECT_ALL.getId(), new TextAction(
-                ITextOperationTarget.SELECT_ALL));
-        setTextActionHandler(ActionFactory.COPY.getId(), new TextAction(
-                ITextOperationTarget.COPY));
-        setTextActionHandler(ActionFactory.CUT.getId(), new TextAction(
-                ITextOperationTarget.CUT));
-        setTextActionHandler(ActionFactory.PASTE.getId(), new TextAction(
-                ITextOperationTarget.PASTE));
-        setTextActionHandler(ActionFactory.DELETE.getId(), new TextAction(
-                ITextOperationTarget.DELETE));
-
-        FindReplaceAction findReplaceAction = new FindReplaceAction(this);
-        setTextActionHandler(ActionFactory.FIND.getId(), findReplaceAction);
-
+    private void activateHandlers() {
+        IHandlerService handlerService = (IHandlerService) getSite()
+                .getService(IHandlerService.class);
+        if (handlerService != null) {
+            commitHandlerActivation = handlerService.activateHandler(
+                    "org.xmind.ui.command.commitNotes", //$NON-NLS-1$
+                    new CommitNotesHandler());
+        }
     }
 
-    private void setTextActionHandler(String id, Action action) {
-        textActionIds.add(id);
-        getViewSite().getActionBars().setGlobalActionHandler(id, action);
+    private void addSpellChecker() {
+        spellingActivation = SpellingSupport.getInstance().activateSpelling(
+                viewer.getImplementation().getTextViewer());
+    }
+
+    private void createActions(IActionBars actionBars) {
+        IWorkbenchWindow window = getSite().getWorkbenchWindow();
+        addGlobalTextAction(actionBars, window, ActionFactory.UNDO,
+                ITextOperationTarget.UNDO);
+        addGlobalTextAction(actionBars, window, ActionFactory.REDO,
+                ITextOperationTarget.REDO);
+        addGlobalTextAction(actionBars, window, ActionFactory.CUT,
+                ITextOperationTarget.CUT);
+        addGlobalTextAction(actionBars, window, ActionFactory.COPY,
+                ITextOperationTarget.COPY);
+        addGlobalTextAction(actionBars, window, ActionFactory.PASTE,
+                ITextOperationTarget.PASTE);
+        addGlobalTextAction(actionBars, window, ActionFactory.SELECT_ALL,
+                ITextOperationTarget.SELECT_ALL);
+
+        IWorkbenchAction action = ActionFactory.FIND.create(window);
+        workbenchActions.put(action.getId(), action);
+        actionBars.setGlobalActionHandler(action.getId(),
+                findReplaceAction = new FindReplaceAction(window));
+
+        registerTextActionHandlers();
+    }
+
+    private void addGlobalTextAction(IActionBars actionBars,
+            IWorkbenchWindow window, ActionFactory actionFactory, int textOp) {
+        IWorkbenchAction action = actionFactory.create(window);
+        workbenchActions.put(action.getId(), action);
+        TextAction textAction = new TextAction(textOp);
+        textActions.add(textAction);
+        actionBars.setGlobalActionHandler(action.getId(), textAction);
+    }
+
+    private IWorkbenchAction getGlobalAction(String actionId) {
+        return workbenchActions == null ? null : workbenchActions.get(actionId);
+    }
+
+    private void registerTextActionHandlers() {
+        handlerService = (IHandlerService) getSite().getService(
+                IHandlerService.class);
+        if (handlerService != null) {
+            activateHandler(TextActionConstants.FONT_ID,
+                    "org.xmind.ui.command.text.font"); //$NON-NLS-1$
+            activateHandler(TextActionConstants.BOLD_ID,
+                    "org.xmind.ui.command.text.bold"); //$NON-NLS-1$
+            activateHandler(TextActionConstants.ITALIC_ID,
+                    "org.xmind.ui.command.text.italic"); //$NON-NLS-1$
+            activateHandler(TextActionConstants.UNDERLINE_ID,
+                    "org.xmind.ui.command.text.underline"); //$NON-NLS-1$
+            activateHandler(TextActionConstants.LEFT_ALIGN_ID,
+                    "org.xmind.ui.command.text.leftAlign"); //$NON-NLS-1$
+            activateHandler(TextActionConstants.CENTER_ALIGN_ID,
+                    "org.xmind.ui.command.text.centerAlign"); //$NON-NLS-1$
+            activateHandler(TextActionConstants.RIGHT_ALIGN_ID,
+                    "org.xmind.ui.command.text.rightAlign"); //$NON-NLS-1$
+        }
+    }
+
+    private void activateHandler(String actionId, String commandId) {
+        IRichTextAction action = contributor.getRichTextAction(actionId);
+        if (action != null) {
+            action.setActionDefinitionId(commandId);
+            IHandlerActivation activation = handlerService.activateHandler(
+                    commandId, new ActionHandler(action));
+            if (handlerActivations == null)
+                handlerActivations = new ArrayList<IHandlerActivation>(10);
+            handlerActivations.add(activation);
+        }
     }
 
     private void showBootstrapContent() {
@@ -398,20 +547,51 @@ public class NotesView extends ViewPart implements IPartListener,
     }
 
     public void dispose() {
+        deactivateHandlers();
+        if (spellingActivation != null) {
+            spellingActivation.getSpellingSupport().deactivateSpelling(
+                    spellingActivation);
+            spellingActivation = null;
+        }
+
         editorSelectionChanged(null);
-        // stop listening to part activation
         getSite().getPage().removePartListener(this);
         getSite().getPage().removeSelectionListener(this);
 
+        if (handlerService != null && handlerActivations != null) {
+            for (IHandlerActivation activation : handlerActivations) {
+                handlerService.deactivateHandler(activation);
+            }
+        }
+        handlerService = null;
+        handlerActivations = null;
+
         super.dispose();
-        textActionIds.clear();
+
+        if (findReplaceAction != null) {
+            findReplaceAction.dispose();
+            findReplaceAction = null;
+        }
+        if (workbenchActions != null) {
+            for (IWorkbenchAction action : workbenchActions.values()) {
+                action.dispose();
+            }
+            workbenchActions = null;
+        }
+        textActions = null;
         if (adapter != null) {
             adapter.dispose();
             adapter = null;
         }
         viewer = null;
-        if (notesOperationProvider != null)
-            notesOperationProvider = null;
+    }
+
+    private void deactivateHandlers() {
+        if (commitHandlerActivation != null) {
+            commitHandlerActivation.getHandlerService().deactivateHandler(
+                    commitHandlerActivation);
+            commitHandlerActivation = null;
+        }
     }
 
     public void setFocus() {
@@ -448,11 +628,8 @@ public class NotesView extends ViewPart implements IPartListener,
     }
 
     public void partDeactivated(IWorkbenchPart part) {
-
         if (DEBUG)
             System.out.println("Part deactivated: " + part); //$NON-NLS-1$
-
-//       if the NotesView was closed ,then to run this: 
         if (part == this) {
             saveNotes();
         }
@@ -518,10 +695,30 @@ public class NotesView extends ViewPart implements IPartListener,
         } else if (adapter == ISaveablePart.class) {
             return getSaveablePart();
         } else if (adapter == IFindReplaceOperationProvider.class) {
-            if (notesOperationProvider == null)
+            if (notesOperationProvider == null) {
                 notesOperationProvider = new NotesFindReplaceOperationProvider(
-                        viewer);
+                        this);
+            }
             return notesOperationProvider;
+        } else if (adapter == IFindReplaceTarget.class) {
+            if (viewer != null) {
+                IRichTextEditViewer rtViewer = viewer.getImplementation();
+                if (rtViewer != null) {
+                    TextViewer textViewer = rtViewer.getTextViewer();
+                    if (textViewer != null)
+                        return textViewer.getFindReplaceTarget();
+                }
+            }
+        } else if (adapter == ITextViewer.class) {
+            if (viewer != null) {
+                IRichTextEditViewer rtViewer = viewer.getImplementation();
+                if (rtViewer != null)
+                    return rtViewer.getTextViewer();
+            }
+        } else if (adapter == IRichTextEditViewer.class) {
+            if (viewer != null) {
+                return viewer.getImplementation();
+            }
         }
         return super.getAdapter(adapter);
     }
@@ -690,7 +887,6 @@ public class NotesView extends ViewPart implements IPartListener,
             return;
 
         saveNotesReg = null;
-        //saveNotesJob = new SaveNotesJob();
         IWorkbook workbook = (IWorkbook) contributingEditor
                 .getAdapter(IWorkbook.class);
         if (workbook instanceof ICoreEventSource2) {
@@ -700,12 +896,6 @@ public class NotesView extends ViewPart implements IPartListener,
             if (DEBUG)
                 System.out.println("Job acitvated"); //$NON-NLS-1$
         }
-//        if (contributingEditor instanceof ISaveablePart3) {
-//            ((ISaveablePart3) contributingEditor)
-//                    .addPreSaveListener(saveNotesJob);
-//            if (DEBUG)
-//                System.out.println("Job acitvated"); //$NON-NLS-1$
-//        }
     }
 
     private void deactivateJob() {
@@ -713,37 +903,16 @@ public class NotesView extends ViewPart implements IPartListener,
             saveNotesReg.unregister();
             saveNotesReg = null;
         }
-//        if (saveNotesJob == null)
-//            return;
-//
-//        IWorkbookRef ref = (IWorkbookRef) contributingEditor
-//                .getAdapter(IWorkbookRef.class);
-//        if (ref != null) {
-//            ref.removeDirtyMarker(saveNotesJob);
-//            if (DEBUG)
-//                System.out.println("Job deactivated"); //$NON-NLS-1$
-//        }
-//
-//        if (contributingEditor instanceof ISaveablePart3) {
-//            ((ISaveablePart3) contributingEditor)
-//                    .removePreSaveListener(saveNotesJob);
-//            if (DEBUG)
-//                System.out.println("Job deactivated"); //$NON-NLS-1$
-//        }
-//        saveNotesJob = null;
     }
 
     private void updateTextActions() {
-        if (viewer == null || viewer.getControl().isDisposed())
+        if (viewer == null || viewer.getControl().isDisposed()
+                || textActions == null || textActions.isEmpty())
             return;
         TextViewer textViewer = viewer.getImplementation().getTextViewer();
         if (textViewer != null) {
-            IActionBars actionBars = getViewSite().getActionBars();
-            for (String id : textActionIds) {
-                IAction handler = actionBars.getGlobalActionHandler(id);
-                if (handler instanceof TextAction) {
-                    ((TextAction) handler).update(textViewer);
-                }
+            for (TextAction action : textActions) {
+                action.update(textViewer);
             }
         }
     }

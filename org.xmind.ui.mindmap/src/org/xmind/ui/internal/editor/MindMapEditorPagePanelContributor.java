@@ -61,7 +61,7 @@ import org.xmind.ui.util.MindMapUtils;
 
 public class MindMapEditorPagePanelContributor extends PanelContributor {
 
-    private static class CrumbItem implements IPropertyChangeListener {
+    protected static class CrumbItem implements IPropertyChangeListener {
 
         private static final int H_MARGIN = 8;
 
@@ -353,7 +353,7 @@ public class MindMapEditorPagePanelContributor extends PanelContributor {
 
     }
 
-    private static class CrumbsBar extends Composite {
+    protected static class CrumbsBar extends Composite {
 
         private static final int SPACING = 1;
 
@@ -367,7 +367,8 @@ public class MindMapEditorPagePanelContributor extends PanelContributor {
 
             public void paintControl(PaintEvent e) {
                 GC gc = e.gc;
-                if (!"carbon".equals(SWT.getPlatform())) { //$NON-NLS-1$
+                if (!"cocoa".equals(SWT.getPlatform()) //$NON-NLS-1$
+                        || !"carbon".equals(SWT.getPlatform())) { //$NON-NLS-1$
                     gc.setBackground(e.display
                             .getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
                     gc.fillRectangle(getBounds());

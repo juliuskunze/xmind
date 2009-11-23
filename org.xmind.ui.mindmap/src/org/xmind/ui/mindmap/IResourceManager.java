@@ -36,7 +36,11 @@ public interface IResourceManager {
 
     void saveUserStyleSheet();
 
+    IStyle getBlankTheme();
+
     IStyle getDefaultTheme();
+
+    void setDefaultTheme(String id);
 
     IStyleSheet getSystemThemeSheet();
 

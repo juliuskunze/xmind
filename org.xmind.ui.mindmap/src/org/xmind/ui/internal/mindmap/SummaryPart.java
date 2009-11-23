@@ -55,9 +55,11 @@ import org.xmind.ui.internal.figures.SummaryFigure;
 import org.xmind.ui.internal.graphicalpolicies.SummaryGraphicalPolicy;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.INodePart;
+import org.xmind.ui.mindmap.IRangeListener;
 import org.xmind.ui.mindmap.ISelectionFeedbackHelper;
 import org.xmind.ui.mindmap.ISummaryPart;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.mindmap.RangeEvent;
 import org.xmind.ui.util.MindMapUtils;
 
 public class SummaryPart extends MindMapPartBase implements FigureListener,
@@ -131,6 +133,8 @@ public class SummaryPart extends MindMapPartBase implements FigureListener,
     private INodePart node = null;
 
     private List<IBranchPart> enclosingBranches = null;
+
+    private List<IRangeListener> rangeListeners = null;
 
     private IPartListener parentListener = new IPartListener() {
 
@@ -290,6 +294,7 @@ public class SummaryPart extends MindMapPartBase implements FigureListener,
         String type = event.getType();
         if (Core.StartIndex.equals(type) || Core.EndIndex.equals(type)) {
             refresh();
+            fireRangeChanged();
 //            getOwnedBranch().getFigure().invalidate();
 //            getOwnedBranch().treeUpdate(true);
         } else if (Core.TopicRefId.equals(type)) {
@@ -359,6 +364,10 @@ public class SummaryPart extends MindMapPartBase implements FigureListener,
     public void addNotify() {
         setNode(findConclusionNode());
         super.addNotify();
+        for (IBranchPart enclosingBranch : getEnclosingBranches()) {
+            enclosingBranch.getFigure().revalidate();
+            enclosingBranch.update();
+        }
     }
 
     @Override
@@ -588,6 +597,26 @@ public class SummaryPart extends MindMapPartBase implements FigureListener,
                 return GEFUtils.getPositionCursor(orientation);
         }
         return super.getCursor(pos);
+    }
+
+    public void addRangeListener(IRangeListener listener) {
+        if (rangeListeners == null)
+            rangeListeners = new ArrayList<IRangeListener>();
+        rangeListeners.add(listener);
+    }
+
+    public void removeRangeListener(IRangeListener listener) {
+        if (rangeListeners != null)
+            rangeListeners.remove(listener);
+    }
+
+    protected void fireRangeChanged() {
+        if (rangeListeners == null)
+            return;
+        RangeEvent event = new RangeEvent(this);
+        for (Object o : rangeListeners.toArray()) {
+            ((IRangeListener) o).rangeChanged(event);
+        }
     }
 
 }

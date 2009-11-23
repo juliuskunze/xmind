@@ -53,5 +53,4 @@ public class DeleteSheetAction extends EditorAction {
         command.setLabel(CommandMessages.Command_DeleteSheet);
         saveAndRun(command);
     }
-
 }

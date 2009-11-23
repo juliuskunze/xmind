@@ -13,8 +13,6 @@
  *******************************************************************************/
 package org.xmind.core.internal.dom;
 
-import static org.xmind.core.internal.dom.DOMConstants.ATTR_STYLE_ID;
-
 import java.util.List;
 
 import org.w3c.dom.Element;
@@ -88,13 +86,15 @@ public class ParagraphImpl implements IParagraph {
     }
 
     public String getStyleId() {
-        return DOMUtils.getAttribute(implementation, ATTR_STYLE_ID);
+        return DOMUtils
+                .getAttribute(implementation, DOMConstants.ATTR_STYLE_ID);
     }
 
     public void setStyleId(String styleId) {
         WorkbookImpl workbook = owner.getRealizedWorkbook();
         WorkbookUtilsImpl.decreaseStyleRef(workbook, this);
-        DOMUtils.setAttribute(implementation, ATTR_STYLE_ID, styleId);
+        DOMUtils.setAttribute(implementation, DOMConstants.ATTR_STYLE_ID,
+                styleId);
         WorkbookUtilsImpl.increaseStyleRef(workbook, this);
     }
 

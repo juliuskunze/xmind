@@ -111,5 +111,4 @@ public class LegendItemPart extends MindMapPartBase implements ILegendItemPart {
         reqHandler.installEditPolicy(GEF.ROLE_MODIFIABLE,
                 MindMapUI.POLICY_LEGEND_ITEM_MODIFIABLE);
     }
-
 }

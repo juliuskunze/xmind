@@ -42,9 +42,6 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.ui.IEditorActionBarContributor;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorSite;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
@@ -175,6 +172,7 @@ public abstract class GraphicalEditor extends EditorPart implements
     }
 
     public void createPartControl(Composite parent) {
+        init();
         if (containerPresentation == null) {
             containerPresentation = createContainerPresentation();
             hookContainerPresentation();
@@ -351,14 +349,6 @@ public abstract class GraphicalEditor extends EditorPart implements
         return getCommandStack() != null && getCommandStack().isDirty();
     }
 
-    @Override
-    public void init(IEditorSite site, IEditorInput input)
-            throws PartInitException {
-        setSite(site);
-        setInput(input);
-        init();
-    }
-
     protected void init() {
         getSite().setSelectionProvider(createSelectionProvider());
         initCommandStack();
@@ -456,7 +446,8 @@ public abstract class GraphicalEditor extends EditorPart implements
     }
 
     public void handleCommandStackEvent(CommandStackEvent event) {
-        if ((event.getStatus() & GEF.CS_POST_MASK) != 0) {
+        if ((event.getStatus() & GEF.CS_POST_MASK) != 0
+                || event.getStatus() == GEF.CS_UPDATED) {
             Display.getCurrent().asyncExec(new Runnable() {
                 public void run() {
                     fireDirty();
@@ -568,7 +559,6 @@ public abstract class GraphicalEditor extends EditorPart implements
     }
 
     protected void handlePageChange(int newPageIndex) {
-        setFocus();
         IGraphicalEditorPage oldActivePage = getPage(activePageIndex);
         if (oldActivePage != null && oldActivePage.isActive()) {
             oldActivePage.setActive(false);

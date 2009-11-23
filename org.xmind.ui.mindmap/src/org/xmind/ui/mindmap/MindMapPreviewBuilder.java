@@ -170,6 +170,14 @@ public class MindMapPreviewBuilder {
                 imageExtractor.setProperty(key, properties.get(key));
             }
         }
+        Integer margin = (Integer) imageExtractor
+                .getProperty(IMindMapViewer.VIEWER_MARGIN);
+        if (margin == null) {
+            margin = Integer.valueOf(0);
+        }
+        imageExtractor.setMargin(margin);
+        imageExtractor.setProperty(IMindMapViewer.VIEWER_MARGIN, Integer
+                .valueOf(margin.intValue() + MindMapUI.SHEET_MARGIN));
         try {
             final ImageLoader saver = new ImageLoader();
             log("Start building"); //$NON-NLS-1$

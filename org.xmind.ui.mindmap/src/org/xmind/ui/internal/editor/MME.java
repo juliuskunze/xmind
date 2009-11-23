@@ -128,6 +128,7 @@ public class MME {
     /*
      * We don't depend on org.eclipse.ui.ide, so we have to use class loader.
      */
+    @SuppressWarnings("unchecked")
     private static IEditorInput createFileEditorInput(Bundle ide,
             IFileStore fileStore) throws CoreException {
         if (fileStore == null)
@@ -176,6 +177,7 @@ public class MME {
     /*
      * We don't depend on org.eclipse.ui.ide, so we have to use class loader.
      */
+    @SuppressWarnings("unchecked")
     private static IEditorInput createFileEditorInput(Bundle ide, IFile file)
             throws CoreException {
         try {
@@ -227,6 +229,7 @@ public class MME {
         return Platform.getAdapterManager().getAdapter(adaptable, adapterType);
     }
 
+    @SuppressWarnings("unchecked")
     private static IFileStore forceFileStore(Object adaptable) {
         if (!(isInplementation(adaptable, "org.eclipse.ui.IURIEditorInput"))) //$NON-NLS-1$
             return null;

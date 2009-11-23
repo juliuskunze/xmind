@@ -57,6 +57,7 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
         addRecentFileCountField();
         addAutoSaveGroup();
         addRememberLastSessionField();
+        addCheckUpdatesField();
     }
 
     private void addRecentFileCountField() {
@@ -69,6 +70,11 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
         addField(new BooleanFieldEditor(CathyPlugin.RESTORE_LAST_SESSION,
                 WorkbenchMessages.RestoreLastSession_label,
                 getFieldEditorParent()));
+    }
+
+    private void addCheckUpdatesField() {
+        addField(new BooleanFieldEditor(CathyPlugin.CHECK_UPDATES_ON_STARTUP,
+                WorkbenchMessages.CheckUpdates_label, getFieldEditorParent()));
     }
 
     private void addAutoSaveGroup() {

@@ -16,7 +16,6 @@ package org.xmind.ui.internal.actions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
@@ -25,12 +24,6 @@ import org.xmind.ui.internal.findreplace.FindReplaceDialog;
 public class FindReplaceAction extends Action implements IWorkbenchAction {
 
     private IWorkbenchWindow window;
-
-    public FindReplaceAction(IViewPart view) {
-        super();
-        this.window = view.getViewSite().getWorkbenchWindow();
-        setId(ActionFactory.FIND.getId());
-    }
 
     public FindReplaceAction(IWorkbenchWindow window) {
         super();

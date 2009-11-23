@@ -89,7 +89,7 @@ public abstract class PageAction extends Action implements IDisposable2 {
     }
 
     public boolean isDisposed() {
-        return page == null;
+        return page == null || page.isDisposed();
     }
 
 }

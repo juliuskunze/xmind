@@ -45,7 +45,7 @@ import org.xmind.ui.viewers.SWTUtils;
 public class ImageSizePropertySectionPart extends
         MindMapPropertySectionPartBase {
 
-    private class InplaceSizeInput {
+    protected class InplaceSizeInput {
 
         private Control hostControl;
 

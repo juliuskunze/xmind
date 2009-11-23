@@ -610,6 +610,8 @@ public class XMind2008Exporter {
             IWorkbook workbook) {
         Element richEle = DOMUtils.createElement(notesEle, "rich"); //$NON-NLS-1$
         for (IParagraph p : html.getParagraphs()) {
+//        for (IBaseParagraph p : html.getParagraphs()) {
+
             Element pEle = DOMUtils.createElement(richEle, "xhtml:p"); //$NON-NLS-1$
             saveStyle(pEle, p);
             for (ISpan span : p.getSpans()) {

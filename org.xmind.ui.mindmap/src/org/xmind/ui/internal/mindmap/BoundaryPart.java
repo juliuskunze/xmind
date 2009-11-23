@@ -49,11 +49,13 @@ import org.xmind.ui.internal.graphicalpolicies.BoundaryGraphicalPolicy;
 import org.xmind.ui.mindmap.IBoundaryPart;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.IConnectionPart;
+import org.xmind.ui.mindmap.IRangeListener;
 import org.xmind.ui.mindmap.IRelationshipPart;
 import org.xmind.ui.mindmap.ISelectionFeedbackHelper;
 import org.xmind.ui.mindmap.ISheetPart;
 import org.xmind.ui.mindmap.ITitleTextPart;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.mindmap.RangeEvent;
 
 public class BoundaryPart extends NodePart implements IBoundaryPart {
 
@@ -62,6 +64,8 @@ public class BoundaryPart extends NodePart implements IBoundaryPart {
     private ITitleTextPart title = null;
 
     private IAnchor anchor = null;
+
+    private List<IRangeListener> rangeListeners = null;
 
     private IPartListener parentListener = new IPartListener() {
 
@@ -206,6 +210,7 @@ public class BoundaryPart extends NodePart implements IBoundaryPart {
             if (branch != null) {
                 branch.treeUpdate(true);
             }
+            fireRangeChanged();
         } else if (Core.TitleText.equals(type)) {
             ((BoundaryFigure) getFigure()).setTitleVisible(hasTitle());
             refresh();
@@ -341,6 +346,26 @@ public class BoundaryPart extends NodePart implements IBoundaryPart {
             anchor = new DecoratedAnchor(getFigure());
         }
         return anchor;
+    }
+
+    public void addRangeListener(IRangeListener listener) {
+        if (rangeListeners == null)
+            rangeListeners = new ArrayList<IRangeListener>();
+        rangeListeners.add(listener);
+    }
+
+    public void removeRangeListener(IRangeListener listener) {
+        if (rangeListeners != null)
+            rangeListeners.remove(listener);
+    }
+
+    protected void fireRangeChanged() {
+        if (rangeListeners == null)
+            return;
+        RangeEvent event = new RangeEvent(this);
+        for (Object o : rangeListeners.toArray()) {
+            ((IRangeListener) o).rangeChanged(event);
+        }
     }
 
 }

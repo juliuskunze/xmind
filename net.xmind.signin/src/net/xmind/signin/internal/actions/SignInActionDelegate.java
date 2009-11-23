@@ -21,6 +21,7 @@ import net.xmind.signin.internal.Messages;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.ui.IActionDelegate2;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -98,22 +99,27 @@ public class SignInActionDelegate extends XMindNetActionDelegate implements
         boolean signedIn = XMindNetEntry.hasSignedIn();
         if (signedIn) {
             XMindNetEntry.signOut();
-            showWelcome();
+            signOutInBrowser();
         } else {
+            final Display display = Display.getCurrent();
             XMindNetEntry.signIn(new ISignInListener() {
                 public void postSignOut() {
                 }
 
-                public void postSignIn(Properties userInfo) {
+                public void postSignIn(final Properties userInfo) {
                     if (userInfo != null)
-                        showAccount(userInfo);
+                        display.asyncExec(new Runnable() {
+                            public void run() {
+                                showAccount(userInfo);
+                            }
+                        });
                 }
             }, false);
         }
     }
 
-    private void showWelcome() {
-        setURL("http://www.xmind.net/xmind/welcome/"); //$NON-NLS-1$
+    private void signOutInBrowser() {
+        setURL("http://www.xmind.net/xmind/go?r=http%3A%2F%2Fwww.xmind.net%2Fxmind%2Fsignout2%2F"); //$NON-NLS-1$
         gotoURL();
     }
 

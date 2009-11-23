@@ -83,7 +83,7 @@ public class ModifyThemeCommandBuilder extends CommandBuilder {
 
     private IStyle getAppliedTheme(ISheet sheet) {
         if (sourceTheme == null
-                || MindMapUI.getResourceManager().getDefaultTheme().equals(
+                || MindMapUI.getResourceManager().getBlankTheme().equals(
                         sourceTheme))
             return null;
 

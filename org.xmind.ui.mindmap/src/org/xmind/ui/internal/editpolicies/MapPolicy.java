@@ -141,5 +141,4 @@ public class MapPolicy extends MindMapPolicyBase {
         }
         return null;
     }
-
 }

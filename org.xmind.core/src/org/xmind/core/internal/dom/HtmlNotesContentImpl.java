@@ -32,7 +32,7 @@ import org.xmind.core.ITextSpan;
 import org.xmind.core.internal.ElementRegistry;
 import org.xmind.core.util.DOMUtils;
 
-public class HtmlNotesContentImpl extends NotesContentImplBase implements
+public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
         IHtmlNotesContent, INodeAdaptableProvider {
 
     public HtmlNotesContentImpl(Element implementation,
@@ -58,12 +58,9 @@ public class HtmlNotesContentImpl extends NotesContentImplBase implements
     public IHyperlinkSpan createHyperlinkSpan(String sourceHyper) {
         Element e = ((WorkbookImpl) getOwnedWorkbook()).getImplementation()
                 .createElement(TAG_A);
-
         HyperlinkSpanImpl hyperlink = new HyperlinkSpanImpl(e, this);
         hyperlink.setHref(sourceHyper);
-
         register(e, hyperlink);
-
         return hyperlink;
     }
 

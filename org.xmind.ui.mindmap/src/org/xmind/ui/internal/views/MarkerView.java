@@ -129,7 +129,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         }
     }
 
-    private class MarkerAction extends Action {
+    protected class MarkerAction extends Action {
 
         private IMarker marker;
 
@@ -183,7 +183,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         void dispose();
     }
 
-    private class MarkerGroupPart implements ISectionPart, ICoreEventListener {
+    protected class MarkerGroupPart implements ISectionPart, ICoreEventListener {
 
         private IMarkerGroup group;
 
@@ -338,7 +338,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
 
     }
 
-    private class MarkerSheetPart implements ISectionPart, ICoreEventListener {
+    protected class MarkerSheetPart implements ISectionPart, ICoreEventListener {
 
         private IMarkerSheet sheet;
 

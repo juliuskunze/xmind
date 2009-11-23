@@ -28,6 +28,8 @@ public interface IRichTextActionBarContributor {
 
     void fillMenu(IMenuManager menu);
 
+    void fillContextMenu(IMenuManager menu);
+
     void selectionChanged(ISelection selection, boolean enabled);
 
     void dispose();

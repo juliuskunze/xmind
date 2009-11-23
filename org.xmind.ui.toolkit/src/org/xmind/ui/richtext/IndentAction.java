@@ -31,6 +31,7 @@ public class IndentAction extends Action implements IRichTextAction {
     public IndentAction(IRichTextEditViewer viewer, String text,
             ImageDescriptor image, String tooltip) {
         super(text, image);
+        setId(TextActionConstants.INDENT_ID);
         this.viewer = viewer;
         setToolTipText(tooltip);
     }

@@ -38,6 +38,11 @@ public class Messages extends NLS {
     public static String initializingSpellingSettings;
     public static String notifyingSpellingVisitors;
 
+    public static String spellCheckProgress_Text;
+
+    public static String importDict_Text;
+    public static String importDictLabel_Text;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
     }

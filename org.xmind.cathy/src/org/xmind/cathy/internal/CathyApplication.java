@@ -43,7 +43,7 @@ public class CathyApplication implements IApplication {
 
         Display display = PlatformUI.createDisplay();
         try {
-            int returnCode = PlatformUI.createAndRunWorkbench(display, //advisor);
+            int returnCode = PlatformUI.createAndRunWorkbench(display,
                     new CathyWorkbenchAdvisor());
             if (returnCode == PlatformUI.RETURN_RESTART) {
                 return EXIT_RESTART;
@@ -57,30 +57,30 @@ public class CathyApplication implements IApplication {
     private void logArgs(String[] args) {
         Log opening = Log.get(Log.OPENING);
         for (String arg : args) {
-            File file = new File(arg);
-            if (file.isFile()) {
-                try {
-                    arg = file.getCanonicalPath();
-                } catch (Exception e) {
-                    arg = file.getAbsolutePath();
-                }
-                opening.append(arg);
-            } else if ("-p".equals(arg)) //$NON-NLS-1$
+            if ("-p".equals(arg)) {//$NON-NLS-1$
                 opening.append("-p"); //$NON-NLS-1$
+            } else {
+                File file = new File(arg);
+                if (file.isFile()) {
+                    try {
+                        arg = file.getCanonicalPath();
+                    } catch (Exception e) {
+                        arg = file.getAbsolutePath();
+                    }
+                    opening.append(arg);
+                }
+            }
         }
     }
 
-    private boolean shouldExitEarly() {
+    private boolean shouldExitEarly() throws Exception {
         Bundle bundle = CathyPlugin.getDefault().getBundle();
         try {
             Class clazz = bundle
                     .loadClass("org.xmind.cathy.internal.ApplicationValidator"); //$NON-NLS-1$
             if (IApplicationValidator.class.isAssignableFrom(clazz)) {
-                try {
-                    return ((IApplicationValidator) clazz.newInstance())
-                            .shouldApplicationExitEarly();
-                } catch (Exception e) {
-                }
+                return ((IApplicationValidator) clazz.newInstance())
+                        .shouldApplicationExitEarly();
             }
         } catch (ClassNotFoundException e) {
         }

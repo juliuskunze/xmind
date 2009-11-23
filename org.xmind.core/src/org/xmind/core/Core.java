@@ -860,6 +860,11 @@ public class Core {
      */
     public static final String WorkbookSave = "workbookSave"; //$NON-NLS-1$
 
+    /**
+     * Core event for the topic was modified.
+     */
+    public static final String ModifyTime = "modifyTime"; //$NON-NLS-1$
+
 //    /**
 //     * Core event type for adding one or more labels (value is 'labelAdd').
 //     * <dl>

@@ -176,7 +176,8 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
 
     private WorkbookImpl newWorkbook(String file) {
         Document impl = createDocument();
-        return new WorkbookImpl(impl, file);
+        WorkbookImpl workbook = new WorkbookImpl(impl, file);
+        return workbook;
     }
 
     /*

@@ -92,7 +92,7 @@ public class RotatableSizeableImageFigure extends SizeableImageFigure implements
         Point center = clientArea.getCenter();
         rotator.setOrigin(center.x, center.y);
         PrecisionRectangle r = rotator.r(new PrecisionRectangle(clientArea),
-                imageSize.width, -1);
+                imageSize.width, -1).translate(-center.x, -center.y);
 //        Rectangle realClientArea = new Rectangle();
 //        realClientArea.setSize(realClientSize);
 //        Dimension delta = realClientSize.getScaled(0.5);

@@ -264,14 +264,12 @@ public class HtmlNotesContentBuilder {
 
     private IImageSpan createImage(StyleRange style) {
         Image image = document.findImage(style.start);
+//        Image image = (Image) style.data;
         if (image != null) {
             String url = adapter.getImageUrl(image);
             if (url != null) {
                 IImageSpan img = result.createImageSpan(url);
                 return img;
-//                p.addSpan(img);
-//                Element img = DOMUtils.createElement(p, DOMConstants.TAG_IMG);
-//                img.setAttribute(DOMConstants.ATTR_SRC, url);
             }
         }
         return null;
@@ -297,18 +295,36 @@ public class HtmlNotesContentBuilder {
         if (lineStyle == null)
             return;
 
-        String align = toModelAlign(lineStyle.alignment);
-        if (align == null)
-            return;
-
         Map<String, String> contents = new HashMap<String, String>();
-        contents.put(Styles.TextAlign, align);
+        String align = toModelAlign(lineStyle.alignment);
+//        if (align == null)
+//            return;
+        if (align != null)
+            contents.put(Styles.TextAlign, align);
+//        boolean bullet = lineStyle.bullet;
+//        if (bullet)
+//            contents.put(Styles.TextBullet, Styles.TEXT_STYLE_BULLET);
+//        boolean number = lineStyle.number;
+//        if (number)
+//            contents.put(Styles.TextBullet, Styles.TEXT_STYLE_NUMBER);
+        String bulletStyle = getBulletStyle(lineStyle.bulletStyle);
+        if (bulletStyle != null)
+            contents.put(Styles.TextBullet, bulletStyle);
+
         String styleId = getNewStyleId(contents, IStyle.PARAGRAPH);
         if (styleId == null)
             return;
 
         p.setStyleId(styleId);
 //        p.setAttribute(DOMConstants.ATTR_STYLE_ID, styleId);
+    }
+
+    private String getBulletStyle(String bulletStyle) {
+        if (LineStyle.BULLET.equals(bulletStyle))
+            return Styles.TEXT_STYLE_BULLET;
+        else if (LineStyle.NUMBER.equals(bulletStyle))
+            return Styles.TEXT_STYLE_NUMBER;
+        return null;
     }
 
     private void applyStyleToSpan(ISpan span, StyleRange style) {

@@ -48,8 +48,10 @@ public class IconTipContributorManager extends RegistryReader {
     }
 
     private void lazyLoad() {
-        readRegistry(Platform.getExtensionRegistry(), MindMapUI.PLUGIN_ID,
-                RegistryConstants.EXT_ICONTIPS);
+        if (Platform.isRunning()) {
+            readRegistry(Platform.getExtensionRegistry(), MindMapUI.PLUGIN_ID,
+                    RegistryConstants.EXT_ICONTIPS);
+        }
     }
 
     protected boolean readElement(IConfigurationElement element) {

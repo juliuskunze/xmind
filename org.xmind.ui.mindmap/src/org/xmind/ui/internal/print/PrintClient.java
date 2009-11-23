@@ -233,13 +233,14 @@ public class PrintClient {
             providers = new ArrayList<MindMapExportContentProvider>();
         }
         providers.add(provider);
+        provider.setProperty(IMindMapViewer.VIEWER_MARGIN, Math.max(
+                pageBounds.width, pageBounds.height));
         provider.setMargin(VIEWER_MARGIN * dpi.x
                 / UnitConvertor.getScreenDpi().x);
         provider.setProperty(IMindMapViewer.VIEWER_GRADIENT, Boolean.FALSE);
         provider.setResizeStrategy(ResizeConstants.RESIZE_STRETCH,
                 needRotate ? pageClientArea.height : pageClientArea.width,
                 needRotate ? pageClientArea.width : pageClientArea.height);
-
         try {
             Rectangle exportArea = provider.getExportArea();
             double scale = provider.getScale();
@@ -286,8 +287,6 @@ public class PrintClient {
         } catch (Throwable e) {
             Logger.log(e, "Error occurred while painting mind map: " //$NON-NLS-1$
                     + source.getCentralTopic().getTitleText());
-//        } finally {
-//            provider.dispose();
         }
     }
 

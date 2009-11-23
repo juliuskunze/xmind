@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.jface.action.ExternalActionManager;
 import org.eclipse.jface.action.IAction;
@@ -135,12 +134,12 @@ public class AlignmentGroup extends ContributionItem {
         }
     }
 
-    public void fill(Menu menu, int index) {
-        for (IAction action : actions) {
-            new ActionContributionItem(action).fill(menu, index++);
-        }
-    }
-
+//    public void fill(Menu menu, int index) {
+//        for (IAction action : actions) {
+//            new ActionContributionItem(action).fill(menu, index++);
+//        }
+//    }
+//
     public void fill(ToolBar parent, int index) {
         if (widget == null && parent != null) {
             int flags = SWT.DROP_DOWN;
@@ -150,6 +149,7 @@ public class AlignmentGroup extends ContributionItem {
             } else {
                 ti = new ToolItem(parent, flags);
             }
+
             ti.setData(this);
             ti.addListener(SWT.Selection, getToolItemListener());
             ti.addListener(SWT.Dispose, getToolItemListener());
@@ -162,6 +162,7 @@ public class AlignmentGroup extends ContributionItem {
             if (currentAction != null)
                 currentAction
                         .addPropertyChangeListener(getCurrentActionListener());
+//            }
         }
     }
 

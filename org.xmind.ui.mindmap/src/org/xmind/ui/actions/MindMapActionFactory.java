@@ -346,6 +346,19 @@ public class MindMapActionFactory {
         }
     };
 
+    public static final ActionFactory DELETE_OTHER_SHEET = new ActionFactory(
+            "org.xmind.ui.deleteOtherSheet") { //$NON-NLS-1$
+        public IWorkbenchAction create(IWorkbenchWindow window) {
+            RetargetAction action = new RetargetAction(getId(),
+                    MindMapMessages.Delete_OtherSheets_text);
+            action.setToolTipText(MindMapMessages.Delete_OtherSheets_toolTip);
+//            action
+//                    .setActionDefinitionId("org.xmind.ui.command.deleteOtherSheet"); //$NON-NLS-1$
+            return action;
+        }
+
+    };
+
     public static final ActionFactory MODIFY_HYPERLINK = new ActionFactory(
             "org.xmind.ui.modifyHyperlink") { //$NON-NLS-1$
         public IWorkbenchAction create(IWorkbenchWindow window) {
@@ -487,6 +500,42 @@ public class MindMapActionFactory {
             return action;
         }
     };
+
+//    public static final ActionFactory SORT_ASALPHA = new ActionFactory(
+//            "org.xmind.ui.sortAsAlpha") { //$NON-NLS-1$
+//        public IWorkbenchAction create(IWorkbenchWindow window) {
+//            RetargetAction action = new RetargetAction(getId(),
+//                    MindMapMessages.SortAsAlpha_text);
+//            action.setToolTipText(MindMapMessages.SortAsAlpha_toolTip);
+////            action.setActionDefinitionId("org.xmind.ui.command.sortAsAlpha"); //$NON-NLS-1$
+//            action.setImageDescriptor(MindMapUI.getImages().get(
+//                    IMindMapImages.ALAPHA, true));
+//            action.setDisabledImageDescriptor(MindMapUI.getImages().get(
+//                    IMindMapImages.ALAPHA, false));
+//            return action;
+//        }
+//    };
+//
+//    public static final ActionFactory SORT_ASPRIORITY = new ActionFactory(
+//            "org.xmind.ui.sortAsPriority") { //$NON-NLS-1$
+//        public IWorkbenchAction create(IWorkbenchWindow window) {
+//            RetargetAction action = new RetargetAction(getId(),
+//                    MindMapMessages.SortAsPriority_text);
+//            action.setToolTipText(MindMapMessages.SortAsPriority_toolTip);
+////            action.setActionDefinitionId("org.xmind.ui.command.sortAsPriority"); //$NON-NLS-1$
+//            return action;
+//        }
+//    };
+//
+//    public static final ActionFactory SORT_ASDATE = new ActionFactory(
+//            "org.xmind.ui.sortAsModifyDate") { //$NON-NLS-1$
+//        public IWorkbenchAction create(IWorkbenchWindow window) {
+//            RetargetAction action = new RetargetAction(getId(),
+//                    MindMapMessages.SortAsModifyDate_text);
+//            action.setToolTipText(MindMapMessages.SortAsModifyDate_toolTip);
+//            return action;
+//        }
+//    };
 
     public static final ActionFactory EDIT_TITLE = new ActionFactory(
             "org.xmind.ui.editTitle") { //$NON-NLS-1$

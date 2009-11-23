@@ -78,6 +78,10 @@ public class LabelEditTool extends MindMapEditToolBase {
 
     protected ContentProposalAdapter contentProposalAdapter = null;
 
+    public ILabelPart getLabelPart() {
+        return label;
+    }
+
     public void setSource(IGraphicalEditPart source) {
         Assert.isTrue(source instanceof ITopicPart);
         label = ((ITopicPart) source).getOwnerBranch().getLabel();
@@ -161,10 +165,11 @@ public class LabelEditTool extends MindMapEditToolBase {
 
     protected void handleSingleRequest(Request request) {
         String type = request.getType();
-        if (MindMapUI.REQ_EDIT_LABEL.equals(type))
-            return;
-
-        super.handleSingleRequest(request);
+        if (MindMapUI.REQ_EDIT_LABEL.equals(type)) {
+            handleEditRequest(request);
+        } else {
+            super.handleSingleRequest(request);
+        }
     }
 
 }

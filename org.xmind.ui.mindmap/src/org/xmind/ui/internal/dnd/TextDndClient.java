@@ -100,9 +100,9 @@ public class TextDndClient implements IDndClient {
         ArrayList<ITopic> topics = new ArrayList<ITopic>(lines.length);
         HashMap<ITopic, Integer> map = new HashMap<ITopic, Integer>();
         ITopic lastTopic = null;
+        int topLevel = -1;
         for (String line : lines) {
             ITopic topic = wb.createTopic();
-            topic.setTitleText(line);
 
             int level = 0;
             for (int i = 0; i < line.length(); i++) {
@@ -116,7 +116,8 @@ public class TextDndClient implements IDndClient {
             String title = line.substring(level);
             topic.setTitleText(title);
 
-            if (level == 0 || lastTopic == null) {
+            if (topLevel < 0 || level <= topLevel || lastTopic == null) {
+                topLevel = level;
                 topics.add(topic);
             } else {
                 int lastLevel = map.get(lastTopic);

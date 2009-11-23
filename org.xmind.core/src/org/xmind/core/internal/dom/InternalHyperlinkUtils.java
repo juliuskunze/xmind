@@ -16,15 +16,27 @@ package org.xmind.core.internal.dom;
 import java.io.IOException;
 
 import org.xmind.core.IFileEntry;
+import org.xmind.core.IIdentifiable;
+import org.xmind.core.IManifest;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.IWorkbookComponentRefManager;
 import org.xmind.core.util.HyperlinkUtils;
 
 public class InternalHyperlinkUtils {
 
-    public static void activateHyperlink(IWorkbook workbook, String url) {
-        if (workbook != null && HyperlinkUtils.isAttachmentURL(url)) {
-            String attPath = HyperlinkUtils.toAttachmentPath(url);
-            increaseFileEntryRef(workbook, attPath);
+    public static void activateHyperlink(IWorkbook workbook, String url,
+            Object source) {
+        if (workbook != null) {
+            if (HyperlinkUtils.isAttachmentURL(url)) {
+                String attPath = HyperlinkUtils.toAttachmentPath(url);
+                increaseFileEntryRef(workbook, attPath);
+            } else if (HyperlinkUtils.isInternalURL(url)) {
+                if (source instanceof IIdentifiable) {
+                    String sourceId = ((IIdentifiable) source).getId();
+                    String id = HyperlinkUtils.toElementID(url);
+                    increateElementRef(workbook, id, sourceId);
+                }
+            }
         }
     }
 
@@ -42,10 +54,30 @@ public class InternalHyperlinkUtils {
         }
     }
 
-    public static void deactivateHyperlink(IWorkbook workbook, String url) {
-        if (workbook != null && HyperlinkUtils.isAttachmentURL(url)) {
-            String attPath = HyperlinkUtils.toAttachmentPath(url);
-            decreaseFileEntryRef(workbook, attPath);
+    public static void increateElementRef(IWorkbook workbook, String elementId,
+            String sourceId) {
+        if (workbook != null && elementId != null) {
+            IWorkbookComponentRefManager counter = (IWorkbookComponentRefManager) workbook
+                    .getAdapter(IWorkbookComponentRefManager.class);
+            if (counter != null) {
+                counter.increaseRef(sourceId, elementId);
+            }
+        }
+    }
+
+    public static void deactivateHyperlink(IWorkbook workbook, String url,
+            Object source) {
+        if (workbook != null) {
+            if (HyperlinkUtils.isAttachmentURL(url)) {
+                String attPath = HyperlinkUtils.toAttachmentPath(url);
+                decreaseFileEntryRef(workbook, attPath);
+            } else if (HyperlinkUtils.isInternalURL(url)) {
+                if (source instanceof IIdentifiable) {
+                    String sourceId = ((IIdentifiable) source).getId();
+                    String elementId = HyperlinkUtils.toElementID(url);
+                    decreaseElementRef(workbook, elementId, sourceId);
+                }
+            }
         }
     }
 
@@ -59,6 +91,17 @@ public class InternalHyperlinkUtils {
                         sub.decreaseReference();
                     }
                 }
+            }
+        }
+    }
+
+    public static void decreaseElementRef(IWorkbook workbook, String elementId,
+            String sourceId) {
+        if (workbook != null && elementId != null) {
+            IWorkbookComponentRefManager counter = (IWorkbookComponentRefManager) workbook
+                    .getAdapter(IWorkbookComponentRefManager.class);
+            if (counter != null) {
+                counter.decreaseRef(sourceId, elementId);
             }
         }
     }
@@ -78,7 +121,8 @@ public class InternalHyperlinkUtils {
         IFileEntry sourceEntry = sourceWorkbook.getManifest().getFileEntry(
                 sourcePath);
         if (sourceEntry != null) {
-            IFileEntry targetEntry = targetWorkbook.getManifest()
+            IManifest manifest = targetWorkbook.getManifest();
+            IFileEntry targetEntry = manifest
                     .cloneEntryAsAttachment(sourceEntry);
             if (targetEntry != null) {
                 return targetEntry.getPath();
@@ -86,5 +130,4 @@ public class InternalHyperlinkUtils {
         }
         return sourcePath;
     }
-
 }

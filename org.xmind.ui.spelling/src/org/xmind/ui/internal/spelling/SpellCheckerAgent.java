@@ -27,7 +27,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.swt.widgets.Display;
 import org.xmind.core.Core;
 import org.xmind.core.util.FileUtils;
 
@@ -67,15 +66,14 @@ public class SpellCheckerAgent {
         visitors = new ArrayList<ISpellCheckerVisitor>();
         visitors.add(visitor);
 
-        final Display preservedDisplay = Display.getCurrent();
         new Job(Messages.loadingSpellChecker) {
             protected IStatus run(IProgressMonitor monitor) {
-                return loadSpellChecker(monitor, preservedDisplay);
+                return loadSpellChecker(monitor);
             }
         }.schedule();
     }
 
-    private IStatus loadSpellChecker(IProgressMonitor monitor, Display display) {
+    private IStatus loadSpellChecker(IProgressMonitor monitor) {
         monitor.beginTask(null, 5);
 
         monitor.subTask(Messages.creatingSpellCheckerInstance);
@@ -96,27 +94,20 @@ public class SpellCheckerAgent {
 
         this.spellChecker = spellChecker;
         monitor.subTask(Messages.notifyingSpellingVisitors);
-        notifyVisitors(display);
+        notifyVisitors();
         monitor.done();
 
         return new Status(IStatus.OK, SpellingPlugin.PLUGIN_ID,
                 "Finish loading spell checker"); //$NON-NLS-1$
     }
 
-    private void notifyVisitors(Display display) {
+    private void notifyVisitors() {
         if (visitors == null)
             return;
 
-        for (int i = 0; i < visitors.size(); i++) {
-            final ISpellCheckerVisitor visitor = visitors.get(i);
+        for (ISpellCheckerVisitor visitor : visitors) {
             if (visitor != null) {
-                if (!display.isDisposed()) {
-                    display.asyncExec(new Runnable() {
-                        public void run() {
-                            visitor.handleWith(spellChecker);
-                        }
-                    });
-                }
+                visitor.handleWith(spellChecker);
             }
         }
         visitors = null;

@@ -38,7 +38,6 @@ import org.xmind.gef.event.MouseDragEvent;
 import org.xmind.gef.event.MouseEvent;
 import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IPart;
-import org.xmind.gef.tool.ITool;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -138,7 +137,8 @@ public class TopicTitleEditTool extends TitleEditTool {
             public void run() {
                 if (widthHandle == null || getTargetViewer() == null
                         || getTargetViewer().getControl() == null
-                        || getTargetViewer().getControl().isDisposed())
+                        || getTargetViewer().getControl().isDisposed()
+                        || control.isDisposed())
                     return;
 
                 Rectangle bounds = new Rectangle(control.getBounds());
@@ -161,13 +161,13 @@ public class TopicTitleEditTool extends TitleEditTool {
         return handle;
     }
 
-    private boolean isHandleContains(IFigure handle, Point p) {
+    private boolean handleContains(IFigure handle, Point p) {
         return handle.containsPoint(getScaled(p));
     }
 
     protected boolean shouldFinishOnMouseDown(MouseEvent me) {
         if (widthHandle != null) {
-            if (isHandleContains(widthHandle, me.cursorLocation)) {
+            if (handleContains(widthHandle, me.cursorLocation)) {
                 mouseDownOnHandle = true;
                 return false;
             }
@@ -176,6 +176,16 @@ public class TopicTitleEditTool extends TitleEditTool {
         return super.shouldFinishOnMouseDown(me);
     }
 
+    @Override
+    protected boolean openEditor(FloatingTextEditor editor, IDocument document) {
+        boolean opened = super.openEditor(editor, document);
+        mouseDownOnHandle = false;
+        draggingHandle = false;
+        widthChanged = false;
+        return opened;
+    }
+
+    @Override
     protected void hookEditor(FloatingTextEditor editor) {
         super.hookEditor(editor);
         width = ((ITopicPart) getSource()).getTopic().getTitleWidth();
@@ -184,6 +194,7 @@ public class TopicTitleEditTool extends TitleEditTool {
         }
     }
 
+    @Override
     protected void unhookEditor(FloatingTextEditor editor) {
         super.unhookEditor(editor);
         if (widthHandle != null) {
@@ -194,18 +205,11 @@ public class TopicTitleEditTool extends TitleEditTool {
         }
     }
 
-    protected void onActivated(ITool prevTool) {
+    @Override
+    protected void closeEditor(FloatingTextEditor editor, boolean finish) {
+        super.closeEditor(editor, finish);
         mouseDownOnHandle = false;
         draggingHandle = false;
-        widthChanged = false;
-        super.onActivated(prevTool);
-    }
-
-    protected void onDeactivated(ITool nextTool) {
-        mouseDownOnHandle = false;
-        draggingHandle = false;
-        widthChanged = false;
-        super.onDeactivated(nextTool);
     }
 
     protected boolean handleMouseDrag(MouseDragEvent me) {
@@ -265,17 +269,15 @@ public class TopicTitleEditTool extends TitleEditTool {
     public IFigure findToolTip(IPart source, Point position) {
         if (!mouseDownOnHandle
                 && !draggingHandle
-                && (widthHandle != null && isHandleContains(widthHandle,
-                        position))) {
-            return new Label(
-                    MindMapMessages.ModifyWrapWidth_toolTip0);
+                && (widthHandle != null && handleContains(widthHandle, position))) {
+            return new Label(MindMapMessages.ModifyWrapWidth_toolTip0);
         }
         return super.getToolTip(source, position);
     }
 
     public Cursor getCurrentCursor(Point pos, IPart host) {
         if (mouseDownOnHandle || draggingHandle
-                || (widthHandle != null && isHandleContains(widthHandle, pos))) {
+                || (widthHandle != null && handleContains(widthHandle, pos))) {
             return Cursors.SIZEWE;
         }
         return super.getCurrentCursor(pos, host);

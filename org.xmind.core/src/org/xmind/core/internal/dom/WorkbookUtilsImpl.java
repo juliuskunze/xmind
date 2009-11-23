@@ -234,17 +234,20 @@ public class WorkbookUtilsImpl {
         String styleId = styledEle.getAttribute(styleTag);
         IStyle sourceStyle = sourceWorkbook.getStyleSheet().findStyle(styleId);
         String sourceStyleId = sourceStyle == null ? null : sourceStyle.getId();
+        String targetStyleId;
         if (sourceStyle != null) {
-            cloneStyle((StyleSheetImpl) targetWorkbook.getStyleSheet(),
-                    (StyleImpl) sourceStyle, (StyleSheetImpl) sourceWorkbook
-                            .getStyleSheet(), data);
+            IStyle targetStyle = importStyle((StyleSheetImpl) targetWorkbook
+                    .getStyleSheet(), (StyleImpl) sourceStyle,
+                    (StyleSheetImpl) sourceWorkbook.getStyleSheet(), data);
+            targetStyleId = targetStyle == null ? null : targetStyle.getId();
+        } else {
+            IStyle targetStyle = (IStyle) data.get(sourceStyle);
+            targetStyleId = targetStyle == null ? null : targetStyle.getId();
         }
-        IStyle targetStyle = (IStyle) data.get(sourceStyle);
-        String targetStyleId = targetStyle == null ? null : targetStyle.getId();
         if (targetStyleId == null) {
             styledEle.removeAttribute(styleTag);
         } else {
-            styledEle.setAttribute(styleTag, targetStyle.getId());
+            styledEle.setAttribute(styleTag, targetStyleId);
         }
         data.put(sourceStyleId, targetStyleId);
 
@@ -337,44 +340,96 @@ public class WorkbookUtilsImpl {
 //        return map;
 //    }
 
-    private static String cloneUrl(WorkbookImpl targetWorkbook,
-            String sourceUrl, IWorkbook sourceWorkbook, CloneData data) {
-        String clonedUrl = data.getString(sourceUrl);
-        if (clonedUrl != null || data.isCloned(sourceUrl))
-            return clonedUrl;
+//    private static String cloneUrl(WorkbookImpl targetWorkbook,
+//            String sourceUrl, IWorkbook sourceWorkbook, CloneData data) {
+//        String clonedUrl = data.getString(sourceUrl);
+//        if (clonedUrl != null || data.isCloned(sourceUrl))
+//            return clonedUrl;
+//
+//        if (HyperlinkUtils.isAttachmentURL(sourceUrl)) {
+//            try {
+//                clonedUrl = InternalHyperlinkUtils.importAttachmentURL(
+//                        sourceUrl, sourceWorkbook, targetWorkbook);
+//            } catch (IOException e) {
+//            }
+//        } else if (HyperlinkUtils.isInternalURL(sourceUrl)) {
+//            String sourceId = HyperlinkUtils.toElementID(sourceUrl);
+//
+//        } else {
+//            clonedUrl = sourceUrl;
+//        }
+//
+//        data.put(sourceUrl, clonedUrl);
+//        return clonedUrl;
+//    }
 
-        if (HyperlinkUtils.isAttachmentURL(sourceUrl)) {
-            try {
-                clonedUrl = InternalHyperlinkUtils.importAttachmentURL(
-                        sourceUrl, sourceWorkbook, targetWorkbook);
-            } catch (IOException e) {
+    private static void replaceHyperlink(WorkbookImpl targetWorkbook,
+            final Element ele, final String attr, IWorkbook sourceWorkbook,
+            final CloneData data) {
+        final String sourceUrl = DOMUtils.getAttribute(ele, attr);
+        if (sourceUrl != null) {
+            String clonedUrl = data.getString(sourceUrl);
+            boolean async = false;
+            if (clonedUrl == null && !data.isCloned(sourceUrl)) {
+                if (HyperlinkUtils.isAttachmentURL(sourceUrl)) {
+                    try {
+                        clonedUrl = InternalHyperlinkUtils.importAttachmentURL(
+                                sourceUrl, sourceWorkbook, targetWorkbook);
+                    } catch (IOException e) {
+                    }
+                } else if (HyperlinkUtils.isInternalURL(sourceUrl)) {
+                    String sourceId = HyperlinkUtils.toElementID(sourceUrl);
+                    if (!data.isCloned(sourceId)) {
+                        async = true;
+                        data.addCloneDataListener(sourceId,
+                                new ICloneDataListener() {
+                                    public void objectCloned(Object source,
+                                            Object cloned) {
+                                        String targetUrl = cloned == null ? null
+                                                : HyperlinkUtils
+                                                        .toInternalURL((String) cloned);
+                                        data.put(sourceUrl, targetUrl);
+                                        DOMUtils.setAttribute(ele, attr,
+                                                targetUrl);
+                                        data.removeCloneDataListener(source,
+                                                this);
+                                    }
+                                });
+                    }
+                    String targetId = data.getString(sourceId);
+                    clonedUrl = HyperlinkUtils.toInternalURL(targetId);
+                } else {
+                    clonedUrl = sourceUrl;
+                }
+                if (!async)
+                    data.put(sourceUrl, clonedUrl);
             }
-        } else {
-            clonedUrl = sourceUrl;
+            if (!async)
+                DOMUtils.setAttribute(ele, attr, clonedUrl);
         }
-
-        data.put(sourceUrl, clonedUrl);
-        return clonedUrl;
     }
 
     private static void replaceTopicHyperlink(WorkbookImpl targetWorkbook,
             Element topicEle, IWorkbook sourceWorkbook, CloneData data) {
-        String oldUrl = DOMUtils.getAttribute(topicEle, ATTR_HREF);
-        if (oldUrl != null) {
-            String newUrl = cloneUrl(targetWorkbook, oldUrl, sourceWorkbook,
-                    data);
-            DOMUtils.setAttribute(topicEle, ATTR_HREF, newUrl);
-        }
+        replaceHyperlink(targetWorkbook, topicEle, ATTR_HREF, sourceWorkbook,
+                data);
+//        String oldUrl = DOMUtils.getAttribute(topicEle, ATTR_HREF);
+//        if (oldUrl != null) {
+//            String newUrl = cloneUrl(targetWorkbook, oldUrl, sourceWorkbook,
+//                    data);
+//            DOMUtils.setAttribute(topicEle, ATTR_HREF, newUrl);
+//        }
     }
 
     private static void replaceImageUrl(WorkbookImpl targetWorkbook,
             Element imgEle, IWorkbook sourceWorkbook, CloneData data) {
-        String oldUrl = DOMUtils.getAttribute(imgEle, ATTR_SRC);
-        if (oldUrl != null) {
-            String newUrl = cloneUrl(targetWorkbook, oldUrl, sourceWorkbook,
-                    data);
-            DOMUtils.setAttribute(imgEle, ATTR_SRC, newUrl);
-        }
+        replaceHyperlink(targetWorkbook, imgEle, ATTR_SRC, sourceWorkbook, data);
+//        String oldUrl = DOMUtils.getAttribute(imgEle, ATTR_SRC);
+//        if (oldUrl != null) {
+//            String newUrl = cloneUrl(targetWorkbook, oldUrl, sourceWorkbook,
+//                    data);
+//            DOMUtils.setAttribute(imgEle, ATTR_SRC, newUrl);
+//        }
     }
 
     private static void replaceMarkerRef(WorkbookImpl targetWorkbook,
@@ -790,9 +845,9 @@ public class WorkbookUtilsImpl {
         if (targetURL != null)
             return targetURL;
 
-        if (sourceManifest == null || targetManifest == null)
+        if (sourceManifest == null || targetManifest == null) {
             return (String) cache(data, sourceURL, sourceURL);
-
+        }
         IFileEntry sourceEntry = sourceManifest.getFileEntry(HyperlinkUtils
                 .toAttachmentPath(sourceURL));
         if (sourceEntry == null)
@@ -800,8 +855,12 @@ public class WorkbookUtilsImpl {
 
         String newPath = Core.getIdFactory().createId()
                 + FileUtils.getExtension(sourceEntry.getPath());
-        IFileEntry targetEntry = targetManifest.createFileEntry(targetManifest
-                .makeAttachmentPath(newPath), sourceEntry.getMediaType());
+        String attachmentPath = targetManifest.makeAttachmentPath(newPath);
+        String mediaType = sourceEntry.getMediaType();
+        IFileEntry targetEntry = targetManifest.createFileEntry(attachmentPath,
+                mediaType);
+        targetEntry.increaseReference();
+
         InputStream is = sourceEntry.getInputStream();
         OutputStream os = targetEntry.getOutputStream();
         if (is != null && os != null) {

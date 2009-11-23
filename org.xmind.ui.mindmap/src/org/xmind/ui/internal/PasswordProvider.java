@@ -47,7 +47,6 @@ public class PasswordProvider implements IEncryptionHandler {
         protected void configureShell(Shell shell) {
             super.configureShell(shell);
             shell.setText(MindMapMessages.EncryptDialog_title);
-//            shell.setText("Password");
         }
 
         @Override
@@ -61,17 +60,8 @@ public class PasswordProvider implements IEncryptionHandler {
 
             Label messageLabel = new Label(composite, SWT.WRAP);
             messageLabel.setText(MindMapMessages.EncryteDialog_label_message);
-//            messageLabel
-//                    .setText("This file seems to be protected. Enter the correct password below to open it.");
             messageLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                     false));
-
-//            Label label = new Label(composite, SWT.NONE);
-//            label.setLayoutData(new GridData());
-//            ((GridData) label.getLayoutData()).heightHint = 5;
-//
-//            Label label_text = new Label(composite, SWT.NONE);
-//            label_text.setText("Input password here:");
 
             Text passwordInput = new Text(composite, SWT.BORDER | SWT.SINGLE
                     | SWT.PASSWORD);

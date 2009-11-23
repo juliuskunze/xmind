@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.xmind.ui.richtext;
 
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.text.DefaultTextDoubleClickStrategy;
 import org.eclipse.jface.text.Document;
@@ -68,6 +71,8 @@ public class RichTextEditViewer implements IRichTextEditViewer {
     private IRichTextActionBarContributor contributor;
 
     private ToolBarManager toolBarManager = null;
+
+    private MenuManager contextMenu = null;
 
     public RichTextEditViewer(Composite parent) {
         this(parent, DEFAULT_CONTROL_STYLE, null);
@@ -161,22 +166,41 @@ public class RichTextEditViewer implements IRichTextEditViewer {
     }
 
     private void initTextViewer(final TextViewer textViewer) {
-
         textViewer
                 .addPostSelectionChangedListener(new ISelectionChangedListener() {
                     public void selectionChanged(SelectionChangedEvent event) {
                         updateToolBar(event.getSelection());
                     }
                 });
+
+        Control control = textViewer.getTextWidget();
+        createContentPopupMenu(control);
+
         textViewer.setTextDoubleClickStrategy(
                 new DefaultTextDoubleClickStrategy(),
                 IDocument.DEFAULT_CONTENT_TYPE);
+
         //((StyledText) textViewer.getControl()).setLineSpacing(3);
         textViewer.setUndoManager(new RichTextViewerUndoManager(25));
         textViewer.activatePlugins();
 
         addHyperlinkListener(textViewer);
+    }
 
+    private void createContentPopupMenu(Control control) {
+        contextMenu = new MenuManager();
+        contextMenu.setRemoveAllWhenShown(true);
+        contextMenu.addMenuListener(new IMenuListener() {
+            public void menuAboutToShow(IMenuManager manager) {
+                fillContextMenu(manager);
+            }
+        });
+        control.setMenu(contextMenu.createContextMenu(control));
+    }
+
+    private void fillContextMenu(IMenuManager menu) {
+        if (contributor != null)
+            contributor.fillContextMenu(menu);
     }
 
     private void addHyperlinkListener(TextViewer viewer) {
@@ -193,6 +217,10 @@ public class RichTextEditViewer implements IRichTextEditViewer {
     protected void handleControlDispose(DisposeEvent e) {
         if (contributor != null) {
             contributor.dispose();
+        }
+        if (contextMenu != null) {
+            contextMenu.dispose();
+            contextMenu = null;
         }
         if (toolBarManager != null) {
             toolBarManager.dispose();
@@ -377,79 +405,5 @@ public class RichTextEditViewer implements IRichTextEditViewer {
         this.editable = editable;
         refresh();
     }
-
-//  private LabelContributionItem titleItem = null;
-//  
-//  private IBaseLabelProvider titleLabelProvider;
-//  
-//  private ILabelProviderListener labelProviderListener = null;
-
-//    public IBaseLabelProvider getTitleLabelProvider() {
-//        return titleLabelProvider;
-//    }
-//
-//    public void setTitleLabelProvider(IBaseLabelProvider labelProvider) {
-//        IBaseLabelProvider oldProvider = this.titleLabelProvider;
-//        // If it hasn't changed, do nothing.
-//        // This also ensures that the provider is not disposed
-//        // if set a second time.
-//        if (labelProvider == oldProvider) {
-//            return;
-//        }
-//        if (oldProvider != null && labelProviderListener != null) {
-//            oldProvider.removeListener(this.labelProviderListener);
-//        }
-//        this.titleLabelProvider = labelProvider;
-//        if (labelProvider != null) {
-//            if (this.labelProviderListener == null) {
-//                this.labelProviderListener = new ILabelProviderListener() {
-//                    public void labelProviderChanged(
-//                            LabelProviderChangedEvent event) {
-//                        RichTextEditViewer.this
-//                                .handleLabelProviderChanged(event);
-//                    }
-//                };
-//            }
-//            labelProvider.addListener(this.labelProviderListener);
-//        }
-//
-//        if (titleItem != null) {
-//            titleItem.setLabelProvider(labelProvider);
-//        }
-//
-//        refresh();
-//
-//        // Dispose old provider after refresh, so that items never refer to
-//        // stale images.
-//        if (oldProvider != null) {
-//            oldProvider.dispose();
-//        }
-//    }
-//
-//    /**
-//     * Handles a label provider changed event.
-//     * <p>
-//     * The <code>ContentViewer</code> implementation of this method calls
-//     * <code>labelProviderChanged()</code> to cause a complete refresh of the
-//     * viewer. Subclasses may reimplement or extend.
-//     * </p>
-//     * 
-//     * @param event
-//     *            the change event
-//     */
-//    protected void handleLabelProviderChanged(LabelProviderChangedEvent event) {
-//        labelProviderChanged();
-//    }
-//
-//    /**
-//     * Notifies that the label provider has changed.
-//     * <p>
-//     * The <code>ContentViewer</code> implementation of this method calls
-//     * <code>refresh()</code>. Subclasses may reimplement or extend.
-//     * </p>
-//     */
-//    protected void labelProviderChanged() {
-//        refresh();
-//    }
 
 }

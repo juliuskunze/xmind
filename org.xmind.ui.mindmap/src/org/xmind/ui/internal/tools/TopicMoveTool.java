@@ -316,7 +316,9 @@ public class TopicMoveTool extends DummyMoveTool implements IStatusListener {
         IBranchPart targetParentBranch = this.targetParent;
         ITopicPart targetParent = targetParentBranch == null ? null
                 : targetParentBranch.getTopicPart();
-        Point position = getRelativePosition();
+        boolean relative = isRelative();
+        Point position = relative ? getRelativePosition()
+                : getAbsolutePosition();
         boolean copy = isCopyMove();
         int index = -1;
         boolean free = isFreeMove();
@@ -350,7 +352,8 @@ public class TopicMoveTool extends DummyMoveTool implements IStatusListener {
         fillTargets(request, getTargetViewer(), false);
         request.setPrimaryTarget(getSourceTopic());
         request.setParameter(GEF.PARAM_POSITION, position);
-        request.setParameter(GEF.PARAM_POSITION_RELATIVE, Boolean.TRUE);
+        request.setParameter(GEF.PARAM_POSITION_RELATIVE, Boolean
+                .valueOf(relative));
         request.setParameter(GEF.PARAM_PARENT, targetParent);
         request.setParameter(GEF.PARAM_INDEX, Integer.valueOf(index));
         request.setParameter(MindMapUI.PARAM_COPY, Boolean.valueOf(copy));
@@ -413,10 +416,18 @@ public class TopicMoveTool extends DummyMoveTool implements IStatusListener {
         return null;
     }
 
+    private boolean isRelative() {
+        return targetParent != null;
+    }
+
     private Point getRelativePosition() {
         Dimension off = getCursorPosition()
                 .getDifference(getStartingPosition());
         return new Point(off.width, off.height);
+    }
+
+    private Point getAbsolutePosition() {
+        return getCursorPosition();
     }
 
     public void statusChanged(StatusEvent event) {

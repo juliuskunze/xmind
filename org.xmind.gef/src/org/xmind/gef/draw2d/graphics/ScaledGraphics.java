@@ -29,6 +29,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.graphics.Path;
 import org.eclipse.swt.graphics.PathData;
 import org.eclipse.swt.graphics.Pattern;
@@ -39,7 +40,9 @@ import org.eclipse.swt.widgets.Display;
 public class ScaledGraphics extends Graphics {
 
     private static class PatternKey {
+
         GradientPattern pattern;
+
         double zoom;
 
         PatternKey() {
@@ -53,7 +56,7 @@ public class ScaledGraphics extends Graphics {
         public boolean equals(Object obj) {
             if (obj == this)
                 return true;
-            if (obj == null || !(obj instanceof GradientPattern))
+            if (obj == null || !(obj instanceof PatternKey))
                 return false;
             PatternKey that = (PatternKey) obj;
             return this.pattern.equals(that.pattern) && this.zoom == that.zoom;
@@ -109,7 +112,7 @@ public class ScaledGraphics extends Graphics {
         private double appliedX;
         private double appliedY;
         private Font font;
-        private int lineWidth;
+        private float lineWidth;
         private double zoom;
 
         private int[] lineDash;
@@ -140,7 +143,7 @@ public class ScaledGraphics extends Graphics {
          *            the line width
          */
         protected State(double zoom, double x, double y, Font font,
-                int lineWidth, int[] lineDash, Pattern background,
+                float lineWidth, int[] lineDash, Pattern background,
                 Pattern foreground) {
             this.zoom = zoom;
             this.appliedX = x;
@@ -167,7 +170,7 @@ public class ScaledGraphics extends Graphics {
          *            the line width
          */
         protected void setValues(double zoom, double x, double y, Font font,
-                int lineWidth, int[] lineDash, Pattern background,
+                float lineWidth, int[] lineDash, Pattern background,
                 Pattern foreground) {
             this.zoom = zoom;
             this.appliedX = x;
@@ -198,7 +201,7 @@ public class ScaledGraphics extends Graphics {
     private Graphics graphics;
     private FontHeightCache localCache = new FontHeightCache();
     private Font localFont;
-    private int localLineWidth;
+    private float localLineWidth;
     private List<State> stack = new ArrayList<State>();
     private int stackPointer = 0;
     private FontHeightCache targetCache = new FontHeightCache();
@@ -481,6 +484,24 @@ public class ScaledGraphics extends Graphics {
         return data;
     }
 
+    private Pattern getCachedPattern(PatternKey key) {
+        GradientPattern pattern = patternCache.get(key);
+        if (pattern != null)
+            return pattern;
+
+        key = new PatternKey(key.pattern, key.zoom);
+        pattern = createZoomedPattern(key.pattern);
+        patternCache.put(key, pattern);
+        return pattern;
+    }
+
+    private GradientPattern createZoomedPattern(GradientPattern p1) {
+        return new GradientPattern(p1.getDevice(), (float) (zoom * p1.x1),
+                (float) (zoom * p1.y1), (float) (zoom * p1.x2),
+                (float) (zoom * p1.y2), p1.color1, p1.alpha1, p1.color2,
+                p1.alpha2);
+    }
+
     /** @see Graphics#getClip(Rectangle) */
     public Rectangle getClip(Rectangle rect) {
         graphics.getClip(rect);
@@ -550,6 +571,10 @@ public class ScaledGraphics extends Graphics {
 
     /** @see Graphics#getLineWidth() */
     public int getLineWidth() {
+        return (int) getLocalLineWidth();
+    }
+
+    public float getLineWidthFloat() {
         return getLocalLineWidth();
     }
 
@@ -557,7 +582,7 @@ public class ScaledGraphics extends Graphics {
         return localFont;
     }
 
-    protected final int getLocalLineWidth() {
+    protected final float getLocalLineWidth() {
         return localLineWidth;
     }
 
@@ -717,6 +742,10 @@ public class ScaledGraphics extends Graphics {
 
     /** @see Graphics#setLineWidth(int) */
     public void setLineWidth(int width) {
+        setLineWidthFloat(width);
+    }
+
+    public void setLineWidthFloat(float width) {
         setLocalLineWidth(width);
     }
 
@@ -725,9 +754,9 @@ public class ScaledGraphics extends Graphics {
         graphics.setFont(zoomFont(f));
     }
 
-    private void setLocalLineWidth(int width) {
+    private void setLocalLineWidth(float width) {
         localLineWidth = width;
-        graphics.setLineWidth(zoomLineWidth(width));
+        graphics.setLineWidth((int) zoomLineWidth(width));
     }
 
     void setScale(double value) {
@@ -735,7 +764,7 @@ public class ScaledGraphics extends Graphics {
             return;
         this.zoom = value;
         graphics.setFont(zoomFont(getLocalFont()));
-        graphics.setLineWidth(zoomLineWidth(getLocalLineWidth()));
+        graphics.setLineWidth((int) zoomLineWidth(getLocalLineWidth()));
         if (localDash != null)
             graphics.setLineDash(zoomDash(localDash));
         if (localBackground != null)
@@ -808,8 +837,8 @@ public class ScaledGraphics extends Graphics {
         return (int) (zoom * height);
     }
 
-    protected int zoomLineWidth(int w) {
-        return (int) (zoom * w);
+    protected float zoomLineWidth(float w) {
+        return (float) (zoom * w);
     }
 
     private int[] zoomPointList(int[] points) {
@@ -1030,23 +1059,8 @@ public class ScaledGraphics extends Graphics {
     protected Pattern zoomPattern(Pattern pattern) {
         if (!(pattern instanceof GradientPattern))
             return pattern;
-        patternKey.setValues((GradientPattern) pattern, getAbsoluteScale());
+        patternKey.setValues((GradientPattern) pattern, zoom);
         return getCachedPattern(patternKey);
-    }
-
-    private Pattern getCachedPattern(PatternKey key) {
-        GradientPattern pattern = patternCache.get(key);
-        if (pattern != null)
-            return pattern;
-        pattern = createZoomedPattern(key.pattern);
-        patternCache.put(key, pattern);
-        return pattern;
-    }
-
-    private GradientPattern createZoomedPattern(GradientPattern p1) {
-        return new GradientPattern(p1.getDevice(), (float) zoom * p1.x1,
-                (float) zoom * p1.y1, (float) zoom * p1.x2, (float) zoom
-                        * p1.y2, p1.color1, p1.alpha1, p1.color2, p1.alpha2);
     }
 
     /**
@@ -1056,14 +1070,6 @@ public class ScaledGraphics extends Graphics {
     public void rotate(float degrees) {
         graphics.rotate(degrees);
     }
-
-//    /**
-//     * @see org.eclipse.gmf.runtime.draw2d.ui.internal.graphics.ScaledGraphics#getGraphics()
-//     */
-//    @Override
-//    public Graphics getGraphics() {
-//        return super.getGraphics();
-//    }
 
     public void translate(float dx, float dy) {
         graphics.translate(dx, dy);
@@ -1081,6 +1087,41 @@ public class ScaledGraphics extends Graphics {
         if (p != path) {
             lastClipPath = p;
         }
+    }
+
+    // ==========================================================
+    //    Since 3.5
+    // ==========================================================
+
+    public boolean getAdvanced() {
+        return graphics.getAdvanced();
+    }
+
+    public LineAttributes getLineAttributes() {
+        LineAttributes a = graphics.getLineAttributes();
+        a.width = getLocalLineWidth();
+        return a;
+    }
+
+    public float getLineMiterLimit() {
+        return graphics.getLineMiterLimit();
+    }
+
+    public void setAdvanced(boolean advanced) {
+        graphics.setAdvanced(advanced);
+    }
+
+    public void setLineMiterLimit(float miterLimit) {
+        graphics.setLineMiterLimit(miterLimit);
+    }
+
+    public void setLineAttributes(LineAttributes attributes) {
+        graphics.setLineAttributes(attributes);
+        setLocalLineWidth(attributes.width);
+    }
+
+    public void setLineDash(float[] value) {
+        graphics.setLineDash(value);
     }
 
 }

@@ -37,7 +37,7 @@ import org.xmind.ui.util.UITimer;
 public class AnimationService extends GraphicalViewerService implements
         IAnimationService {
 
-    private static final boolean DEBUG = false;
+    private static boolean DEBUG = false;
 
     private class LayoutCapturer implements LayoutListener {
 

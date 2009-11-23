@@ -19,8 +19,6 @@ import java.util.List;
 
 public interface IFileEntry extends IAdaptable {
 
-//    IManifest getOwnedManifest();
-
     String getPath();
 
     String getMediaType();

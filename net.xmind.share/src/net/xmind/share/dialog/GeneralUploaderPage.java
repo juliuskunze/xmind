@@ -13,11 +13,7 @@ package net.xmind.share.dialog;
 
 import net.xmind.share.Info;
 import net.xmind.share.Messages;
-import net.xmind.signin.IVerifyListener;
-import net.xmind.signin.XMindNetEntry;
 
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
@@ -25,19 +21,15 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
-public class GeneralUploaderPage extends UploaderPage implements
-        IVerifyListener {
+public class GeneralUploaderPage extends UploaderPage {
 
     private InfoField titleField;
 
     private InfoField descriptionField;
 
     private RadioInfoFieldGroup privacyGroup;
-
-    private Button privateButton;
 
     public GeneralUploaderPage() {
         setTitle(Messages.UploaderDialog_GeneralPage_title);
@@ -79,11 +71,8 @@ public class GeneralUploaderPage extends UploaderPage implements
                 Messages.UploaderDialog_Public_label);
         privacyGroup.addOption(Info.PublicView,
                 Messages.UploaderDialog_PublicView_label);
-        if (isPrivateVisible()) {
-            privateButton = privacyGroup.addOption(Info.Private,
-                    Messages.UploaderDialog_Private_label);
-            privateButton.setEnabled(isPrivateEnabled());
-        }
+        privacyGroup.addOption(Info.Private,
+                Messages.UploaderDialog_Private_label);
 
         Object value = getPrivacyValue();
         setPrivacyValue(value);
@@ -97,21 +86,6 @@ public class GeneralUploaderPage extends UploaderPage implements
                 });
 
         setControl(composite);
-    }
-
-    private boolean isPrivateVisible() {
-        return Platform.getBundle("org.xmind.meggy") != null; //$NON-NLS-1$
-    }
-
-    private boolean isPrivateEnabled() {
-        IStatus validity = XMindNetEntry.getValidity();
-        if (validity != null) {
-            int code = validity.getCode();
-            if (code == VALID)
-                return true;
-        }
-        XMindNetEntry.verify(this);
-        return false;
     }
 
     private void setPrivacyValue(Object value) {
@@ -132,24 +106,6 @@ public class GeneralUploaderPage extends UploaderPage implements
     public void setFocus() {
         if (descriptionField != null && !descriptionField.isDisposed()) {
             descriptionField.setFocus();
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * net.xmind.signin.IVerifyListener#notifyValidity(org.eclipse.core.runtime
-     * .IStatus)
-     */
-    public void notifyValidity(IStatus validity) {
-        if (validity != null) {
-            int code = validity.getCode();
-            if (code == VALID) {
-                if (privateButton != null && !privateButton.isDisposed()) {
-                    privateButton.setEnabled(true);
-                }
-            }
         }
     }
 

@@ -78,6 +78,7 @@ public class MindManagerImporter extends MindMapImporter implements
     private class NotesImporter {
 
         IParagraph currentParagraph = null;
+//        IBaseParagraph currentParagraph = null;
 
         Stack<IStyle> styleStack = new Stack<IStyle>();
 
@@ -156,6 +157,8 @@ public class MindManagerImporter extends MindMapImporter implements
 
         private void addParagraph() {
             currentParagraph = content.createParagraph();
+//            currentParagraph = content
+//                    .createParagraph(IBaseParagraph.GENERAL_PARAGRAPH);
             content.addParagraph(currentParagraph);
             registerStyle(currentParagraph, Styles.TextAlign);
         }

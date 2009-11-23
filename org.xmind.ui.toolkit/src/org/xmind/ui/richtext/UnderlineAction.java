@@ -32,6 +32,7 @@ public class UnderlineAction extends Action implements IRichTextAction {
             ImageDescriptor image, String tooltip) {
         super(text, AS_CHECK_BOX);
         this.viewer = viewer;
+        setId(TextActionConstants.UNDERLINE_ID);
         setImageDescriptor(image);
         setToolTipText(tooltip);
     }

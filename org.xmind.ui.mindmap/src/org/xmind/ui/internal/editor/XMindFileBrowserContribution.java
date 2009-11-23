@@ -35,7 +35,7 @@ import org.xmind.ui.util.Logger;
 public class XMindFileBrowserContribution implements
         IBrowserViewerContribution, IBrowserViewerContribution2 {
 
-    private static class XMindFileListener implements PropertyChangeListener,
+    protected static class XMindFileListener implements PropertyChangeListener,
             IPropertyChangingListener {
 
         private IBrowserViewer viewer;

@@ -15,6 +15,7 @@ package org.xmind.ui.texteditor;
 
 import org.eclipse.jface.fieldassist.IControlContentAdapter;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Control;
 
 public interface IControlContentAdapter2 extends IControlContentAdapter {
@@ -31,6 +32,11 @@ public interface IControlContentAdapter2 extends IControlContentAdapter {
 
     int getLineEndOffset(Control control, int lineIndex);
 
+    Rectangle getTextBounds(Control control, int start, int length);
+
     String getControlContents(Control control, int start, int length);
+
+    void replaceControlContents(Control control, int start, int length,
+            String newText);
 
 }

@@ -55,6 +55,7 @@ import org.xmind.core.IResourceRef;
 import org.xmind.core.ISheet;
 import org.xmind.core.ISummary;
 import org.xmind.core.ITopic;
+import org.xmind.core.IWorkbookComponentRefManager;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegistration;
 import org.xmind.core.event.ICoreEventSource;
@@ -107,13 +108,15 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
 
     private WorkbookStyleRefCounter styleRefCounter = null;
 
+    private WorkbookComponentRefCounter elementRefCounter = null;
+
     private String password = null;
 
     /**
      * @param implementation
      */
     public WorkbookImpl(Document implementation) {
-        this(implementation, null);
+        this(implementation, null, true);
     }
 
     /**
@@ -121,10 +124,16 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
      *            The file name of the workbook.
      */
     public WorkbookImpl(Document implementation, String targetPath) {
+        this(implementation, targetPath, true);
+    }
+
+    public WorkbookImpl(Document implementation, String targetPath,
+            boolean needInit) {
         this.implementation = implementation;
         this.saver = new WorkbookSaver(this, targetPath);
         this.tempSaver = new TempSaver(this);
-        init();
+        if (needInit)
+            init();
     }
 
     private void init() {
@@ -186,6 +195,9 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
             return getMarkerRefCounter();
         if (adapter == IStyleRefCounter.class)
             return getStyleRefCounter();
+        if (adapter == IWorkbookComponentRefManager.class)
+            return getElementRefCounter();
+
         return super.getAdapter(adapter);
     }
 
@@ -212,7 +224,6 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     public ISheet createSheet() {
         SheetImpl sheet = new SheetImpl(
                 implementation.createElement(TAG_SHEET), this);
-
         getElementRegistry().register(sheet);
         return sheet;
     }
@@ -474,6 +485,13 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
         return styleRefCounter;
     }
 
+    protected WorkbookComponentRefCounter getElementRefCounter() {
+        if (elementRefCounter == null) {
+            elementRefCounter = new WorkbookComponentRefCounter(this);
+        }
+        return elementRefCounter;
+    }
+
     public ICloneData clone(Collection<? extends Object> sources) {
         return WorkbookUtilsImpl.clone(this, sources, null);
     }
@@ -728,6 +746,11 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
 
     public String getFile() {
         return saver == null ? null : saver.getFile();
+    }
+
+    public void setFile(String file) {
+        if (saver != null)
+            saver.setFile(file);
     }
 
     public String getTempLocation() {

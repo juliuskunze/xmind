@@ -31,18 +31,18 @@ public class ImageSpanImpl extends SpanImplBase implements IImageSpan {
 
     public void setSource(String source) {
         WorkbookImpl workbook = getOwner().getRealizedWorkbook();
-        InternalHyperlinkUtils.deactivateHyperlink(workbook, getSource());
+        InternalHyperlinkUtils.deactivateHyperlink(workbook, getSource(), this);
         DOMUtils.setAttribute((Element) getImplementation(), ATTR_SRC, source);
-        InternalHyperlinkUtils.activateHyperlink(workbook, getSource());
+        InternalHyperlinkUtils.activateHyperlink(workbook, getSource(), this);
     }
 
     protected void addNotify(WorkbookImpl workbook) {
         super.addNotify(workbook);
-        InternalHyperlinkUtils.activateHyperlink(workbook, getSource());
+        InternalHyperlinkUtils.activateHyperlink(workbook, getSource(), this);
     }
 
     protected void removeNotify(WorkbookImpl workbook) {
-        InternalHyperlinkUtils.deactivateHyperlink(workbook, getSource());
+        InternalHyperlinkUtils.deactivateHyperlink(workbook, getSource(), this);
         super.removeNotify(workbook);
     }
 }

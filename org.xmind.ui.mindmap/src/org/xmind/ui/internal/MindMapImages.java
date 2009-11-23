@@ -24,6 +24,8 @@ import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.program.Program;
 import org.eclipse.ui.internal.util.BundleUtility;
+import org.xmind.core.IBoundary;
+import org.xmind.core.IRelationship;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
@@ -112,6 +114,10 @@ public class MindMapImages implements IMindMapImages {
             return get(SHEET, enabled);
         } else if (element instanceof IWorkbook) {
             return get(WORKBOOK, enabled);
+        } else if (element instanceof IBoundary) {
+            return get(BOUNDARY, enabled);
+        } else if (element instanceof IRelationship) {
+            return get(RELATIONSHIP, enabled);
         }
         return null;
     }

@@ -29,6 +29,7 @@ import java.util.Set;
 import org.xmind.core.Core;
 import org.xmind.core.CoreException;
 import org.xmind.core.IAdaptable;
+import org.xmind.core.IManifest;
 import org.xmind.core.io.ByteArrayStorage;
 import org.xmind.core.io.IInputSource;
 import org.xmind.core.io.IOutputTarget;
@@ -95,6 +96,8 @@ public class TempSaver {
     }
 
     private void saveAll() throws IOException, CoreException {
+        if (storage == null)
+            storage = createStorage();
         IOutputTarget target = storage.getOutputTarget();
 
         saveDOM(workbook.getMeta(), target, META_XML);
@@ -113,8 +116,12 @@ public class TempSaver {
         if (oldStorage != null) {
             saveStorage(oldStorage, target);
         }
+        IManifest manifest = workbook.getManifest();
+        saveDOM(manifest, target, MANIFEST_XML);
+    }
 
-        saveDOM(workbook.getManifest(), target, MANIFEST_XML);
+    private IStorage createStorage() {
+        return null;
     }
 
     private void saveStorage(IStorage sourceStorage, IOutputTarget target)

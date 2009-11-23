@@ -16,10 +16,17 @@ package org.xmind.ui.internal.editor;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
-import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.graphics.Point;
+import org.eclipse.jface.text.TextSelection;
+import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IViewPart;
+import org.xmind.core.INotes;
+import org.xmind.core.INotesContent;
+import org.xmind.core.IPlainNotesContent;
 import org.xmind.core.ITitled;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
@@ -32,37 +39,71 @@ import org.xmind.gef.tool.ITool;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.internal.findreplace.AbstractFindReplaceOperationProvider;
+import org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider;
+import org.xmind.ui.internal.tools.LabelEditTool;
 import org.xmind.ui.mindmap.IBoundaryPart;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.ILabelPart;
 import org.xmind.ui.mindmap.IRelationshipPart;
+import org.xmind.ui.mindmap.ISheetPart;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.texteditor.FloatingTextEditTool;
 import org.xmind.ui.texteditor.FloatingTextEditor;
+import org.xmind.ui.tools.TitleEditTool;
+import org.xmind.ui.util.MindMapUtils;
 
 /**
  * @author Frank Shaka
  */
-/*
- * TODO Use the new request-policy mechanism
- */
 public class MindMapFindReplaceOperationProvider extends
         AbstractFindReplaceOperationProvider {
 
-    private class SearchData {
-        IPart host;
-        int offset;
+    private static final int PROP_TITLE = 1;
+
+    private static final int PROP_LABEL = 2;
+
+    private static final int PROP_NOTES = 3;
+
+    private class SearchResult {
+
+        final String toFind;
+
+        IPart part = null;
+
+        int offset = -1;
+
+        int propertyId = 0;
 
         /**
          * @param host
          * @param offset
-         * @param hostText
+         * @param isInNotes
          */
-        public SearchData(IPart host, int offset) {
+        public SearchResult(String toFind) {
             super();
-            this.host = host;
-            this.offset = offset;
+            this.toFind = toFind;
+        }
+
+        public boolean found() {
+            if (part == null)
+                return false;
+            if (part instanceof ITopicPart) {
+                if (propertyId == PROP_NOTES)
+                    return true;
+            }
+            return offset >= 0;
+        }
+
+        public boolean sameLocation(SearchResult that) {
+            if (that == null)
+                return false;
+            if (this.part != that.part)
+                return false;
+            if (this.propertyId == PROP_NOTES)
+                return that.propertyId == PROP_NOTES;
+            return this.propertyId == that.propertyId
+                    && this.offset == that.offset;
         }
 
         /**
@@ -72,25 +113,21 @@ public class MindMapFindReplaceOperationProvider extends
         public boolean equals(Object obj) {
             if (obj == this)
                 return true;
-            if (!(obj instanceof SearchData))
+            if (!(obj instanceof SearchResult))
                 return false;
-            SearchData sd = (SearchData) obj;
-            return sd.host == this.host && sd.offset == this.offset;
+            SearchResult that = (SearchResult) obj;
+            return (this.toFind == that.toFind || (this.toFind != null && this.toFind
+                    .equals(that.toFind)))
+                    && sameLocation(that);
         }
 
     }
 
-    /**
-     * Parameter for global use (initial value is {@link #PARAM_FORWARD} and
-     * {@link #PARAM_CURRENT_MAP})
-     */
-    private static int parameter = PARAM_FORWARD | PARAM_CURRENT_MAP;
-
     private IGraphicalEditor editor;
 
-    private String cachedToFind = null;
+    private SearchResult result = null;
 
-    private IPart tempPart = null;
+    private boolean findingInNotes = false;
 
     /**
      * 
@@ -100,20 +137,6 @@ public class MindMapFindReplaceOperationProvider extends
     }
 
     protected IPart getCurrentPart() {
-//        IGraphicalViewer viewer = getActiveViewer();
-//        if (viewer != null) {
-//            IPart focusedPart = viewer.getFocusedPart();
-//            if (focusedPart != null && focusedPart instanceof ITopicPart)
-//                return focusedPart;
-//            List<IPart> selection = viewer.getSelectionSupport()
-//                    .getPartSelection();
-//            if (!selection.isEmpty()) {
-//                IPart part = selection.get(0);
-//                if (part instanceof ITopicPart)
-//                    return part;
-//            }
-//        }
-
         IGraphicalViewer viewer = getActiveViewer();
         if (viewer != null) {
             IPart part = viewer.getFocusedPart();
@@ -149,26 +172,6 @@ public class MindMapFindReplaceOperationProvider extends
     }
 
     /**
-     * @param toFind
-     */
-    protected void saveCache(String toFind) {
-        if ((cachedToFind == null && cachedToFind != toFind)
-                || (cachedToFind != null && !cachedToFind.equals(toFind))) {
-            cachedToFind = toFind;
-        }
-    }
-
-    /**
-     * @see cn.brainy.ui.mindmap.dialogs.IFindReplaceOperationProvider#find(java.lang.String)
-     */
-    public boolean find(String toFind) {
-        saveCache(toFind);
-        if (cachedToFind == null)
-            return false;
-        return super.find(cachedToFind);
-    }
-
-    /**
      * @see cn.brainy.ui.mindmap.dialogs.AbstractFindReplaceOperationProvider#findAll(java.lang.String)
      */
     @Override
@@ -178,39 +181,215 @@ public class MindMapFindReplaceOperationProvider extends
         return !result.isEmpty();
     }
 
+    @Override
+    public boolean find(String toFind) {
+        if (findingInNotes)
+            return false;
+        return super.find(toFind);
+    }
+
     /**
      * @see cn.brainy.ui.mindmap.dialogs.AbstractFindReplaceOperationProvider#findNext(java.lang.String)
      */
     @Override
     protected boolean findNext(String toFind) {
-        int offset = getCurrentOffset(tempPart);
-        if (offset < 0)
-            return false;
-        IPart part = getCurrentPart();
-        if (tempPart instanceof ILabelPart)
-            part = tempPart;
-
-        SearchData current = new SearchData(part, offset);
-        SearchData next = findNext(toFind, current);
-        if (next == null)
-            return false;
-
-        startEditing(next.host);
-        selectText(next, toFind.length());
-
-        tempPart = next.host;
-        return true;
+        SearchResult start = getStartingLocation();
+        SearchResult newResult = new SearchResult(toFind);
+        findNext(newResult, start);
+        result = newResult;
+        return result.found() && select(newResult);
     }
 
-    /**
-     * @see cn.brainy.ui.mindmap.dialogs.IFindReplaceOperationProvider#replace(java.lang.String,
-     *      java.lang.String)
-     */
-    public boolean replace(String toFind, String toReplaceWith) {
-        saveCache(toFind);
-        if (cachedToFind == null)
-            return false;
-        return super.replace(toFind, toReplaceWith);
+    private void findNext(SearchResult result, SearchResult start) {
+        findNextInProperty(result, start);
+        SearchResult next = start;
+        while (!result.found()) {
+            next = getNextProperty(next);
+            if (next == null
+                    || (next.part == start.part && next.propertyId == start.propertyId))
+                break;
+            findNextInProperty(result, next);
+        }
+    }
+
+    private SearchResult getNextProperty(SearchResult start) {
+        SearchResult result = new SearchResult(start.toFind);
+        if (start.part instanceof ITopicPart) {
+            if (start.propertyId == PROP_TITLE) {
+                result.part = start.part;
+                result.propertyId = PROP_LABEL;
+            } else if (start.propertyId == PROP_LABEL) {
+                result.part = start.part;
+                result.propertyId = PROP_NOTES;
+            } else {
+                result.part = getNextPart(start.part);
+                result.propertyId = PROP_TITLE;
+            }
+        } else {
+            result.part = getNextPart(start.part);
+            result.propertyId = PROP_TITLE;
+        }
+        result.offset = getStartingOffset(result);
+        return result;
+    }
+
+    private void findNextInProperty(SearchResult result, SearchResult start) {
+        String text = getPropertyText(start.part, start.propertyId);
+        if (text != null) {
+            int offset = indexOf(text, result.toFind, start.offset);
+            if (offset >= 0) {
+                result.part = start.part;
+                result.propertyId = start.propertyId;
+                if (start.propertyId != PROP_NOTES) {
+                    result.offset = offset;
+                }
+            }
+        }
+    }
+
+    private boolean select(SearchResult result) {
+        if (result.found()) {
+            int pageIndex = getPageIndex(result.part);
+            if (pageIndex >= 0) {
+                if (pageIndex != editor.getActivePage())
+                    editor.setActivePage(pageIndex);
+                IGraphicalEditorPage page = editor.getActivePageInstance();
+                if (page != null) {
+                    EditDomain domain = page.getEditDomain();
+                    IGraphicalViewer viewer = page.getViewer();
+                    if (result.propertyId == PROP_TITLE) {
+                        editAndSelect(result, domain, viewer, GEF.REQ_EDIT);
+                    } else if (result.propertyId == PROP_LABEL) {
+                        editAndSelect(result, domain, viewer,
+                                MindMapUI.REQ_EDIT_LABEL);
+                    } else if (result.propertyId == PROP_NOTES) {
+                        return findInNotes(result, page);
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean findInNotes(final SearchResult result,
+            IGraphicalEditorPage page) {
+        page.getEditDomain().handleRequest(GEF.REQ_CANCEL, page.getViewer());
+        page.getViewer()
+                .setSelection(
+                        new StructuredSelection(MindMapUtils
+                                .getRealModel(result.part)), true);
+        final IViewPart[] notesView = new IViewPart[1];
+        SafeRunner.run(new SafeRunnable() {
+            public void run() throws Exception {
+                notesView[0] = editor.getSite().getPage().showView(
+                        MindMapUI.VIEW_NOTES);
+            }
+        });
+        if (notesView[0] != null) {
+            ITextViewer textViewer = (ITextViewer) notesView[0]
+                    .getAdapter(ITextViewer.class);
+            if (textViewer != null) {
+                textViewer.setSelectedRange(isForward() ? 0 : textViewer
+                        .getDocument().getLength(), 0);
+            }
+            IFindReplaceOperationProvider frProvider = (IFindReplaceOperationProvider) notesView[0]
+                    .getAdapter(IFindReplaceOperationProvider.class);
+            if (frProvider != null) {
+                findingInNotes = true;
+                try {
+                    return frProvider.find(result.toFind);
+                } finally {
+                    findingInNotes = false;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void editAndSelect(final SearchResult result,
+            final EditDomain domain, final IGraphicalViewer viewer,
+            final String requestType) {
+        Display.getCurrent().asyncExec(new Runnable() {
+            public void run() {
+                Request request = new Request(requestType).setPrimaryTarget(
+                        result.part).setDomain(domain).setViewer(
+                        getActiveViewer()).setParameter(GEF.PARAM_FOCUS,
+                        Boolean.FALSE)
+                        .setParameter(
+                                GEF.PARAM_TEXT_SELECTION,
+                                new TextSelection(result.offset, result.toFind
+                                        .length()));
+                domain.getDefaultTool().handleRequest(request);
+            }
+        });
+    }
+
+    private SearchResult getStartingLocation() {
+        SearchResult start = new SearchResult(result == null ? null
+                : result.toFind);
+        start.part = getCurrentPart();
+        ITool tool = editor.getActivePageInstance().getEditDomain()
+                .getActiveTool();
+        if (tool instanceof LabelEditTool) {
+            start.propertyId = PROP_LABEL;
+            start.offset = getStartingOffset((LabelEditTool) tool);
+        } else if (tool instanceof TitleEditTool) {
+            start.propertyId = PROP_TITLE;
+            start.offset = getStartingOffset((TitleEditTool) tool);
+        } else if (result != null && result.part == start.part
+                && result.propertyId == PROP_NOTES) {
+            start.part = getNextPart(start.part);
+            start.propertyId = PROP_TITLE;
+            start.offset = getStartingOffset(start);
+        } else {
+            start.propertyId = PROP_TITLE;
+            start.offset = getStartingOffset(start);
+        }
+        return start;
+    }
+
+    private int getStartingOffset(FloatingTextEditTool tool) {
+        ITextSelection selection = tool.getTextSelection();
+        if (isForward()) {
+            return selection.getOffset() + selection.getLength();
+        } else {
+            return selection.getOffset();
+        }
+    }
+
+    private int getStartingOffset(SearchResult result) {
+        String text = getPropertyText(result.part, result.propertyId);
+        return text == null ? -1 : getNewOffset(text);
+    }
+
+    private String getPropertyText(IPart part, int propertyId) {
+        if (propertyId == PROP_NOTES) {
+            if (part instanceof ITopicPart) {
+                INotes notes = ((ITopicPart) part).getTopic().getNotes();
+                INotesContent content = notes.getContent(INotes.PLAIN);
+                if (content instanceof IPlainNotesContent) {
+                    return ((IPlainNotesContent) content).getTextContent();
+                }
+            }
+            return null;
+        }
+        if (propertyId == PROP_LABEL) {
+            ILabelPart label = ((ITopicPart) part).getOwnerBranch().getLabel();
+            return label == null ? null : label.getLabelText();
+        }
+
+        Object model = MindMapUtils.getRealModel(part);
+        if (model instanceof ITitled && ((ITitled) model).hasTitle()) {
+            return ((ITitled) model).getTitleText();
+        }
+
+        ITitled titled = (ITitled) part.getAdapter(ITitled.class);
+        if (titled != null && titled.hasTitle()) {
+            return titled.getTitleText();
+        }
+
+        return (String) part.getAdapter(String.class);
     }
 
     /**
@@ -243,128 +422,18 @@ public class MindMapFindReplaceOperationProvider extends
      */
     @Override
     protected boolean replaceNext(String toFind, String toReplaceWith) {
-//        FloatingTextEditor textEditor = getTextEditor();
-        IPart part = getCurrentPart();
-        if (tempPart instanceof ILabelPart)
-            part = tempPart;
-        FloatingTextEditor textEditor = getTextEditor(part);
-        if (textEditor != null) {
-            if (canReplace(toFind, textEditor)) {
-                StyledText textWidget = textEditor.getTextViewer()
-                        .getTextWidget();
-                Point selection = textWidget.getSelection();
-                int caretOffset = isForward() ? selection.y : selection.x;
-                textWidget.insert(toReplaceWith);
-                textWidget.setCaretOffset(caretOffset);
+        EditDomain domain = getCurrentDomain();
+        if (domain != null) {
+            ITool tool = domain.getActiveTool();
+            if (tool != null && tool instanceof FloatingTextEditTool) {
+                FloatingTextEditor textEditor = ((FloatingTextEditTool) tool)
+                        .getEditor();
+                if (textEditor != null && !textEditor.isClosed()) {
+                    textEditor.replaceText(toReplaceWith, true);
+                }
             }
         }
         return findNext(toFind);
-    }
-
-    /**
-     * @return
-     */
-    private int getCurrentOffset(IPart part) {
-//        if (isEditing()) {
-//            FloatingTextEditor textEditor = getTextEditor();
-        if (isEditing(part)) {
-            FloatingTextEditor textEditor = getTextEditor(part);
-            if (textEditor == null)
-                return -1;
-            StyledText textWidget = textEditor.getTextViewer().getTextWidget();
-            Point selection = textWidget.getSelection();
-            int offset = isForward() ? selection.y : selection.x;
-//            getEditTool().handleRequest(GEF.REQ_FINISH, getActiveViewer());
-            ITool editTool = getEditTool(part);
-            editTool.handleRequest(GEF.REQ_FINISH, getActiveViewer());
-            return offset;
-        } else
-            tempPart = null;
-        if (isForward())
-            return 0;
-        String text = getText(getCurrentPart());
-        return text == null ? -1 : getNewOffset(text);
-    }
-
-    protected void selectText(SearchData data, int length) {
-        FloatingTextEditor textEditor = getTextEditor(data.host);
-        if (textEditor != null) {
-            ITextViewer textViewer = textEditor.getTextViewer();
-            StyledText textWidget = textViewer.getTextWidget();
-            textWidget.setSelectionRange(data.offset, length);
-        }
-    }
-
-    protected boolean startEditing(IPart part) {
-        if (part == null)
-            return false;
-        ITool selectTool = getDefaultTool();
-        ITool editTool = getEditTool(part);
-        if (selectTool == null || editTool == null)
-            return false;
-        startEditing(part, selectTool, editTool);
-        return isEditing(part);
-    }
-
-    private void startEditing(IPart part, ITool selectTool, ITool editTool) {
-        if (part instanceof ITopicPart || part instanceof IBoundaryPart
-                || part instanceof IRelationshipPart) {
-
-            ((AbstractTool) editTool).getStatus().setStatus(GEF.ST_NO_FOCUS,
-                    true);
-            Request request = new Request(GEF.REQ_EDIT);
-            request.setPrimaryTarget(part);
-            selectTool.handleRequest(request);
-        } else if (part instanceof ILabelPart) {
-            ((AbstractTool) editTool).getStatus().setStatus(GEF.ST_NO_FOCUS,
-                    true);
-//            Request request = new Request(MindMapUI.REQ_EDIT_LABEL);
-//            MindMapUI.REQ_EDIT_LABEL==GEF.REQ_EDIT_LABE;
-            Request request = new Request(GEF.REQ_EDIT_LABEL);
-            ILabelPart p = (ILabelPart) part;
-            IBranchPart branch = p.getOwnedBranch();
-            ITopicPart topicPart = branch.getTopicPart();
-            request.setPrimaryTarget(topicPart);
-            selectTool.handleRequest(request);
-        }
-    }
-
-    protected SearchData findNext(String toFind, SearchData current) {
-        return findNext(toFind, current, null);
-    }
-
-    protected SearchData findNext(String toFind, SearchData current,
-            SearchData start) {
-        if (current == null || (current.equals(start)))
-            return null;
-        String text = getText(current.host);
-        if (text == null)
-            return null;
-        int index = indexOf(text, toFind, current.offset);
-        if (index >= 0) {
-            return new SearchData(current.host, index);
-        }
-        if (start == null) {
-            start = current;
-        }
-        IPart next = getNextPart(current);
-        String nextText = getText(next);
-        while (nextText == null) {
-            next = getNextPart(next);
-            if (next == start.host)
-                break;
-            nextText = getText(next);
-        }
-        int newOffset = getNewOffset(nextText);
-        if (next != start.host) {
-            SearchData data = new SearchData(next, newOffset);
-            return findNext(toFind, data, start);
-        }
-        index = indexOf(nextText, toFind, newOffset);
-        if (index >= 0 && isIndexPermitted(index, start.offset)) {
-            return new SearchData(next, index);
-        }
-        return null;
     }
 
     /**
@@ -407,19 +476,6 @@ public class MindMapFindReplaceOperationProvider extends
         return true;
     }
 
-    protected boolean canReplace(String toFind, FloatingTextEditor textEditor) {
-        ITextSelection selection = (ITextSelection) textEditor.getSelection();
-        String selectionText = selection.getText();
-        if (!equals(toFind, selectionText))
-            return false;
-        if (isWholeWord()) {
-            String text = textEditor.getTextContents();
-            return isWholeWord(text, selection.getOffset(), selection
-                    .getLength());
-        }
-        return true;
-    }
-
     protected String getText(IPart p) {
         if (p == null)
             return null;
@@ -437,12 +493,10 @@ public class MindMapFindReplaceOperationProvider extends
         return (String) p.getAdapter(String.class);
     }
 
-    /**
-     * @param current
-     * @return
-     */
-    private IPart getNextPart(SearchData current) {
-        return getNextPart(current.host);
+    private int getPageIndex(IPart part) {
+        Object input = part.getSite().getViewer().getInput();
+        IGraphicalEditorPage page = editor.findPage(input);
+        return page == null ? editor.getActivePage() : page.getIndex();
     }
 
     private IPart getNextPart(IPart current) {
@@ -454,19 +508,28 @@ public class MindMapFindReplaceOperationProvider extends
      * @return
      */
     private IPart getBackwardPart(IPart current) {
-        IPart prev = findPrecedingPart(current);
-        if (!isWorkbook())
-            return prev;
-//        if (prev != current && prev.getModel() != getCentralTopic())
-//            return prev;
-        int pageIndex = getActivePage().getIndex();
+        if (!isCentral(current) || !isWorkbook()) {
+            IPart prev = findPrecedingPart(current);
+            if (prev != null && prev != current)
+                return prev;
+            if (!isWorkbook())
+                return current;
+        }
+        int pageIndex = getPageIndex(current);
         int pageCount = editor.getPageCount();
         if (pageIndex == 0)
             pageIndex = pageCount - 1;
         else
             pageIndex--;
-        editor.setActivePage(pageIndex);
-        return getCurrentCentralTopicPart();
+        IGraphicalEditorPage page = editor.getPage(pageIndex);
+        IGraphicalViewer viewer = page.getViewer();
+        IPart central = (IPart) viewer.getAdapter(ITopicPart.class);
+        if (central != null) {
+            IPart prev = findPrecedingPart(central);
+            if (prev != null && prev != central)
+                return prev;
+        }
+        return central;
     }
 
     /**
@@ -474,48 +537,82 @@ public class MindMapFindReplaceOperationProvider extends
      * @return
      */
     private IPart getForwardPart(IPart current) {
-        IPart prev = findSucceedingPart(current);
+        IPart next = findSucceedingPart(current);
+        if (next != null && next != current
+                && (!isCentral(next) || !isWorkbook()))
+            return next;
         if (!isWorkbook())
-            return prev;
-        int pageIndex = getActivePage().getIndex();
+            return current;
+        int pageIndex = getPageIndex(current);
         int pageCount = editor.getPageCount();
         if (pageIndex == pageCount - 1)
             pageIndex = 0;
         else
             pageIndex++;
-        editor.setActivePage(pageIndex);
-        return getCurrentCentralTopicPart();
-    }
-
-    private IPart findPrecedingPart(IPart current) {
-        if (current.hasRole(GEF.ROLE_NAVIGABLE)) {
-            Request navRequest = new Request(GEF.REQ_NAV_PREV)
-                    .setPrimaryTarget(current).setViewer(
-                            current.getSite().getViewer());
-            current.handleRequest(navRequest, GEF.ROLE_NAVIGABLE);
-            Object result = navRequest.getResult(GEF.RESULT_NAVIGATION);
-            if (result instanceof IPart[]) {
-                IPart[] parts = (IPart[]) result;
-                if (parts.length > 0)
-                    return parts[0];
-            }
-        }
-        return current;
+        IGraphicalEditorPage page = editor.getPage(pageIndex);
+        IGraphicalViewer viewer = page.getViewer();
+        return (IPart) viewer.getAdapter(ITopicPart.class);
     }
 
     private IPart findSucceedingPart(IPart current) {
-//        if (current instanceof ITopicPart) {
-//            ITopicPart topicPart = (ITopicPart) current;
-//            ITopic topic = topicPart.getTopic();
-//            INotes notes = topic.getNotes();
-//            if (notes != null) {
-//                if (hasOwnedWord(notes)) {
-//                    gotoNotesView();
-//                    return null;
-//                }
-//            }
-//        }
+        if (current instanceof ITopicPart) {
+            IPart next = firstBoundary(((ITopicPart) current).getOwnerBranch());
+            if (next != null)
+                return next;
+        } else if (current instanceof IBoundaryPart) {
+            IPart next = nextBoundary((IBoundaryPart) current);
+            if (next != null)
+                return next;
+            return findNavNext(((IBoundaryPart) current).getOwnedBranch()
+                    .getTopicPart());
+        } else if (current instanceof IRelationshipPart) {
+            IPart next = nextRelationship((IRelationshipPart) current);
+            if (next != null)
+                return next;
+            return getCurrentCentralTopicPart();
+        }
+        IPart next = findNavNext(current);
+        if (current instanceof ITopicPart && isCentral(next)) {
+            IPart rel = firstRelationship();
+            if (rel != null)
+                return rel;
+        }
+        return next;
+    }
 
+    private IPart findPrecedingPart(IPart current) {
+        if (current instanceof ITopicPart) {
+            if (isCentral(current)) {
+                IPart rel = lastRelationship();
+                if (rel != null)
+                    return rel;
+            }
+            IPart prev = findNavPrev(current);
+            if (prev != current && prev instanceof ITopicPart) {
+                if (((ITopicPart) current).getOwnerBranch().getParentBranch() == ((ITopicPart) prev)
+                        .getOwnerBranch()) {
+                    IPart prevBoundary = lastBoundary(((ITopicPart) prev)
+                            .getOwnerBranch());
+                    if (prevBoundary != null)
+                        return prevBoundary;
+                }
+            }
+            return prev;
+        } else if (current instanceof IBoundaryPart) {
+            IPart prev = prevBoundary((IBoundaryPart) current);
+            if (prev != null)
+                return prev;
+            return ((IBoundaryPart) current).getOwnedBranch().getTopicPart();
+        } else if (current instanceof IRelationshipPart) {
+            IPart prev = prevRelationship((IRelationshipPart) current);
+            if (prev != null)
+                return prev;
+            return findNavPrev(getCurrentCentralTopicPart());
+        }
+        return null;
+    }
+
+    private IPart findNavNext(IPart current) {
         if (current.hasRole(GEF.ROLE_NAVIGABLE)) {
             Request navRequest = new Request(GEF.REQ_NAV_NEXT);
             navRequest.setPrimaryTarget(current);
@@ -531,91 +628,157 @@ public class MindMapFindReplaceOperationProvider extends
                 }
             }
         }
-        return current;
+        return null;
     }
 
-//    private boolean hasOwnedWord(INotes notes) {
-//        INotesContent content = notes.getContent(INotes.PLAIN);
-//        if (content == null)
-//            return false;
-//        IPlainNotesContent plain = (IPlainNotesContent) content;
-//        String context = plain.getTextContent();
-//        if (context == null || "".equals(context))
-//            return false;
-//        return context.contains(cachedToFind);
-//    }
-//
-//    private void gotoNotesView() {
-//        IWorkbenchWindow window = getActivePage().getParentEditor().getSite()
-//                .getWorkbenchWindow();
-//        if (window != null) {
-//            IWorkbenchPage page = window.getActivePage();
-//            if (page != null) {
-//                try {
-//                    page.showView(MindMapUI.VIEW_NOTES, null,
-//                            IWorkbenchPage.VIEW_ACTIVATE);
-//                } catch (PartInitException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//    }
-
-    /**
-     * @see cn.brainy.ui.mindmap.dialogs.IFindReplaceOperationProvider#getParameter()
-     */
-    public int getParameter() {
-        return parameter;
+    private IPart findNavPrev(IPart current) {
+        if (current.hasRole(GEF.ROLE_NAVIGABLE)) {
+            Request navRequest = new Request(GEF.REQ_NAV_PREV)
+                    .setPrimaryTarget(current).setViewer(
+                            current.getSite().getViewer());
+            current.handleRequest(navRequest, GEF.ROLE_NAVIGABLE);
+            Object result = navRequest.getResult(GEF.RESULT_NAVIGATION);
+            if (result instanceof IPart[]) {
+                IPart[] parts = (IPart[]) result;
+                if (parts.length > 0)
+                    return parts[0];
+            }
+        }
+        return null;
     }
 
-    /**
-     * @see cn.brainy.ui.mindmap.dialogs.IFindReplaceOperationProvider#setParameter(int,
-     *      boolean)
-     */
-    public void setParameter(int op, boolean value) {
-        parameter &= ~op;
-        if (value)
-            parameter |= op;
+    private IPart firstBoundary(IBranchPart branch) {
+        List<IBoundaryPart> boundaries = branch.getBoundaries();
+        if (boundaries.isEmpty())
+            return null;
+        int start = -1, end = -1;
+        IBoundaryPart first = null;
+        for (IBoundaryPart b : boundaries) {
+            int s = b.getBoundary().getStartIndex();
+            int e = b.getBoundary().getEndIndex();
+            if (start < 0 || s < start || (s == start && (end < 0 || e > end))) {
+                start = s;
+                end = e;
+                first = b;
+            }
+        }
+        return first;
     }
 
-    /**
-     * 
-     * @return
-     */
-    public boolean canFind() {
-        return cachedToFind != null;
+    private IPart lastBoundary(IBranchPart branch) {
+        List<IBoundaryPart> boundaries = branch.getBoundaries();
+        if (boundaries.isEmpty())
+            return null;
+        int start = -1, end = -1;
+        IBoundaryPart last = null;
+        for (IBoundaryPart b : boundaries) {
+            int s = b.getBoundary().getStartIndex();
+            int e = b.getBoundary().getEndIndex();
+            if (start < 0 || s > start || (s == start && (end < 0 || e < end))) {
+                start = s;
+                end = e;
+                last = b;
+            }
+        }
+        return last;
     }
 
-    /**
-     * 
-     * @return
-     */
-    public boolean findAll() {
-        return findAll(cachedToFind);
+    private IPart nextBoundary(IBoundaryPart boundary) {
+        List<IBoundaryPart> boundaries = boundary.getOwnedBranch()
+                .getBoundaries();
+        int start0 = boundary.getBoundary().getStartIndex();
+        int end0 = boundary.getBoundary().getEndIndex();
+        int start = -1, end = -1;
+        IBoundaryPart next = null;
+        for (IBoundaryPart b : boundaries) {
+            if (b != boundary) {
+                int s = b.getBoundary().getStartIndex();
+                int e = b.getBoundary().getEndIndex();
+                if (s > start0 || (s == start0 && e < end0)) {
+                    if (start < 0 || s < start
+                            || (s == start && (end < 0 || e > end))) {
+                        start = s;
+                        end = e;
+                        next = b;
+                    }
+                }
+            }
+        }
+        return next;
     }
 
-    /**
-     * 
-     * @return
-     */
-    public boolean findNext() {
-        return findNext(cachedToFind);
+    private IPart prevBoundary(IBoundaryPart boundary) {
+        List<IBoundaryPart> boundaries = boundary.getOwnedBranch()
+                .getBoundaries();
+        int start0 = boundary.getBoundary().getStartIndex();
+        int end0 = boundary.getBoundary().getEndIndex();
+        int start = -1, end = -1;
+        IBoundaryPart next = null;
+        for (IBoundaryPart b : boundaries) {
+            if (b != boundary) {
+                int s = b.getBoundary().getStartIndex();
+                int e = b.getBoundary().getEndIndex();
+                if (s < start0 || (s == start0 && e > end0)) {
+                    if (start < 0 || s > start
+                            || (s == start && (end < 0 || e < end))) {
+                        start = s;
+                        end = e;
+                        next = b;
+                    }
+                }
+            }
+        }
+        return next;
     }
 
-    /**
-     * @param toReplaceWith
-     * @return
-     */
-    public boolean replaceNext(String toReplaceWith) {
-        return replaceNext(cachedToFind, toReplaceWith);
+    private List<IRelationshipPart> getRelationships() {
+        IGraphicalViewer viewer = getActiveViewer();
+        if (viewer != null) {
+            ISheetPart sheet = (ISheetPart) viewer.getAdapter(ISheetPart.class);
+            if (sheet != null) {
+                return sheet.getRelationships();
+            }
+        }
+        return null;
     }
 
-    /**
-     * @param toReplaceWith
-     * @return
-     */
-    public boolean replaceAll(String toReplaceWith) {
-        return replaceAll(cachedToFind, toReplaceWith);
+    private IPart firstRelationship() {
+        List<IRelationshipPart> rels = getRelationships();
+        if (rels != null && !rels.isEmpty())
+            return rels.get(0);
+        return null;
+    }
+
+    private IPart lastRelationship() {
+        List<IRelationshipPart> rels = getRelationships();
+        if (rels != null && !rels.isEmpty())
+            return rels.get(rels.size() - 1);
+        return null;
+    }
+
+    private IPart nextRelationship(IRelationshipPart rel) {
+        List<IRelationshipPart> rels = getRelationships();
+        if (rels != null && !rels.isEmpty()) {
+            int index = rels.indexOf(rel);
+            if (index >= 0 && index < rels.size() - 1)
+                return rels.get(index + 1);
+        }
+        return null;
+    }
+
+    private IPart prevRelationship(IRelationshipPart rel) {
+        List<IRelationshipPart> rels = getRelationships();
+        if (rels != null && !rels.isEmpty()) {
+            int index = rels.indexOf(rel);
+            if (index > 0)
+                return rels.get(index - 1);
+        }
+        return null;
+    }
+
+    private boolean isCentral(IPart part) {
+        return part instanceof ITopicPart
+                && ((ITopicPart) part).getOwnerBranch().isCentral();
     }
 
     protected FloatingTextEditor getTextEditor(IPart part) {
@@ -642,7 +805,6 @@ public class MindMapFindReplaceOperationProvider extends
                 || part instanceof IRelationshipPart) {
             return domain == null ? null : domain.getTool(GEF.TOOL_EDIT);
         } else
-            // (part instanceof ITopicPart || part==null) 
             return domain == null ? null : domain
                     .getTool(MindMapUI.TOOL_EDIT_TOPIC_TITLE);
 
@@ -678,4 +840,5 @@ public class MindMapFindReplaceOperationProvider extends
     private IGraphicalEditorPage getActivePage() {
         return editor.getActivePageInstance();
     }
+
 }

@@ -24,6 +24,10 @@ public abstract class HyperlinkPage implements IHyperlinkPage {
         return container;
     }
 
+    public boolean tryFinish() {
+        return true;
+    }
+
     public String getValue() {
         return value;
     }
