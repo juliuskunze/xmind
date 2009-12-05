@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -31,18 +31,8 @@ public class Messages extends NLS {
     public static String ShowAccount_pattern;
     public static String ShowAccount_toolTip_pattern;
 
-    public static String Upgrade_text;
-    public static String Upgrade_toolTip;
     public static String Renew_text;
     public static String Renew_toolTip;
-    public static String UpgradeSourceDialog_title;
-    public static String UpgradeSourceDialog_label;
-    public static String UpgradeSourceDialog_Online;
-    public static String UpgradeSourceDialog_LocalFile;
-    public static String Upgrade_jobName;
-    public static String Upgrade_ErrorDialog_title;
-    public static String Upgrade_ErrorDialog_message;
-    public static String Upgrade_InstallDialog_title;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);

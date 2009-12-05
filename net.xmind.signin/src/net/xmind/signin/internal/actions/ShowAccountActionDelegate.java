@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -72,16 +72,18 @@ public class ShowAccountActionDelegate extends XMindNetActionDelegate implements
      * 
      */
     private void update() {
-        String userID = getUserID();
-        if (userID == null) {
-            action.setText(Messages.ShowAccount_text);
-            action.setToolTipText(Messages.ShowAccount_toolTip);
-        } else {
-            action.setText(NLS.bind(Messages.ShowAccount_pattern, userID));
-            action.setToolTipText(NLS.bind(
-                    Messages.ShowAccount_toolTip_pattern, userID));
+        if (action != null) {
+            String userID = getUserID();
+            if (userID == null) {
+                action.setText(Messages.ShowAccount_text);
+                action.setToolTipText(Messages.ShowAccount_toolTip);
+            } else {
+                action.setText(NLS.bind(Messages.ShowAccount_pattern, userID));
+                action.setToolTipText(NLS.bind(
+                        Messages.ShowAccount_toolTip_pattern, userID));
+            }
+            action.setEnabled(XMindNetEntry.hasSignedIn());
         }
-        action.setEnabled(XMindNetEntry.hasSignedIn());
     }
 
     private String getUserID() {

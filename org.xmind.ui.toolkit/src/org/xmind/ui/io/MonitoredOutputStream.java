@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,6 +14,7 @@
 package org.xmind.ui.io;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -45,7 +46,7 @@ public class MonitoredOutputStream extends OutputStream {
     public void flush() throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         realStream.flush();
     }
@@ -53,7 +54,7 @@ public class MonitoredOutputStream extends OutputStream {
     public void write(byte[] b, int off, int len) throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         realStream.write(b, off, len);
     }
@@ -61,7 +62,7 @@ public class MonitoredOutputStream extends OutputStream {
     public void write(byte[] b) throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         realStream.write(b);
     }
@@ -69,7 +70,7 @@ public class MonitoredOutputStream extends OutputStream {
     public void write(int b) throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         realStream.write(b);
     }

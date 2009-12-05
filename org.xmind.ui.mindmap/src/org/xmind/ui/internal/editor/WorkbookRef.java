@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -377,6 +377,8 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
             throw new org.eclipse.core.runtime.CoreException(new Status(
                     IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
                     "No workbook to save.")); //$NON-NLS-1$
+
+        Object oldKey = getKey();
         setKey(newKey);
         setWorkbookLoader(null);
         setWorkbookSaver(null);
@@ -387,7 +389,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
                     IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
                     "No workbook saver has been set.")); //$NON-NLS-1$
 
-        WorkbookRefManager.getInstance().changeKey(this, newKey);
+        WorkbookRefManager.getInstance().changeKey(this, oldKey, newKey);
 
         savePreview(monitor);
         workbookSaver.save(monitor, workbook);

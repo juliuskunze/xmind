@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -77,6 +77,10 @@ public class LabelEditTool extends MindMapEditToolBase {
     private ILabelPart label = null;
 
     protected ContentProposalAdapter contentProposalAdapter = null;
+
+    public LabelEditTool() {
+        addEditRequestType(MindMapUI.REQ_EDIT_LABEL);
+    }
 
     public ILabelPart getLabelPart() {
         return label;
@@ -161,15 +165,6 @@ public class LabelEditTool extends MindMapEditToolBase {
     private Image createLabelProposalImage() {
         return MindMapUI.getImages().get(IMindMapImages.LABEL, true)
                 .createImage(false, Display.getCurrent());
-    }
-
-    protected void handleSingleRequest(Request request) {
-        String type = request.getType();
-        if (MindMapUI.REQ_EDIT_LABEL.equals(type)) {
-            handleEditRequest(request);
-        } else {
-            super.handleSingleRequest(request);
-        }
     }
 
 }

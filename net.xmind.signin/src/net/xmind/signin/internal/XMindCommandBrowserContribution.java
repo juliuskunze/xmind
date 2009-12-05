@@ -12,13 +12,13 @@ public class XMindCommandBrowserContribution implements
     }
 
     public void installBrowserListeners(IBrowserViewer viewer) {
-        viewer.addPropertyChangeListener(UserInfoManager.getDefault()
-                .getXMindCommandListener());
+        viewer.addPropertyChangeListener(IBrowserViewer.PROPERTY_STATUS,
+                UserInfoManager.getDefault().getXMindCommandListener());
     }
 
     public void uninstallBrowserListeners(IBrowserViewer viewer) {
-        viewer.removePropertyChangeListener(UserInfoManager.getDefault()
-                .getXMindCommandListener());
+        viewer.removePropertyChangeListener(IBrowserViewer.PROPERTY_STATUS,
+                UserInfoManager.getDefault().getXMindCommandListener());
     }
 
 }

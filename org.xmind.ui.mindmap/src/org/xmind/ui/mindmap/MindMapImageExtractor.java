@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,6 +14,7 @@
 package org.xmind.ui.mindmap;
 
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -82,17 +83,36 @@ public class MindMapImageExtractor {
         return properties == null ? null : properties.get(key);
     }
 
+    /**
+     * Get the extracted image. If no image exists, a new one will be created.
+     * 
+     * @return the extracted image, or <code>null</code> if error occurred
+     */
     public Image getImage() {
         if (image == null) {
-            if (Thread.currentThread() != display.getThread()) {
-                display.syncExec(new Runnable() {
-                    public void run() {
-                        image = createImage();
-                    }
-                });
-            } else {
-                image = createImage();
-            }
+            display.syncExec(new Runnable() {
+                public void run() {
+                    image = createImage();
+                }
+            });
+        }
+        return image;
+    }
+
+    /**
+     * Get the extracted image. If no image exists, a new one will be created.
+     * 
+     * @return the extracted image
+     * @throws SWTError
+     *             if error occurs
+     */
+    public Image getImage2() throws SWTError {
+        if (image == null) {
+            display.syncExec(new Runnable() {
+                public void run() {
+                    image = createImage2();
+                }
+            });
         }
         return image;
     }
@@ -121,6 +141,15 @@ public class MindMapImageExtractor {
     }
 
     private Image createImage() {
+        try {
+            return createImage2();
+        } catch (Throwable e) {
+            Logger.log(e);
+            return null;
+        }
+    }
+
+    private Image createImage2() {
         final MindMapExportContentProvider provider;
         if (parent != null) {
             provider = new MindMapExportContentProvider(parent, sheet,
@@ -138,9 +167,6 @@ public class MindMapImageExtractor {
                     provider.getContents(), provider).createImage(false,
                     display);
             origin = provider.getOrigin();
-        } catch (Throwable e) {
-            image = null;
-            Logger.log(e);
         } finally {
             display.asyncExec(new Runnable() {
                 public void run() {

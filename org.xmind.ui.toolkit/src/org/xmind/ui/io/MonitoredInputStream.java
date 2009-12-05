@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,6 +15,7 @@ package org.xmind.ui.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -39,7 +40,7 @@ public class MonitoredInputStream extends InputStream {
     public int read() throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         return realStream.read();
     }
@@ -63,7 +64,7 @@ public class MonitoredInputStream extends InputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         return realStream.read(b, off, len);
     }
@@ -71,7 +72,7 @@ public class MonitoredInputStream extends InputStream {
     public int read(byte[] b) throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         return realStream.read(b);
     }
@@ -79,7 +80,7 @@ public class MonitoredInputStream extends InputStream {
     public void reset() throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         realStream.reset();
     }
@@ -87,7 +88,7 @@ public class MonitoredInputStream extends InputStream {
     public long skip(long n) throws IOException {
         if (monitor.isCanceled()) {
             closeRealStream();
-            throw new StreamInterruptedException();
+            throw new InterruptedIOException();
         }
         return realStream.skip(n);
     }

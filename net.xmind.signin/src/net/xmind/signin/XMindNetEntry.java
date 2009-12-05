@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -52,8 +52,9 @@ public class XMindNetEntry {
         return UserInfoManager.getDefault().signIn();
     }
 
-    public static Properties signIn(String message) {
-        return UserInfoManager.getDefault().signIn(message);
+    public static Properties signIn(String message,
+            ISignInDialogExtension extension) {
+        return UserInfoManager.getDefault().signIn(message, extension);
     }
 
     public static void signIn(ISignInListener callback, boolean block) {
@@ -63,6 +64,12 @@ public class XMindNetEntry {
     public static void signIn(ISignInListener callback, boolean block,
             String message) {
         UserInfoManager.getDefault().signIn(callback, block, message);
+    }
+
+    public static void signIn(ISignInListener callback, boolean block,
+            String message, ISignInDialogExtension extension) {
+        UserInfoManager.getDefault()
+                .signIn(callback, block, message, extension);
     }
 
     public static void signOut() {

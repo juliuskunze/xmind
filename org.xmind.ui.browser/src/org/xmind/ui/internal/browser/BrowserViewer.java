@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -11,9 +11,9 @@
  */
 package org.xmind.ui.internal.browser;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.net.URI;
+import java.beans.PropertyChangeSupport;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -170,8 +170,6 @@ public class BrowserViewer implements IBrowserViewer {
 
         private String statusText;
 
-        private boolean redirect = true;
-
         public void hook(Browser browser) {
             browser.addLocationListener(this);
             browser.addOpenWindowListener(this);
@@ -226,16 +224,8 @@ public class BrowserViewer implements IBrowserViewer {
             if (!"about:blank".equals(event.location)) { //$NON-NLS-1$
                 event.doit = firePropertyChangingEvent(PROPERTY_LOCATION,
                         locationText, event.location, event.doit);
-                if (event.doit && redirect
-                        && !event.location.startsWith("file:")) { //$NON-NLS-1$
-                    try {
-                        event.location = "http://www.xmind.net/xmind/go?r=" //$NON-NLS-1$
-                                + new URI(event.location).toString();
-                    } catch (Exception e) {
-                        // ignore
-                    } finally {
-                        redirect = false;
-                    }
+                if (event.doit && redirect) {
+                    event.location = makeRedirectUrl(event.location);
                 }
             }
         }
@@ -377,12 +367,17 @@ public class BrowserViewer implements IBrowserViewer {
          * .browser.StatusTextEvent)
          */
         public void changed(StatusTextEvent event) {
+            boolean doit = true;
+            String oldStatus = statusText;
+            if (!firePropertyChangingEvent(PROPERTY_STATUS, oldStatus,
+                    event.text, doit)) {
+                event.text = ""; //$NON-NLS-1$
+            }
             if (container != null) {
                 IStatusLineManager status = container.getActionBars()
                         .getStatusLineManager();
                 status.setMessage(event.text);
             }
-            String oldStatus = statusText;
             statusText = event.text;
             firePropertyChangeEvent(PROPERTY_STATUS, oldStatus, statusText);
         }
@@ -423,13 +418,16 @@ public class BrowserViewer implements IBrowserViewer {
 
     private int progressWorked = 0;
 
-    private List<PropertyChangeListener> propertyListeners;
+    private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(
+            this);
 
     private BackAction backAction;
 
     private ForwardAction forwardAction;
 
     private StopRefreshAction stopRefreshAction;
+
+    private boolean redirect = true;
 
     public BrowserViewer(Composite parent, int style) {
         this(parent, style, null);
@@ -721,6 +719,10 @@ public class BrowserViewer implements IBrowserViewer {
         if ("xmind".equalsIgnoreCase(url)) //$NON-NLS-1$
             url = URL_HOME;
 
+        if (redirect) {
+            url = makeRedirectUrl(url);
+        }
+
         if (browse)
             navigate(url);
 
@@ -946,39 +948,47 @@ public class BrowserViewer implements IBrowserViewer {
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
-        if (propertyListeners == null)
-            propertyListeners = new ArrayList<PropertyChangeListener>();
-        propertyListeners.add(listener);
+        propertyChangeSupport.addPropertyChangeListener(listener);
     }
 
     public void removePropertyChangeListener(PropertyChangeListener listener) {
-        if (propertyListeners != null)
-            propertyListeners.remove(listener);
+        propertyChangeSupport.removePropertyChangeListener(listener);
+    }
+
+    public void addPropertyChangeListener(String propertyName,
+            PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
+    }
+
+    public void removePropertyChangeListener(String propertyName,
+            PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(propertyName,
+                listener);
     }
 
     protected void firePropertyChangeEvent(String propertyName,
             Object oldValue, Object newValue) {
-        if (propertyListeners == null)
-            return;
-
-        PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName,
-                oldValue, newValue);
-        for (Object pcl : propertyListeners.toArray()) {
-            try {
-                ((PropertyChangeListener) pcl).propertyChange(event);
-            } catch (Throwable ignore) {
-            }
-        }
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue,
+                newValue);
     }
 
     protected boolean firePropertyChangingEvent(String propertyName,
             Object oldValue, Object newValue, boolean doit) {
-        if (propertyListeners == null)
-            return doit;
-
         PropertyChangingEvent event = new PropertyChangingEvent(this,
                 propertyName, oldValue, newValue, doit);
-        for (Object pcl : propertyListeners.toArray()) {
+        PropertyChangeListener[] listeners = propertyChangeSupport
+                .getPropertyChangeListeners();
+        if (firePropertyChangingEvent(listeners, event)) {
+            listeners = propertyChangeSupport
+                    .getPropertyChangeListeners(propertyName);
+            return firePropertyChangingEvent(listeners, event);
+        }
+        return event.doit;
+    }
+
+    private boolean firePropertyChangingEvent(
+            PropertyChangeListener[] listeners, PropertyChangingEvent event) {
+        for (Object pcl : listeners) {
             if (pcl instanceof IPropertyChangingListener) {
                 try {
                     ((IPropertyChangingListener) pcl).propertyChanging(event);
@@ -1261,6 +1271,19 @@ public class BrowserViewer implements IBrowserViewer {
             DEFAULT_BUSY_PICTURES = list.toArray();
         }
         return DEFAULT_BUSY_PICTURES;
+    }
+
+    private String makeRedirectUrl(String source) {
+        if (!source.startsWith("file:")) { //$NON-NLS-1$
+            try {
+                return "http://www.xmind.net/xmind/go?r=" //$NON-NLS-1$
+                        + URLEncoder.encode(source, "UTF-8"); //$NON-NLS-1$
+            } catch (Exception e) {
+            } finally {
+                redirect = false;
+            }
+        }
+        return source;
     }
 
 }

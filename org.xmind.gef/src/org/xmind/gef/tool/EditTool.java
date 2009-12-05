@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -12,6 +12,10 @@
  *     XMind Ltd. - initial API and implementation
  *******************************************************************************/
 package org.xmind.gef.tool;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.xmind.gef.GEF;
@@ -30,6 +34,8 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
     private IGraphicalEditPart source;
 
     private boolean remainActive = false;
+
+    private Set<String> editRequestTypes = new HashSet<String>();
 
     public IGraphicalEditPart getSource() {
         return source;
@@ -72,13 +78,25 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
                 finishEditing();
                 remainActive = false;
             }
-            setSource(newSource);
-            getTargetViewer().setSelection(new StructuredSelection(newSource),
-                    true);
-            if (!startEditing(getSource())) {
-                changeActiveTool(GEF.TOOL_DEFAULT);
+            if (newSource != null) {
+                setSource(newSource);
+                if (acceptEditRequest(request)) {
+                    getTargetViewer().setSelection(
+                            new StructuredSelection(newSource), true);
+                    if (!startEditing(getSource())) {
+                        changeActiveTool(GEF.TOOL_DEFAULT);
+                    }
+                } else {
+                    finishEditing();
+                }
+            } else {
+                finishEditing();
             }
         }
+    }
+
+    protected boolean acceptEditRequest(Request request) {
+        return true;
     }
 
     /**
@@ -110,6 +128,18 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
                 || GEF.ROLE_SCALABLE.equals(role);
     }
 
+    protected Collection<String> getEditRequestTypes() {
+        return editRequestTypes;
+    }
+
+    protected void addEditRequestType(String reqType) {
+        editRequestTypes.add(reqType);
+    }
+
+    protected void removeEditRequestType(String reqType) {
+        editRequestTypes.remove(reqType);
+    }
+
     protected void handleSingleRequest(Request request) {
         if (request.getTargetViewer() == null
                 || request.getTargetViewer() != getTargetViewer()) {
@@ -117,7 +147,8 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
             return;
         }
         String requestType = request.getType();
-        if (GEF.REQ_EDIT.equals(requestType)) {
+        if (GEF.REQ_EDIT.equals(requestType)
+                || getEditRequestTypes().contains(requestType)) {
             handleEditRequest(request);
         } else if (GEF.REQ_SELECT_ALL.equals(requestType)) {
             selectAll();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -52,6 +52,7 @@ public class Messages extends NLS {
 
     public static String ErrorDialog_title;
     public static String ErrorDialog_message;
+    public static String ErrorDialog_Unauthorized_message;
 
     static {
         // initialize resource bundle

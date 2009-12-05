@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -199,7 +199,7 @@ public class FreeMindImporter extends MindMapImporter implements
                 String size = att(ele, "size"); //$NON-NLS-1$
                 if (size != null) {
                     String fontSize = FreeMindImporter.this.parseSize(size);
-                    style.setProperty(Styles.FontSize, fontSize);
+                    style.setProperty(Styles.FontSize, fontSize + "pt"); //$NON-NLS-1$
                 }
             }
         }

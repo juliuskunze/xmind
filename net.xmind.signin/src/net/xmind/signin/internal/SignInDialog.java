@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -11,6 +11,7 @@
  */
 package net.xmind.signin.internal;
 
+import net.xmind.signin.ISignInDialogExtension;
 import net.xmind.signin.XMindNetEntry;
 import net.xmind.signin.util.IDataStore;
 
@@ -55,21 +56,25 @@ public class SignInDialog extends Dialog implements StatusTextListener,
 
     private String message;
 
+    private ISignInDialogExtension extension;
+
     private boolean infoRetrieved = false;
 
     /**
      * @param parentWindow
      */
     public SignInDialog(Shell parent) {
-        this(parent, null);
+        this(parent, null, null);
     }
 
-    public SignInDialog(Shell parent, String message) {
+    public SignInDialog(Shell parent, String message,
+            ISignInDialogExtension extension) {
         super(parent);
         setBlockOnOpen(true);
         setShellStyle(SWT.TITLE | SWT.CLOSE | SWT.RESIZE
                 | SWT.APPLICATION_MODAL);
         this.message = message;
+        this.extension = extension;
     }
 
     public String getUserID() {
@@ -115,7 +120,17 @@ public class SignInDialog extends Dialog implements StatusTextListener,
             createSeparator(composite);
         }
         createBrowser(composite);
+
+        if (extension != null) {
+            createExtension(composite);
+        }
         return composite;
+    }
+
+    private void createExtension(Composite parent) {
+        Composite composite = new Composite(parent, SWT.NONE);
+        composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        extension.createControls(composite);
     }
 
     private void createBrowser(Composite parent) {

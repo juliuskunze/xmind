@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -109,10 +109,16 @@ public class WorkbookSaver {
      */
     public void save(OutputStream output) throws IOException, CoreException {
         save(new ZipStreamOutputTarget(new ZipOutputStream(output)), null);
+
+        // the target can't be reused
+        this.target = null;
     }
 
     public void save(String file) throws IOException, CoreException {
         save(null, file);
+
+        // the target can't be reused
+        this.target = null;
     }
 
     public void save(IOutputTarget target) throws IOException, CoreException {

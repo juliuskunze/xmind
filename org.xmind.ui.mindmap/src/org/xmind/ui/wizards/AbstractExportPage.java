@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -88,11 +88,20 @@ public abstract class AbstractExportPage extends WizardPage {
     }
 
     protected Control createFileControls(Composite parent) {
-        Composite group = new Composite(parent, SWT.NONE);
+        Composite composite = new Composite(parent, SWT.NONE);
+        GridLayout gridLayout = new GridLayout(1, false);
+        gridLayout.marginWidth = 0;
+        gridLayout.marginHeight = 0;
+        gridLayout.verticalSpacing = 10;
+        gridLayout.horizontalSpacing = 0;
+        composite.setLayout(gridLayout);
+
+        Composite group = new Composite(composite, SWT.NONE);
         GridLayout layout = new GridLayout(3, false);
         layout.marginWidth = 0;
         layout.marginHeight = 0;
         group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
         Label toFileLabel = new Label(group, SWT.WRAP);
         toFileLabel.setLayoutData(new GridData(GridData.BEGINNING,
@@ -121,7 +130,7 @@ public abstract class AbstractExportPage extends WizardPage {
         browseButton.setLayoutData(layoutData);
         hookWidget(browseButton, SWT.Selection);
 
-        overwriteCheckButton = new Button(parent, SWT.CHECK);
+        overwriteCheckButton = new Button(composite, SWT.CHECK);
         overwriteCheckButton.setLayoutData(new GridData(GridData.FILL,
                 GridData.CENTER, true, false));
         overwriteCheckButton
@@ -130,7 +139,7 @@ public abstract class AbstractExportPage extends WizardPage {
                 .isOverwriteWithoutPrompt());
         hookWidget(overwriteCheckButton, SWT.Selection);
 
-        return group;
+        return composite;
     }
 
     public void dispose() {

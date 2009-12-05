@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -28,7 +28,6 @@ import org.xmind.gef.GEF;
 import org.xmind.gef.Request;
 import org.xmind.gef.draw2d.IReferencedFigure;
 import org.xmind.gef.event.MouseDragEvent;
-import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.tool.ITool;
 import org.xmind.ui.branch.AbstractBranchStructure;
@@ -310,12 +309,18 @@ public class SpreadsheetStructure extends AbstractBranchStructure implements
             ITool tool = domain.getTool(Spreadsheet.TOOL_EDIT_COLUMN_HEAD);
             if (tool != null && tool instanceof ColumnHeadEditTool) {
                 ColumnHeadEditTool editTool = (ColumnHeadEditTool) tool;
-                editTool.setSource((IGraphicalEditPart) chartBranch);
-                editTool.setChart(chart);
-                editTool.setColumnHead(colHead);
-                editTool.setColumn(chart.findColumn(colHead));
                 editTool.setTargetViewer(chartBranch.getSite().getViewer());
                 domain.setActiveTool(Spreadsheet.TOOL_EDIT_COLUMN_HEAD);
+                if (domain.getActiveTool() == editTool) {
+                    editTool.handleRequest(new Request(GEF.REQ_EDIT)
+                            .setPrimaryTarget(chartBranch).setViewer(
+                                    chartBranch.getSite().getViewer())
+                            .setParameter(Spreadsheet.PARAM_CHART, chart)
+                            .setParameter(Spreadsheet.PARAM_COLUMN_HEAD,
+                                    colHead).setParameter(
+                                    Spreadsheet.PARAM_COLUMN,
+                                    chart.findColumn(colHead)));
+                }
             }
         }
     }

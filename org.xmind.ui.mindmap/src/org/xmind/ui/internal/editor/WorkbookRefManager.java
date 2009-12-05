@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -212,8 +212,8 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         return instance;
     }
 
-    void changeKey(WorkbookRef ref, Object newKey) {
-        WorkbookRef oldRef = registry.remove(ref.getKey());
+    void changeKey(WorkbookRef ref, Object oldKey, Object newKey) {
+        WorkbookRef oldRef = registry.remove(oldKey);
         if (oldRef != ref)
             return;
         registry.put(newKey, ref);
@@ -270,7 +270,7 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         if (memento != null) {
             try {
                 memento.save(new OutputStreamWriter(new FileOutputStream(
-                        location)));
+                        location), "utf-8")); //$NON-NLS-1$
             } catch (IOException e) {
                 Logger.log(e, "Failed to save session log."); //$NON-NLS-1$
             }
@@ -314,7 +314,7 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         List<IEditorInput> list = null;
         InputStreamReader reader = null;
         try {
-            reader = new InputStreamReader(new FileInputStream(file));
+            reader = new InputStreamReader(new FileInputStream(file), "utf-8"); //$NON-NLS-1$
         } catch (Exception e1) {
             Logger.log(e1, "Failed to read file"); //$NON-NLS-1$
             try {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -508,8 +508,12 @@ public class FreeMindExporter {
         fontEle.setAttribute("NAME", "SansSerif"); //$NON-NLS-1$ //$NON-NLS-2$
         if (fontSize != null) {
             int index = fontSize.indexOf("pt"); //$NON-NLS-1$
-            String size = fontSize.substring(0, index);
-            fontEle.setAttribute("SIZE", size); //$NON-NLS-1$
+            if (index >= 0) {
+                String size = fontSize.substring(0, index);
+                fontEle.setAttribute("SIZE", size); //$NON-NLS-1$
+            } else {
+                fontEle.setAttribute("SIZE", fontSize); //$NON-NLS-1$
+            }
         } else
             fontEle.setAttribute("SIZE", "12"); //$NON-NLS-1$ //$NON-NLS-2$
     }

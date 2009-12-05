@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -88,7 +88,8 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
     private class SetDefaultThemeAction extends Action {
 
         public SetDefaultThemeAction() {
-            super(MindMapMessages.DefaultThemeAction_text, IAction.AS_CHECK_BOX);
+            super(MindMapMessages.DefaultThemeAction_text,
+                    IAction.AS_PUSH_BUTTON);
             setToolTipText(MindMapMessages.DefaultThemeAction_toolTip);
             setImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.DEFAULT_THEME, true));
@@ -170,10 +171,8 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         viewer.addSelectionChangedListener(new ISelectionChangedListener() {
             public void selectionChanged(SelectionChangedEvent event) {
                 ISelection selection = event.getSelection();
-                Object obj = ((IStructuredSelection) selection)
-                        .getFirstElement();
                 if (setDefaultThemeAction != null) {
-                    setDefaultThemeAction.setEnabled(obj != null);
+                    setDefaultThemeAction.setEnabled(!selection.isEmpty());
                 }
             }
         });

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,6 +20,7 @@ public class WorkbenchMessages extends NLS {
     private static final String BUNDLE_NAME = "org.xmind.cathy.internal.messages"; //$NON-NLS-1$
 
     public static String AppWindowTitle;
+    public static String ProWindowTitle;
 
     public static String File_menu_text;
     public static String Edit_menu_text;
@@ -32,38 +33,16 @@ public class WorkbenchMessages extends NLS {
     public static String AutoSave_label;
     public static String AutoSave_Minutes;
 
-    public static String AutoSaveJob_name;
-    public static String AutoSaveJob_finished;
-    public static String AutoSaveJob_errorOccurred;
-
     public static String appWindow_ListSelectionDialog_Text;
 
     public static String appWindow_ListSelectionDialog_Title;
 
     public static String KeyAssist_text;
 
-    public static String SignIn_text;
-    public static String SignOut_text;
-    public static String ShowAccount_text;
-    public static String ShowAccount_toolTip;
-    public static String ShowAccount_pattern;
-    public static String ShowAccount_toolTip_pattern;
-
-    public static String Welcome_text;
-    public static String Welcome_toolTip;
-    public static String Help_text;
-    public static String Help_toolTip;
-    public static String Feedback_text;
-    public static String Feedback_toolTip;
-    public static String Invite_text;
-    public static String Invite_toolTip;
-
     public static String Update_text;
     public static String Update_toolTip;
 
-    public static String CheckOpenFilesJob_jobName;
     public static String CheckOpenFilesJob_CheckFiles_name;
-    public static String CheckOpenFilesJob_ReadFiles_name;
     public static String CheckOpenFilesJob_OpenFiles_name;
     public static String CheckOpenFilesJob_FailsToOpen_message;
     public static String CheckOpenFilesJob_ShowPresentation_name;
@@ -75,13 +54,13 @@ public class WorkbenchMessages extends NLS {
 
     public static String CheckUpdatesJob_jobName;
     public static String CheckUpdatesJob_Fail_message;
+    public static String CheckUpdatesJob_NoUpdate_message;
     public static String CheckUpdatesJob_NewUpdate_message;
     public static String CheckUpdatesJob_NewUpdate_info_message;
     public static String CheckUpdatesJob_NewUpdate_moreDownloads_text;
 
     public static String StartupJob_jobName;
     public static String StartupJob_OpenBootstrapEditor_name;
-    public static String StartupJob_CheckAppUpdate_name;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, WorkbenchMessages.class);

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -25,6 +25,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.xmind.core.Core;
 import org.xmind.core.event.CoreEvent;
@@ -228,6 +229,14 @@ public class StylesViewer extends CategorizedGalleryViewer implements
                 hookSheet(sheet);
             }
         }
+    }
+
+    @Override
+    protected void handleDispose(DisposeEvent event) {
+        if (register != null) {
+            register.unregisterAll();
+        }
+        super.handleDispose(event);
     }
 
     private void hookSheet(IStyleSheet sheet) {

@@ -7,13 +7,12 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -183,12 +182,12 @@ public class CheckUpdatesJob extends Job {
     protected IStatus run(IProgressMonitor monitor) {
         monitor.beginTask(null, 1);
         if (showFailResult) {
-            SafeRunner.run(new SafeRunnable(
-                    WorkbenchMessages.CheckUpdatesJob_Fail_message) {
-                public void run() throws Exception {
-                    doCheck();
-                }
-            });
+            try {
+                doCheck();
+            } catch (Exception e) {
+                return new Status(IStatus.ERROR, CathyPlugin.PLUGIN_ID,
+                        WorkbenchMessages.CheckUpdatesJob_Fail_message, e);
+            }
         } else {
             try {
                 doCheck();
@@ -202,7 +201,7 @@ public class CheckUpdatesJob extends Job {
     }
 
     protected void doCheck() throws Exception {
-        String url = "http://www.xmind.net/_api/checkVersion/3.1.0/" //$NON-NLS-1$
+        String url = "http://www.xmind.net/_api/checkVersion/3.1.1/" //$NON-NLS-1$
                 + Platform.getOS() + "/" + Platform.getOSArch(); //$NON-NLS-1$
         HttpMethod method = new GetMethod(url);
         HttpClient client = new HttpClient();
@@ -220,14 +219,32 @@ public class CheckUpdatesJob extends Job {
                 if (downloadUrl != null) {
                     if (allDownloadsUrl == null)
                         allDownloadsUrl = "http://www.xmind.net/downloads/"; //$NON-NLS-1$
-                    showNewUpdateDailog(downloadUrl, version, size,
+                    showNewUpdateDialog(downloadUrl, version, size,
                             allDownloadsUrl);
+                } else {
+                    showNoUpdateDialog();
                 }
+            } else {
+                showNoUpdateDialog();
             }
+        } else {
+            showNoUpdateDialog();
         }
     }
 
-    private void showNewUpdateDailog(final String downloadUrl,
+    private void showNoUpdateDialog() {
+        if (showFailResult) {
+            workbench.getDisplay().asyncExec(new Runnable() {
+                public void run() {
+                    MessageDialog.openInformation(null,
+                            WorkbenchMessages.AppWindowTitle,
+                            WorkbenchMessages.CheckUpdatesJob_NoUpdate_message);
+                }
+            });
+        }
+    }
+
+    private void showNewUpdateDialog(final String downloadUrl,
             final String version, final int size, final String allDownloadsUrl) {
         workbench.getDisplay().asyncExec(new Runnable() {
             public void run() {

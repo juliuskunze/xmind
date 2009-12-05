@@ -128,7 +128,7 @@ public class ErrorDetailsDialog extends Dialog {
 
         ps.println("Time: " + String.format("%1$tF %1$tT", time)); //$NON-NLS-1$ //$NON-NLS-2$
 
-        ps.print("XMind: 3.1.0"); //$NON-NLS-1$
+        ps.print("XMind: 3.1.1"); //$NON-NLS-1$
         if (isPro()) {
             ps.println(" Pro"); //$NON-NLS-1$
         } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -12,11 +12,16 @@
 package net.xmind.signin.internal;
 
 import java.beans.PropertyChangeListener;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
+import net.xmind.signin.ISignInDialogExtension;
 import net.xmind.signin.ISignInListener;
+import net.xmind.signin.IXMindCommandHandler;
 import net.xmind.signin.util.IDataStore;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -33,42 +38,62 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.xmind.ui.browser.IBrowserViewer;
+import org.xmind.ui.browser.IPropertyChangingListener;
+import org.xmind.ui.browser.PropertyChangingEvent;
+import org.xmind.ui.internal.browser.BrowserViewer;
 
-public class UserInfoManager {
+public class UserInfoManager implements IXMindCommandHandler {
 
-    private class XMindCommandListener implements PropertyChangeListener {
+    private class XMindCommandListener implements PropertyChangeListener,
+            IPropertyChangingListener {
 
         public void propertyChange(java.beans.PropertyChangeEvent evt) {
-            if (!IBrowserViewer.PROPERTY_STATUS.equals(evt.getPropertyName()))
-                return;
+        }
 
-            XMindCommand command = new XMindCommand((String) evt.getNewValue());
-            if (!command.parse())
-                return;
+        public void propertyChanging(PropertyChangingEvent event) {
+            if (event.getSource() instanceof BrowserViewer) {
+                String url = ((BrowserViewer) event.getSource()).getURL();
+                if (isXMindUrl(url)) {
+                    XMindCommand command = new XMindCommand((String) event
+                            .getNewValue());
+                    if (!command.parse())
+                        return;
 
-            if ("signout".equals(command.getCommand())) { //$NON-NLS-1$
-                signOut(false);
-            } else if ("200".equals(command.getCode())) { //$NON-NLS-1$
-                saveUserInfo(command.getJSON());
-                firePostSignIn(data);
+                    event.doit = false;
+                    handleXMindCommand(command);
+                }
             }
+        }
+
+        private boolean isXMindUrl(String url) {
+            if (url != null) {
+                try {
+                    String host = new URI(url).getHost();
+                    return host != null && host.endsWith(".xmind.net"); //$NON-NLS-1$
+                } catch (Exception e) {
+
+                }
+            }
+            return false;
         }
 
     }
 
     private class SignInJob extends Job {
 
-        private final String message;
+        private String message;
 
-        public SignInJob(String message) {
+        private ISignInDialogExtension extension;
+
+        public SignInJob(String message, ISignInDialogExtension extension) {
             super("Sign in to xmind.net"); //$NON-NLS-1$
             this.message = message;
+            this.extension = extension;
             setSystem(true);
         }
 
         protected IStatus run(IProgressMonitor monitor) {
-            return doSignIn(monitor, message);
+            return doSignIn(monitor, message, extension);
         }
     }
 
@@ -112,6 +137,9 @@ public class UserInfoManager {
 
     private XMindCommandListener xmindCommandListener = null;
 
+    private Map<String, List<IXMindCommandHandler>> xmindCommandHandlers = new HashMap<String, List<IXMindCommandHandler>>(
+            1);
+
     private UserInfoManager(IPreferenceStore prefStore) {
         this.prefStore = prefStore;
 
@@ -133,11 +161,11 @@ public class UserInfoManager {
     }
 
     public Properties signIn() {
-        return signIn((String) null);
+        return signIn((String) null, null);
     }
 
-    public Properties signIn(String message) {
-        signIn(null, true, message);
+    public Properties signIn(String message, ISignInDialogExtension extension) {
+        signIn(null, true, message, extension);
         return getUserInfo();
     }
 
@@ -146,11 +174,16 @@ public class UserInfoManager {
 //    }
 
     public void signIn(ISignInListener calllback, boolean block) {
-        signIn(calllback, block, null);
+        signIn(calllback, block, null, null);
     }
 
     public void signIn(final ISignInListener callback, boolean block,
             String message) {
+        signIn(callback, block, message, null);
+    }
+
+    public void signIn(final ISignInListener callback, boolean block,
+            String message, ISignInDialogExtension extension) {
         if (hasSignedIn()) {
             if (callback != null)
                 callback.postSignIn(getUserInfo());
@@ -165,7 +198,7 @@ public class UserInfoManager {
 
         Display display = block ? Display.getCurrent() : null;
 
-        startSignInJob(message);
+        startSignInJob(message, extension);
 
         if (block) {
             while (signInJob != null) {
@@ -189,9 +222,9 @@ public class UserInfoManager {
     /**
      * 
      */
-    private void startSignInJob(String message) {
+    private void startSignInJob(String message, ISignInDialogExtension extension) {
         if (signInJob == null) {
-            signInJob = new SignInJob(message);
+            signInJob = new SignInJob(message, extension);
             signInJob.addJobChangeListener(new JobChangeAdapter() {
                 public void done(IJobChangeEvent event) {
                     signInJob = null;
@@ -205,7 +238,7 @@ public class UserInfoManager {
      * 
      */
     private IStatus doSignIn(final IProgressMonitor monitor,
-            final String message) {
+            final String message, final ISignInDialogExtension extension) {
         if (!PlatformUI.isWorkbenchRunning())
             return new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                     "No workbench is running."); //$NON-NLS-1$
@@ -230,7 +263,8 @@ public class UserInfoManager {
                 if (shell != null)
                     shell.setActive();
 
-                SignInDialog dialog = new SignInDialog(shell, message);
+                SignInDialog dialog = new SignInDialog(shell, message,
+                        extension);
                 dialogs[0] = dialog;
                 int code = dialog.open();
                 dialogs[0] = null;
@@ -426,4 +460,78 @@ public class UserInfoManager {
         }
         return xmindCommandListener;
     }
+
+    public boolean handleXMindCommand(XMindCommand command) {
+        if ("signout".equals(command.getCommand())) { //$NON-NLS-1$
+            signOut(false);
+            return true;
+        } else if ("200".equals(command.getCode())) { //$NON-NLS-1$
+            saveUserInfo(command.getJSON());
+            firePostSignIn(data);
+            return true;
+        }
+        return fireXMindCommand(command);
+    }
+
+    private boolean fireXMindCommand(final XMindCommand command) {
+        String cmd = command.getCommand();
+        if (cmd != null) {
+            List<IXMindCommandHandler> handlers = xmindCommandHandlers.get(cmd);
+            if (handlers != null && !handlers.isEmpty()) {
+                return fireXMindCommand(command, handlers.toArray());
+            }
+        }
+        String code = command.getCode();
+        if (code != null) {
+            List<IXMindCommandHandler> handlers = xmindCommandHandlers
+                    .get(code);
+            if (handlers != null && !handlers.isEmpty()) {
+                return fireXMindCommand(command, handlers.toArray());
+            }
+        }
+        return false;
+    }
+
+    private boolean fireXMindCommand(final XMindCommand command,
+            Object[] handlers) {
+        final boolean[] handled = new boolean[1];
+        handled[0] = false;
+        for (final Object handler : handlers) {
+            if (handled[0])
+                return true;
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    handled[0] = ((IXMindCommandHandler) handler)
+                            .handleXMindCommand(command);
+                }
+            });
+            if (handled[0])
+                return true;
+        }
+        return handled[0];
+    }
+
+    public void addXMindCommandHandler(String commandName,
+            IXMindCommandHandler handler) {
+        List<IXMindCommandHandler> handlers = xmindCommandHandlers
+                .get(commandName);
+        if (handlers == null) {
+            handlers = new ArrayList<IXMindCommandHandler>();
+            xmindCommandHandlers.put(commandName, handlers);
+        }
+        handlers.add(handler);
+    }
+
+    public void removeXMindCommandHandler(String commandName,
+            IXMindCommandHandler handler) {
+        List<IXMindCommandHandler> handlers = xmindCommandHandlers
+                .get(commandName);
+        if (handlers != null && !handlers.isEmpty()) {
+            handlers.remove(handler);
+            if (handlers.isEmpty()) {
+                xmindCommandHandlers.remove(commandName);
+            }
+        }
+    }
+
 }

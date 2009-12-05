@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -54,6 +54,14 @@ public class ColumnHeadEditTool extends MindMapEditToolBase {
     private ColumnHeadEditorHelper helper;
 
     protected ContentProposalAdapter contentProposalAdapter = null;
+
+    protected boolean acceptEditRequest(Request request) {
+        setChart((Chart) request.getParameter(Spreadsheet.PARAM_CHART));
+        setColumn((Column) request.getParameter(Spreadsheet.PARAM_COLUMN));
+        setColumnHead((ColumnHead) request
+                .getParameter(Spreadsheet.PARAM_COLUMN_HEAD));
+        return super.acceptEditRequest(request);
+    }
 
     public void setChart(Chart chart) {
         Assert.isNotNull(chart);

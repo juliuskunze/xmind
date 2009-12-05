@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -12,12 +12,14 @@
 package net.xmind.share.jobs;
 
 import java.io.IOException;
+import java.net.UnknownServiceException;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.auth.InvalidCredentialsException;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -191,12 +193,20 @@ public class HttpUtils {
             throws HttpException, IOException, JSONException {
         GetMethod method = new GetMethod(mergeUrl(userName, session));
         setTokenAndJson(method, token);
-        if (HttpStatus.SC_OK == client.executeMethod(method)) {
-            JSONObject result = new JSONObject(method.getResponseBodyAsString());
-            return result.getDouble("progress"); //$NON-NLS-1$
-        } else {
-            return -1;
+        if (HttpStatus.SC_OK != client.executeMethod(method))
+            throw new UnknownServiceException();
+        JSONObject result = new JSONObject(method.getResponseBodyAsString());
+        if (result.has("status")) { //$NON-NLS-1$
+            String status = result.getString("status"); //$NON-NLS-1$
+            if ("forbidden".equals(status)) { //$NON-NLS-1$
+                throw new InvalidCredentialsException();
+            } else if ("error".equals(status)) { //$NON-NLS-1$
+                throw new UnknownServiceException();
+            } else if ("finished".equals(status)) { //$NON-NLS-1$
+                return -1;
+            }
         }
+        return result.getDouble("progress"); //$NON-NLS-1$
     }
 
     public static void cancelUploading(HttpClient client, String userName,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -213,9 +213,11 @@ public class SpellingHelper implements ISpellingActivation, Listener,
             if (context[0] != null) {
                 ranges.clear();
 
-                spellChecker.addSpellCheckListener(this);
-                spellChecker.checkSpelling(new StringWordTokenizer(context[0]));
-                spellChecker.removeSpellCheckListener(this);
+                SpellChecker theSpellChecker = spellChecker;
+                theSpellChecker.addSpellCheckListener(this);
+                theSpellChecker.checkSpelling(new StringWordTokenizer(
+                        context[0]));
+                theSpellChecker.removeSpellCheckListener(this);
 
                 if (monitor.isCanceled() || display.isDisposed() || !isActive())
                     return Status.CANCEL_STATUS;
@@ -452,7 +454,6 @@ public class SpellingHelper implements ISpellingActivation, Listener,
             job = null;
         }
         ranges.clear();
-        spellChecker = null;
     }
 
     void dispose() {

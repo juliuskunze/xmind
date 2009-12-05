@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,6 +14,7 @@
 package org.xmind.ui.wizards;
 
 import java.io.File;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 
@@ -36,7 +37,6 @@ import org.xmind.ui.internal.dialogs.DialogUtils;
 import org.xmind.ui.internal.wizards.UncompletablePage;
 import org.xmind.ui.internal.wizards.WizardMessages;
 import org.xmind.ui.io.MonitoredOutputStream;
-import org.xmind.ui.io.StreamInterruptedException;
 import org.xmind.ui.mindmap.IMindMap;
 import org.xmind.ui.mindmap.IMindMapViewer;
 import org.xmind.ui.util.Logger;
@@ -148,11 +148,14 @@ public abstract class AbstractMindMapExportWizard extends AbstractExportWizard {
             return true;
         } catch (Throwable e) {
             if (e instanceof InterruptedException
-                    || e instanceof StreamInterruptedException) {
+                    || e instanceof InterruptedIOException) {
                 return false;
             }
-            if (e instanceof InvocationTargetException) {
-                e = ((InvocationTargetException) e).getCause();
+            while (e instanceof InvocationTargetException) {
+                Throwable t = ((InvocationTargetException) e).getCause();
+                if (t == null)
+                    break;
+                e = t;
             }
             final Throwable ex = e;
             display.asyncExec(new Runnable() {

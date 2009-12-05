@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,6 +14,7 @@
 package org.xmind.ui.wizards;
 
 import java.io.File;
+import java.io.InterruptedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,6 @@ import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.ui.commands.AddSheetCommand;
 import org.xmind.ui.internal.editor.MME;
 import org.xmind.ui.internal.wizards.WizardMessages;
-import org.xmind.ui.io.StreamInterruptedException;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.Logger;
 
@@ -217,7 +217,7 @@ public abstract class AbstractMindMapImportWizard extends Wizard implements
             return true;
         } catch (Throwable e) {
             if (e instanceof InterruptedException
-                    || e instanceof StreamInterruptedException) {
+                    || e instanceof InterruptedIOException) {
                 return false;
             }
             if (e instanceof InvocationTargetException) {

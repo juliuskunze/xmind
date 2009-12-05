@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -191,7 +191,6 @@ public class MindMapMessages extends NLS {
     public static String ZoomIn_toolTip;
     public static String ZoomOut_text;
     public static String ZoomOut_toolTip;
-    public static String FindUpdate_toolTip;
     public static String InsertImageFromFile_text;
     public static String InsertImageFromFile_toolTip;
     public static String MoveUp_text;
@@ -267,14 +266,14 @@ public class MindMapMessages extends NLS {
 
     public static String TryPro_text;
     public static String TryPro_toolTip;
-    public static String TryPro_UpdateSourceDialog_title;
-    public static String TryPro_UpdateSourceDialog_label;
-    public static String TryPro_UpdateSourceDialog_Online;
-    public static String TryPro_UpdateSourceDialog_LocalFile;
-    public static String TryPro_UpdateSourceDialog_jobName;
-    public static String TryPro_ErrorDialog_title;
-    public static String TryPro_ErrorDialog_message;
-    public static String TryPro_InstallDialog_title;
+//    public static String TryPro_UpdateSourceDialog_title;
+//    public static String TryPro_UpdateSourceDialog_label;
+//    public static String TryPro_UpdateSourceDialog_Online;
+//    public static String TryPro_UpdateSourceDialog_LocalFile;
+//    public static String TryPro_UpdateSourceDialog_jobName;
+//    public static String TryPro_ErrorDialog_title;
+//    public static String TryPro_ErrorDialog_message;
+//    public static String TryPro_InstallDialog_title;
 
     public static String WorkbookEditorInput_name;
 
@@ -284,10 +283,10 @@ public class MindMapMessages extends NLS {
     public static String OpenAttachment_text;
 
     public static String NotesView_InsertImage_toolTip;
-    public static String NotesView_UndoTyping_text;
-    public static String NotesView_UndoTyping_toolTip;
-    public static String NotesView_RedoTyping_text;
-    public static String NotesView_RedoTyping_toolTip;
+//    public static String NotesView_UndoTyping_text;
+//    public static String NotesView_UndoTyping_toolTip;
+//    public static String NotesView_RedoTyping_text;
+//    public static String NotesView_RedoTyping_toolTip;
 
     public static String ProtocolManager_OpenHyperlink_pattern;
 

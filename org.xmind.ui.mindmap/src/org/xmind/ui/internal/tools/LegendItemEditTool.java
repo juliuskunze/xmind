@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,10 +19,15 @@ import org.xmind.gef.Request;
 import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IPart;
 import org.xmind.ui.mindmap.ILegendItemPart;
+import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.texteditor.FloatingTextEditorHelper;
 import org.xmind.ui.tools.TitleEditTool;
 
 public class LegendItemEditTool extends TitleEditTool {
+
+    public LegendItemEditTool() {
+        addEditRequestType(MindMapUI.REQ_EDIT_LEGEND_ITEM);
+    }
 
     public void setSource(IGraphicalEditPart source) {
         Assert.isTrue(source instanceof ILegendItemPart);

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,6 +16,7 @@ package org.xmind.ui.internal.wizards;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -50,7 +51,6 @@ import org.xmind.gef.image.ImageWriter;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogUtils;
 import org.xmind.ui.io.MonitoredOutputStream;
-import org.xmind.ui.io.StreamInterruptedException;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.MindMapImageExtractor;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -175,7 +175,7 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
                 try {
                     writeImage(image, destPath, monitor);
                     origin = imageExtractor.getOrigin();
-                } catch (StreamInterruptedException e) {
+                } catch (InterruptedIOException e) {
                     deleteTemporaryPath(destPath);
                     if (generatePreviewJob == this)
                         generatePreviewJob = null;

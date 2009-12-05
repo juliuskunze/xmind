@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -19,6 +19,8 @@ import net.xmind.share.Messages;
 import net.xmind.share.XmindSharePlugin;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -27,6 +29,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.PlatformUI;
+import org.json.JSONException;
 import org.xmind.core.CoreException;
 import org.xmind.core.IMeta;
 import org.xmind.core.IWorkbook;
@@ -48,15 +51,30 @@ public class UploadJob extends Job {
             return runWithException(monitor);
         } catch (Throwable e) {
             // inform user the exception
-            PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-                public void run() {
-                    if (MessageDialog.openQuestion(null,
-                            Messages.ErrorDialog_title,
-                            Messages.ErrorDialog_message)) {
-                        schedule();
-                    }
-                }
-            });
+
+            if (e instanceof AuthenticationException) {
+                PlatformUI.getWorkbench().getDisplay().asyncExec(
+                        new Runnable() {
+                            public void run() {
+                                MessageDialog
+                                        .openError(
+                                                null,
+                                                Messages.ErrorDialog_title,
+                                                Messages.ErrorDialog_Unauthorized_message);
+                            }
+                        });
+            } else {
+                PlatformUI.getWorkbench().getDisplay().asyncExec(
+                        new Runnable() {
+                            public void run() {
+                                if (MessageDialog.openQuestion(null,
+                                        Messages.ErrorDialog_title,
+                                        Messages.ErrorDialog_message)) {
+                                    schedule();
+                                }
+                            }
+                        });
+            }
             // log this error, but don't let user see it.
             XmindSharePlugin.getDefault().getLog().log(
                     new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
@@ -151,22 +169,21 @@ public class UploadJob extends Job {
 
     private void loopRetrieveProgress(IProgressMonitor monitor,
             String userName, String token, String session,
-            TransferFileJob uploadJob) {
+            TransferFileJob uploadJob) throws HttpException, IOException {
         int uploaded = 0;
-        while (!monitor.isCanceled() && !uploadJob.isDone()) {
+        while (!monitor.isCanceled()) {
             try {
                 double progress = HttpUtils.retrieveUploadingProcess(client,
                         userName, session, token);
-                if (progress < 0) {
+                if (progress < 0)
                     break;
-                }
 
                 int newUploaded = (int) (progress * 90);
                 if (newUploaded > uploaded) {
                     monitor.worked(newUploaded - uploaded);
                     uploaded = newUploaded;
                 }
-            } catch (Exception ignore) {
+            } catch (JSONException ignore) {
             }
 
             try {

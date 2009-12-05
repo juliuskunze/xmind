@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -161,7 +162,7 @@ public class DownloadJob extends Job {
                 }
             }
         } catch (IOException e) {
-            if (e instanceof StreamInterruptedException) {
+            if (e instanceof InterruptedIOException) {
                 return new Status(IStatus.WARNING, pluginId, CANCELED, NLS
                         .bind(Messages.DownloadCanceled, getSourceURL(),
                                 getTargetPath()), null);

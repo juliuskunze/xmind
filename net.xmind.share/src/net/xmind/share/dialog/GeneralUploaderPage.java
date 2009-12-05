@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 XMind Ltd. and others.
+ * Copyright (c) 2006-2009 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -13,6 +13,7 @@ package net.xmind.share.dialog;
 
 import net.xmind.share.Info;
 import net.xmind.share.Messages;
+import net.xmind.signin.internal.VerificationDelegate;
 
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -21,6 +22,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
 public class GeneralUploaderPage extends UploaderPage {
@@ -71,8 +73,10 @@ public class GeneralUploaderPage extends UploaderPage {
                 Messages.UploaderDialog_Public_label);
         privacyGroup.addOption(Info.PublicView,
                 Messages.UploaderDialog_PublicView_label);
-        privacyGroup.addOption(Info.Private,
+        Button privateShareWidget = privacyGroup.addOption(Info.Private,
                 Messages.UploaderDialog_Private_label);
+        privateShareWidget.setEnabled(VerificationDelegate.getDefault()
+                .isValid());
 
         Object value = getPrivacyValue();
         setPrivacyValue(value);
