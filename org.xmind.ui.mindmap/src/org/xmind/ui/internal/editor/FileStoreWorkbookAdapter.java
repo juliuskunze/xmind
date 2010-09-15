@@ -1,6 +1,7 @@
 package org.xmind.ui.internal.editor;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,14 +40,13 @@ public class FileStoreWorkbookAdapter implements IWorkbookLoader,
                 workbook.setFile(file.getAbsolutePath());
                 return workbook;
             }
+            throw new FileNotFoundException(file.getAbsolutePath());
         } else {
             InputStream input = fileStore.openInputStream(0, monitor);
             IWorkbook workbook = Core.getWorkbookBuilder().loadFromStream(
                     input, storage, encryptionHandler);
-            workbook.setFile(file.getAbsolutePath());
             return workbook;
         }
-        return null;
     }
 
     private static IFileStore createTempFile(IFileStore fileStore) {

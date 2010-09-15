@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -52,6 +52,7 @@ import org.xmind.gef.command.ICommandStackListener;
 import org.xmind.gef.ui.actions.ActionRegistry;
 import org.xmind.gef.ui.actions.IActionRegistry;
 import org.xmind.gef.ui.actions.ICommandStackAction;
+import org.xmind.ui.tabfolder.IPageClosedListener;
 
 /**
  * @author Brian Sun
@@ -137,6 +138,8 @@ public abstract class GraphicalEditor extends EditorPart implements
     private List<IGraphicalEditorPage> pages = new ArrayList<IGraphicalEditorPage>();
 
     private List<IPageChangedListener> pageChangedListeners = null;
+
+    private List<IPageClosedListener> pageClosedListeners = null;
 
     private ICommandStack commandStack = null;
 
@@ -321,6 +324,7 @@ public abstract class GraphicalEditor extends EditorPart implements
                 pageIndex--;
             setActivePage(pageIndex);
         }
+        firePageClosed(page);
     }
 
     public IGraphicalEditorPage getPage(int pageIndex) {
@@ -520,12 +524,6 @@ public abstract class GraphicalEditor extends EditorPart implements
     protected void uninstallModelListener() {
     }
 
-    public void addPageChangedListener(IPageChangedListener listener) {
-        if (pageChangedListeners == null)
-            pageChangedListeners = new ArrayList<IPageChangedListener>();
-        pageChangedListeners.add(listener);
-    }
-
     public Object getSelectedPage() {
         return getActivePageInstance();
     }
@@ -534,16 +532,23 @@ public abstract class GraphicalEditor extends EditorPart implements
         return getPage(getActivePage());
     }
 
+    public void addPageChangedListener(IPageChangedListener listener) {
+        if (pageChangedListeners == null)
+            pageChangedListeners = new ArrayList<IPageChangedListener>();
+        pageChangedListeners.add(listener);
+    }
+
     public void removePageChangedListener(IPageChangedListener listener) {
         if (pageChangedListeners == null)
             return;
         pageChangedListeners.remove(listener);
+        if (pageChangedListeners.isEmpty())
+            pageChangedListeners = null;
     }
 
     protected void firePageChanged(Object newPage) {
         if (pageChangedListeners == null)
             return;
-
         final PageChangedEvent event = new PageChangedEvent(this, newPage);
         for (final Object l : pageChangedListeners.toArray()) {
             SafeRunner.run(new SafeRunnable() {
@@ -554,21 +559,51 @@ public abstract class GraphicalEditor extends EditorPart implements
         }
     }
 
+    public void addPageClosedListener(IPageClosedListener listener) {
+        if (pageClosedListeners == null)
+            pageClosedListeners = new ArrayList<IPageClosedListener>();
+        pageClosedListeners.add(listener);
+    }
+
+    public void removePageClosedListener(IPageClosedListener listener) {
+        if (pageClosedListeners == null)
+            return;
+        pageClosedListeners.remove(listener);
+        if (pageClosedListeners.isEmpty())
+            pageClosedListeners = null;
+    }
+
+    protected void firePageClosed(final Object pageInstance) {
+        if (pageClosedListeners == null)
+            return;
+        for (final Object listener : pageClosedListeners.toArray()) {
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    ((IPageClosedListener) listener).pageClosed(pageInstance);
+                }
+            });
+        }
+    }
+
     protected void fireDirty() {
         firePropertyChange(PROP_DIRTY);
     }
 
     protected void handlePageChange(int newPageIndex) {
+        boolean wasFocused = false;
         IGraphicalEditorPage oldActivePage = getPage(activePageIndex);
         if (oldActivePage != null && oldActivePage.isActive()) {
+            wasFocused = oldActivePage.isFocused();
             oldActivePage.setActive(false);
         }
 
         this.activePageIndex = newPageIndex;
-
         IGraphicalEditorPage activePage = getPage(newPageIndex);
         if (activePage != null && !activePage.isActive()) {
             activePage.setActive(true);
+        }
+        if (wasFocused) {
+            activePage.setFocus();
         }
 
         IEditorActionBarContributor contributor = getEditorSite()
@@ -616,8 +651,11 @@ public abstract class GraphicalEditor extends EditorPart implements
         pages.add(newIndex, pages.remove(oldIndex));
         for (int i = 0; i < pages.size(); i++) {
             IGraphicalEditorPage page = pages.get(i);
+            boolean wasFocused = page.isFocused();
             containerPresentation.setPageControl(getContainer(), i, page
                     .getControl());
+            if (wasFocused)
+                page.setFocus();
             page.updatePageTitle();
         }
         if (wasActive) {

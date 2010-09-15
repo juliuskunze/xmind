@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -407,25 +407,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
                 Logger.log(e, "Failed to save preview picture."); //$NON-NLS-1$
             }
         }
-//        IPreviewSaver previewSaver = findPreviewSaver();
-//        if (previewSaver != null) {
-//            try {
-//                previewSaver.savePreivew(workbook, monitor);
-//            } catch (Throwable e) {
-//                Logger.log(e, "Failed to save preview picture."); //$NON-NLS-1$
-//            }
-//        }
     }
-
-//    private IPreviewSaver findPreviewSaver() {
-//        for (IEditorPart editor : referrers) {
-//            IPreviewSaver previewSaver = (IPreviewSaver) editor
-//                    .getAdapter(IPreviewSaver.class);
-//            if (previewSaver != null)
-//                return previewSaver;
-//        }
-//        return null;
-//    }
 
     public void propertyChange(PropertyChangeEvent event) {
         if (commandStack != null) {

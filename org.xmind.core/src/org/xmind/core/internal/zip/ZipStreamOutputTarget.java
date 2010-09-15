@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,13 +20,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.xmind.core.Core;
-import org.xmind.core.io.IOutputTarget;
+import org.xmind.core.io.ICloseableOutputTarget;
 
 /**
  * @author frankshaka
  * 
  */
-public class ZipStreamOutputTarget implements IOutputTarget {
+public class ZipStreamOutputTarget implements ICloseableOutputTarget {
 
     private static class ZipEntryOutputStream extends FilterOutputStream {
 

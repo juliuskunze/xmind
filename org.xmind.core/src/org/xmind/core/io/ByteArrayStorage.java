@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.xmind.core.Core;
 import org.xmind.core.CoreException;
 
 /**
@@ -32,14 +31,6 @@ import org.xmind.core.CoreException;
 public class ByteArrayStorage implements IStorage {
 
     protected class ByteArrayInputSource implements IInputSource {
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.xmind.core.io.IInputSource#close()
-         */
-        public void close() {
-        }
 
         /*
          * (non-Javadoc)
@@ -122,22 +113,6 @@ public class ByteArrayStorage implements IStorage {
             return dataTable != null && !dataTable.isEmpty();
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see
-         * org.xmind.core.io.IInputSource#releaseStream(java.io.InputStream)
-         */
-        public boolean closeEntryStream(String entryPath, InputStream stream) {
-            try {
-                stream.close();
-                return true;
-            } catch (IOException e) {
-                Core.getLogger().log(e);
-                return false;
-            }
-        }
-
     }
 
     protected class ByteArrayOutputTarget implements IOutputTarget {
@@ -191,14 +166,6 @@ public class ByteArrayStorage implements IStorage {
         /*
          * (non-Javadoc)
          * 
-         * @see org.xmind.core.io.IOutputTarget#close()
-         */
-        public void close() {
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
          * @see org.xmind.core.io.IOutputTarget#getEntryStream(java.lang.String)
          */
         public OutputStream getEntryStream(String entryName) {
@@ -224,22 +191,6 @@ public class ByteArrayStorage implements IStorage {
          */
         public boolean open() {
             return true;
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see
-         * org.xmind.core.io.IOutputTarget#releaseStream(java.io.OutputStream)
-         */
-        public boolean closeEntryStream(String entryPath, OutputStream stream) {
-            try {
-                stream.close();
-                return true;
-            } catch (IOException e) {
-                Core.getLogger().log(e);
-                return false;
-            }
         }
 
         /*

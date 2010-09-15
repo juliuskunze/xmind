@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.xmind.core.Core;
 
 public class DirectoryInputSource implements IInputSource {
 
@@ -107,6 +109,8 @@ public class DirectoryInputSource implements IInputSource {
             File file = new File(dir, entryName);
             return new FileInputStream(file);
         } catch (FileNotFoundException e) {
+            Core.getLogger().log(e,
+                    "Failed to get entry input stream: " + entryName); //$NON-NLS-1$
         }
         return null;
     }
@@ -116,6 +120,8 @@ public class DirectoryInputSource implements IInputSource {
             stream.close();
             return true;
         } catch (IOException e) {
+            Core.getLogger().log(e,
+                    "Failed to close entry input stream: " + entryPath); //$NON-NLS-1$
         }
         return false;
     }

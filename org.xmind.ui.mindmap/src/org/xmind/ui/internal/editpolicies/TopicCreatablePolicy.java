@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -93,7 +93,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
                 || MindMapUI.REQ_ADD_MARKER.equals(requestType)
                 || MindMapUI.REQ_CREATE_BOUNDARY.equals(requestType)
                 || MindMapUI.REQ_CREATE_SUMMARY.equals(requestType)
-                || MindMapUI.REQ_ADD_IMAGE.equals(requestType);
+                || MindMapUI.REQ_ADD_IMAGE.equals(requestType)
+                || MindMapUI.REQ_CREATE_SHEET.equals(requestType);
     }
 
     public void handle(Request request) {
@@ -113,7 +114,30 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
             createSummary(request);
         } else if (MindMapUI.REQ_ADD_IMAGE.equals(reqType)) {
             addImage(request);
+        } else if (MindMapUI.REQ_CREATE_SHEET.equals(reqType)) {
+            createSheetFromTopic(request);
         }
+    }
+
+    private void createSheetFromTopic(Request request) {
+        List<IPart> targets = request.getTargets();
+        if (targets.isEmpty())
+            return;
+        List<ITopic> topics = MindMapUtils.getTopics(targets);
+        if (topics.isEmpty())
+            return;
+
+        ITopic sourceTopic = topics.get(0);
+        CreateSheetFromTopicCommandBuilder builder = new CreateSheetFromTopicCommandBuilder(
+                request.getTargetViewer(), request.getTargetCommandStack(),
+                sourceTopic);
+        if (!builder.canStart())
+            return;
+
+        builder.start();
+        builder.setLabel(CommandMessages.Command_CreateSheetFromTopic);
+        builder.run();
+        builder.end();
     }
 
     private void createSummary(Request request) {

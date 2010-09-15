@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,11 +17,17 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.graphics.ImageData;
 import org.xmind.core.IFileEntry;
 import org.xmind.core.IWorkbook;
+import org.xmind.ui.mindmap.IMindMapImages;
+import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.Logger;
 
 public class AttachmentImageDescriptor extends ImageDescriptor {
+
+    private static ImageData MISSING_DATA = null;
 
     private IWorkbook workbook;
 
@@ -43,23 +49,37 @@ public class AttachmentImageDescriptor extends ImageDescriptor {
             try {
                 imageData = new ImageData(in);
             } catch (Exception e) {
+                Logger.log(e, "Failed to get image data from attachment: " //$NON-NLS-1$
+                        + path + " (" + workbook.toString() + ")"); //$NON-NLS-1$ //$NON-NLS-2$
+                imageData = getMissingData();
+            } catch (SWTError e) {
+                Logger.log(e, "Failed to get image data from attachment: " //$NON-NLS-1$
+                        + path + " (" + workbook.toString() + ")"); //$NON-NLS-1$ //$NON-NLS-2$
+                imageData = getMissingData();
             } finally {
                 try {
                     in.close();
                 } catch (Exception e) {
                 }
             }
+        } else {
+            imageData = getMissingData();
         }
         return imageData;
     }
 
     private InputStream getStream() {
         IFileEntry entry = workbook.getManifest().getFileEntry(path);
-        if (entry == null)
+        if (entry == null) {
+            Logger.log("Failed to get file entry by entry path: " + path); //$NON-NLS-1$
             return null;
+        }
         InputStream stream = entry.getInputStream();
-        if (stream == null)
+        if (stream == null) {
+            Logger.log("Failed to get input stream from workbook entry: " //$NON-NLS-1$
+                    + path);
             return null;
+        }
         return new BufferedInputStream(stream);
     }
 
@@ -90,6 +110,14 @@ public class AttachmentImageDescriptor extends ImageDescriptor {
     public static ImageDescriptor createFromEntry(IWorkbook workbook,
             IFileEntry entry) {
         return new AttachmentImageDescriptor(workbook, entry.getPath());
+    }
+
+    private static ImageData getMissingData() {
+        if (MISSING_DATA == null) {
+            MISSING_DATA = MindMapUI.getImages().get(
+                    IMindMapImages.MISSING_IMAGE).getImageData();
+        }
+        return MISSING_DATA;
     }
 
 }

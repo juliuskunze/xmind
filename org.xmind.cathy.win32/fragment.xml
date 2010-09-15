@@ -4,7 +4,7 @@
    <extension
          point="org.eclipse.ui.startup">
       <startup
-            class="org.xmind.cathy.internal.Startup">
+            class="org.xmind.cathy.internal.win32.Startup">
       </startup>
    </extension>
 

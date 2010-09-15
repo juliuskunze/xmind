@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -127,8 +127,6 @@ public class OpenWorkbookAction extends Action implements IWorkbenchAction {
                         .getAbsolutePath());
         SafeRunner.run(new SafeRunnable(errMessage) {
             public void run() throws Exception {
-//                WorkbookEditorInput input = new WorkbookEditorInput(contents,
-//                        file.getAbsolutePath());
                 IEditorInput input = MME.createFileEditorInput(file);
                 window.getActivePage().openEditor(input,
                         MindMapUI.MINDMAP_EDITOR_ID);

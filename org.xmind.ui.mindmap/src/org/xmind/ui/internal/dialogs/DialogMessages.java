@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,6 +15,11 @@ package org.xmind.ui.internal.dialogs;
 
 import org.eclipse.osgi.util.NLS;
 
+/**
+ * 
+ * @author Frank Shaka
+ * 
+ */
 public class DialogMessages extends NLS {
 
     private static final String BUNDLE_NAME = "org.xmind.ui.internal.dialogs.messages"; //$NON-NLS-1$

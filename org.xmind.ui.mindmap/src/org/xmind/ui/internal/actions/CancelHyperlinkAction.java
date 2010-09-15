@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -69,11 +69,10 @@ public class CancelHyperlinkAction extends PageAction implements
      * @return
      */
     private boolean hasModifiableHyperlink(ISelection selection) {
-        ITopic topic = (ITopic) ((IStructuredSelection) selection)
-                .getFirstElement();
-        if (topic == null)
+        Object topic = ((IStructuredSelection) selection).getFirstElement();
+        if (topic == null || !(topic instanceof ITopic))
             return false;
-        String hyperlink = topic.getHyperlink();
+        String hyperlink = ((ITopic) topic).getHyperlink();
         if (hyperlink == null)
             return false;
         return MindMapUI.getProtocolManager().isHyperlinkModifiable(topic,

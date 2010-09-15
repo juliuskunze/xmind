@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,6 +16,7 @@ package org.xmind.gef.tree;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
@@ -26,7 +27,6 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.xmind.gef.AbstractViewer;
-import org.xmind.gef.GEF;
 import org.xmind.gef.part.IPart;
 
 /**
@@ -112,7 +112,7 @@ public class TreeViewer extends AbstractViewer implements ITreeViewer {
     }
 
     public void scheduleRedraw() {
-        if (GEF.IS_CARBON)
+        if (Util.isMac())
             // Redraw scheduling performs awefully on OS X.
             return;
 

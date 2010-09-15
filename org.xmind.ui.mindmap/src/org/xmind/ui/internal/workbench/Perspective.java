@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -41,6 +41,7 @@ public class Perspective implements IPerspectiveFactory {
         createLeftLayout(pageLayout);
 
         pageLayout.addShowViewShortcut(OUTLINE_VIEW_ID);
+        pageLayout.addShowViewShortcut(MindMapUI.VIEW_OVERVIEW);
         pageLayout.addShowViewShortcut(MindMapUI.VIEW_MARKER);
         pageLayout.addShowViewShortcut(MindMapUI.VIEW_NOTES);
         pageLayout.addShowViewShortcut(MindMapUI.VIEW_STYLES);
@@ -53,6 +54,7 @@ public class Perspective implements IPerspectiveFactory {
         IFolderLayout layout = pageLayout.createFolder("upRight", //$NON-NLS-1$
                 IPageLayout.RIGHT, getRatio1(), pageLayout.getEditorArea());
         layout.addView(OUTLINE_VIEW_ID);
+        layout.addView(MindMapUI.VIEW_OVERVIEW);
         layout.addPlaceholder(MindMapUI.VIEW_STYLES);
     }
 

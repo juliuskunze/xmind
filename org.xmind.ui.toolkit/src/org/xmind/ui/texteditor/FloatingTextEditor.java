@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -196,10 +196,18 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
 
         control.setVisible(true);
         if (withFocus) {
-            control.setFocus();
+            setFocus();
         }
         fireEditingStarted(createTextEvent());
         return true;
+    }
+
+    protected void setFocus() {
+        if (textViewer != null && !textViewer.getTextWidget().isDisposed()) {
+            textViewer.getTextWidget().setFocus();
+        } else if (control != null && !control.isDisposed()) {
+            control.setFocus();
+        }
     }
 
     public boolean close() {
@@ -244,10 +252,17 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
         if (!finish)
             hardCancel();
         Composite parent = control.getParent();
+        boolean wasFocused = isFocused();
         control.dispose();
-        if (parent.getShell() == parent.getDisplay().getActiveShell()) {
+        if (wasFocused
+                && parent.getShell() == parent.getDisplay().getActiveShell()) {
             parent.setFocus();
         }
+    }
+
+    protected boolean isFocused() {
+        return textViewer != null && !textViewer.getTextWidget().isDisposed()
+                && textViewer.getTextWidget().isFocusControl();
     }
 
     protected void hardCancel() {

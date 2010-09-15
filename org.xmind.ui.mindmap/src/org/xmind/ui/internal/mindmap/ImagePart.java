@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -109,7 +109,7 @@ public class ImagePart extends MindMapPartBase implements IImagePart {
             IImageRegistryService service = (IImageRegistryService) viewer
                     .getService(IImageRegistryService.class);
             if (service != null) {
-                return service.getImage(getImageDescriptor(), false, this);
+                return service.getImage(getImageDescriptor(), true, this);
             }
         }
         imageNeedsDispose = true;

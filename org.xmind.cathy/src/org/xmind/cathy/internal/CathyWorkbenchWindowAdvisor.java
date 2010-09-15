@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,9 +13,12 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
-import net.xmind.signin.internal.IVerificationListener;
-import net.xmind.signin.internal.VerificationDelegate;
+import net.xmind.signin.IAccountInfo;
+import net.xmind.signin.IAuthorizationListener;
+import net.xmind.signin.IPreauthorizationListener;
+import net.xmind.signin.XMindNet;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.CoolBarManager;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
@@ -35,13 +38,15 @@ import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 import org.eclipse.ui.internal.WorkbenchWindow;
 import org.xmind.cathy.internal.jobs.CheckOpenFilesJob;
-import org.xmind.cathy.internal.jobs.StartupJob;
 import org.xmind.ui.internal.workbench.Util;
 
 public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
-        implements IVerificationListener, IPartListener2, IPropertyListener {
+        implements IPartListener2, IPropertyListener, IAuthorizationListener,
+        IPreauthorizationListener {
 
     private boolean showPro = false;
+
+    private IWorkbenchPartReference activePartRef = null;
 
     public CathyWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer) {
         super(configurer);
@@ -59,11 +64,10 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
         configurer.setShowStatusLine(true);
         configurer.setShowProgressIndicator(true);
         configurer.setTitle(WorkbenchMessages.AppWindowTitle);
-        VerificationDelegate.getDefault().addVerificationListener(this);
+        XMindNet.addAuthorizationListener(this);
     }
 
     public void postWindowOpen() {
-        super.postWindowOpen();
         IWorkbenchWindow window = getWindowConfigurer().getWindow();
         if (window != null) {
             CoolBarManager coolBar = ((WorkbenchWindow) window)
@@ -73,8 +77,6 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
             }
 
             window.getPartService().addPartListener(this);
-
-            new StartupJob(window.getWorkbench()).schedule();
 
             Shell shell = window.getShell();
             if (shell != null && !shell.isDisposed()) {
@@ -88,22 +90,37 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
                 });
             }
         }
+        XMindNet.addPreauthorizationListener(this);
     }
 
     @Override
     public void postWindowClose() {
-        VerificationDelegate.getDefault().removeVerificationListener(this);
-        super.postWindowClose();
+        XMindNet.removePreauthorizationListener(this);
+        XMindNet.removeAuthorizationListener(this);
     }
 
-    public void verified(boolean valid) {
-        this.showPro = valid;
+    public void authorized(IAccountInfo accountInfo) {
+        this.showPro = accountInfo.hasValidSubscription();
+        updateWindowTitle();
+    }
+
+    public void unauthorized(IStatus result, IAccountInfo accountInfo) {
+        this.showPro = false;
+        updateWindowTitle();
+    }
+
+    public void preauthorized() {
+        this.showPro = true;
         updateWindowTitle();
     }
 
     public void partActivated(IWorkbenchPartReference partRef) {
         if (partRef instanceof IEditorReference) {
-            partRef.addPropertyListener(this);
+            if (activePartRef != null) {
+                activePartRef.removePropertyListener(this);
+            }
+            activePartRef = partRef;
+            activePartRef.addPropertyListener(this);
         }
         updateWindowTitle();
     }
@@ -112,11 +129,14 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
     }
 
     public void partClosed(IWorkbenchPartReference partRef) {
+        if (partRef == activePartRef) {
+            activePartRef = null;
+            partRef.removePropertyListener(this);
+        }
         updateWindowTitle();
     }
 
     public void partDeactivated(IWorkbenchPartReference partRef) {
-        partRef.removePropertyListener(this);
     }
 
     public void partHidden(IWorkbenchPartReference partRef) {

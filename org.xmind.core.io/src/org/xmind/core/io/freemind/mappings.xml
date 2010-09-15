@@ -18,7 +18,7 @@
 		<resource-mapping src="licq" dest="other-people" />
 		<resource-mapping src="messagebox_warning" dest="other-exclam" />
 	
-		<resource-mapping src="ksmiletris" dest="smiley-happy" />
+		<resource-mapping src="ksmiletris" dest="smiley-smile" />
 		<resource-mapping src="flag" dest="flag-red" />
 	</resource-group>
 </resource-mappings>

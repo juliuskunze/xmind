@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -81,10 +81,6 @@ public abstract class AbstractExportPage extends WizardPage {
 
     protected boolean hasTargetPath() {
         return getCastedWizard().hasTargetPath();
-    }
-
-    protected boolean hasSource() {
-        return getCastedWizard().hasSource();
     }
 
     protected Control createFileControls(Composite parent) {
@@ -246,7 +242,7 @@ public abstract class AbstractExportPage extends WizardPage {
     }
 
     protected boolean isPageCompletable() {
-        return hasSource() && hasTargetPath();
+        return hasTargetPath();
     }
 
     protected void setTargetPath(String path) {

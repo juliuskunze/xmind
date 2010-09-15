@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -11,27 +11,31 @@
  */
 package net.xmind.share.dialog;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
 import net.xmind.share.Info;
 import net.xmind.share.Messages;
-import net.xmind.signin.internal.VerificationDelegate;
 
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.forms.events.HyperlinkEvent;
+import org.eclipse.ui.forms.events.IHyperlinkListener;
+import org.eclipse.ui.forms.widgets.FormText;
 
-public class GeneralUploaderPage extends UploaderPage {
+public class GeneralUploaderPage extends UploaderPage implements
+        PropertyChangeListener {
 
     private InfoField titleField;
 
     private InfoField descriptionField;
 
-    private RadioInfoFieldGroup privacyGroup;
+    private FormText privacyText;
 
     public GeneralUploaderPage() {
         setTitle(Messages.UploaderDialog_GeneralPage_title);
@@ -39,9 +43,10 @@ public class GeneralUploaderPage extends UploaderPage {
 
     public void createControl(Composite parent) {
         Composite composite = new Composite(parent, SWT.NONE);
+        composite.setBackground(parent.getBackground());
 
         GridLayout layout = new GridLayout();
-        layout.verticalSpacing = 15;
+        layout.verticalSpacing = 10;
         composite.setLayout(layout);
 
         titleField = new InfoField(false, true, true);
@@ -66,51 +71,83 @@ public class GeneralUploaderPage extends UploaderPage {
                     }
                 });
 
-        privacyGroup = new RadioInfoFieldGroup(false);
-        privacyGroup.fill(composite);
-        privacyGroup.setName(Messages.UploaderDialog_Privacy_title);
-        privacyGroup.addOption(Info.Public,
-                Messages.UploaderDialog_Public_label);
-        privacyGroup.addOption(Info.PublicView,
-                Messages.UploaderDialog_PublicView_label);
-        Button privateShareWidget = privacyGroup.addOption(Info.Private,
-                Messages.UploaderDialog_Private_label);
-        privateShareWidget.setEnabled(VerificationDelegate.getDefault()
-                .isValid());
-
-        Object value = getPrivacyValue();
-        setPrivacyValue(value);
-        privacyGroup.setSelectedValue(value);
-        privacyGroup
-                .addSelectionChangedListener(new ISelectionChangedListener() {
-                    public void selectionChanged(SelectionChangedEvent event) {
-                        setPrivacyValue(((IStructuredSelection) event
-                                .getSelection()).getFirstElement());
-                    }
-                });
+        createPrivacySection(composite);
 
         setControl(composite);
+
+        getInfo().addPropertyChangeListener(Info.PRIVACY, this);
+        getInfo().addPropertyChangeListener(Info.DOWNLOADABLE, this);
     }
 
-    private void setPrivacyValue(Object value) {
-        getInfo().setProperty(Info.ALLOW_DOWNLOAD, value);
-    }
+    private void createPrivacySection(Composite parent) {
+        privacyText = new FormText(parent, SWT.NO_FOCUS);
+        privacyText
+                .setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        privacyText.setBackground(parent.getBackground());
+        privacyText.addHyperlinkListener(new IHyperlinkListener() {
 
-    private Object getPrivacyValue() {
-        Object value = getInfo().getProperty(Info.ALLOW_DOWNLOAD);
-        if (value == null) {
-            value = getContainer().getDialogSettings().get(Info.ALLOW_DOWNLOAD);
-            if (value == null) {
-                value = Info.Public;
+            public void linkExited(HyperlinkEvent e) {
             }
-        }
-        return value;
+
+            public void linkEntered(HyperlinkEvent e) {
+            }
+
+            public void linkActivated(HyperlinkEvent e) {
+                if ("privacy".equals(e.getHref())) { //$NON-NLS-1$
+                    goToPrivacyPage();
+                }
+            }
+        });
+        updatePrivacyLabel();
     }
 
     public void setFocus() {
         if (descriptionField != null && !descriptionField.isDisposed()) {
             descriptionField.setFocus();
         }
+    }
+
+    @Override
+    public void dispose() {
+        getInfo().removePropertyChangeListener(Info.PRIVACY, this);
+        getInfo().removePropertyChangeListener(Info.DOWNLOADABLE, this);
+        super.dispose();
+    }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+        String name = evt.getPropertyName();
+        if (Info.PRIVACY.equals(name) || Info.DOWNLOADABLE.equals(name)) {
+            updatePrivacyLabel();
+        }
+    }
+
+    private void updatePrivacyLabel() {
+        if (privacyText == null || privacyText.isDisposed())
+            return;
+        privacyText.setText(NLS.bind(Messages.UploaderDialog_Privacy_prompt,
+                new String[] { getAccessibilityText(), getDownloadableText(),
+                        "privacy" }), true, false); //$NON-NLS-1$
+    }
+
+    private String getAccessibilityText() {
+        Object acc = getInfo().getString(Info.PRIVACY, Info.PRIVACY_PUBLIC);
+        if (Info.PRIVACY_PUBLIC.equals(acc))
+            return Messages.UploaderDialog_Privacy_Public_title;
+        if (Info.PRIVACY_PRIVATE.equals(acc))
+            return Messages.UploaderDialog_Privacy_Private_title;
+        return Messages.UploaderDialog_Privacy_Unlisted_title;
+    }
+
+    private String getDownloadableText() {
+        Object value = getInfo().getString(Info.DOWNLOADABLE,
+                Info.DOWNLOADABLE_YES);
+        if (Info.DOWNLOADABLE_YES.equals(value))
+            return Messages.UploaderDialog_Privacy_DownloadAllowed;
+        return Messages.UploaderDialog_Privacy_DownloadForbidden;
+    }
+
+    private void goToPrivacyPage() {
+        getContainer().showPage("org.xmind.ui.uploader.privacy"); //$NON-NLS-1$
     }
 
 }

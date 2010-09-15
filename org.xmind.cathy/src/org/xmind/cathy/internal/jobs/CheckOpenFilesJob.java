@@ -35,6 +35,7 @@ import org.xmind.ui.internal.imports.freemind.FreeMindImporter;
 import org.xmind.ui.internal.imports.mm.MindManagerImporter;
 import org.xmind.ui.internal.prefs.MarkerManagerPrefPage;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.Logger;
 import org.xmind.ui.wizards.MindMapImporter;
 
 public class CheckOpenFilesJob extends AbstractCheckFilesJob {
@@ -52,6 +53,8 @@ public class CheckOpenFilesJob extends AbstractCheckFilesJob {
     @Override
     protected void prepare() {
         filesToOpen = null;
+        startsPresentation = false;
+        markersImported = false;
         super.prepare();
     }
 
@@ -227,7 +230,7 @@ public class CheckOpenFilesJob extends AbstractCheckFilesJob {
                 return (IEditorActionDelegate) bundle.loadClass(clazz)
                         .newInstance();
             } catch (Throwable e) {
-                e.printStackTrace();
+                Logger.log(e);
             }
         }
         return null;

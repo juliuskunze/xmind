@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,38 +18,46 @@ import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Rectangle;
-import org.eclipse.swt.SWT;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Shell;
-import org.xmind.gef.GEF;
 
 /**
  * @author Brian Sun
  */
 public class GraphicsUtils {
 
-    private static Boolean IS_CARBON_SNOW_LEOPARD = null;
+    private static Boolean carbon = null;
+
+    private static boolean isCarbon() {
+        if (carbon == null) {
+            carbon = Boolean.valueOf(Util.isCarbon());
+        }
+        return carbon.booleanValue();
+    }
+
+    private static Boolean carbonSnowLeopard = null;
 
     public static boolean isCarbonSnowLeopard() {
-        if (IS_CARBON_SNOW_LEOPARD == null) {
-            if ("carbon".equals(SWT.getPlatform())) { //$NON-NLS-1$
+        if (carbonSnowLeopard == null) {
+            if (isCarbon()) {
                 String osVersion = System.getProperty("os.version"); //$NON-NLS-1$
                 if (osVersion != null) {
                     String[] parts = osVersion.split("\\."); //$NON-NLS-1$
                     if (isGreater(parts[0], 10)) {
                         if (parts.length > 1) {
-                            IS_CARBON_SNOW_LEOPARD = Boolean.valueOf(isGreater(
+                            carbonSnowLeopard = Boolean.valueOf(isGreater(
                                     parts[1], 6));
                         }
                     }
                 }
             }
-            if (IS_CARBON_SNOW_LEOPARD == null)
-                IS_CARBON_SNOW_LEOPARD = Boolean.FALSE;
+            if (carbonSnowLeopard == null)
+                carbonSnowLeopard = Boolean.FALSE;
         }
-        return IS_CARBON_SNOW_LEOPARD.booleanValue();
+        return carbonSnowLeopard.booleanValue();
     }
 
     private static boolean isGreater(String str, int value) {
@@ -66,11 +74,12 @@ public class GraphicsUtils {
 
     public static void fixGradientBugForCarbon(Graphics graphics,
             Rectangle bounds) {
-        if (GEF.IS_CARBON) {
+        if (isCarbon()) {
             graphics.pushState();
             graphics.setAlpha(0);
             graphics.setBackgroundColor(ColorConstants.white);
             graphics.fillRectangle(bounds);
+            graphics.restoreState();
             graphics.popState();
         }
     }

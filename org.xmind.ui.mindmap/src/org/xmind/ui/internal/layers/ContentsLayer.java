@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -160,8 +160,19 @@ public class ContentsLayer extends BaseLayer implements IOriginBased {
                 }
             }
         } else if (constrained) {
-            if (contents instanceof IReferencedFigure)
-                return ((IReferencedFigure) contents).getReference();
+            if (contents instanceof IReferencedFigure) {
+                Insets ins = ((IReferencedFigure) contents)
+                        .getReferenceDescription();
+                Rectangle area = getViewportClientArea(this);
+                if (area == null) {
+                    area = getBounds();
+                } else {
+                    area = area.getCopy().scale(1 / getScale(this, 1));
+                }
+                return new Point(area.x + (area.width - ins.left - ins.right)
+                        / 2 + ins.left, area.y
+                        + (area.height - ins.top - ins.bottom) / 2 + ins.top);
+            }
             return contents.getBounds().getLocation();
         }
         return new Point();
@@ -217,9 +228,14 @@ public class ContentsLayer extends BaseLayer implements IOriginBased {
             } else {
                 area = area.getCopy().scale(1 / getScale(this, 1));
             }
-            contents.setBounds(new Rectangle(area.x + (area.width - size.width)
-                    / 2, area.y + (area.height - size.height) / 2, size.width,
-                    size.height));
+            Rectangle contentBounds = new Rectangle(area.x
+                    + (area.width - size.width) / 2, area.y
+                    + (area.height - size.height) / 2, size.width, size.height);
+            if (contents instanceof FreeformFigure) {
+                ((FreeformFigure) contents).setFreeformBounds(contentBounds);
+            } else {
+                contents.setBounds(contentBounds);
+            }
         } else {
             Point o = getOrigin();
             Insets ins;

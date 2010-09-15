@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -33,7 +33,6 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
@@ -110,6 +109,21 @@ public class MComboViewer extends StructuredViewer {
 
     private Object separatorImitation = null;
 
+    /**
+     * Constructs a new instance of this class given its parent and a style
+     * value describing its behavior and appearance.
+     * 
+     * @param parent
+     *            a composite control which will be the parent of the new
+     *            instance (cannot be null)
+     * @param style
+     *            the style of control to construct
+     * 
+     * @see #NORNAL
+     * @see #NO_TEXT
+     * @see #NO_IMAGE
+     * @see #FILTERED
+     */
     public MComboViewer(Composite parent, int style) {
         this.dropDownHandle = createDropDownHandle(parent, style);
         hookControl(dropDownHandle.getControl());
@@ -501,8 +515,8 @@ public class MComboViewer extends StructuredViewer {
         Shell shell = list.getShell();
         if (shell != null && !shell.isDisposed()) {
             dropDownHandle.setForceFocus(true);
-            shell.addDisposeListener(new DisposeListener() {
-                public void widgetDisposed(DisposeEvent e) {
+            shell.addListener(SWT.Dispose, new Listener() {
+                public void handleEvent(Event event) {
                     if (!dropDownHandle.getControl().isDisposed()) {
                         dropDownHandle.setForceFocus(false);
                     }

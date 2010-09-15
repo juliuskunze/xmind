@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -91,7 +91,7 @@ public class FilePathParser {
             sb.append(".."); //$NON-NLS-1$
             sb.append(sep);
         }
-        for (int i = routine.size() - 1; i >= start; i--) {
+        for (int i = start; i < routine.size(); i++) {
             sb.append(routine.get(i).getName());
             sb.append(sep);
         }
@@ -100,6 +100,7 @@ public class FilePathParser {
     }
 
     public static String toAbsolutePath(String base, String relativePath) {
+
         try {
             return new File(base, relativePath).getCanonicalPath();
         } catch (IOException e) {
@@ -107,14 +108,14 @@ public class FilePathParser {
         }
     }
 
-//    public static void main(String[] args) {
-//        String relativePath = toRelativePath("/Users/frankshaka/Music", //$NON-NLS-1$
-//                "/Users/frankshaka/Desktop/a.xmind"); //$NON-NLS-1$
-//        System.out.println(relativePath);
-//        System.out.println(isPathRelative(relativePath));
-//        System.out.println(toAbsolutePath("/Users/frankshaka/Music", //$NON-NLS-1$
-//                relativePath));
-//    }
+    public static void main(String[] args) {
+        String base = "/Applications/Utilities/Console.app/Contents/info.plist"; //$NON-NLS-1$
+        String absolutePath = "/Users/frankshaka/Desktop/a.xmind"; //$NON-NLS-1$
+        String relativePath = toRelativePath(base, absolutePath);
+        System.out.println(relativePath);
+        System.out.println(isPathRelative(relativePath));
+        System.out.println(toAbsolutePath(base, relativePath));
+    }
 
     /*
      * ECMA 3, 15.1.3 URI Handling Function Properties

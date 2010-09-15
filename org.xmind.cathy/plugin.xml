@@ -92,4 +92,10 @@
             sequence="M1+M2+L">
       </key>
    </extension>
+   <extension
+         point="org.eclipse.ui.startup">
+      <startup
+            class="org.xmind.cathy.internal.AutoSaveService">
+      </startup>
+   </extension>
 </plugin>

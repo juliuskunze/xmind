@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -14,11 +14,11 @@ package net.xmind.share;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
 
 import net.xmind.share.dialog.UploaderDialog;
 import net.xmind.share.jobs.UploadJob;
-import net.xmind.signin.XMindNetEntry;
+import net.xmind.signin.IAccountInfo;
+import net.xmind.signin.XMindNet;
 
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -82,9 +82,6 @@ public class Uploader extends JobChangeAdapter {
         trimAttachments();
         generatePreview();
 
-//        String styleId = workbook.getPrimarySheet().getStyleId();
-//        System.out.println(styleId);
-
         if (fullImage == null || origin == null) {
             cancel();
             MessageDialog.openError(parentShell,
@@ -102,7 +99,6 @@ public class Uploader extends JobChangeAdapter {
         info.setProperty(Info.BACKGROUND_COLOR, getBackgroundColor());
 
         UploaderDialog dialog = createUploadDialog();
-
         int ret = dialog.open();
         if (ret != UploaderDialog.OK) {
             cancel();
@@ -124,12 +120,16 @@ public class Uploader extends JobChangeAdapter {
         meta.setValue(Info.ORIGIN_Y, String.valueOf(origin.y));
         meta.setValue(Info.BACKGROUND_COLOR, info
                 .getString(Info.BACKGROUND_COLOR));
-        if (info.hasProperty(Info.ALLOW_DOWNLOAD)) {
-            meta.setValue(Info.ALLOW_DOWNLOAD, info.getString(
-                    Info.ALLOW_DOWNLOAD, Info.Public));
-        } else {
-            meta.setValue(Info.ALLOW_DOWNLOAD, Info.Public);
-        }
+//        if (info.hasProperty(Info.ALLOW_DOWNLOAD)) {
+//            meta.setValue(Info.ALLOW_DOWNLOAD, info.getString(
+//                    Info.ALLOW_DOWNLOAD, Info.Public));
+//        } else {
+//            meta.setValue(Info.ALLOW_DOWNLOAD, Info.Public);
+//        }
+        meta.setValue(Info.PRIVACY, info.getString(Info.PRIVACY,
+                Info.PRIVACY_PUBLIC));
+        meta.setValue(Info.DOWNLOADABLE, info.getString(Info.DOWNLOADABLE,
+                Info.DOWNLOADABLE_YES));
 
         if (file == null) {
             String tempFile = Core.getWorkspace()
@@ -176,12 +176,10 @@ public class Uploader extends JobChangeAdapter {
     }
 
     private boolean signIn() {
-        Properties userInfo = XMindNetEntry.signIn();
-        if (userInfo != null) {
-            info.setProperty(Info.USER_ID, userInfo
-                    .getProperty(XMindNetEntry.USER_ID));
-            info.setProperty(Info.TOKEN, userInfo
-                    .getProperty(XMindNetEntry.TOKEN));
+        IAccountInfo accountInfo = XMindNet.signIn();
+        if (accountInfo != null) {
+            info.setProperty(Info.USER_ID, accountInfo.getUser());
+            info.setProperty(Info.TOKEN, accountInfo.getAuthToken());
             return true;
         }
         return false;

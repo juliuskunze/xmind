@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -32,7 +32,7 @@ import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.MindMapUI;
-import org.xmind.ui.wizards.AbstractExportPage;
+import org.xmind.ui.wizards.AbstractMindMapExportPage;
 import org.xmind.ui.wizards.AbstractMindMapExportWizard;
 
 public class XMind2008ExportWizard extends AbstractMindMapExportWizard {
@@ -45,14 +45,14 @@ public class XMind2008ExportWizard extends AbstractMindMapExportWizard {
 
     private static final String FILTER = "*" + FILE_EXT; //$NON-NLS-1$
 
-    private class XMind2008ExportPage extends AbstractExportPage {
+    private class XMind2008ExportPage extends AbstractMindMapExportPage {
 
         /**
          * @param pageName
          * @param title
          */
         public XMind2008ExportPage() {
-            super(PAGE_NAME, WizardMessages.XMind2008ExportPage_title, null);
+            super(PAGE_NAME, WizardMessages.XMind2008ExportPage_title);
         }
 
         /*

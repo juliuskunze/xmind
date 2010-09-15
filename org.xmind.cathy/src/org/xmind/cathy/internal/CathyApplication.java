@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -38,9 +38,9 @@ public class CathyApplication implements IApplication {
         if (args != null && args.length > 0) {
             logArgs(args);
         }
-        if (shouldExitEarly())
+        if (shouldExitEarly()) {
             return EXIT_OK;
-
+        }
         Display display = PlatformUI.createDisplay();
         try {
             int returnCode = PlatformUI.createAndRunWorkbench(display,

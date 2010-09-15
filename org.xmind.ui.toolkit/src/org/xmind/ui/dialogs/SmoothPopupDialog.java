@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,7 +14,9 @@
 package org.xmind.ui.dialogs;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -41,6 +43,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.xmind.ui.util.UITimer;
 import org.xmind.ui.viewers.ImageButton;
 
@@ -48,6 +52,51 @@ import org.xmind.ui.viewers.ImageButton;
  * @author Frank Shaka
  */
 public class SmoothPopupDialog extends Window {
+
+    private static Map<String, PopupGroup> groups = new HashMap<String, PopupGroup>();
+
+    private static class PopupGroup {
+
+        private Point initBottomRight = null;
+
+        private Point bottomRight = null;
+
+        private int width = 0;
+
+        private List<SmoothPopupDialog> dialogs = new ArrayList<SmoothPopupDialog>();
+
+        public Point getBottomRight() {
+            return bottomRight;
+        }
+
+        public void setBottomRight(int right, int bottom) {
+            this.initBottomRight = new Point(right, bottom);
+            this.bottomRight = new Point(right, bottom);
+        }
+
+        public void add(SmoothPopupDialog dialog, int height, int width) {
+            if (bottomRight == null)
+                throw new IllegalStateException();
+
+            dialogs.add(dialog);
+            int top = bottomRight.y - height;
+            if (top < Display.getCurrent().getClientArea().y) {
+                this.bottomRight.x -= this.width;
+                this.bottomRight.y = this.initBottomRight.y;
+            } else {
+                this.width = Math.max(this.width, width);
+                this.bottomRight.y -= height;
+            }
+        }
+
+        public void remove(SmoothPopupDialog dialog) {
+            dialogs.remove(dialog);
+            if (dialogs.isEmpty()) {
+                initBottomRight = null;
+                bottomRight = null;
+            }
+        }
+    }
 
     private final class BorderFillLayout extends Layout {
 
@@ -207,6 +256,10 @@ public class SmoothPopupDialog extends Window {
 
     private Listener sourceControlMoveListener = null;
 
+    private PopupGroup group = null;
+
+    private int duration = STAY_DURATION;
+
     public SmoothPopupDialog(Shell parent, boolean showCloseButton,
             String titleText) {
         super(parent);
@@ -214,6 +267,20 @@ public class SmoothPopupDialog extends Window {
         setBlockOnOpen(false);
         this.showCloseButton = showCloseButton;
         this.titleText = titleText;
+    }
+
+    /**
+     * 
+     * @param stayDuration
+     *            the duration this dialog will stay on the screen, in
+     *            milliseconds
+     */
+    public void setDuration(int stayDuration) {
+        this.duration = stayDuration;
+    }
+
+    public int getDuration() {
+        return this.duration;
     }
 
     protected void configureShell(Shell shell) {
@@ -289,7 +356,7 @@ public class SmoothPopupDialog extends Window {
     }
 
     protected boolean hasTitleArea() {
-        return titleText != null && showCloseButton;
+        return titleText != null || showCloseButton;
     }
 
     protected Control createTitleArea(Composite parent) {
@@ -512,6 +579,42 @@ public class SmoothPopupDialog extends Window {
         this.targetSize = targetSize;
     }
 
+    public void setGroupId(String groupId) {
+        if (groupId == null) {
+            if (group != null) {
+                group.remove(this);
+                group = null;
+            }
+        } else {
+            group = groups.get(groupId);
+            if (group == null) {
+                group = new PopupGroup();
+                groups.put(groupId, group);
+            }
+        }
+    }
+
+    public void popUp() {
+        Display display = Display.getCurrent();
+
+        Shell shell = null;
+        if (PlatformUI.isWorkbenchRunning()) {
+            IWorkbenchWindow window = PlatformUI.getWorkbench()
+                    .getActiveWorkbenchWindow();
+            if (window != null) {
+                shell = window.getShell();
+            }
+        }
+        if (shell == null)
+            shell = display.getActiveShell();
+        if (shell != null && !shell.isDisposed()) {
+            popUp(shell);
+        } else {
+            Rectangle area = display.getClientArea();
+            popUp(area.x + area.width - 50, area.y + area.height - 50);
+        }
+    }
+
     public void popUp(Control sourceControl) {
         open(sourceControl, true);
     }
@@ -569,15 +672,30 @@ public class SmoothPopupDialog extends Window {
     }
 
     protected void open(int right, int bottom, boolean popup) {
-        this.startingBottomRight = new Point(right, bottom);
+        this.startingBottomRight = getStartingBottomRight(right, bottom);
         this.popup = popup;
         open();
+    }
+
+    private Point getStartingBottomRight(int right, int bottom) {
+        if (group != null) {
+            Point bottomRight = group.getBottomRight();
+            if (bottomRight == null) {
+                group.setBottomRight(right, bottom);
+                bottomRight = group.getBottomRight();
+            }
+            return new Point(bottomRight.x, bottomRight.y);
+        }
+        return new Point(right, bottom);
     }
 
     public int open() {
         stop();
 
         Shell shell = showShell();
+        if (group != null) {
+            group.add(this, targetHeight, targetWidth);
+        }
 
         if (shell != null && !shell.isDisposed()) {
             if (popup && startingBottomRight != null) {
@@ -608,13 +726,6 @@ public class SmoothPopupDialog extends Window {
         return shell;
     }
 
-//    private Shell getActiveShell() {
-//        Display display = Display.getCurrent();
-//        if (display == null)
-//            return null;
-//        return display.getActiveShell();
-//    }
-
     private void doPopUp(Shell shell) {
         currentHeight = shell.getSize().y;
         timer = new UITimer(0, ANIM_INTERVALS, new SafeRunnable() {
@@ -634,10 +745,10 @@ public class SmoothPopupDialog extends Window {
 
     protected void postOpen() {
         updateShellBounds(targetHeight);
-        if (STAY_DURATION > 0) {
+        if (getDuration() > 0) {
             Display display = getShell().getDisplay();
             pullDownTask = new PullDownTask(display);
-            display.timerExec(STAY_DURATION, pullDownTask);
+            display.timerExec(getDuration(), pullDownTask);
         }
         currentHeight = targetHeight;
     }
@@ -647,7 +758,7 @@ public class SmoothPopupDialog extends Window {
         if (shell != null && !shell.isDisposed()) {
             Point bottomRight;
             Point start;
-            if (sourceControl != null) {
+            if (sourceControl != null && group == null) {
                 start = getBottomRight(sourceControl);
             } else {
                 start = startingBottomRight;
@@ -661,7 +772,9 @@ public class SmoothPopupDialog extends Window {
             }
             int x = bottomRight.x - targetWidth;
             int y = bottomRight.y - height;
+            shell.setRedraw(false);
             shell.setBounds(x, y, targetWidth, height);
+            shell.setRedraw(true);
         }
     }
 
@@ -710,6 +823,9 @@ public class SmoothPopupDialog extends Window {
     public boolean close() {
         stop();
         currentHeight = 0;
+        if (group != null) {
+            group.remove(this);
+        }
         return super.close();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -23,6 +23,18 @@ public class Messages extends NLS {
 
     public static String SignOut_jobName;
     public static String SignInDialog_title;
+    public static String SignInDialog_message;
+    public static String SignInDialog_NameField_text;
+    public static String SignInDialog_PasswordField_text;
+    public static String SignInDialog_NotMember_text;
+    public static String SignInDialog_ForgotPassword_text;
+    public static String SignInDialog_Remember_text;
+    public static String SignInDialog_SignIn_text;
+    public static String SignInDialog_SigningIn_text;
+    public static String SignInDialog_RequestError_message;
+    public static String SignInDialog_ServerError_message;
+    public static String SignInDialog_NetworkError_message;
+    public static String SignInDialog_ApplicationError_message;
 
     public static String SignIn_text;
     public static String SignOut_text;

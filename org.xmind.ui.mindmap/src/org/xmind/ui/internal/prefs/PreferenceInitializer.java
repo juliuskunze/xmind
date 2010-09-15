@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -23,7 +23,7 @@ import org.xmind.ui.prefs.PrefConstants;
 
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
-    private static final String DEFAULT_DND_CLIENT_ID_ORDER = "org.xmind.ui.dnd.workbookComponent org.xmind.ui.dnd.url.org.xmind.ui.dnd.file org.xmind.ui.dnd.text"; //$NON-NLS-1$
+    private static final String DEFAULT_DND_CLIENT_ID_ORDER = "org.xmind.ui.dnd.workbookComponent org.xmind.ui.dnd.image org.xmind.ui.dnd.url org.xmind.ui.dnd.file org.xmind.ui.dnd.text"; //$NON-NLS-1$
 
     public void initializeDefaultPreferences() {
         IScopeContext context = new DefaultScope();

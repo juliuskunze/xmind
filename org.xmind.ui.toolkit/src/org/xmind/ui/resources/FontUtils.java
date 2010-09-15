@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -684,8 +684,6 @@ public class FontUtils {
         }
 
         if (reg.hasValueFor(key) || isDefaultKey(key)) {
-            if (relativeHeight < 0)
-                return reg.get(key);
             FontData[] fontData = reg.getFontData(key);
             return getFont(newKey, bold(
                     relativeHeight(fontData, relativeHeight), true));

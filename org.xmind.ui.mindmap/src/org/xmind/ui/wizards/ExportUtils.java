@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -21,11 +21,11 @@ import org.eclipse.osgi.util.NLS;
 import org.xmind.core.IRelationship;
 import org.xmind.core.IRelationshipEnd;
 import org.xmind.core.ITopic;
-import org.xmind.ui.internal.wizards.WizardMessages;
+import org.xmind.ui.util.MindMapUtils;
 
 public class ExportUtils {
 
-    private static final String SEP_DOT = "."; //$NON-NLS-1$
+//    private static final String SEP_DOT = "."; //$NON-NLS-1$
 
     static final List<RelationshipDescription> EMPTY_RELATIONSHIPS = Collections
             .emptyList();
@@ -34,41 +34,42 @@ public class ExportUtils {
     }
 
     public static String getNumberingText(ITopic topic, ITopic centralTopic) {
-        if (topic == null || topic.equals(centralTopic)
-                || (centralTopic == null && topic.isRoot())) {
-            return null;
-        }
-        String number = getNumber(topic);
-        if (number == null)
-            return null;
-
-        ITopic parent = topic.getParent();
-        if (parent == null)
-            return number + SEP_DOT;
-
-        String parentText = getNumberingText(parent, centralTopic);
-        if (parentText == null)
-            return number + SEP_DOT;
-
-        if (parentText.endsWith(SEP_DOT))
-            return parentText + number;
-
-        return parentText + SEP_DOT + number;
+        return MindMapUtils.getFullNumberingText(topic, null);
+//        if (topic == null || topic.equals(centralTopic)
+//                || (centralTopic == null && topic.isRoot())) {
+//            return null;
+//        }
+//        String number = getNumber(topic);
+//        if (number == null)
+//            return null;
+//
+//        ITopic parent = topic.getParent();
+//        if (parent == null)
+//            return number + SEP_DOT;
+//
+//        String parentText = getNumberingText(parent, centralTopic);
+//        if (parentText == null)
+//            return number + SEP_DOT;
+//
+//        if (parentText.endsWith(SEP_DOT))
+//            return parentText + number;
+//
+//        return parentText + SEP_DOT + number;
     }
 
-    private static String getNumber(ITopic topic) {
-        if (topic.isRoot())
-            return null;
-        int index = topic.getIndex() + 1;
-        String type = topic.getType();
-        if (ITopic.DETACHED.equals(type)) {
-            return NLS.bind(WizardMessages.Export_Appendix_format, index);
-        } else if (ITopic.SUMMARY.equals(type)) {
-            return NLS.bind(WizardMessages.Export_Summary_format, index);
-        } else {
-            return String.valueOf(index);
-        }
-    }
+//    private static String getNumber(ITopic topic) {
+//        if (topic.isRoot())
+//            return null;
+//        int index = topic.getIndex() + 1;
+//        String type = topic.getType();
+//        if (ITopic.DETACHED.equals(type)) {
+//            return NLS.bind(WizardMessages.Export_Appendix_format, index);
+//        } else if (ITopic.SUMMARY.equals(type)) {
+//            return NLS.bind(WizardMessages.Export_Summary_format, index);
+//        } else {
+//            return String.valueOf(index);
+//        }
+//    }
 
     public static List<RelationshipDescription> getRelationships(ITopic topic,
             List<IRelationship> relationships) {

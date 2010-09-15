@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -24,6 +24,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.TextViewer;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.graphics.Color;
@@ -777,8 +778,7 @@ public class RichTextUtils {
         if (f2 == null && f1 != null)
             return false;
 
-        if (!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                && !"cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
+        if (!Util.isMac())
             return f1.equals(f2);
 
         if (f1.isDisposed() || f2.isDisposed())

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,6 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+import org.xmind.core.Core;
 import org.xmind.core.util.FileUtils;
 
 public class DirectoryOutputTarget implements IOutputTarget {
@@ -41,6 +42,8 @@ public class DirectoryOutputTarget implements IOutputTarget {
             FileUtils.ensureFileParent(file);
             return new FileOutputStream(file);
         } catch (FileNotFoundException e) {
+            Core.getLogger().log(e,
+                    "Failed to get entry output stream: " + entryName); //$NON-NLS-1$
         }
         return null;
     }

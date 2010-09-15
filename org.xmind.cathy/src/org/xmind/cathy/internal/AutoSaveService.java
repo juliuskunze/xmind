@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,13 +20,17 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.ui.IStartup;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchListener;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * @author Frank Shaka
  * 
  */
-public class AutoSaveService implements IPropertyChangeListener {
+public class AutoSaveService implements IStartup, IWorkbenchListener,
+        IPropertyChangeListener {
 
     private class AutoSaveJob {
 
@@ -125,19 +129,15 @@ public class AutoSaveService implements IPropertyChangeListener {
     /**
      * 
      */
-    public AutoSaveService(IWorkbench workbench) {
-        this.workbench = workbench;
-        CathyPlugin.getDefault().getPreferenceStore()
-                .addPropertyChangeListener(this);
-        checkState();
+    public AutoSaveService() {
     }
 
-    public void dispose() {
-        stopJob();
-        workbench = null;
-        CathyPlugin.getDefault().getPreferenceStore()
-                .removePropertyChangeListener(this);
-    }
+//    public void dispose() {
+//        stopJob();
+//        workbench = null;
+//        CathyPlugin.getDefault().getPreferenceStore()
+//                .removePropertyChangeListener(this);
+//    }
 
     /**
      * 
@@ -223,6 +223,28 @@ public class AutoSaveService implements IPropertyChangeListener {
         } catch (Throwable e) {
             CathyPlugin.log(e, "Error occurred while auto saving."); //$NON-NLS-1$
         }
+    }
+
+    public void earlyStartup() {
+        this.workbench = PlatformUI.getWorkbench();
+        this.workbench.addWorkbenchListener(this);
+        CathyPlugin.getDefault().getPreferenceStore()
+                .addPropertyChangeListener(this);
+        checkState();
+    }
+
+    public void postShutdown(IWorkbench workbench) {
+        if (this.workbench == null)
+            return;
+        this.workbench.removeWorkbenchListener(this);
+        this.workbench = null;
+        CathyPlugin.getDefault().getPreferenceStore()
+                .removePropertyChangeListener(this);
+        stopJob();
+    }
+
+    public boolean preShutdown(IWorkbench workbench, boolean forced) {
+        return true;
     }
 
 }

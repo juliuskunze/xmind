@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -29,6 +29,13 @@ public class Logger {
         MindMapUIPlugin.getDefault().getLog().log(
                 new Status(IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
                         IStatus.ERROR, message, e));
+    }
+
+    public static void log(String message) {
+        if (message == null)
+            message = ""; //$NON-NLS-1$
+        MindMapUIPlugin.getDefault().getLog().log(
+                new Status(IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID, message));
     }
 
     public static void debug(Class<?> clazz, String message) {

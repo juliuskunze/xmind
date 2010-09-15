@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,9 +18,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +39,13 @@ public class Log {
     public static final String K_PRIMARY_WINDOW = "PRIMARY_WINDOW"; //$NON-NLS-1$
 
     private static String lineSeparator = null;
+
+    /**
+     * On Mac OS X, we use AppleScript to open .xmind file on double click.
+     * AppleScript supports only UTF-16. So we should do writing and reading log
+     * files using UTF-16 format on Mac OS X.
+     */
+    private static boolean ON_MAC = "macosx".equals(Platform.getOS()); //$NON-NLS-1$
 
     private File file;
 
@@ -100,12 +107,11 @@ public class Log {
             return new String[0];
         List<String> lines = new ArrayList<String>();
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(file), ON_MAC ? "UTF-16" : "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if ("macosx".equals(Platform.getOS())) //$NON-NLS-1$
-                        line = new String(line.getBytes(), "utf-16"); //$NON-NLS-1$
                     line = line.trim();
                     if (!"".equals(line)) //$NON-NLS-1$
                         lines.add(line);
@@ -121,7 +127,7 @@ public class Log {
     }
 
     public void setContents(String... contents) {
-        write(true, contents);
+        write(false, contents);
     }
 
     public void append(String... lines) {
@@ -133,8 +139,9 @@ public class Log {
     private void write(boolean append, String... contents) {
         FileUtils.ensureFileParent(file);
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file,
-                    append));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(file, append),
+                    ON_MAC ? "UTF-16" : "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
             try {
                 for (String line : contents) {
                     writer.write(line);

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,12 +16,6 @@ package org.xmind.core.io;
 import java.io.OutputStream;
 
 public interface IOutputTarget {
-
-//    /**
-//     * 
-//     * @return
-//     */
-//    boolean open();
 
     /**
      * 
@@ -43,18 +37,5 @@ public interface IOutputTarget {
      * @param time
      */
     void setEntryTime(String entryName, long time);
-
-//    /**
-//     * 
-//     * @param entryPath
-//     * @param stream
-//     * @return
-//     */
-//    boolean closeEntryStream(String entryPath, OutputStream stream);
-
-//    /**
-//     * 
-//     */
-//    void close();
 
 }

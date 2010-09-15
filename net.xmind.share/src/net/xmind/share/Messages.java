@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -29,6 +29,17 @@ public class Messages extends NLS {
     public static String UploaderDialog_Public_label;
     public static String UploaderDialog_PublicView_label;
     public static String UploaderDialog_Private_label;
+    public static String UploaderDialog_Privacy_prompt;
+
+    public static String UploaderDialog_Privacy_Public_title;
+    public static String UploaderDialog_Privacy_Public_description;
+    public static String UploaderDialog_Privacy_Private_title;
+    public static String UploaderDialog_Privacy_Private_description;
+    public static String UploaderDialog_Privacy_Unlisted_title;
+    public static String UploaderDialog_Privacy_Unlisted_description;
+    public static String UploaderDialog_Privacy_AllowDownload_text;
+    public static String UploaderDialog_Privacy_DownloadAllowed;
+    public static String UploaderDialog_Privacy_DownloadForbidden;
 
     public static String UploaderDialog_ThumbnailPage_title;
     public static String UploaderDialog_Thumbnail_description;

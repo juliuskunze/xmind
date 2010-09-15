@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -23,7 +23,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.swt.SWT;
+import org.eclipse.jface.util.Util;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
@@ -32,11 +32,13 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.internal.provisional.application.IActionBarConfigurer2;
+import org.xmind.cathy.internal.actions.HelpAction;
 import org.xmind.cathy.internal.actions.NewMenu;
 import org.xmind.cathy.internal.actions.ShowKeyAssistAction;
 import org.xmind.cathy.internal.actions.UpdateAction;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.actions.ActionConstants;
+import org.xmind.ui.internal.actions.OpenHomeMapAction;
 import org.xmind.ui.internal.actions.OpenWorkbookAction;
 
 public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
@@ -47,6 +49,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
     // when fillActionBars is called with FILL_PROXY.
 
     private IWorkbenchAction openAction;
+
+    private IWorkbenchAction openHomeMapAction;
 
     private IWorkbenchAction closeAction;
 
@@ -86,6 +90,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
     private IWorkbenchAction findAction;
 
+    private IWorkbenchAction helpAction;
+
     private IWorkbenchAction updateAction;
 
     private IWorkbenchAction aboutAction;
@@ -114,6 +120,9 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         openAction = new OpenWorkbookAction(window);
         register(openAction);
+
+        openHomeMapAction = new OpenHomeMapAction(window);
+        register(openHomeMapAction);
 
         closeAction = ActionFactory.CLOSE.create(window);
         register(closeAction);
@@ -175,6 +184,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         reopenEditors = ContributionItemFactory.REOPEN_EDITORS.create(window);
 
         // For Help Menu:
+        helpAction = new HelpAction("org.xmind.ui.help", window); //$NON-NLS-1$
+        register(helpAction);
 
         updateAction = new UpdateAction("org.xmind.ui.update", window); //$NON-NLS-1$
         register(updateAction);
@@ -217,6 +228,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new Separator());
 
         menu.add(openAction);
+        menu.add(openHomeMapAction);
         menu.add(new GroupMarker(IWorkbenchActionConstants.OPEN_EXT));
         menu.add(new Separator());
 
@@ -251,8 +263,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         // looking for it when Cmd-Q is invoked (or Quit is chosen from the
         // application menu.
         ActionContributionItem exitItem = new ActionContributionItem(exitAction);
-        exitItem.setVisible(!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                && !"cocoa".equals(SWT.getPlatform())); //$NON-NLS-1$
+        exitItem.setVisible(!Util.isMac());
         menu.add(exitItem);
 
         menu.add(new GroupMarker(IWorkbenchActionConstants.FILE_END));
@@ -288,8 +299,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         ActionContributionItem openPreferencesItem = new ActionContributionItem(
                 openPreferencesAction);
-        openPreferencesItem.setVisible(!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                && !"cocoa".equals(SWT.getPlatform())); //$NON-NLS-1$
+        openPreferencesItem.setVisible(!Util.isMac());
         menu.add(openPreferencesItem);
         menu.add(new GroupMarker(IWorkbenchActionConstants.EDIT_END));
         return menu;
@@ -306,6 +316,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new GroupMarker("group.intro.ext")); //$NON-NLS-1$
 
         menu.add(new Separator("group.main")); //$NON-NLS-1$
+        menu.add(helpAction);
         menu.add(new GroupMarker("group.assist")); //$NON-NLS-1$
         menu.add(keyAssistAction);
         menu.add(new GroupMarker("group.xmind")); //$NON-NLS-1$
@@ -316,7 +327,10 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new Separator("group.tutorials")); //$NON-NLS-1$
         menu.add(new Separator("group.tools")); //$NON-NLS-1$
         menu.add(new Separator("group.updates")); //$NON-NLS-1$
-        menu.add(updateAction);
+
+        if (!CathyPlugin.getDistributionId().startsWith("vindy")) { //$NON-NLS-1$
+            menu.add(updateAction);
+        }
 
         if (!isPro()) {
             menu.add(new GroupMarker("group.upgrade")); //$NON-NLS-1$
@@ -328,8 +342,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         ActionContributionItem aboutItem = new ActionContributionItem(
                 aboutAction);
-        aboutItem.setVisible(!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                && !"cocoa".equals(SWT.getPlatform())); //$NON-NLS-1$
+        aboutItem.setVisible(!Util.isMac());
         menu.add(aboutItem);
         menu.add(new GroupMarker("about.ext")); //$NON-NLS-1$
         return menu;
@@ -382,5 +395,22 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         coolBar.add(new GroupMarker(IWorkbenchActionConstants.GROUP_EDITOR));
     }
+
+//    @Override
+//    protected void fillStatusLine(IStatusLineManager statusLine) {
+//        super.fillStatusLine(statusLine);
+//        Bundle signInBundle = Platform.getBundle("net.xmind.signin"); //$NON-NLS-1$
+//        if (signInBundle != null) {
+//            try {
+//                Class<?> clazz = signInBundle
+//                        .loadClass("net.xmind.signin.internal.AccountStatusContribution"); //$NON-NLS-1$
+//                IContributionItem xmindAccountContribution = (IContributionItem) clazz
+//                        .newInstance();
+//                statusLine.add(xmindAccountContribution); //$NON-NLS-1$
+//            } catch (Exception e) {
+//                //ignore
+//            }
+//        }
+//    }
 
 }

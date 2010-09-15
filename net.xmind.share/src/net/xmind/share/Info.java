@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -129,6 +129,7 @@ public class Info {
      * @see #PublicView
      * @see #Public
      * @see #Private
+     * @deprecated use #DOWNLOADABLE and #ACCESSIBILITY
      */
     public static final String ALLOW_DOWNLOAD = SHARE + IMeta.SEP
             + "AllowDownload"; //$NON-NLS-1$
@@ -144,6 +145,7 @@ public class Info {
      * @see #ALLOW_DOWNLOAD
      * @see #Public
      * @see #Private
+     * @deprecated
      */
     public static final String PublicView = "0"; //$NON-NLS-1$
 
@@ -158,6 +160,7 @@ public class Info {
      * @see #ALLOW_DOWNLOAD
      * @see #PublicView
      * @see #Private
+     * @deprecated
      */
     public static final String Public = "1"; //$NON-NLS-1$
 
@@ -172,8 +175,21 @@ public class Info {
      * @see #ALLOW_DOWNLOAD
      * @see #PublicView
      * @see #Public
+     * @deprecated
      */
     public static final String Private = "2"; //$NON-NLS-1$
+
+    public static final String DOWNLOADABLE = SHARE + IMeta.SEP
+            + "Downloadable"; //$NON-NLS-1$
+
+    public static final String DOWNLOADABLE_NO = "0"; //$NON-NLS-1$
+    public static final String DOWNLOADABLE_YES = "1"; //$NON-NLS-1$
+
+    public static final String PRIVACY = SHARE + IMeta.SEP + "Privacy"; //$NON-NLS-1$
+
+    public static final String PRIVACY_PUBLIC = "1"; //$NON-NLS-1$
+    public static final String PRIVACY_PRIVATE = "2"; //$NON-NLS-1$
+    public static final String PRIVACY_UNLISTED = "3"; //$NON-NLS-1$
 
     /**
      * <p>
@@ -355,6 +371,11 @@ public class Info {
     public void removePropertyChangeListener(String key,
             PropertyChangeListener listener) {
         support.removePropertyChangeListener(key, listener);
+    }
+
+    @Override
+    public String toString() {
+        return properties.toString();
     }
 
 }

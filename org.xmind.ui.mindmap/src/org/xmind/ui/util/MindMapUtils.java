@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -51,6 +51,7 @@ import org.xmind.ui.branch.IFreeableBranchStructureExtension;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.ICacheManager;
+import org.xmind.ui.mindmap.IIconTipPart;
 import org.xmind.ui.mindmap.IMindMap;
 import org.xmind.ui.mindmap.ISheetPart;
 import org.xmind.ui.mindmap.ISummaryPart;
@@ -738,6 +739,9 @@ public class MindMapUtils {
         for (IPart p : parts) {
             if (p instanceof ITopicPart)
                 topics.add((ITopicPart) p);
+            else if (p instanceof IIconTipPart) {
+                topics.add(((IIconTipPart) p).getTopicPart());
+            }
         }
         topics.trimToSize();
         return topics;

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -28,6 +28,7 @@ import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_CHILD;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_FLOAT;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_PARENT;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_RELATIONSHIP;
+import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_SHEET;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_SUMMARY;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_EDIT_LABEL;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_HIDE_LEGEND;
@@ -95,6 +96,7 @@ public class MindMapEditDomain extends EditDomain {
         getPartRoles().setRole(REQ_CREATE_CHILD, GEF.ROLE_CREATABLE);
         getPartRoles().setRole(REQ_CREATE_BEFORE, GEF.ROLE_CREATABLE);
         getPartRoles().setRole(REQ_CREATE_PARENT, GEF.ROLE_CREATABLE);
+        getPartRoles().setRole(REQ_CREATE_SHEET, GEF.ROLE_CREATABLE);
 
         getPartRoles().setRole(REQ_CREATE_FLOAT, GEF.ROLE_CREATABLE);
         getPartRoles().setRole(REQ_CREATE_BOUNDARY, GEF.ROLE_CREATABLE);

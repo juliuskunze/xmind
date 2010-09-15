@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,11 +14,9 @@
 package org.xmind.ui.internal.prefs;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
-import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.IntegerFieldEditor;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -33,8 +31,8 @@ import org.xmind.ui.prefs.PrefConstants;
 public class EditorPrefPage extends FieldEditorPreferencePage implements
         IWorkbenchPreferencePage {
 
-    private Composite tipsFadeDelayParent;
-    private IntegerFieldEditor tipsFadeDelayField;
+//    private Composite tipsFadeDelayParent;
+//    private IntegerFieldEditor tipsFadeDelayField;
 
     public EditorPrefPage() {
         super(PrefMessages.EditorPage_title, FLAT);
@@ -45,6 +43,7 @@ public class EditorPrefPage extends FieldEditorPreferencePage implements
     }
 
     protected void createFieldEditors() {
+        addPreviewField();
         addUndoRedoField();
         addTopicPositioningGroup();
         addAnimationField();
@@ -59,10 +58,11 @@ public class EditorPrefPage extends FieldEditorPreferencePage implements
                 PrefMessages.EditorPage_UndoLimit_label,
                 createFieldContainer(parent)));
 
-        Label label = new Label(parent, SWT.WRAP);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-        ((GridData) label.getLayoutData()).widthHint = 400;
-        label.setText(PrefMessages.EditorPage_UndoRedo_description);
+        Label descriptionLabel = new Label(parent, SWT.WRAP);
+        descriptionLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+                false, false));
+        ((GridData) descriptionLabel.getLayoutData()).widthHint = 400;
+        descriptionLabel.setText(PrefMessages.EditorPage_UndoRedo_description);
 
 //        Label blank = new Label(parent, SWT.NONE);
 //        blank.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
@@ -79,14 +79,13 @@ public class EditorPrefPage extends FieldEditorPreferencePage implements
     private void addTopicPositioningGroup() {
         Composite parent = createGroup(PrefMessages.EditorPage_TopicPositioning_title);
         addAllowOverlapsField(createFieldContainer(parent));
-        // allow  overlap 
-
         addAllowFreePositionField(createFieldContainer(parent));
 
-        Label label = new Label(parent, SWT.WRAP);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-        ((GridData) label.getLayoutData()).widthHint = 400;
-        label
+        Label descriptionLabel = new Label(parent, SWT.WRAP);
+        descriptionLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+                false, false));
+        ((GridData) descriptionLabel.getLayoutData()).widthHint = 400;
+        descriptionLabel
                 .setText(PrefMessages.EditorPage_TopicPositioning_FreePositioning_description);
     }
 
@@ -106,6 +105,11 @@ public class EditorPrefPage extends FieldEditorPreferencePage implements
         addField(new BooleanFieldEditor(PrefConstants.GRADIENT_COLOR,
                 PrefMessages.EditorPage_UndoRedo_gradientColor,
                 getFieldEditorParent()));
+    }
+
+    private void addPreviewField() {
+        addField(new BooleanFieldEditor(PrefConstants.PREVIEW_SKIPPED,
+                PrefMessages.EditorPage_Preview_text, getFieldEditorParent()));
     }
 
     private Composite createGroup(String groupTitle) {
@@ -128,7 +132,6 @@ public class EditorPrefPage extends FieldEditorPreferencePage implements
         Composite composite = new Composite(parent, SWT.NONE);
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         composite.setLayout(new GridLayout(1, false));
-
         return composite;
     }
 
@@ -165,17 +168,17 @@ public class EditorPrefPage extends FieldEditorPreferencePage implements
     public void init(IWorkbench workbench) {
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
-        super.propertyChange(event);
-        if (event.getSource() instanceof FieldEditor) {
-            FieldEditor fe = (FieldEditor) event.getSource();
-            if (event.getProperty().equals(FieldEditor.VALUE)) {
-                String prefName = fe.getPreferenceName();
-                if (PrefConstants.UNDO_REDO_TIPS_ENABLED.equals(prefName)) {
-                    tipsFadeDelayField.setEnabled(
-                            (Boolean) event.getNewValue(), tipsFadeDelayParent);
-                }
-            }
-        }
-    }
+//    public void propertyChange(PropertyChangeEvent event) {
+//        super.propertyChange(event);
+//        if (event.getSource() instanceof FieldEditor) {
+//            FieldEditor fe = (FieldEditor) event.getSource();
+//            if (event.getProperty().equals(FieldEditor.VALUE)) {
+//                String prefName = fe.getPreferenceName();
+//                if (PrefConstants.UNDO_REDO_TIPS_ENABLED.equals(prefName)) {
+//                    tipsFadeDelayField.setEnabled(
+//                            (Boolean) event.getNewValue(), tipsFadeDelayParent);
+//                }
+//            }
+//        }
+//    }
 }

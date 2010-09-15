@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,6 +18,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
@@ -137,7 +138,7 @@ public class SimpleInfoPopupDialog extends SmoothPopupDialog {
         hyperlink.setUnderlined(true);
         hyperlink.addHyperlinkListener(new HyperlinkAdapter() {
             public void linkActivated(HyperlinkEvent e) {
-                action.run();
+                openHyperlink(action);
             }
         });
         return hyperlink;
@@ -174,7 +175,8 @@ public class SimpleInfoPopupDialog extends SmoothPopupDialog {
     }
 
     protected Font getInfoFont() {
-        return FontUtils.getNewHeight(JFaceResources.DEFAULT_FONT, 10);
+        return FontUtils.getNewHeight(JFaceResources.DEFAULT_FONT,
+                Util.isMac() ? 14 : 10);
     }
 
     public String getInfoText() {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,7 +13,7 @@
  *******************************************************************************/
 package org.xmind.gef;
 
-import org.eclipse.swt.SWT;
+import org.eclipse.jface.util.Util;
 
 /**
  * @author Brian Sun
@@ -21,16 +21,16 @@ import org.eclipse.swt.SWT;
  */
 public class GEF {
 
-    public static final boolean IS_CARBON;
-    public static final boolean IS_WIN32;
-    public static final boolean IS_GTK;
-
-    static {
-        String platform = SWT.getPlatform();
-        IS_CARBON = "carbon".equals(platform) || "cocoa".equals(platform); //$NON-NLS-1$ //$NON-NLS-2$
-        IS_WIN32 = "win32".equals(platform); //$NON-NLS-1$
-        IS_GTK = "gtk".equals(platform); //$NON-NLS-1$
-    }
+//    public static final boolean IS_CARBON;
+//    public static final boolean IS_WIN32;
+//    public static final boolean IS_GTK;
+//
+//    static {
+//        String platform = SWT.getPlatform();
+//        IS_CARBON = "carbon".equals(platform) || "cocoa".equals(platform); //$NON-NLS-1$ //$NON-NLS-2$
+//        IS_WIN32 = "win32".equals(platform); //$NON-NLS-1$
+//        IS_GTK = "gtk".equals(platform); //$NON-NLS-1$
+//    }
 
     /*
      * Request Types:
@@ -415,7 +415,16 @@ public class GEF {
      * Graphics Hints:
      */
     public static final boolean IS_PLATFORM_SUPPORT_GRADIENT = true;//!IS_CARBON;
-    public static final boolean IS_PLATFORM_SUPPORT_TEXT_PATH = IS_WIN32;
+//    public static final boolean IS_PLATFORM_SUPPORT_TEXT_PATH = IS_WIN32;
+
+    private static Boolean textPathSupported = null;
+
+    public static boolean isTextPathSupported() {
+        if (textPathSupported == null) {
+            textPathSupported = Boolean.valueOf(Util.isWindows());
+        }
+        return textPathSupported.booleanValue();
+    }
 
 //    /*
 //     * Figure event type:

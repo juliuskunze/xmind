@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -108,7 +108,7 @@ public abstract class AbstractMindMapExportWizard extends AbstractExportWizard {
     protected abstract void addValidPages();
 
     public boolean canFinish() {
-        return super.canFinish() && hasSource() && hasTargetPath();
+        return super.canFinish() && hasSource();
     }
 
     public boolean performFinish() {

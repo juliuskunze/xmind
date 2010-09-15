@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,6 +19,7 @@ import static org.xmind.core.internal.zip.ArchiveConstants.META_XML;
 import static org.xmind.core.internal.zip.ArchiveConstants.PATH_MARKER_SHEET;
 import static org.xmind.core.internal.zip.ArchiveConstants.STYLES_XML;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -38,6 +39,8 @@ import org.xmind.core.IManifest;
 import org.xmind.core.internal.security.Crypto;
 import org.xmind.core.internal.zip.ArchiveConstants;
 import org.xmind.core.internal.zip.ZipStreamOutputTarget;
+import org.xmind.core.io.DirectoryOutputTarget;
+import org.xmind.core.io.ICloseableOutputTarget;
 import org.xmind.core.io.IInputSource;
 import org.xmind.core.io.IOutputTarget;
 import org.xmind.core.marker.IMarkerSheet;
@@ -136,20 +139,24 @@ public class WorkbookSaver {
             CoreException {
         if (target == null) {
             if (file != null) {
-                target = new ZipStreamOutputTarget(new ZipOutputStream(
-                        new FileOutputStream(file)));
+                if (new File(file).isDirectory()) {
+                    target = new DirectoryOutputTarget(file);
+                } else {
+                    target = new ZipStreamOutputTarget(new ZipOutputStream(
+                            new FileOutputStream(file)));
+                }
             }
         }
         this.file = file;
 
         if (target == null)
-            throw new FileNotFoundException("No target when saving."); //$NON-NLS-1$
+            throw new FileNotFoundException("No target to save."); //$NON-NLS-1$
 
         try {
             doSave(target);
         } finally {
-            if (target instanceof ZipStreamOutputTarget) {
-                ((ZipStreamOutputTarget) target).close();
+            if (target instanceof ICloseableOutputTarget) {
+                ((ICloseableOutputTarget) target).close();
             }
         }
     }

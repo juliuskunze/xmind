@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -57,6 +57,8 @@ public interface IGraphicalEditorPage extends IDisposable2, IAdaptable,
     Control getControl();
 
     void setFocus();
+
+    boolean isFocused();
 
     ISelectionProvider getSelectionProvider();
 

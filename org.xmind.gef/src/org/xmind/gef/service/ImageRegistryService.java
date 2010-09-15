@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Control;
@@ -43,8 +44,14 @@ public class ImageRegistryService extends AbstractViewerService implements
         public Image getImage(boolean returnMissingImageOnError,
                 Object reference) {
             if (image == null) {
-                image = descriptor.createImage(returnMissingImageOnError,
-                        getDevice());
+                try {
+                    image = descriptor.createImage(returnMissingImageOnError,
+                            getDevice());
+                } catch (Exception e) {
+                    image = getErrorImageCreator().createImage();
+                } catch (SWTError e) {
+                    image = getErrorImageCreator().createImage();
+                }
             }
             if (reference != null) {
                 if (references == null)
@@ -81,8 +88,24 @@ public class ImageRegistryService extends AbstractViewerService implements
 
     private Device device;
 
+    private ImageDescriptor errorImageDescriptor = null;
+
     public ImageRegistryService(IViewer viewer) {
         super(viewer);
+    }
+
+    public ImageRegistryService(IViewer viewer,
+            ImageDescriptor errorImageDescriptor) {
+        super(viewer);
+        setErrorImageDescriptor(errorImageDescriptor);
+    }
+
+    public void setErrorImageDescriptor(ImageDescriptor errorImageDescriptor) {
+        this.errorImageDescriptor = errorImageDescriptor;
+    }
+
+    public ImageDescriptor getErrorImageDescriptor() {
+        return errorImageDescriptor;
     }
 
     protected void activate() {
@@ -106,7 +129,7 @@ public class ImageRegistryService extends AbstractViewerService implements
         if (imageDescriptor == null) {
             if (!returnMissingImageOnError)
                 return null;
-            imageDescriptor = ImageDescriptor.getMissingImageDescriptor();
+            imageDescriptor = getErrorImageCreator();
         }
         ImageCache cache = caches.get(imageDescriptor);
         if (cache == null) {
@@ -114,6 +137,12 @@ public class ImageRegistryService extends AbstractViewerService implements
             caches.put(imageDescriptor, cache);
         }
         return cache.getImage(returnMissingImageOnError, reference);
+    }
+
+    private ImageDescriptor getErrorImageCreator() {
+        if (errorImageDescriptor != null)
+            return errorImageDescriptor;
+        return ImageDescriptor.getMissingImageDescriptor();
     }
 
     private Device getDevice() {

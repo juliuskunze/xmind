@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -153,55 +153,6 @@ public class TextDndClient implements IDndClient {
         }
         return topics.toArray();
     }
-
-//    private Object[] buildeTopics(String text, IViewer viewer, IWorkbook wb) {
-//        String[] lines = text.split(LINE_DELIMITER);
-//        List<ITopic> topics = new ArrayList<ITopic>(lines.length);
-//        Map<ITopic, Integer> levels = new HashMap<ITopic, Integer>();
-//        ITopic last = null;
-//        for (String line : lines) {
-//            ITopic topic = wb.createTopic();
-//
-//            int level = 0;
-//            for (int i = 0; i < line.length(); i++) {
-//                char c = line.charAt(i);
-//                if (c == '\t') {
-//                    level++;
-//                } else {
-//                    break;
-//                }
-//            }
-//
-//            String title = line.substring(level);
-//            topic.setTitleText(title);
-//
-//            if (level == 0 || last == null) {
-//                topics.add(topic);
-//            } else {
-//                int lastLevel = ((Integer) levels.get(last)).intValue();
-//                ITopic parent = null;
-//                if (level > lastLevel) {
-//                    parent = last;
-//                } else {
-//                    while (level <= lastLevel) {
-//                        parent = last.getParent();
-//                        if (parent == null)
-//                            break;
-//                        Integer lvl = ((Integer) levels.get(parent));
-//                        if (lvl == null)
-//                            break;
-//                        lastLevel = lvl.intValue();
-//                    }
-//                }
-//                if (parent != null) {
-//                    parent.add(topic);
-//                }
-//            }
-//            last = topic;
-//            levels.put(topic, level);
-//        }
-//        return topics.toArray();
-//    }
 
     public Object getData(Transfer transfer, TransferData data) {
         if (transfer == this.transfer)

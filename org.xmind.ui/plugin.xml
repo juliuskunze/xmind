@@ -191,6 +191,18 @@
             name="%command.actualSize.name">
       </command>
       <command
+            categoryId="org.xmind.ui.category.view"
+            description="%command.fitMap.description"
+            id="org.xmind.ui.command.fitMap"
+            name="%command.fitMap.name">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.view"
+            description="%command.fitSelection.description"
+            id="org.xmind.ui.command.fitSelection"
+            name="%command.fitSelection.name">
+      </command>
+      <command
             categoryId="org.xmind.ui.category.mindmap"
             description="%command.newSheet.description"
             id="org.xmind.ui.command.newSheet"
@@ -279,6 +291,12 @@
             description="%command.openWorkbook.description"
             id="org.xmind.ui.command.openWorkbook"
             name="%command.openWorkbook.name">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.mindmap"
+            description="%command.openHomeMap.description"
+            id="org.xmind.ui.command.openHomeMap"
+            name="%command.openHomeMap.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.view"
@@ -872,6 +890,11 @@
             class="org.xmind.ui.internal.dnd.TextDndClient"
             id="org.xmind.ui.dnd.text"
             name="%dndClient.text.name">
+      </dndClient>
+      <dndClient
+            class="org.xmind.ui.internal.dnd.ImageDndClient"
+            id="org.xmind.ui.dnd.image"
+            name="%dndClient.image.name">
       </dndClient>
    </extension>
    <extension
@@ -1603,6 +1626,13 @@
             icon="icons/e/notes.gif"
             id="org.xmind.ui.NotesView"
             name="%view.notes.name">
+      </view>
+      <view
+            category="org.xmind.ui.views.mindmap"
+            class="org.xmind.ui.internal.views.OverviewView"
+            icon="icons/e/overview.gif"
+            id="org.xmind.ui.OverviewBiew"
+            name="%view.overview.name">
       </view>
       <view
             category="org.xmind.ui.views.resources"

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -100,6 +100,10 @@ public class MindMapMessages extends NLS {
 
     public static String Finish_text;
     public static String Finish_toolTip;
+    public static String FitMap_text;
+    public static String FitMap_toolTip;
+    public static String FitSelection_text;
+    public static String FitSelection_toolTip;
     public static String InsertAttachment_text;
     public static String InsertAttachment_toolTip;
     public static String InsertBoundary_text;
@@ -160,6 +164,8 @@ public class MindMapMessages extends NLS {
     public static String NewSheet_toolTip;
     public static String OpenWorkbook_text;
     public static String OpenWorkbook_toolTip;
+    public static String OpenHomeMap_text;
+    public static String OpenHomeMap_toolTip;
     public static String OpenHyperlink_text;
     public static String OpenHyperlink_toolTip;
     public static String RenameSheet_text;
@@ -263,6 +269,8 @@ public class MindMapMessages extends NLS {
     public static String MarkerParameterNamePattern;
 
     public static String RecentUsed;
+
+    public static String DefaultOverviewPage_message;
 
     public static String TryPro_text;
     public static String TryPro_toolTip;

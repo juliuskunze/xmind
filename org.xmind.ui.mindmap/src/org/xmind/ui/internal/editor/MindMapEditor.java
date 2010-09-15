@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,6 +14,7 @@
 package org.xmind.ui.internal.editor;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 
@@ -33,6 +34,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -100,6 +102,7 @@ import org.xmind.ui.commands.ModifyTitleTextCommand;
 import org.xmind.ui.commands.MoveSheetCommand;
 import org.xmind.ui.dialogs.SimpleInfoPopupDialog;
 import org.xmind.ui.internal.MindMapMessages;
+import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.actions.CreateSheetAction;
 import org.xmind.ui.internal.actions.DeleteOtherSheetsAction;
 import org.xmind.ui.internal.actions.DeleteSheetAction;
@@ -115,6 +118,7 @@ import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.IWorkbookRef;
 import org.xmind.ui.mindmap.MindMapPreviewBuilder;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.prefs.PrefConstants;
 import org.xmind.ui.tabfolder.IPageMoveListener;
 import org.xmind.ui.tabfolder.IPageTitleChangedListener;
 import org.xmind.ui.tabfolder.PageMoveHelper;
@@ -892,8 +896,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
             Font base = display.getSystemFont();
             FontData[] fontData = base.getFontData();
             int increment;
-            if (("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                    || "cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
+            if ((Util.isMac())
                     && System
                             .getProperty("org.eclipse.swt.internal.carbon.smallFonts") != null) { //$NON-NLS-1$
                 increment = 3;
@@ -976,7 +979,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
         public LoadWorkbookJob() {
             super(NLS.bind(MindMapMessages.LoadWorkbookJob_text,
                     getEditorInput().getName()));
-            setSystem(true);
+            //setSystem(true);
         }
 
         @Override
@@ -1033,9 +1036,11 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
             } while (wrongPassword);
 
             if (getWorkbook() == null) {
-                if (error != null) {
-                    showErrorMessage(error, errorTime);
+                if (error == null) {
+                    error = new FileNotFoundException(getEditorInput()
+                            .getName());
                 }
+                showErrorMessage(error, errorTime);
                 return Status.CANCEL_STATUS;
             }
 
@@ -1362,8 +1367,11 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
         MindMapEditorConfigurerManager.getInstance().configureEditor(this);
 
         inputMonitor = new EditorInputMonitor(this);
-        if (getWorkbook() == null && loadWorkbookJob == null) {
-            loadWorkbookJob = new LoadWorkbookJob();
+        if (getWorkbook() != null) {
+            showWorkbook();
+        } else if (loadWorkbookJob == null) {
+            final LoadWorkbookJob theLoadJob = new LoadWorkbookJob();
+            loadWorkbookJob = theLoadJob;
             loadWorkbookJob.addJobChangeListener(new JobChangeAdapter() {
                 public void done(IJobChangeEvent event) {
                     loadWorkbookJob = null;
@@ -1388,6 +1396,9 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
                     return;
                 showPane(pageContainer);
                 createInitialPages();
+                if (getSite().getPage().getActiveEditor() == MindMapEditor.this) {
+                    setFocus();
+                }
                 firePropertyChange(PROP_INPUT);
                 fireDirty();
             }
@@ -1584,72 +1595,6 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
         return getWorkbook() != null;
     }
 
-//    public void changeInput(IEditorInput newInput, IProgressMonitor monitor)
-//            throws org.eclipse.core.runtime.CoreException, IOException,
-//            CoreException {
-//        Assert.isNotNull(newInput);
-//        IEditorInput oldInput = getEditorInput();
-//        WorkbookRef oldRef = this.workbookRef;
-//        boolean oldSaveable = oldRef.isSaveable();
-//        final IWorkbook oldWorkbook = oldRef.getWorkbook();
-//        boolean wasSingleRef = oldRef.getNumReferrers() == 1;
-//        if (wasSingleRef && oldSaveable) {
-//            WorkbookRefManager.getInstance()
-//                    .changeKey(oldInput, newInput, this);
-//            oldRef.saveWorkbook(monitor);
-//        } else {
-//            WorkbookRef newRef = WorkbookRefManager.getInstance().addReferrer(
-//                    newInput, this);
-//            newRef.setWorkbook(oldWorkbook);
-//            Assert.isTrue(newRef.isSaveable());
-//            newRef.saveWorkbook(monitor);
-//            uninstallModelListener();
-//
-//            if (!wasSingleRef) {
-//                newRef.setWorkbook(null);
-//                newRef.loadWorkbook(new IEncryptionHandler() {
-//                    public String retrievePassword() throws CoreException {
-//                        return oldWorkbook.getPassword();
-//                    }
-//                }, monitor);
-//                IWorkbook newWorkbook = newRef.getWorkbook();
-//                Assert.isNotNull(newWorkbook);
-//                int activePage = getActivePage();
-//
-//                int oldPageCount = getPageCount();
-//                for (ISheet sheet : newWorkbook.getSheets()) {
-//                    IGraphicalEditorPage page = createSheetPage(sheet, -1);
-//                    if (MindMapUI.isAnimationEnabled()) {
-//                        // avoid fading in
-//                        IRootPart rootPart = page.getViewer().getRootPart();
-//                        if (rootPart instanceof MindMapRootPart) {
-//                            MindMapLayeredPane layeredPane = ((MindMapRootPart) rootPart)
-//                                    .getLayeredPane();
-//                            if (layeredPane != null) {
-//                                layeredPane.setAlpha(0xff);
-//                            }
-//                        }
-//                    }
-//                    configurePage(page);
-//                }
-//                // avoid flashing
-//                setActivePage(oldPageCount + activePage);
-//                for (int i = 0; i < oldPageCount; i++) {
-//                    removePage(0);
-//                }
-//            }
-//
-//            setCommandStack(newRef.getCommandStack());
-//            this.workbookRef = newRef;
-//            WorkbookRefManager.getInstance().removeReferrer(oldInput, this);
-//            installModelListener();
-//        }
-//        super.doSave(monitor);
-//        setInput(newInput);
-//        firePropertyChange(PROP_INPUT);
-//        updateNames();
-//    }
-
     public IWorkbookRef getWorkbookRef() {
         return workbookRef;
     }
@@ -1789,13 +1734,13 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
 
     @Override
     public void setFocus() {
+        if (workbookRef != null) {
+            workbookRef.setPrimaryReferrer(this);
+        }
         if (isShowingBackCover()) {
             backCover.setFocus();
         } else {
             super.setFocus();
-        }
-        if (workbookRef != null) {
-            workbookRef.setPrimaryReferrer(this);
         }
     }
 
@@ -1846,27 +1791,30 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
 
     public void savePreivew(final IWorkbook workbook,
             final IProgressMonitor monitor) throws IOException, CoreException {
-        final Composite parent = this.parent;
-        if (workbook != null && parent != null && parent.getDisplay() != null
-                && !parent.getDisplay().isDisposed()) {
-            final IOException[] ioe = new IOException[1];
-            parent.getDisplay().syncExec(new Runnable() {
-                public void run() {
-                    if (workbook.getPassword() != null) {
-                        URL url = BundleUtility.find(MindMapUI.PLUGIN_ID,
-                                IMindMapImages.ENCRYPTED_THUMBNAIL);
-                        if (url != null) {
-                            try {
-                                new MindMapPreviewBuilder(workbook)
-                                        .saveFrom(url.openStream());
-                            } catch (IOException e) {
-                                ioe[0] = e;
-                                Logger
-                                        .log(e,
-                                                "Failed to save preview image from encrypted_thumbnail.jpg."); //$NON-NLS-1$
-                            }
-                        }
-                    } else {
+        if (workbook == null)
+            throw new IllegalArgumentException();
+
+        if (workbook.getPassword() != null) {
+            URL url = BundleUtility.find(MindMapUI.PLUGIN_ID,
+                    IMindMapImages.ENCRYPTED_THUMBNAIL);
+            if (url != null) {
+                new MindMapPreviewBuilder(workbook).saveFrom(url.openStream());
+            }
+        } else if (MindMapUIPlugin.getDefault().getPreferenceStore()
+                .getBoolean(PrefConstants.PREVIEW_SKIPPED)) {
+            URL url = BundleUtility.find(MindMapUI.PLUGIN_ID,
+                    IMindMapImages.DEFAULT_THUMBNAIL);
+            if (url != null) {
+                new MindMapPreviewBuilder(workbook).saveFrom(url.openStream());
+            }
+        } else {
+            final Composite parent = this.parent;
+            if (parent != null && !parent.isDisposed()
+                    && parent.getDisplay() != null
+                    && !parent.getDisplay().isDisposed()) {
+                final IOException[] ioe = new IOException[1];
+                parent.getDisplay().syncExec(new Runnable() {
+                    public void run() {
                         Composite previewCanvas = new Composite(parent,
                                 SWT.NONE);
                         try {
@@ -1882,10 +1830,10 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
                             parent.layout(true);
                         }
                     }
-                }
-            });
-            if (ioe[0] != null)
-                throw ioe[0];
+                });
+                if (ioe[0] != null)
+                    throw ioe[0];
+            }
         }
     }
 

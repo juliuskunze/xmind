@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -73,6 +73,7 @@ import org.xmind.ui.internal.actions.CollapseAction;
 import org.xmind.ui.internal.actions.CollapseAllAction;
 import org.xmind.ui.internal.actions.CreateBoundaryAction;
 import org.xmind.ui.internal.actions.CreateRelationshipAction;
+import org.xmind.ui.internal.actions.CreateSheetFromTopicAction;
 import org.xmind.ui.internal.actions.CreateSummaryAction;
 import org.xmind.ui.internal.actions.CutAction;
 import org.xmind.ui.internal.actions.DeleteAction;
@@ -84,11 +85,12 @@ import org.xmind.ui.internal.actions.EditTitleAction;
 import org.xmind.ui.internal.actions.ExtendAction;
 import org.xmind.ui.internal.actions.ExtendAllAction;
 import org.xmind.ui.internal.actions.FinishAction;
+import org.xmind.ui.internal.actions.FitMapAction;
+import org.xmind.ui.internal.actions.FitSelectionAction;
 import org.xmind.ui.internal.actions.InsertAttachmentAction;
 import org.xmind.ui.internal.actions.InsertFloatingTopicAction;
 import org.xmind.ui.internal.actions.InsertImageAction;
 import org.xmind.ui.internal.actions.InsertParentTopicAction;
-import org.xmind.ui.internal.actions.InsertSheetAction;
 import org.xmind.ui.internal.actions.InsertSubtopicAction;
 import org.xmind.ui.internal.actions.InsertTopicAction;
 import org.xmind.ui.internal.actions.InsertTopicBeforeAction;
@@ -373,11 +375,6 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
             if (getEditDomain() != null) {
                 getEditDomain().handleRequest(GEF.REQ_CANCEL, getViewer());
             }
-            deactivateContext();
-        } else if (!oldActive && newActive) {
-            if (getEditDomain() != null) {
-                changeContext(getEditDomain().getActiveTool());
-            }
         }
     }
 
@@ -415,7 +412,12 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
      * .FocusEvent)
      */
     public void focusGained(FocusEvent e) {
-        changeContext(getEditDomain().getActiveTool());
+        e.display.asyncExec(new Runnable() {
+            public void run() {
+                if (isActive())
+                    changeContext(getEditDomain().getActiveTool());
+            }
+        });
     }
 
     /*
@@ -451,7 +453,8 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
         actionRegistry.addAction(insertParentTopicAction);
         addSelectionAction(insertParentTopicAction);
 
-        InsertSheetAction insertSheetAction = new InsertSheetAction(this);
+        CreateSheetFromTopicAction insertSheetAction = new CreateSheetFromTopicAction(
+                this);
         actionRegistry.addAction(insertSheetAction);
         addSelectionAction(insertSheetAction);
 
@@ -516,6 +519,12 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
 
         ActualSizeAction actualSizeAction = new ActualSizeAction(this);
         actionRegistry.addAction(actualSizeAction);
+
+        FitMapAction fitMapAction = new FitMapAction(this);
+        actionRegistry.addAction(fitMapAction);
+
+        FitSelectionAction fitSelectionAction = new FitSelectionAction(this);
+        actionRegistry.addAction(fitSelectionAction);
 
         SelectAllAction selectAllAction = new SelectAllAction(this);
         actionRegistry.addAction(selectAllAction);

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,12 +20,6 @@ import java.util.Iterator;
 public interface IInputSource {
 
     Iterator<String> NO_ENTRIES = new ArrayList<String>(0).iterator();
-
-//    /**
-//     * 
-//     * @return
-//     */
-//    boolean open();
 
     /**
      * 
@@ -66,18 +60,5 @@ public interface IInputSource {
      *         <code>-1</code> if the entry does not exist
      */
     long getEntryTime(String entryName);
-
-//    /**
-//     * 
-//     * @param entryPath
-//     * @param stream
-//     * @return
-//     */
-//    boolean closeEntryStream(String entryPath, InputStream stream);
-//
-//    /**
-//     * 
-//     */
-//    void close();
 
 }

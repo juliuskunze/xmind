@@ -1,4 +1,19 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
 package org.xmind.cathy.internal.jobs;
+
+import net.xmind.signin.XMindNet;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -6,7 +21,6 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.Dialog;
@@ -35,6 +49,10 @@ import org.xmind.cathy.internal.WorkbenchMessages;
 import org.xmind.ui.resources.FontUtils;
 import org.xmind.ui.viewers.FileUtils;
 
+/**
+ * 
+ * @author Frank Shaka
+ */
 public class CheckUpdatesJob extends Job {
 
     private static class NewUpdateDialog extends Dialog {
@@ -161,7 +179,7 @@ public class CheckUpdatesJob extends Job {
         }
 
         private void openAllDownloadsUrl() {
-            Program.launch(allDownloadsUrl);
+            XMindNet.gotoURL(allDownloadsUrl);
         }
 
         private void openDownloadUrl() {
@@ -201,12 +219,11 @@ public class CheckUpdatesJob extends Job {
     }
 
     protected void doCheck() throws Exception {
-        String url = "http://www.xmind.net/_api/checkVersion/3.1.1/" //$NON-NLS-1$
-                + Platform.getOS() + "/" + Platform.getOSArch(); //$NON-NLS-1$
+        String url = "http://www.xmind.net/_api/checkVersion/3.2.0"; //$NON-NLS-1$
+        String distribId = CathyPlugin.getDistributionId();
+        url = url + "?distrib=" + distribId; //$NON-NLS-1$
         HttpMethod method = new GetMethod(url);
-        HttpClient client = new HttpClient();
-
-        int code = client.executeMethod(method);
+        int code = new HttpClient().executeMethod(method);
         if (code == HttpStatus.SC_OK) {
             String resp = method.getResponseBodyAsString();
             JSONObject json = new JSONObject(resp);

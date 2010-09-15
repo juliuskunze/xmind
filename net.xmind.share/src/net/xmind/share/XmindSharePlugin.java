@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -11,6 +11,8 @@
  */
 package net.xmind.share;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -64,4 +66,12 @@ public class XmindSharePlugin extends AbstractUIPlugin {
         return plugin;
     }
 
+    public static void log(String message) {
+        getDefault().getLog().log(new Status(IStatus.INFO, PLUGIN_ID, message));
+    }
+
+    public static void log(Throwable e, String message) {
+        getDefault().getLog().log(
+                new Status(IStatus.INFO, PLUGIN_ID, message, e));
+    }
 }

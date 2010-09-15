@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -94,10 +94,8 @@ public abstract class AbstractExportWizard extends Wizard implements
         }
     }
 
-    protected abstract boolean hasSource();
-
     public boolean canFinish() {
-        return super.canFinish() && hasSource() && hasTargetPath();
+        return super.canFinish() && hasTargetPath();
     }
 
     protected void launchTargetFile(boolean fileOrDirectory,

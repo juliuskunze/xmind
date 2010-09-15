@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -150,4 +150,17 @@ public class UnitConvertor {
     public static PrecisionInsets mm2dots(PrecisionInsets ins, Point dpi) {
         return inch2dots(mm2inch(ins), dpi);
     }
+
+    public static PrecisionPoint dots2mm(Point p, Point dpi) {
+        double x = inch2mm(p.x * 1.0 / dpi.x);
+        double y = inch2mm(p.y * 1.0 / dpi.y);
+        return new PrecisionPoint(x, y);
+    }
+
+    public static PrecisionPoint dots2inch(Point p, Point dpi) {
+        double x = p.x * 1.0 / dpi.x;
+        double y = p.y * 1.0 / dpi.y;
+        return new PrecisionPoint(x, y);
+    }
+
 }

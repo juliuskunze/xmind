@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -28,6 +28,7 @@ import org.eclipse.draw2d.geometry.Insets;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.util.Util;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
@@ -183,7 +184,7 @@ public class UndoRedoTipsService extends GraphicalViewerService implements
             getTitleLayer().add(figure);
 
             figure.setFont(FontUtils.getBoldRelative(
-                    JFaceResources.DEFAULT_FONT, GEF.IS_CARBON ? 2 : 1));
+                    JFaceResources.DEFAULT_FONT, Util.isMac() ? 2 : 1));
             figure.setForegroundColor(Display.getCurrent().getSystemColor(
                     SWT.COLOR_WHITE));
             figure.setBackgroundColor(getFrameColor());

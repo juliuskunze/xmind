@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -33,6 +33,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.util.Util;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -576,8 +577,7 @@ public class PageSetupDialog extends TitleAreaDialog {
         forReferenceLabel
                 .setText(DialogMessages.PageSetupDialog_JustForReference);
         forReferenceLabel.setFont(FontUtils.getNewHeight(
-                JFaceResources.DEFAULT_FONT, "carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                        || "cocoa".equals(SWT.getPlatform()) ? 9 : 7)); //$NON-NLS-1$
+                JFaceResources.DEFAULT_FONT, Util.isMac() ? 9 : 7));
         forReferenceLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
                 true, false));
     }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -93,8 +93,8 @@ public class WorkbookRefManager implements IWorkbookRefManager {
     private WorkbookRefManager() {
     }
 
-    public WorkbookRef addReferrer(Object source, IWorkbookReferrer referrer)
-            throws CoreException {
+    public synchronized WorkbookRef addReferrer(Object source,
+            IWorkbookReferrer referrer) throws CoreException {
         WorkbookRef ref = registry.get(source);
         if (ref != null) {
             ref.addReferrer(referrer);
@@ -103,11 +103,10 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         ref = createWorkbookRef(source, referrer);
         ref.addReferrer(referrer);
         ensureAutoHibernateStarted();
-
         return ref;
     }
 
-    private WorkbookRef createWorkbookRef(Object source,
+    private synchronized WorkbookRef createWorkbookRef(Object source,
             IWorkbookReferrer referrer) throws CoreException {
         WorkbookRef ref = new WorkbookRef();
         WorkbookRefInitializer.getInstance().initialize(ref, source, referrer);
@@ -122,9 +121,9 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         if (lastSession != null) {
             String tempLocation = lastSession.get(source);
             if (tempLocation != null) {
-                ref
-                        .setWorkbookLoader(new TempWorkbookLoader(ref,
-                                tempLocation));
+                File file = MME.getFile(source);
+                ref.setWorkbookLoader(new TempWorkbookLoader(ref, tempLocation,
+                        file == null ? null : file.getAbsolutePath()));
             }
         }
 
@@ -142,7 +141,8 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         }
     }
 
-    public void removeReferrer(Object source, IWorkbookReferrer referrer) {
+    public synchronized void removeReferrer(Object source,
+            IWorkbookReferrer referrer) {
         WorkbookRef ref = registry.get(source);
         try {
             if (ref != null) {
@@ -167,7 +167,8 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         }
     }
 
-    public IWorkbookRef createRef(IEditorInput editorInput, IEditorPart editor) {
+    public synchronized IWorkbookRef createRef(IEditorInput editorInput,
+            IEditorPart editor) {
         IWorkbookReferrer referrer = findWorkbookReferrer(editor);
         if (referrer == null)
             return null;
@@ -189,7 +190,8 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         return referrer;
     }
 
-    public void disposeRef(IEditorInput editorInput, IEditorPart editor) {
+    public synchronized void disposeRef(IEditorInput editorInput,
+            IEditorPart editor) {
         IWorkbookReferrer referrer = findWorkbookReferrer(editor);
         if (referrer != null)
             removeReferrer(editorInput, referrer);
@@ -245,22 +247,24 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         }
 
         XMLMemento memento = null;
-        for (Entry<Object, WorkbookRef> en : registry.entrySet()) {
-            WorkbookRef ref = en.getValue();
-            IWorkbook workbook = ref.getWorkbook();
-            if (workbook != null) {
-                try {
-                    workbook.saveTemp();
-                } catch (Throwable e) {
-                }
-                Object key = en.getKey();
-                if (key instanceof IEditorInput) {
-                    if (memento == null) {
-                        memento = XMLMemento
-                                .createWriteRoot(TAG_OPENED_EDITORS);
+        synchronized (this) {
+            for (Entry<Object, WorkbookRef> en : registry.entrySet()) {
+                WorkbookRef ref = en.getValue();
+                IWorkbook workbook = ref.getWorkbook();
+                if (workbook != null) {
+                    try {
+                        workbook.saveTemp();
+                    } catch (Throwable e) {
                     }
-                    saveMemento(memento, (IEditorInput) key, workbook
-                            .getTempLocation());
+                    Object key = en.getKey();
+                    if (key instanceof IEditorInput) {
+                        if (memento == null) {
+                            memento = XMLMemento
+                                    .createWriteRoot(TAG_OPENED_EDITORS);
+                        }
+                        saveMemento(memento, (IEditorInput) key, workbook
+                                .getTempLocation());
+                    }
                 }
             }
         }

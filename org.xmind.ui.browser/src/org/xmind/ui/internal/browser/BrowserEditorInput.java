@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -41,12 +41,23 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
 
     private String clientId;
 
+    public BrowserEditorInput() {
+    }
+
     public BrowserEditorInput(String url) {
         this(url, null);
     }
 
     public BrowserEditorInput(String url, String clientId) {
         this.url = url;
+        this.clientId = clientId;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public void setClientId(String clientId) {
         this.clientId = clientId;
     }
 
@@ -127,7 +138,9 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
         String name = memento.getString(TAG_NAME);
         String tooltip = memento.getString(TAG_TOOLTIP);
         String clientId = memento.getString(TAG_CLIENT_ID);
-        BrowserEditorInput input = new BrowserEditorInput(url, clientId);
+        BrowserEditorInput input = new BrowserEditorInput();
+        input.setUrl(url);
+        input.setClientId(clientId);
         input.setName(name);
         input.setToolTipText(tooltip);
         return input;

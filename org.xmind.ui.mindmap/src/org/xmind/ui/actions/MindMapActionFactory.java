@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -137,6 +137,40 @@ public class MindMapActionFactory {
                     IMindMapImages.ACTUAL_SIZE, true));
             action.setDisabledImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.ACTUAL_SIZE, false));
+            return action;
+        }
+    };
+
+    public static final ActionFactory FIT_MAP = new ActionFactory(
+            "org.xmind.ui.fitMap") { //$NON-NLS-1$
+        public IWorkbenchAction create(IWorkbenchWindow window) {
+            if (window == null)
+                throw new IllegalArgumentException();
+            LabelRetargetAction action = new LabelRetargetAction(getId(),
+                    MindMapMessages.FitMap_text);
+            action.setToolTipText(MindMapMessages.FitMap_toolTip);
+            action.setActionDefinitionId("org.xmind.ui.command.fitMap"); //$NON-NLS-1$
+            action.setImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.FIT_SIZE, true));
+            action.setDisabledImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.FIT_SIZE, false));
+            return action;
+        }
+    };
+
+    public static final ActionFactory FIT_SELECTION = new ActionFactory(
+            "org.xmind.ui.fitSelection") { //$NON-NLS-1$
+        public IWorkbenchAction create(IWorkbenchWindow window) {
+            if (window == null)
+                throw new IllegalArgumentException();
+            LabelRetargetAction action = new LabelRetargetAction(getId(),
+                    MindMapMessages.FitSelection_text);
+            action.setToolTipText(MindMapMessages.FitSelection_toolTip);
+            action.setActionDefinitionId("org.xmind.ui.command.fitSelection"); //$NON-NLS-1$
+            action.setImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.FIT_SELECTION, true));
+            action.setDisabledImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.FIT_SELECTION, false));
             return action;
         }
     };

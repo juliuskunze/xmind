@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -143,7 +143,7 @@ public class FreeMindExporter {
         }
 
         try {
-            OutputStream os = new FileOutputStream(new File(targetPath));
+            OutputStream os = new FileOutputStream(targetPath);
             // put the document's content to write in the tempPath
             DOMUtils.save(document, os, true);
         } catch (Exception e) {
@@ -185,11 +185,11 @@ public class FreeMindExporter {
         writeArrowLink(nodeEle, topic);
         writeFont(nodeEle, style);
         writeIcon(nodeEle, topic);
-        writehookNotes(nodeEle, topic);
+        writeHookNotes(nodeEle, topic);
         writSubTopics(nodeEle, topic);
     }
 
-    private void writehookNotes(Element nodeEle, ITopic topic) {
+    private void writeHookNotes(Element nodeEle, ITopic topic) {
         INotes notes = topic.getNotes();
         if (notes == null)
             return;
@@ -546,7 +546,7 @@ public class FreeMindExporter {
 
     private void writeModify(Element nodeEle) {
         String value = String.valueOf(System.currentTimeMillis());
-        nodeEle.setAttribute("MOIFIED", value); //$NON-NLS-1$
+        nodeEle.setAttribute("MODIFIED", value); //$NON-NLS-1$
     }
 
     private void writeLink(Element nodeEle, ITopic topic) throws Exception {
@@ -567,13 +567,11 @@ public class FreeMindExporter {
             String path = FilePathParser.toPath(hyperlink);
             if (FilePathParser.isPathRelative(path)) {
                 IWorkbook workbook = topic.getOwnedWorkbook();
-                if (workbook != null) {
-                    String base = workbook.getFile();
+                String base = workbook.getFile();
+                if (base != null) {
+                    base = new File(base).getParent();
                     if (base != null) {
-                        base = new File(base).getParent();
-                        if (base != null) {
-                            FilePathParser.toAbsolutePath(base, path);
-                        }
+                        return FilePathParser.toAbsolutePath(base, path);
                     }
                 }
                 return FilePathParser.toAbsolutePath(System

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -25,7 +25,11 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Display;
+import org.xmind.core.Core;
+import org.xmind.core.ISheet;
+import org.xmind.core.IWorkbook;
 import org.xmind.core.style.IStyle;
+import org.xmind.core.style.IStyleSheet;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.draw2d.decoration.IDecoration;
 import org.xmind.gef.graphicalpolicy.IStyleSelector;
@@ -612,4 +616,56 @@ public class StyleUtils {
         }
         return false;
     }
+
+    public static void setTheme(ISheet sheet, IStyle theme) {
+        if (sheet == null)
+            return;
+
+        if (theme == null || theme.isEmpty()) {
+            sheet.setThemeId(null);
+        } else {
+            IWorkbook workbook = sheet.getOwnedWorkbook();
+            IStyleSheet styleSheet = workbook.getStyleSheet();
+            theme = styleSheet.importStyle(theme);
+            if (theme == null || theme.isEmpty()) {
+                sheet.setThemeId(null);
+            } else {
+                sheet.setThemeId(theme.getId());
+                setThemeStyles(workbook, styleSheet, sheet, theme,
+                        Styles.MultiLineColors, Styles.LineTapered);
+            }
+        }
+    }
+
+    private static void setThemeStyles(IWorkbook workbook,
+            IStyleSheet styleSheet, ISheet sheet, IStyle theme,
+            String... sheetStyleNames) {
+        IStyle sheetTheme = theme.getDefaultStyle(Styles.FAMILY_MAP);
+        if (sheetTheme == null)
+            return;
+        IStyle sheetStyle = styleSheet.findStyle(sheet.getStyleId());
+        if (sheetStyle != null) {
+            sheetStyle = Core.getWorkbookBuilder().createWorkbook()
+                    .getStyleSheet().importStyle(sheetStyle);
+        }
+        String value = null;
+        for (String styleName : sheetStyleNames) {
+            value = sheetTheme.getProperty(styleName);
+            if (value != null) {
+                if (sheetStyle == null)
+                    sheetStyle = Core.getWorkbookBuilder().createWorkbook()
+                            .getStyleSheet().createStyle(sheet.getStyleType());
+                sheetStyle.setProperty(styleName, value);
+            } else if (sheetStyle != null) {
+                sheetStyle.setProperty(styleName, value);
+            }
+        }
+        if (sheetStyle != null) {
+            sheetStyle = workbook.getStyleSheet().importStyle(sheetStyle);
+            if (sheetStyle != null) {
+                sheet.setStyleId(sheetStyle.getId());
+            }
+        }
+    }
+
 }

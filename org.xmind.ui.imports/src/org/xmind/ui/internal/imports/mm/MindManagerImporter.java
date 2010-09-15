@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -15,11 +15,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -27,6 +31,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.eclipse.osgi.util.NLS;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -49,6 +54,8 @@ import org.xmind.core.ISpan;
 import org.xmind.core.ISummary;
 import org.xmind.core.ITitled;
 import org.xmind.core.ITopic;
+import org.xmind.core.ITopicExtension;
+import org.xmind.core.ITopicExtensionElement;
 import org.xmind.core.ITopicRange;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.dom.NumberUtils;
@@ -63,6 +70,7 @@ import org.xmind.core.util.FileUtils;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.ui.internal.imports.ImportMessages;
 import org.xmind.ui.internal.imports.ImporterUtils;
+import org.xmind.ui.internal.protocols.FilePathParser;
 import org.xmind.ui.io.MonitoredInputStream;
 import org.xmind.ui.resources.ColorUtils;
 import org.xmind.ui.style.StyleUtils;
@@ -74,6 +82,11 @@ import org.xml.sax.SAXParseException;
 
 public class MindManagerImporter extends MindMapImporter implements
         MMConstants, ErrorHandler {
+
+    private static final Pattern DATE_PATTERN = Pattern
+            .compile("((\\d+)-(\\d{1,2})-(\\d{1,2}))T((\\d{1,2}):(\\d{1,2}):(\\d{1,2}))"); //$NON-NLS-1$
+
+    private static Pattern OID_PATTERN = null;
 
     private class NotesImporter {
 
@@ -297,6 +310,9 @@ public class MindManagerImporter extends MindMapImporter implements
 
     private IStyle theme = null;
 
+    private Map<String, List<ITopic>> topicLinkMap = new HashMap<String, List<ITopic>>(
+            10);
+
     public MindManagerImporter(String sourcePath) {
         super(sourcePath);
     }
@@ -338,6 +354,7 @@ public class MindManagerImporter extends MindMapImporter implements
             getMonitor().subTask(
                     ImportMessages.MindManagerImporter_ReadingElements);
             loadSheet(doc.getDocumentElement());
+            setTopicLinks();
             getMonitor().worked(45);
 
             checkInterrupted();
@@ -935,6 +952,7 @@ public class MindManagerImporter extends MindMapImporter implements
         loadMarkers(topicEle, topic);
         loadLabels(topicEle, topic);
         loadNotes(topicEle, topic);
+        loadTask(topicEle, topic);
 
         loadSubTopics(topicEle, topic);
         loadDetachedSubTopics(topicEle, topic);
@@ -965,6 +983,7 @@ public class MindManagerImporter extends MindMapImporter implements
                     attTopic.setTitleText(name);
                     attTopic.setHyperlink(HyperlinkUtils.toAttachmentURL(entry
                             .getPath()));
+                    topic.add(attTopic, ITopic.ATTACHED);
                 }
             }
         }
@@ -1270,7 +1289,7 @@ public class MindManagerImporter extends MindMapImporter implements
     }
 
     private static String parseMarkerId(String mmIconId) {
-        return getMapping("marker", mmIconId, null); //$NON-NLS-1$
+        return getMapping("marker", mmIconId, "other-question"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     private void loadHyperlink(Element topicEle, ITopic topic)
@@ -1282,8 +1301,28 @@ public class MindManagerImporter extends MindMapImporter implements
 
         String url = att(hyperlinkEle, "Url"); //$NON-NLS-1$
         if (url != null) {
+            if (url.startsWith("#xpointer(")) { //$NON-NLS-1$
+                Matcher m = getOIdPattern().matcher(url);
+                if (m.find()) {
+                    String OId = m.group(1);
+                    recordTopicLink(OId, topic);
+                }
+                return;
+            } else if (url.startsWith("\"") && url.endsWith("\"")) { //$NON-NLS-1$ //$NON-NLS-2$
+                String path = url.substring(1, url.length() - 1);
+                String absolute = att(hyperlinkEle, "Absolute"); //$NON-NLS-1$
+                url = FilePathParser.toURI(path, absolute != null
+                        && !Boolean.parseBoolean(absolute));
+            }
             topic.setHyperlink(url);
         }
+    }
+
+    private static Pattern getOIdPattern() {
+        if (OID_PATTERN == null) {
+            OID_PATTERN = Pattern.compile("@OId='([^']*)'"); //$NON-NLS-1$
+        }
+        return OID_PATTERN;
     }
 
     private void loadTopicShape(Element topicEle, ITopic topic)
@@ -1453,6 +1492,92 @@ public class MindManagerImporter extends MindMapImporter implements
         return null;
     }
 
+    private void loadTask(Element ownerEle, ITopic topic)
+            throws InterruptedException {
+        checkInterrupted();
+        Element taskEle = child(ownerEle, "ap:Task"); //$NON-NLS-1$
+        if (taskEle == null)
+            return;
+
+        ITopicExtensionElement taskContent = null;
+        String startDate = att(taskEle, "StartDate"); //$NON-NLS-1$
+        if (startDate != null) {
+            Matcher m = DATE_PATTERN.matcher(startDate);
+            if (m.find()) {
+                taskContent = ensureTaskContent(topic, taskContent);
+                taskContent.deleteChildren("start-date"); //$NON-NLS-1$
+                ITopicExtensionElement ele = taskContent
+                        .createChild("start-date"); //$NON-NLS-1$
+                ele.setTextContent(m.group(1) + " " + m.group(5)); //$NON-NLS-1$
+            }
+        }
+
+        String endDate = att(taskEle, "DeadlineDate"); //$NON-NLS-1$;
+        if (endDate != null) {
+            Matcher m = DATE_PATTERN.matcher(endDate);
+            if (m.find()) {
+                taskContent = ensureTaskContent(topic, taskContent);
+                taskContent.deleteChildren("end-date");//$NON-NLS-1$
+                ITopicExtensionElement ele = taskContent
+                        .createChild("end-date"); //$NON-NLS-1$
+                ele.setTextContent(m.group(1) + " " + m.group(5)); //$NON-NLS-1$
+
+            }
+        }
+
+        String resources = att(taskEle, "Resources"); //$NON-NLS-1$
+        if (resources != null) {
+            String[] resourceArray = resources.split("; "); //$NON-NLS-1$
+            for (String resource : resourceArray) {
+                topic.addLabel(NLS.bind(
+                        ImportMessages.MindManagerImporter_ResourceLabel,
+                        resource.replaceAll(",", ";"))); //$NON-NLS-1$//$NON-NLS-2$
+            }
+        }
+
+        String durationHours = att(taskEle, "DurationHours"); //$NON-NLS-1$
+        if (durationHours != null) {
+            String durationLabel = null;
+            String durationUnit = att(taskEle, "DurationUnit"); //$NON-NLS-1$
+            if (durationUnit != null) {
+                try {
+                    int hours = Integer.parseInt(durationHours);
+                    if ("urn:mindjet:Month".equals(durationUnit)) { //$NON-NLS-1$
+                        durationLabel = NLS.bind(
+                                ImportMessages.MindManagerImporter_Months,
+                                hours / 160);
+                    } else if ("urn:mindjet:Week".equals(durationUnit)) { //$NON-NLS-1$
+                        durationLabel = NLS.bind(
+                                ImportMessages.MindManagerImporter_Weeks,
+                                hours / 40);
+                    } else if ("urn:mindjet:Day".equals(durationUnit)) { //$NON-NLS-1$
+                        durationLabel = NLS.bind(
+                                ImportMessages.MindManagerImporter_Days,
+                                hours / 8);
+                    }
+                } catch (NumberFormatException e) {
+                }
+            }
+            if (durationLabel == null) {
+                durationLabel = NLS
+                        .bind(ImportMessages.MindManagerImporter_Hours,
+                                durationHours);
+            }
+            topic.addLabel(NLS.bind(
+                    ImportMessages.MindManagerImporter_DurationLabel,
+                    durationLabel));
+        }
+
+    }
+
+    private static ITopicExtensionElement ensureTaskContent(ITopic topic,
+            ITopicExtensionElement taskContent) {
+        if (taskContent != null)
+            return taskContent;
+        ITopicExtension ext = topic.createExtension("org.xmind.ui.taskInfo"); //$NON-NLS-1$
+        return ext.getContent();
+    }
+
     private void loadTitle(Element ownerEle, ITitled titleOwner)
             throws InterruptedException {
         checkInterrupted();
@@ -1479,7 +1604,6 @@ public class MindManagerImporter extends MindMapImporter implements
     }
 
     private void loadTextAlignment(String align, IStyled styleOwner) {
-        // TODO Auto-generated method stub
         if (align.startsWith("urn:mindjet:")) { //$NON-NLS-1$
             int len = "urn:mindjet:".length(); //$NON-NLS-1$
             String textAlign = align.substring(len).toLowerCase();
@@ -1593,9 +1717,29 @@ public class MindManagerImporter extends MindMapImporter implements
     }
 
     private void loadOId(Element mmEle, IIdentifiable element) {
-        String id = att(mmEle, "OId"); //$NON-NLS-1$
-        if (id != null) {
-            idMap.put(id, element.getId());
+        String OId = att(mmEle, "OId"); //$NON-NLS-1$
+        if (OId != null) {
+            idMap.put(OId, element.getId());
+        }
+    }
+
+    private void recordTopicLink(String OId, ITopic sourceTopic) {
+        List<ITopic> topics = topicLinkMap.get(OId);
+        if (topics == null) {
+            topics = new ArrayList<ITopic>();
+            topicLinkMap.put(OId, topics);
+        }
+        topics.add(sourceTopic);
+    }
+
+    private void setTopicLinks() {
+        for (Entry<String, List<ITopic>> en : topicLinkMap.entrySet()) {
+            String id = idMap.get(en.getKey());
+            if (id != null) {
+                for (ITopic topic : en.getValue()) {
+                    topic.setHyperlink(HyperlinkUtils.toInternalURL(id));
+                }
+            }
         }
     }
 

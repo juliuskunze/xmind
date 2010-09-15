@@ -86,24 +86,24 @@ public abstract class AbstractCheckFilesJob extends Job {
         final IEditorPart[] result = new IEditorPart[1];
         display.syncExec(new Runnable() {
             public void run() {
-                final IWorkbenchWindow window = getPrimaryWindow();
+                IWorkbenchWindow window = getPrimaryWindow();
                 if (window == null)
                     return;
-                SafeRunner
-                        .run(new SafeRunnable(
-                                NLS
-                                        .bind(
-                                                WorkbenchMessages.CheckOpenFilesJob_FailsToOpen_message,
-                                                input.getName())) {
-                            public void run() throws Exception {
-                                IWorkbenchPage page = window.getActivePage();
-                                if (page != null) {
+                final IWorkbenchPage page = window.getActivePage();
+                if (page != null) {
+                    SafeRunner
+                            .run(new SafeRunnable(
+                                    NLS
+                                            .bind(
+                                                    WorkbenchMessages.CheckOpenFilesJob_FailsToOpen_message,
+                                                    input.getName())) {
+                                public void run() throws Exception {
                                     result[0] = page.openEditor(input,
                                             MindMapUI.MINDMAP_EDITOR_ID,
                                             activate);
                                 }
-                            }
-                        });
+                            });
+                }
             }
 
         });

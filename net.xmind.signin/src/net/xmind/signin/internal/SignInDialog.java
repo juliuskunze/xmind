@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -11,12 +11,12 @@
  */
 package net.xmind.signin.internal;
 
+import net.xmind.signin.IDataStore;
 import net.xmind.signin.ISignInDialogExtension;
-import net.xmind.signin.XMindNetEntry;
-import net.xmind.signin.util.IDataStore;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.OpenWindowListener;
@@ -43,6 +43,7 @@ import org.xmind.ui.internal.browser.InternalBrowserView;
 
 /**
  * @author briansun
+ * @deprecated {@link SignInDialog2} uses local widgets instead of web page.
  */
 public class SignInDialog extends Dialog implements StatusTextListener,
         OpenWindowListener {
@@ -78,15 +79,15 @@ public class SignInDialog extends Dialog implements StatusTextListener,
     }
 
     public String getUserID() {
-        return data == null ? null : data.getString(XMindNetEntry.USER_ID);
+        return data == null ? null : data.getString(XMindNetAccount.USER);
     }
 
     public String getToken() {
-        return data == null ? null : data.getString(XMindNetEntry.TOKEN);
+        return data == null ? null : data.getString(XMindNetAccount.TOKEN);
     }
 
     public boolean shouldRemember() {
-        return data == null ? false : data.getBoolean(UserInfoManager.REMEMBER);
+        return data == null ? false : data.getBoolean(SignInJob.REMEMBER);
     }
 
     public IDataStore getData() {
@@ -130,7 +131,7 @@ public class SignInDialog extends Dialog implements StatusTextListener,
     private void createExtension(Composite parent) {
         Composite composite = new Composite(parent, SWT.NONE);
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-        extension.createControls(composite);
+        extension.contributeToOptions(this, composite);
     }
 
     private void createBrowser(Composite parent) {
@@ -150,8 +151,7 @@ public class SignInDialog extends Dialog implements StatusTextListener,
 
         browser.setUrl(SIGN_IN_URL);
 
-        if ("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                || "cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
+        if (Util.isMac())
             browser.refresh();
 
         browser.setFocus();
@@ -247,11 +247,11 @@ public class SignInDialog extends Dialog implements StatusTextListener,
     }
 
     private boolean checkCommand(String text) {
-        XMindCommand command = new XMindCommand(text);
+        XMindNetCommand command = new XMindNetCommand(text);
         if (!command.parse())
             return false;
         if ("200".equals(command.getCode())) { //$NON-NLS-1$
-            return executeJSON(command.getJSON());
+            return executeJSON(command.getContent());
         }
         return false;
     }
@@ -271,8 +271,8 @@ public class SignInDialog extends Dialog implements StatusTextListener,
     }
 
     private boolean setUserNameAndToken(IDataStore json) throws JSONException {
-        String userID = json.getString(XMindNetEntry.USER_ID);
-        String token = json.getString(XMindNetEntry.TOKEN);
+        String userID = json.getString(XMindNetAccount.USER);
+        String token = json.getString(XMindNetAccount.TOKEN);
         if (userID == null || token == null || "".equals(userID) //$NON-NLS-1$
                 || "".equals(token)) //$NON-NLS-1$
             return false;

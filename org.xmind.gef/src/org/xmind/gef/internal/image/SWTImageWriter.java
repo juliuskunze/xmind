@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,11 +17,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
-import org.xmind.gef.GEF;
 import org.xmind.gef.image.ImageWriter;
 
 public class SWTImageWriter extends ImageWriter {
@@ -69,7 +69,7 @@ public class SWTImageWriter extends ImageWriter {
 
     private static boolean needsDepthConvertion(int format) {
         return format == SWT.IMAGE_GIF
-                || (format == SWT.IMAGE_BMP && GEF.IS_CARBON);
+                || (format == SWT.IMAGE_BMP && Util.isMac());
     }
 
 }

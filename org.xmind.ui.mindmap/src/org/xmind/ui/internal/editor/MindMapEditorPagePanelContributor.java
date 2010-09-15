@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -21,6 +21,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.util.Util;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
@@ -367,8 +368,7 @@ public class MindMapEditorPagePanelContributor extends PanelContributor {
 
             public void paintControl(PaintEvent e) {
                 GC gc = e.gc;
-                if (!"cocoa".equals(SWT.getPlatform()) //$NON-NLS-1$
-                        || !"carbon".equals(SWT.getPlatform())) { //$NON-NLS-1$
+                if (!Util.isMac()) {
                     gc.setBackground(e.display
                             .getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
                     gc.fillRectangle(getBounds());

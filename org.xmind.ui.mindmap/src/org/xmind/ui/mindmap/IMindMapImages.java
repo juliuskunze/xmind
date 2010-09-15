@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -56,6 +56,7 @@ public interface IMindMapImages {
     String ATTACHMENT = "attachment.gif"; //$NON-NLS-1$
     String BOUNDARY = "boundary.gif"; //$NON-NLS-1$
     String CENTRAL = "central.gif"; //$NON-NLS-1$
+    String DELETE = "delete_edit.gif"; //$NON-NLS-1$
     String DONE = "step_done.gif"; //$NON-NLS-1$
     String DOWN_TRIANGLE = "down_triangle.gif"; //$NON-NLS-1$
     String DRILL_UP = "drill_up.gif"; //$NON-NLS-1$
@@ -174,6 +175,8 @@ public interface IMindMapImages {
     String WRONG = PATH + "misc/close_view.gif"; //$NON-NLS-1$
     String BLANK = PATH + "misc/blank.gif"; //$NON-NLS-1$
     String ENCRYPTED_THUMBNAIL = PATH + "misc/encrypted_thumbnail.jpg"; //$NON-NLS-1$
+    String DEFAULT_THUMBNAIL = PATH + "misc/default_thumbnail.jpg"; //$NON-NLS-1$
+    String MISSING_IMAGE = PATH + "misc/missing_image.png"; //$NON-NLS-1$
 
     String UNKNOWN_FILE = "unknownfile.gif"; //$NON-NLS-1$
 

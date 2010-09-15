@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.OpenEvent;
@@ -59,10 +60,13 @@ public class MButton extends Viewer {
      */
     public static final int NO_ARROWS = 1 << 2;
 
+    private static final boolean DRAWS_FOCUS = Util.isMac();
+
+    protected static final int MARGIN = DRAWS_FOCUS ? 4 : 1;
     protected static final int CORNER_SIZE = 5;
-    protected static final int MARGIN = (CORNER_SIZE + 1) / 2;
-    protected static final int EXPANSION = (MARGIN + 1) / 2;
-    protected static final int SELECTION_CORNER_SIZE = (MARGIN - EXPANSION) * 2 + 1;
+    protected static final int BORDER = (CORNER_SIZE + 1) / 2;
+    protected static final int FOCUS_CORNER_SIZE = CORNER_SIZE - 2;
+    protected static final int FOCUS_BORDER = (FOCUS_CORNER_SIZE + 1) / 2;
     protected static final int IMAGE_TEXT_SPACING = 3;
     protected static final int CONTENT_ARROW_SPACING = 4;
     protected static final int ARROW_WIDTH = 7;
@@ -106,6 +110,21 @@ public class MButton extends Viewer {
     private Rectangle imgArea = null;
     private Rectangle textArea = null;
 
+    /**
+     * Constructs a new instance of this class given its parent and a style
+     * value describing its behavior and appearance.
+     * 
+     * @param parent
+     *            a composite control which will be the parent of the new
+     *            instance (cannot be null)
+     * @param style
+     *            the style of control to construct
+     * 
+     * @see #NORMAL
+     * @see #NO_TEXT
+     * @see #NO_IMAGE
+     * @see #NO_ARROWS
+     */
     public MButton(Composite parent, int style) {
         this.style = checkStyle(style, NORMAL, NORMAL, NO_TEXT, NO_IMAGE,
                 NO_ARROWS);
@@ -116,36 +135,32 @@ public class MButton extends Viewer {
                     clearCaches();
                 Point imageSize = getImageSize();
                 Point textSize = getTextSize();
+                boolean hasArrows = hasArrows();
 
                 int width;
                 if (wHint != SWT.DEFAULT) {
-                    width = wHint;
+                    width = Math.max(wHint, MARGIN * 2);
                 } else {
-                    boolean hasArrows = hasArrows();
-                    int minWidth = imageSize.x + textSize.x + MARGIN;
+                    width = MARGIN * 2 + imageSize.x + textSize.x + BORDER * 2;
                     if (hasArrows) {
-                        minWidth += ARROW_WIDTH + MARGIN;
+                        width += ARROW_WIDTH + CONTENT_ARROW_SPACING;
                     }
                     if (imageSize.x != 0 && textSize.x != 0) {
-                        minWidth += IMAGE_TEXT_SPACING;
+                        width += IMAGE_TEXT_SPACING;
                     }
-                    if (hasArrows && (imageSize.x != 0 || textSize.x != 0)) {
-                        minWidth += CONTENT_ARROW_SPACING;
-                    }
-                    width = minWidth;
+//                    if (hasArrows && (imageSize.x != 0 || textSize.x != 0)) {
+//                        width += CONTENT_ARROW_SPACING;
+//                    }
                 }
 
-                int minHeight = Math.max(imageSize.y, textSize.y);
-                if (hasArrows()) {
+                int minHeight = MARGIN * 2 + Math.max(imageSize.y, textSize.y)
+                        + BORDER * 2;
+                if (hasArrows) {
                     minHeight = Math.max(minHeight, ARROW_HEIGHT * 2
-                            + ARROWS_SPACING)
-                            + MARGIN;
+                            + ARROWS_SPACING);
                 }
-                minHeight += MARGIN;
-                // int height = ( hHint == SWT.DEFAULT ) ? minHeight : hHint;
                 int height = minHeight;
                 Rectangle trim = computeTrim(0, 0, width, height);
-
                 return new Point(trim.width, trim.height);
             }
         };
@@ -425,9 +440,9 @@ public class MButton extends Viewer {
     protected Point calcTextSize() {
         String string = getText();
         if (!hasText()) {
-            if ((style & NO_TEXT) == 0)
+            if ((style & NO_TEXT) != 0)
                 return new Point(0, 0);
-            string = " "; //$NON-NLS-1$
+            string = "X"; //$NON-NLS-1$
         }
         Point size;
         GC gc = new GC(getControl().getDisplay());
@@ -479,14 +494,18 @@ public class MButton extends Viewer {
 
     protected void buildCaches() {
         bounds = control.getClientArea();
-        int x1 = bounds.x + MARGIN;
-        int y1 = bounds.y + MARGIN;
-        int w1 = bounds.width - MARGIN * 2;
-        int h1 = bounds.height - MARGIN * 2;
+        bounds.x += MARGIN;
+        bounds.y += MARGIN;
+        bounds.width -= MARGIN * 2;
+        bounds.height -= MARGIN * 2;
+        int x1 = bounds.x + BORDER;
+        int y1 = bounds.y + BORDER;
+        int w1 = bounds.width - BORDER * 2;
+        int h1 = bounds.height - BORDER * 2;
         boolean hasArrows = hasArrows();
 
         if (hasArrows) {
-            arrowLoc = new Point(x1 + w1 - ARROW_WIDTH, y1
+            arrowLoc = new Point(x1 + w1 + BORDER / 2 - ARROW_WIDTH, y1
                     + (h1 - ARROW_HEIGHT * 2 - ARROWS_SPACING) / 2 - 1);
         }
         contentArea = new Rectangle(x1, y1, w1
@@ -549,13 +568,13 @@ public class MButton extends Viewer {
 
         if (focused) {
             // draw focused content background
-            x = contentArea.x - EXPANSION;
-            y = contentArea.y - EXPANSION;
-            w = contentArea.width + EXPANSION * 2;
-            h = contentArea.height + EXPANSION * 2;
+            x = contentArea.x - FOCUS_BORDER;
+            y = contentArea.y - FOCUS_BORDER;
+            w = contentArea.width + FOCUS_BORDER * 2;
+            h = contentArea.height + FOCUS_BORDER * 2;
             gc.setBackground(getRealTextBackground(display));
-            gc.fillRoundRectangle(x, y, w, h, SELECTION_CORNER_SIZE,
-                    SELECTION_CORNER_SIZE);
+            gc.fillRoundRectangle(x, y, w, h, FOCUS_CORNER_SIZE,
+                    FOCUS_CORNER_SIZE);
         }
 
         boolean hasImage = hasImage();
@@ -606,17 +625,22 @@ public class MButton extends Viewer {
             y += ARROW_HEIGHT * 2 + ARROWS_SPACING + 1;
             x1 = arrowLoc.x;
             y1 += ARROWS_SPACING;
-            gc.fillPolygon(new int[] { x, y, x1, y1, x2, y1 });
+            gc.fillPolygon(new int[] { x, y, x2, y1, x1 - 1, y1 });
         }
 
         // draw border
-        if (hasBackgroundAndBorder) {
+        if (focused) {
             x = bounds.x;
             y = bounds.y;
-            w = bounds.width - 1;
-            h = bounds.height - 1;
-            gc.setForeground(getBorderForeground(display, focused));
-            gc.drawRoundRectangle(x, y, w, h, CORNER_SIZE, CORNER_SIZE);
+            w = bounds.width;
+            h = bounds.height;
+            if (DRAWS_FOCUS) {
+                gc.drawFocus(x - MARGIN + 1, y - MARGIN + 1,
+                        w + MARGIN * 2 - 2, h + MARGIN * 2 - 2);
+            } else {
+                gc.setForeground(getBorderForeground(display, focused));
+                gc.drawRoundRectangle(x, y, w, h, CORNER_SIZE, CORNER_SIZE);
+            }
         }
     }
 

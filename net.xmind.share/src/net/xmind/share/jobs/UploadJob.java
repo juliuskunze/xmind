@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -11,187 +11,341 @@
  */
 package net.xmind.share.jobs;
 
-import java.io.File;
 import java.io.IOException;
 
 import net.xmind.share.Info;
 import net.xmind.share.Messages;
 import net.xmind.share.XmindSharePlugin;
+import net.xmind.signin.IAccountInfo;
+import net.xmind.signin.IAuthenticationListener;
+import net.xmind.signin.XMindNet;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.auth.AuthenticationException;
-import org.eclipse.core.runtime.Assert;
+import org.apache.commons.httpclient.HttpStatus;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
-import org.json.JSONException;
 import org.xmind.core.CoreException;
 import org.xmind.core.IMeta;
 import org.xmind.core.IWorkbook;
+import org.xmind.ui.dialogs.SimpleInfoPopupDialog;
 
 public class UploadJob extends Job {
 
+    private class TransferWorker implements Runnable {
+
+        private Thread thread = null;
+
+        public void start() {
+            if (thread != null)
+                return;
+            thread = new Thread(this);
+            thread.setName("Upload:" + info.getString(Info.TITLE)); //$NON-NLS-1$
+            thread.setDaemon(false);
+            thread.setPriority(Thread.NORM_PRIORITY);
+            thread.start();
+        }
+
+        public void run() {
+            session.transfer();
+        }
+
+    }
+
+    private class ProgressWorker implements Runnable {
+
+        private IProgressMonitor monitor;
+
+        private int ticks;
+
+        private Thread thread = null;
+
+        private int ticksUploaded = 0;
+
+        public ProgressWorker(IProgressMonitor monitor, int ticks) {
+            this.monitor = monitor;
+            this.ticks = ticks;
+        }
+
+        public void start() {
+            if (thread != null)
+                return;
+            thread = new Thread(this);
+            thread.setName("ProgressWorker:" + info.getString(Info.TITLE)); //$NON-NLS-1$
+            thread.setDaemon(true);
+            thread.setPriority(Thread.MIN_PRIORITY);
+            thread.start();
+        }
+
+        public void cancel() {
+            if (thread != null) {
+                thread.interrupt();
+                thread = null;
+            }
+        }
+
+        public boolean isCompleted() {
+            return session.getStatus() == UploadSession.COMPLETED;
+        }
+
+        public void run() {
+            while (!monitor.isCanceled() && !session.hasError()
+                    && !isCompleted()) {
+
+                session.retrieveProgress();
+                if (monitor.isCanceled() || session.hasError())
+                    return;
+
+                if (isCompleted()) {
+                    monitor.worked(ticks - ticksUploaded);
+                    ticksUploaded = ticks;
+                    return;
+                }
+
+                int newUploaded = (int) (session.getUploadProgress() * ticks);
+                if (newUploaded > ticksUploaded) {
+                    monitor.worked(newUploaded - ticksUploaded);
+                    ticksUploaded = newUploaded;
+                }
+
+                try {
+                    Thread.sleep(760);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }
+
+    }
+
     private Info info;
 
-    private HttpClient client;
+    private UploadSession session;
 
     public UploadJob(Info info) {
         super(NLS.bind(Messages.UploadJob_name, info.getString(Info.TITLE)));
         this.info = info;
-        this.client = new HttpClient();
     }
 
     protected IStatus run(IProgressMonitor monitor) {
-        try {
-            return runWithException(monitor);
-        } catch (Throwable e) {
-            // inform user the exception
+        IStatus status = doRun(monitor);
 
-            if (e instanceof AuthenticationException) {
-                PlatformUI.getWorkbench().getDisplay().asyncExec(
-                        new Runnable() {
-                            public void run() {
-                                MessageDialog
-                                        .openError(
-                                                null,
-                                                Messages.ErrorDialog_title,
-                                                Messages.ErrorDialog_Unauthorized_message);
-                            }
-                        });
-            } else {
-                PlatformUI.getWorkbench().getDisplay().asyncExec(
-                        new Runnable() {
-                            public void run() {
-                                if (MessageDialog.openQuestion(null,
-                                        Messages.ErrorDialog_title,
-                                        Messages.ErrorDialog_message)) {
-                                    schedule();
-                                }
-                            }
-                        });
-            }
-            // log this error, but don't let user see it.
-            XmindSharePlugin.getDefault().getLog().log(
-                    new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
-                            Messages.UploadJob_Failure_message, e));
-            return new Status(IStatus.WARNING, XmindSharePlugin.PLUGIN_ID,
-                    IStatus.ERROR, Messages.UploadJob_Failure_message, e);
+        // prompt completion information to user
+        if (status.isOK()) {
+            promptCompletion();
+            return status;
         }
+
+        if (status.matches(IStatus.ERROR)) {
+            // show error dialog
+            status = promptError(session.getStatus(), status);
+
+            if (status.isOK() || !status.matches(IStatus.ERROR))
+                return status;
+
+            // log this error, but prevent system from prompting dialogs,
+            // because we have shown our own dialogs above.
+            XmindSharePlugin.getDefault().getLog().log(status);
+            return new Status(IStatus.WARNING, status.getPlugin(), status
+                    .getCode(), status.getMessage() == null
+                    || "".equals(status.getMessage()) ? //$NON-NLS-1$ 
+            Messages.UploadJob_Failure_message
+                    : status.getMessage(), status.getException());
+        }
+
+        // other status
+        return status;
     }
 
-    private IStatus runWithException(IProgressMonitor monitor) throws Exception {
-        String title = info.getString(Info.TITLE);
-        Assert.isNotNull(title);
-        String userName = info.getString(Info.USER_ID);
-        Assert.isNotNull(userName);
-        String token = info.getString(Info.TOKEN);
-        Assert.isNotNull(token);
-        File file = (File) info.getProperty(Info.FILE);
-
+    private IStatus doRun(IProgressMonitor monitor) {
         monitor.beginTask(null, 100);
+        session = new UploadSession(info);
 
-        // Retrieve session and url
+        // retrieve session and url
         monitor.subTask(Messages.UploadJob_Task_Prepare);
-        String[] data = HttpUtils.prepareUpload(client, userName, token, title);
-        String session = data[0];
-        String url = data[1];
-        String mapname = data[2];
+        session.prepare();
+        if (session.hasError())
+            return session.getError();
+        if (monitor.isCanceled())
+            return Status.CANCEL_STATUS;
+        monitor.worked(5);
 
-        if (url != null) {
-            IWorkbook workbook = (IWorkbook) info.getProperty(Info.WORKBOOK);
-            if (workbook != null) {
-                workbook.getMeta().setValue(
-                        Info.SHARE + IMeta.SEP + "SourceUrl", //$NON-NLS-1$
-                        url);
-                try {
-                    workbook.save();
-                } catch (IOException ignore) {
-                } catch (CoreException ignore) {
-                }
-            }
-        }
+        // save the permalink into file
+        savePermalink();
+        if (monitor.isCanceled())
+            return Status.CANCEL_STATUS;
+        monitor.worked(5);
 
+        // start transfering file data up to XMind server
+        monitor.subTask(Messages.UploadJob_Task_TransferFile);
+        new TransferWorker().start();
+        if (session.hasError())
+            return session.getError();
         if (monitor.isCanceled())
             return Status.CANCEL_STATUS;
 
-        monitor.worked(10);
-
-        monitor.subTask(Messages.UploadJob_Task_TransferFile);
-
-        // Start file uploading.
-        TransferFileJob uploadJob = new TransferFileJob(userName, session, file);
-        Thread uploadThread = new Thread(uploadJob);
-        uploadThread.setName("Upload Map (" + title + ")"); //$NON-NLS-1$ //$NON-NLS-2$
-        uploadThread.setPriority(Thread.NORM_PRIORITY);
-        uploadThread.start();
-
-        loopRetrieveProgress(monitor, userName, token, session, uploadJob);
-
-        if (monitor.isCanceled()) {
-            monitor.subTask(Messages.UploadJob_Task_Cancel);
+        // wait for processing completion, error or user canceling
+        // while retrieving transfer progress
+        ProgressWorker progressWorker = new ProgressWorker(monitor, 89);
+        progressWorker.start();
+        do {
             try {
-                HttpUtils.cancelUploading(client, userName, session, token);
-            } catch (Exception ignore) {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                return Status.CANCEL_STATUS;
             }
-            return Status.CANCEL_STATUS;
-        } else {
-            if (uploadJob.getException() != null) {
-                throw uploadJob.getException();
+
+            // uploading failed
+            if (session.hasError())
+                return session.getError();
+
+            // cancel uploading
+            if (monitor.isCanceled()) {
+                monitor.subTask(Messages.UploadJob_Task_Cancel);
+                session.cancel();
+                progressWorker.cancel();
+                if (session.hasError())
+                    return session.getError();
+                return Status.CANCEL_STATUS;
             }
-            monitor.done();
-        }
 
-        uploadJob = null;
+        } while (!progressWorker.isCompleted());
 
-        if (mapname != null) {
-            final String mapURL = "http://www.xmind.net/xmind/map/" + userName //$NON-NLS-1$ 
-                    + "/" + token + "/" + mapname; //$NON-NLS-1$ //$NON-NLS-2$
-            PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-                public void run() {
-                    int retCode = new MessageDialog(null,
-                            Messages.UploadJob_OpenMap_title, null,
-                            Messages.UploadJob_OpenMap_message, 0,
-                            new String[] { Messages.UploadJob_View_text,
-                                    Messages.UploadJob_Close_text }, 0).open();
-                    if (retCode == 0) {
-                        new OpenMapJob(mapURL);
-                    }
-                }
-            });
-        }
+        // uploading completed
+        monitor.done();
         return Status.OK_STATUS;
     }
 
-    private void loopRetrieveProgress(IProgressMonitor monitor,
-            String userName, String token, String session,
-            TransferFileJob uploadJob) throws HttpException, IOException {
-        int uploaded = 0;
-        while (!monitor.isCanceled()) {
-            try {
-                double progress = HttpUtils.retrieveUploadingProcess(client,
-                        userName, session, token);
-                if (progress < 0)
-                    break;
+    private void savePermalink() {
+        if (session.getPermalink() == null)
+            return;
 
-                int newUploaded = (int) (progress * 90);
-                if (newUploaded > uploaded) {
-                    monitor.worked(newUploaded - uploaded);
-                    uploaded = newUploaded;
-                }
-            } catch (JSONException ignore) {
-            }
-
+        IWorkbook workbook = (IWorkbook) info.getProperty(Info.WORKBOOK);
+        if (workbook != null) {
+            workbook.getMeta().setValue(Info.SHARE + IMeta.SEP + "SourceUrl", //$NON-NLS-1$
+                    session.getPermalink());
             try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                break;
+                workbook.save();
+            } catch (IOException ignore) {
+            } catch (CoreException ignore) {
             }
         }
+    }
+
+    private void promptCompletion() {
+        final Display display = PlatformUI.getWorkbench().getDisplay();
+        if (display == null || display.isDisposed())
+            return;
+        display.asyncExec(new Runnable() {
+            public void run() {
+                final SimpleInfoPopupDialog[] dialogs = new SimpleInfoPopupDialog[1];
+                IAction viewAction = new Action() {
+                    public void run() {
+                        showUploadedMap(session.getViewLink());
+                        if (dialogs[0] != null)
+                            dialogs[0].close();
+                    }
+                };
+                viewAction.setText(Messages.UploadJob_View_text);
+
+                SimpleInfoPopupDialog dialog = new SimpleInfoPopupDialog(null,
+                        null, Messages.UploadJob_OpenMap_message, 0, null,
+                        viewAction);
+                dialog.setDuration(10000);
+                dialog.setGroupId("org.xmind.notifications"); //$NON-NLS-1$
+                dialog.popUp();
+                dialogs[0] = dialog;
+            }
+        });
+    }
+
+    private void showUploadedMap(String url) {
+        if (url != null) {
+            XMindNet.gotoURL(url);
+            return;
+        }
+
+        IAccountInfo accountInfo = XMindNet.getAccountInfo();
+        if (accountInfo == null)
+            return;
+
+        String userId = accountInfo.getUser();
+        String token = accountInfo.getAuthToken();
+        XMindNet.gotoURL(String.format(
+                "http://www.xmind.net/xmind/account/%s/%s/", //$NON-NLS-1$
+                userId, token));
+    }
+
+    private IStatus promptError(int uploadStatus, IStatus error) {
+        int code = error.getCode();
+        String message = null;
+        boolean tryAgainAllowed = true;
+        if (uploadStatus == UploadSession.PREPARING) {
+            if (code > 0) {
+                if (code == HttpStatus.SC_UNAUTHORIZED) {
+                    resignin();
+                    return Status.CANCEL_STATUS;
+                }
+            }
+        } else if (uploadStatus == UploadSession.UPLOADING) {
+            if (code > 0) {
+                if (code == HttpStatus.SC_NOT_FOUND) {
+                    return Status.CANCEL_STATUS;
+                } else if (code == UploadSession.CODE_VERIFICATION_FAILURE) {
+                    message = Messages.ErrorDialog_Unauthorized_message;
+                    tryAgainAllowed = false;
+                }
+            }
+        }
+
+        if (message == null)
+            message = Messages.ErrorDialog_message;
+
+        promptErrorMessage(message, tryAgainAllowed);
+        return error;
+    }
+
+    private void promptErrorMessage(final String message,
+            final boolean tryAgainAllowed) {
+        Display display = PlatformUI.getWorkbench().getDisplay();
+        if (display == null || display.isDisposed())
+            return;
+
+        display.asyncExec(new Runnable() {
+            public void run() {
+                if (tryAgainAllowed) {
+                    if (MessageDialog.openQuestion(null,
+                            Messages.ErrorDialog_title, message)) {
+                        schedule();
+                    }
+                } else {
+                    MessageDialog.openError(null, Messages.ErrorDialog_title,
+                            message);
+                }
+            }
+        });
+    }
+
+    private void resignin() {
+        XMindNet.signOut();
+        XMindNet.signIn(new IAuthenticationListener() {
+
+            public void postSignIn(IAccountInfo accountInfo) {
+                info.setProperty(Info.USER_ID, accountInfo.getUser());
+                info.setProperty(Info.TOKEN, accountInfo.getAuthToken());
+                schedule();
+
+            }
+
+            public void postSignOut(IAccountInfo oldAccountInfo) {
+            }
+        }, false);
     }
 
 }

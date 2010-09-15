@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -55,11 +55,12 @@ public class DOMUtils {
 
     private static class ElementIterator implements Iterator<Element> {
 
-        private NodeList children;
-
         private String tagName;
 
-        private int index;
+        private Node child;
+//        private NodeList children;
+//
+//        private int index;
 
         private Element next;
 
@@ -68,22 +69,36 @@ public class DOMUtils {
         }
 
         public ElementIterator(Node parent, String tagName) {
-            this.children = parent.getChildNodes();
             this.tagName = tagName;
-            this.index = 0;
+            this.child = parent.getFirstChild();
+//            this.children = parent.getChildNodes();
+//            this.index = 0;
             this.next = findNextElement();
         }
 
         private Element findNextElement() {
-            for (int i = index; i < children.getLength(); i++) {
-                Node n = children.item(i);
-                if (isElementByTag(n, tagName)) {
-                    next = (Element) n;
-                    index = i + 1;
-                    return next;
+            if (child == null) {
+                next = null;
+            } else {
+                while (child != null && !isElementByTag(child, tagName)) {
+                    child = child.getNextSibling();
+                }
+                if (child != null) {
+                    next = (Element) child;
+                    child = child.getNextSibling();
+                } else {
+                    next = null;
                 }
             }
-            return null;
+//            for (int i = index; i < children.getLength(); i++) {
+//                Node n = children.item(i);
+//                if (isElementByTag(n, tagName)) {
+//                    next = (Element) n;
+//                    index = i + 1;
+//                    return next;
+//                }
+//            }
+            return next;
         }
 
         public boolean hasNext() {

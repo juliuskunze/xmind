@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.xmind.core.ICloneData;
+import org.xmind.core.IImage;
 import org.xmind.core.IRelationship;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
@@ -36,6 +37,9 @@ import org.xmind.ui.commands.AddRelationshipCommand;
 import org.xmind.ui.commands.AddTopicCommand;
 import org.xmind.ui.commands.CommandMessages;
 import org.xmind.ui.commands.DeleteMarkerCommand;
+import org.xmind.ui.commands.ModifyImageAlignmentCommand;
+import org.xmind.ui.commands.ModifyImageSizeCommand;
+import org.xmind.ui.commands.ModifyImageSourceCommand;
 import org.xmind.ui.commands.ModifyPositionCommand;
 import org.xmind.ui.mindmap.IMindMapDndClient;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -158,6 +162,16 @@ public class DropTargetPolicy extends MindMapPolicyBase {
                                 parentTopic, markerId);
                         builder.add(addMarker, true);
                     }
+                }
+            } else if (cloned instanceof IImage) {
+                IImage image = (IImage) cloned;
+                if (parentTopic != null) {
+                    builder.add(new ModifyImageSourceCommand(parentTopic, image
+                            .getSource()), true);
+                    builder.add(new ModifyImageSizeCommand(parentTopic, image
+                            .getWidth(), image.getHeight()), true);
+                    builder.add(new ModifyImageAlignmentCommand(parentTopic,
+                            image.getAlignment()), true);
                 }
             }
             builder.addSource(cloned, true);

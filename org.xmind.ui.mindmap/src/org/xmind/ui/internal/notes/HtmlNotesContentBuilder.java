@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -166,7 +166,9 @@ public class HtmlNotesContentBuilder {
         }
 
         ISpan span = createSpan(next, appliedStyle);
-        addSpan(span);
+        if (span != null) {
+            addSpan(span);
+        }
 
         if (isInHyperlink() && isHyperlinkEnding(next)) {
             finishCurrentHyperlink();
@@ -207,7 +209,8 @@ public class HtmlNotesContentBuilder {
     private ISpan createSpan(int next, StyleRange style) {
         String content = getTrimmedContent(next - offset);
         if (content != null) {
-            if (style != null && style.metrics != null) {
+            if (style != null && style.metrics != null
+                    && ImagePlaceHolder.PLACE_HOLDER.equals(content)) {
                 return createImage(style);
             } else {
                 return createText(content, style);
@@ -287,8 +290,9 @@ public class HtmlNotesContentBuilder {
     }
 
     public String trimContent(String content) {
-        return content.replaceAll(ImagePlaceHolder.PLACE_HOLDER
-                + "|\\r\\n|\\r|\\n", NotesConstants.EMPTY); //$NON-NLS-1$
+//        return content.replaceAll(ImagePlaceHolder.PLACE_HOLDER
+//                + "|\\r\\n|\\r|\\n", NotesConstants.EMPTY); //$NON-NLS-1$
+        return content.replaceAll("\\r\\n|\\r|\\n", NotesConstants.EMPTY); //$NON-NLS-1$
     }
 
     private void applyStyleToParagraph(IParagraph p, LineStyle lineStyle) {

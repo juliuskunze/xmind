@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,12 +19,11 @@ import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
+import org.xmind.cathy.internal.jobs.StartupJob;
 
 public class CathyWorkbenchAdvisor extends WorkbenchAdvisor {
 
     private static final String PERSPECTIVE_ID = "org.xmind.ui.perspective.mindmapping"; //$NON-NLS-1$
-
-    private AutoSaveService autoSaveService = null;
 
     public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(
             IWorkbenchWindowConfigurer configurer) {
@@ -41,11 +40,20 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor {
         configurer.setExitOnLastWindowClose(true);
     }
 
+    @Override
+    public void postStartup() {
+        super.postStartup();
+        IWorkbench workbench = getWorkbenchConfigurer().getWorkbench();
+        new StartupJob(workbench).schedule();
+    }
+
     public boolean preShutdown() {
         boolean readyToShutDown = super.preShutdown();
         if (readyToShutDown) {
-            if (!CathyPlugin.getDefault().getPreferenceStore().getBoolean(
-                    CathyPlugin.RESTORE_LAST_SESSION)) {
+//            if (!CathyPlugin.getDefault().getPreferenceStore().getBoolean(
+//                    CathyPlugin.RESTORE_LAST_SESSION)) {
+            if (CathyPlugin.getDefault().getPreferenceStore().getInt(
+                    CathyPlugin.STARTUP_ACTION) != CathyPlugin.STARTUP_ACTION_LAST) {
                 if (!closeAllEditors())
                     return false;
             }
@@ -60,20 +68,6 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor {
             closed |= window.getActivePage().closeAllEditors(true);
         }
         return closed;
-    }
-
-    public void postShutdown() {
-        if (autoSaveService != null) {
-            autoSaveService.dispose();
-            autoSaveService = null;
-        }
-        super.postShutdown();
-    }
-
-    public void postStartup() {
-        super.postStartup();
-        autoSaveService = new AutoSaveService(getWorkbenchConfigurer()
-                .getWorkbench());
     }
 
 }

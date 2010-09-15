@@ -238,6 +238,8 @@ public abstract class DialogPane {
     }
 
     private void adjustButtonWidths(Composite buttonBar) {
+        if (buttons == null)
+            return;
         int maxWidth = 90;
         for (Button b : buttons.values()) {
             int width = b.computeSize(SWT.DEFAULT, SWT.DEFAULT).x;

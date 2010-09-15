@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -24,6 +24,7 @@ import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.style.IStyle;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.style.StyleUtils;
 
 public class WorkbookFactory {
 
@@ -39,11 +40,10 @@ public class WorkbookFactory {
                 .getSheets().size()));
         ITopic rootTopic = sheet.getRootTopic();
         rootTopic.setTitleText(MindMapMessages.TitleText_CentralTopic);
+        rootTopic.setStructureClass("org.xmind.ui.map.clockwise"); //$NON-NLS-1$
 
         IStyle theme = MindMapUI.getResourceManager().getDefaultTheme();
-        IStyle importStyle = workbook.getStyleSheet().importStyle(theme);
-        if (importStyle != null)
-            sheet.setThemeId(importStyle.getId());
+        StyleUtils.setTheme(sheet, theme);
 
         return workbook;
     }

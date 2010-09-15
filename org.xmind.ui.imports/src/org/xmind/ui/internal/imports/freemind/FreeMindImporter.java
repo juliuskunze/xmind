@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -226,7 +226,7 @@ public class FreeMindImporter extends MindMapImporter implements
 
     private IStyleSheet styleSheet = null;
 
-    private String topicText = ""; //$NON-NLS-1$
+    private StringBuilder topicText = null;
 
     public FreeMindImporter(String sourcePath, IWorkbook targetWorkbook) {
         super(sourcePath, targetWorkbook);
@@ -354,16 +354,16 @@ public class FreeMindImporter extends MindMapImporter implements
         return "org.xmind.arrowShape.none"; //$NON-NLS-1$
     }
 
-    private void loadTopic(ITopic topic, Element topicEle)
+    private void loadTopic(ITopic topic, Element nodeEle)
             throws InterruptedException {
         checkInterrupted();
-        String id = att(topicEle, "ID"); //$NON-NLS-1$
+        String id = att(nodeEle, "ID"); //$NON-NLS-1$
         if (id != null) {
             idMap.put(id, topic.getId());
         }
 
         checkInterrupted();
-        String text = att(topicEle, "TEXT"); //$NON-NLS-1$
+        String text = att(nodeEle, "TEXT"); //$NON-NLS-1$
         if (text == null)
             text = ImporterUtils.getDefaultTopicTitle(topic);
         else if (text.contains("../../../../")) { //$NON-NLS-1$
@@ -376,13 +376,13 @@ public class FreeMindImporter extends MindMapImporter implements
         topic.setTitleText(text);
 
         checkInterrupted();
-        String folded = att(topicEle, "FOLDED"); //$NON-NLS-1$
+        String folded = att(nodeEle, "FOLDED"); //$NON-NLS-1$
         if (folded != null && "true".equals(folded)) //$NON-NLS-1$
             topic.setFolded(true);
 
         checkInterrupted();
         if (!topic.isRoot()) {
-            Element ele = child(topicEle, "cloud"); //$NON-NLS-1$
+            Element ele = child(nodeEle, "cloud"); //$NON-NLS-1$
             if (ele != null) {
                 IBoundary boundary = getTargetWorkbook().createBoundary();
                 int index = topic.getIndex();
@@ -393,7 +393,7 @@ public class FreeMindImporter extends MindMapImporter implements
         }
 
         checkInterrupted();
-        String link = att(topicEle, "LINK"); //$NON-NLS-1$
+        String link = att(nodeEle, "LINK"); //$NON-NLS-1$
         if (link != null) {
             if (link.startsWith("../../../../")) { //$NON-NLS-1$
                 String hyperlink = link.substring("../../../../".length()); //$NON-NLS-1$
@@ -409,39 +409,40 @@ public class FreeMindImporter extends MindMapImporter implements
         }
 
         checkInterrupted();
-        String backgroundColor = att(topicEle, "BACKGROUND_COLOR"); //$NON-NLS-1$
+        String backgroundColor = att(nodeEle, "BACKGROUND_COLOR"); //$NON-NLS-1$
         registerStyle(topic, Styles.FillColor, backgroundColor);
 
         checkInterrupted();
-        String foregroundColor = att(topicEle, "COLOR"); //$NON-NLS-1$
+        String foregroundColor = att(nodeEle, "COLOR"); //$NON-NLS-1$
         registerStyle(topic, Styles.TextColor, foregroundColor);
 
         checkInterrupted();
-        Element fontEle = child(topicEle, "font"); //$NON-NLS-1$
+        Element fontEle = child(nodeEle, "font"); //$NON-NLS-1$
         loadFont(fontEle, topic);
 
         checkInterrupted();
-        Element linkNode = child(topicEle, "arrowlink"); //$NON-NLS-1$
+        Element linkNode = child(nodeEle, "arrowlink"); //$NON-NLS-1$
         if (linkNode != null) {
             if (linkEles == null)
                 linkEles = new ArrayList<Element>();
-            linkEles.add(topicEle);
+            linkEles.add(nodeEle);
         }
 
-        Iterator<Element> iconIter = children(topicEle, "icon"); //$NON-NLS-1$
+        Iterator<Element> iconIter = children(nodeEle, "icon"); //$NON-NLS-1$
         while (iconIter.hasNext()) {
             checkInterrupted();
             Element iconEle = iconIter.next();
             String builtIn = att(iconEle, "BUILTIN"); //$NON-NLS-1$
             if (builtIn != null) {
                 String markerId = getTransferred("marker", builtIn, null); //$NON-NLS-1$
-                if (markerId != null)
-                    topic.addMarker(markerId);
+                if (markerId == null)
+                    markerId = "other-question"; //$NON-NLS-1$
+                topic.addMarker(markerId);
             }
         }
 
         checkInterrupted();
-        Element hookEle = child(topicEle, "hook"); //$NON-NLS-1$
+        Element hookEle = child(nodeEle, "hook"); //$NON-NLS-1$
         if (hookEle != null) {
             String name = att(hookEle, "NAME"); //$NON-NLS-1$
             if ("accessories/plugins/NodeNote.properties".equals(name)) { //$NON-NLS-1$
@@ -451,7 +452,7 @@ public class FreeMindImporter extends MindMapImporter implements
             }
         }
 
-        Iterator<Element> notesIter = children(topicEle, "richcontent"); //$NON-NLS-1$
+        Iterator<Element> notesIter = children(nodeEle, "richcontent"); //$NON-NLS-1$
         while (notesIter.hasNext()) {
             checkInterrupted();
             Element richEle = notesIter.next();
@@ -466,16 +467,21 @@ public class FreeMindImporter extends MindMapImporter implements
                     topic.getNotes().setContent(INotes.HTML, notesContent);
                 }
             } else if ("NODE".equals(type)) { //$NON-NLS-1$
+                topicText = null;
                 Element htmlEle = child(richEle, "html"); //$NON-NLS-1$
-                if (htmlEle != null)
+                if (htmlEle != null) {
                     loadNode(topic, htmlEle);
-                if (topicText == null)
-                    topicText = ImporterUtils.getDefaultTopicTitle(topic);
-                topic.setTitleText(topicText.trim());
+                }
+                if (topicText != null) {
+                    text = topicText.toString().trim();
+                } else {
+                    text = ImporterUtils.getDefaultTopicTitle(topic);
+                }
+                topic.setTitleText(text);
             }
         }
 
-        Iterator<Element> nodeIter = children(topicEle, "node"); //$NON-NLS-1$
+        Iterator<Element> nodeIter = children(nodeEle, "node"); //$NON-NLS-1$
         while (nodeIter.hasNext()) {
             checkInterrupted();
             Element subNodeEle = nodeIter.next();
@@ -511,8 +517,12 @@ public class FreeMindImporter extends MindMapImporter implements
         } else if ("p".equalsIgnoreCase(tagName) //$NON-NLS-1$
                 || "li".equalsIgnoreCase(tagName)) { //$NON-NLS-1$
             String text = element.getTextContent().trim();
-            if (text != null)
-                topicText += text + '\n';
+            if (text != null) {
+                if (topicText == null)
+                    topicText = new StringBuilder();
+                topicText.append(text);
+                topicText.append('\n');
+            }
 
             String align = att(element, "style"); //$NON-NLS-1$
             if (align != null) {

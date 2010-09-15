@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,6 +14,7 @@
 package org.xmind.gef;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.text.IInputChangedListener;
 import org.eclipse.jface.viewers.IInputSelectionProvider;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -101,6 +102,10 @@ public interface IViewer extends IAdaptable, IInputSelectionProvider {
     void addPreSelectionChangedListener(ISelectionChangedListener listener);
 
     void removePreSelectionChangedListener(ISelectionChangedListener listener);
+
+    void addInputChangedListener(IInputChangedListener listener);
+
+    void removeInputChangedListener(IInputChangedListener listener);
 
     IViewerService getService(Class<? extends IViewerService> serviceType);
 

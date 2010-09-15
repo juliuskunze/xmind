@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -27,29 +27,87 @@ public class CathyPlugin extends AbstractUIPlugin {
     public static final String PLUGIN_ID = "org.xmind.cathy"; //$NON-NLS-1$
 
     /**
-     * 
+     * Boolean value:<br>
+     * <ul>
+     * <li><code>true</code> to enable auto saving service when there's opened
+     * workbooks</li>
+     * <li><code>false</code> to disable this service</li>
+     * </ul>
      */
     public static final String AUTO_SAVE_ENABLED = "autoSaveEnabled"; //$NON-NLS-1$
 
     /**
-     * 
+     * Integer value:<br>
+     * the intervals (in minutes) between auto saving actions
      */
     public static final String AUTO_SAVE_INTERVALS = "autoSaveIntervals"; //$NON-NLS-1$
 
     /**
-     * 
+     * (Deprecated, use {@link #STARTUP_ACTION} instead) Boolean value:<br>
+     * <ul>
+     * <li><code>true</code> to remember unclosed workbooks when XMind quits and
+     * open them next time XMind starts</li>
+     * <li><code>false</code> to always open a bootstrap workbook when XMind
+     * opens</li>
+     * </ul>
      */
     public static final String RESTORE_LAST_SESSION = "restoreLastSession"; //$NON-NLS-1$
 
     /**
-     * 
+     * Boolean value:<br>
+     * <ul>
+     * <li><code>true</code> to check updates when XMind starts</li>
+     * <li><code>false</code> to skip update checking when XMind starts</li>
+     * </ul>
      */
     public static final String CHECK_UPDATES_ON_STARTUP = "checkUpdatesOnStartup"; //$NON-NLS-1$
 
-//    /**
-//     * 
-//     */
-//    public static final String RECENT_FILE_COUNT = "recentFileCount"; //$NON-NLS-1$
+    /**
+     * Integer value (enumerated):<br>
+     * <ul>
+     * <li><code>0</code>({@link #STARTUP_ACTION_BLANK}): opens a blank map on
+     * startup</li>
+     * <li><code>1</code>({@link #STARTUP_ACTION_HOME}): opens the home map on
+     * startup</li>
+     * <li><code>2</code>({@link #STARTUP_ACTION_LAST}): opens last session on
+     * startup</li>
+     * </ul>
+     */
+    public static final String STARTUP_ACTION = "startupAction"; //$NON-NLS-1$
+
+    /**
+     * Integer preference store value for opening a blank map on startup.
+     * (value=0)
+     * 
+     * @see #STARTUP_ACTION
+     */
+    public static final int STARTUP_ACTION_BLANK = 0;
+
+    /**
+     * Integer preference store value for opening the home map on startup.
+     * (value=1)
+     * 
+     * @see #STARTUP_ACTION
+     */
+    public static final int STARTUP_ACTION_HOME = 1;
+
+    /**
+     * Integer preference store value for opening last session on startup.
+     * (value=2)
+     * 
+     * @see #STARTUP_ACTION
+     */
+    public static final int STARTUP_ACTION_LAST = 2;
+
+    /**
+     * Boolean value:<br>
+     * <ul>
+     * <li><code>true</code> to hide system notifications (usually pushed to the
+     * user by pop-up windows)</li>
+     * <li><code>false</code> to show system notifications</li>
+     * </ul>
+     */
+    //public static final String HIDE_NOTIFICATIONS = "hideNotifications"; //$NON-NLS-1$
 
     // The shared instance.
     private static CathyPlugin plugin;
@@ -79,6 +137,15 @@ public class CathyPlugin extends AbstractUIPlugin {
     public void stop(BundleContext context) throws Exception {
         super.stop(context);
         plugin = null;
+    }
+
+    public static String getDistributionId() {
+        String distribId = System
+                .getProperty("org.xmind.product.distribution.id"); //$NON-NLS-1$
+        if (distribId == null || "".equals(distribId)) { //$NON-NLS-1$
+            distribId = "cathy.portable"; //$NON-NLS-1$
+        }
+        return distribId;
     }
 
     /**

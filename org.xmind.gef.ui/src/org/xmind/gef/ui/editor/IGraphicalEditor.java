@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,47 +16,52 @@ package org.xmind.gef.ui.editor;
 import org.eclipse.jface.dialogs.IPageChangeProvider;
 import org.eclipse.ui.IEditorPart;
 import org.xmind.gef.command.ICommandStack;
+import org.xmind.ui.tabfolder.IPageClosedListener;
 
 public interface IGraphicalEditor extends IEditorPart, IPageChangeProvider {
 
-    public void addPage(IGraphicalEditorPage page);
+    void addPage(IGraphicalEditorPage page);
 
-    public void removePage(IGraphicalEditorPage page);
+    void removePage(IGraphicalEditorPage page);
 
-    public IGraphicalEditorPage getPage(int pageIndex);
+    IGraphicalEditorPage getPage(int pageIndex);
 
-    public int getPageCount();
+    int getPageCount();
 
-    public int findPage(IGraphicalEditorPage page);
+    int findPage(IGraphicalEditorPage page);
 
-//    public boolean isDirty();
+//    boolean isDirty();
 
-//    public void forceDirty();
+//    void forceDirty();
 
-//    public void fireDirty();
+//    void fireDirty();
 
-    public void setCommandStack(ICommandStack commandStack);
+    void setCommandStack(ICommandStack commandStack);
 
-    public ICommandStack getCommandStack();
+    ICommandStack getCommandStack();
 
-    public int getActivePage();
+    int getActivePage();
 
-    public void setActivePage(int index);
+    void setActivePage(int index);
 
-    public IGraphicalEditorPage getActivePageInstance();
+    IGraphicalEditorPage getActivePageInstance();
 
-    public IGraphicalEditorPage[] getPages();
+    IGraphicalEditorPage[] getPages();
 
-    public IGraphicalEditorPage findPage(Object pageInput);
+    IGraphicalEditorPage findPage(Object pageInput);
 
-    public IGraphicalEditorPage ensurePageVisible(Object pageInput);
+    IGraphicalEditorPage ensurePageVisible(Object pageInput);
 
-    public boolean navigateTo(Object pageInput, Object... elements);
+    boolean navigateTo(Object pageInput, Object... elements);
 
-    public void movePageTo(int oldIndex, int newIndex);
+    void movePageTo(int oldIndex, int newIndex);
 
-    public String getPageText(int index);
+    String getPageText(int index);
 
-    public void setPageText(int index, String text);
+    void setPageText(int index, String text);
+
+    void addPageClosedListener(IPageClosedListener listener);
+
+    void removePageClosedListener(IPageClosedListener listener);
 
 }

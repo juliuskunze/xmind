@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -12,12 +12,19 @@
 package org.xmind.core.internal;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.channels.FileLock;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
+import org.eclipse.core.runtime.Status;
 import org.osgi.framework.BundleContext;
 import org.xmind.core.Core;
 import org.xmind.core.internal.security.BouncyCastleSecurityProvider;
@@ -34,6 +41,12 @@ public class XmindCore extends Plugin {
 
     // The shared instance
     private static XmindCore plugin;
+
+    private String stampFile = null;
+
+    private FileOutputStream stream = null;
+
+    private FileLock lock = null;
 
     /**
      * The constructor
@@ -53,11 +66,10 @@ public class XmindCore extends Plugin {
 
         InternalCore.getInstance().setLogger(new DefaultLogger());
 
-        String workspacePath = findWorkspacePath();
-        String path = new File(workspacePath, ".xmind").getAbsolutePath(); //$NON-NLS-1$
-        Core.getWorkspace().setWorkingDirectory(path);
+        Core.getWorkspace().setWorkingDirectory(makeWorkspacePath());
 
-//        Crypto.setProvider(new BouncyCastleProvider());
+        createStampFile();
+
         Crypto.setProvider(new BouncyCastleSecurityProvider());
     }
 
@@ -68,9 +80,10 @@ public class XmindCore extends Plugin {
      * org.eclipse.core.runtime.Plugin#stop(org.osgi.framework.BundleContext)
      */
     public void stop(BundleContext context) throws Exception {
+        deleteStampFile();
+        checkTempDir();
         plugin = null;
         super.stop(context);
-        FileUtils.delete(new File(Core.getWorkspace().getTempDir()));
     }
 
     /**
@@ -82,21 +95,157 @@ public class XmindCore extends Plugin {
         return plugin;
     }
 
-    /**
-     * @return
-     */
-    //TODO use a workspace independent from the Eclipse's workspace
-    private String findWorkspacePath() {
+    private String findInstancePath() {
         URL url = Platform.getInstanceLocation().getURL();
         try {
             url = FileLocator.toFileURL(url);
         } catch (IOException e) {
         }
         String file = url.getFile();
-        if (file != null && !"".equals(file)) //$NON-NLS-1$
+        if (file != null && !"".equals(file)) {//$NON-NLS-1$
             return file;
-
+        }
         return url.toExternalForm();
+    }
+
+    private String makeWorkspacePath() {
+        String workspacePath = findInstancePath();
+        return new File(workspacePath, ".xmind").getAbsolutePath(); //$NON-NLS-1$
+    }
+
+    /**
+     * Create a 'Workspace Stamp File' in the temp dir and lock it.
+     * 
+     * @throws CoreException
+     *             when we fail to the create or lock of the 'Workspace Stamp
+     *             File'
+     */
+    private void createStampFile() throws CoreException {
+        stampFile = makeStampFilePath();
+        if (stampFile == null)
+            throw new CoreException(
+                    new Status(
+                            IStatus.ERROR,
+                            PLUGIN_ID,
+                            "Failed to prepare the XMind workspace: unable to create a name for the 'Workspace Stamp File'. Please make sure you have permission to modify files at " //$NON-NLS-1$
+                                    + Core.getWorkspace().getTempDir()));
+        File file = new File(stampFile);
+        try {
+            stream = new FileOutputStream(file);
+        } catch (IOException e) {
+            throw new CoreException(
+                    new Status(
+                            IStatus.ERROR,
+                            PLUGIN_ID,
+                            "Fail to prepare the XMind workspace: unable to create the 'Workspace Stamp File'. Please make sure you have permission to modify files at " //$NON-NLS-1$
+                                    + Core.getWorkspace().getTempDir(), e));
+        }
+        for (int err = 0; err < 5; err++) {
+            try {
+                lock = stream.getChannel().tryLock();
+            } catch (IOException e) {
+            }
+            if (lock != null)
+                break;
+        }
+        if (lock == null) {
+            try {
+                stream.close();
+            } catch (IOException e) {
+            }
+            stream = null;
+            file.delete();
+            throw new CoreException(
+                    new Status(
+                            IStatus.ERROR,
+                            PLUGIN_ID,
+                            "Fail to prepare the XMind workspace: unable to lock the 'Workspace Stamp File'. Please make sure you have permission to modify files at " //$NON-NLS-1$
+                                    + Core.getWorkspace().getTempDir()));
+        }
+    }
+
+    private String makeStampFilePath() {
+        String path = null;
+        for (int error = 0; error < 5; error++) {
+            path = Core.getWorkspace().getTempFile(
+                    Long.toHexString(System.currentTimeMillis()) + '_'
+                            + Integer.toHexString((int) (Math.random() * 1024))
+                            + ".core"); //$NON-NLS-1$
+            if (!new File(path).exists())
+                break;
+            path = null;
+        }
+        return path;
+    }
+
+    private void deleteStampFile() {
+        if (lock != null) {
+            try {
+                lock.release();
+            } catch (IOException e) {
+            }
+            lock = null;
+        }
+        if (stream != null) {
+            try {
+                stream.close();
+            } catch (IOException e) {
+            }
+            stream = null;
+        }
+        if (stampFile != null) {
+            new File(stampFile).delete();
+            stampFile = null;
+        }
+    }
+
+    /**
+     * If no other XMind instance is running, clears the temp dir.
+     */
+    private void checkTempDir() {
+        File dir = new File(Core.getWorkspace().getTempDir());
+        if (!dir.exists() || !dir.canRead())
+            return;
+        String[] instanceMarkers = dir.list(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".core"); //$NON-NLS-1$
+            }
+        });
+        if (instanceMarkers != null && instanceMarkers.length > 0) {
+            for (String name : instanceMarkers) {
+                File file = new File(dir, name);
+                if (isLocked(file))
+                    return; // another XMind Core is using the temp dir
+            }
+        }
+        deleteTempDir();
+    }
+
+    private boolean isLocked(File file) {
+        try {
+            FileOutputStream s = new FileOutputStream(file);
+            try {
+                FileLock l = s.getChannel().tryLock();
+                if (l == null)
+                    return true;
+
+                try {
+                    l.release();
+                } catch (IOException e2) {
+                }
+                return false;
+            } finally {
+                s.close();
+            }
+        } catch (FileNotFoundException e) {
+            return false;
+        } catch (IOException e) {
+            return true;
+        }
+    }
+
+    private void deleteTempDir() {
+        FileUtils.delete(new File(Core.getWorkspace().getTempDir()));
     }
 
 }

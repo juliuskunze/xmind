@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -182,10 +182,30 @@ public class SpellingHelper implements ISpellingActivation, Listener,
             }
         }
 
-        protected IStatus doRun(IProgressMonitor monitor) {
+        protected IStatus doRun(final IProgressMonitor monitor) {
             start = System.currentTimeMillis();
             if (monitor.isCanceled() || display.isDisposed() || !isActive())
                 return Status.CANCEL_STATUS;
+
+            final String[] context = new String[1];
+            display.syncExec(new Runnable() {
+                public void run() {
+                    if (monitor.isCanceled() || display.isDisposed()
+                            || !isActive())
+                        return;
+                    context[0] = contentAdapter.getControlContents(control);
+                }
+            });
+            if (monitor.isCanceled() || display.isDisposed() || !isActive())
+                return Status.CANCEL_STATUS;
+
+            if (context[0] == null || "".equals(context[0])) {//$NON-NLS-1$
+                if (!ranges.isEmpty()) {
+                    ranges.clear();
+                    redraw(display);
+                }
+                return Status.OK_STATUS;
+            }
 
             while (System.currentTimeMillis() < start + CHECK_DELAY) {
                 if (monitor.isCanceled() || display.isDisposed() || !isActive())
@@ -200,9 +220,11 @@ public class SpellingHelper implements ISpellingActivation, Listener,
             if (monitor.isCanceled() || display.isDisposed() || !isActive())
                 return Status.CANCEL_STATUS;
 
-            final String[] context = new String[1];
             display.syncExec(new Runnable() {
                 public void run() {
+                    if (monitor.isCanceled() || display.isDisposed()
+                            || !isActive())
+                        return;
                     context[0] = contentAdapter.getControlContents(control);
                 }
             });
@@ -213,12 +235,13 @@ public class SpellingHelper implements ISpellingActivation, Listener,
             if (context[0] != null) {
                 ranges.clear();
 
-                SpellChecker theSpellChecker = spellChecker;
-                theSpellChecker.addSpellCheckListener(this);
-                theSpellChecker.checkSpelling(new StringWordTokenizer(
-                        context[0]));
-                theSpellChecker.removeSpellCheckListener(this);
-
+                if (!"".equals(context[0])) { //$NON-NLS-1$
+                    SpellChecker theSpellChecker = spellChecker;
+                    theSpellChecker.addSpellCheckListener(this);
+                    theSpellChecker.checkSpelling(new StringWordTokenizer(
+                            context[0]));
+                    theSpellChecker.removeSpellCheckListener(this);
+                }
                 if (monitor.isCanceled() || display.isDisposed() || !isActive())
                     return Status.CANCEL_STATUS;
 

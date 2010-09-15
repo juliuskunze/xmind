@@ -6,4 +6,5 @@
 	<template resource="Project Management.xmt" name="%template.projectManagement.name" />
 	<template resource="Reading journals.xmt" name="%template.readingJournals.name"/>
 	<template resource="Personal Management.xmt" name="%template.personalManagement.name"/>
+	<template resource="Flow Chart.xmt" name="%template.flowChart.name"/>
 </templates>

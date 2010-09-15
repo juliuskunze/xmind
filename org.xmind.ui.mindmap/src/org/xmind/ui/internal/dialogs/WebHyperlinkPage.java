@@ -1,3 +1,16 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
 package org.xmind.ui.internal.dialogs;
 
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -13,6 +26,11 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IEditorPart;
 import org.xmind.ui.dialogs.HyperlinkPage;
 
+/**
+ * 
+ * @author Frank Shaka
+ * 
+ */
 public class WebHyperlinkPage extends HyperlinkPage implements Listener {
 
     private Composite composite;
@@ -98,7 +116,8 @@ public class WebHyperlinkPage extends HyperlinkPage implements Listener {
                 if ("".equals(content)) //$NON-NLS-1$
                     isFinish = false;
                 setCanFinish(isFinish);
-                setErrorMessage(isFinish ? null : DialogMessages.WebHyperlinkPage_nullHyper_message);
+                setErrorMessage(isFinish ? null
+                        : DialogMessages.WebHyperlinkPage_nullHyper_message);
             } else if (event.type == SWT.FocusIn) {
                 text.selectAll();
             }

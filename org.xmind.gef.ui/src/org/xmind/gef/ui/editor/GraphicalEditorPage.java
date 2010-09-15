@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -51,8 +51,6 @@ public abstract class GraphicalEditorPage extends Disposable implements
     private IGraphicalViewer viewer = null;
 
     private MenuManager contentPopupMenu = null;
-
-//    private Menu menu = null;
 
     private boolean active = false;
 
@@ -133,9 +131,6 @@ public abstract class GraphicalEditorPage extends Disposable implements
      */
     public void setActive(boolean active) {
         this.active = active;
-        if (active) {
-            setFocus();
-        }
     }
 
     /**
@@ -158,12 +153,10 @@ public abstract class GraphicalEditorPage extends Disposable implements
 
     public void setEditDomain(EditDomain domain) {
         if (this.domain != null && getViewer() != null) {
-//            this.domain.removeViewer(getViewer());
             this.domain.setViewer(null);
         }
         this.domain = domain;
         if (domain != null && getViewer() != null) {
-//            domain.addViewer(getViewer());
             domain.setViewer(getViewer());
         }
     }
@@ -281,7 +274,6 @@ public abstract class GraphicalEditorPage extends Disposable implements
 
     protected void initViewer(IGraphicalViewer viewer) {
         if (domain != null) {
-            //domain.addViewer(viewer);
             domain.setViewer(viewer);
         }
     }
@@ -306,10 +298,30 @@ public abstract class GraphicalEditorPage extends Disposable implements
      * @see org.xmind.gef.ui.editor.IGraphicalEditorPage#setFocus()
      */
     public void setFocus() {
-        if (viewer != null && viewer.getControl() != null
-                && !viewer.getControl().isDisposed()) {
-            viewer.getControl().setFocus();
+        if (viewer == null)
+            return;
+        Control focusControl = viewer.getControl();
+        if (focusControl != null && !focusControl.isDisposed()) {
+            focusControl.setFocus();
         }
+    }
+
+    public boolean isFocused() {
+        return hasFocusControl(getControl());
+    }
+
+    private boolean hasFocusControl(Control c) {
+        if (c == null || c.isDisposed())
+            return false;
+        if (c.isFocusControl())
+            return true;
+        if (c instanceof Composite) {
+            for (Control child : ((Composite) c).getChildren()) {
+                if (hasFocusControl(child))
+                    return true;
+            }
+        }
+        return true;
     }
 
     public IGraphicalViewer getViewer() {
@@ -375,15 +387,11 @@ public abstract class GraphicalEditorPage extends Disposable implements
             contentPopupMenu.dispose();
             contentPopupMenu = null;
         }
-//        if (menu != null) {
-//            menu.dispose();
-//            menu = null;
-//        }
         if (viewer != null) {
             unhookViewer(viewer);
             if (domain != null) {
                 domain.setViewer(null);
-                //domain.removeViewer(viewer);
+                domain.dispose();
             }
             viewer.getControl().dispose();
             viewer = null;

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -414,6 +414,8 @@ public class WallpaperPropertySectionPart extends StyledPropertySectionPart {
 
     private MButton selectWallpaperWidget;
 
+    private PopupDialog selectWallpaperDialog;
+
     private IAction removeWallpaperAction;
 
     private Composite opacityGroup;
@@ -664,6 +666,7 @@ public class WallpaperPropertySectionPart extends StyledPropertySectionPart {
 
     public void dispose() {
         super.dispose();
+        selectWallpaperDialog = null;
         selectWallpaperWidget = null;
         removeWallpaperAction = null;
         opacityGroup = null;
@@ -709,8 +712,25 @@ public class WallpaperPropertySectionPart extends StyledPropertySectionPart {
         if (selectWallpaperWidget != null
                 && selectWallpaperWidget.getControl() != null
                 && !selectWallpaperWidget.getControl().isDisposed()) {
-            Control handle = selectWallpaperWidget.getControl();
-            new SelectWallpaperDialog(handle.getShell(), handle).open();
+            if (selectWallpaperDialog == null) {
+                Control handle = selectWallpaperWidget.getControl();
+                selectWallpaperDialog = new SelectWallpaperDialog(handle
+                        .getShell(), handle);
+            }
+            selectWallpaperDialog.open();
+            Shell shell = selectWallpaperDialog.getShell();
+            if (shell != null && !shell.isDisposed()) {
+                selectWallpaperWidget.setForceFocus(true);
+                shell.addListener(SWT.Dispose, new Listener() {
+                    public void handleEvent(Event event) {
+                        if (selectWallpaperWidget != null
+                                && !selectWallpaperWidget.getControl()
+                                        .isDisposed()) {
+                            selectWallpaperWidget.setForceFocus(false);
+                        }
+                    }
+                });
+            }
         }
     }
 

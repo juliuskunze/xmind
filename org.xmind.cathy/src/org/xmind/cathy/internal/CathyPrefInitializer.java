@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -31,6 +31,8 @@ public class CathyPrefInitializer extends AbstractPreferenceInitializer {
         node.putInt(CathyPlugin.AUTO_SAVE_INTERVALS, 5);
         node.putBoolean(CathyPlugin.RESTORE_LAST_SESSION, false);
         node.putBoolean(CathyPlugin.CHECK_UPDATES_ON_STARTUP, true);
+        node.putInt(CathyPlugin.STARTUP_ACTION,
+                CathyPlugin.STARTUP_ACTION_BLANK);
     }
 
 }

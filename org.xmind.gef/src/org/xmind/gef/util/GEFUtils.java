@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,7 +15,7 @@ package org.xmind.gef.util;
 
 import org.eclipse.draw2d.Cursors;
 import org.eclipse.draw2d.PositionConstants;
-import org.eclipse.swt.SWT;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -93,8 +93,7 @@ public class GEFUtils {
         if (f2 == null && f1 != null)
             return false;
 
-        if (!"carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                && !"cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
+        if (!Util.isMac())
             return f1.equals(f2);
 
         if (f1.isDisposed() || f2.isDisposed())

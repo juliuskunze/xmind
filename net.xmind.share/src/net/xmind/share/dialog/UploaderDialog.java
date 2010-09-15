@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -13,12 +13,12 @@ package net.xmind.share.dialog;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import net.xmind.share.Info;
 import net.xmind.share.Messages;
 import net.xmind.share.XmindSharePlugin;
-import net.xmind.signin.XMindNetEntry;
+import net.xmind.signin.IAccountInfo;
+import net.xmind.signin.XMindNet;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -47,6 +47,8 @@ public class UploaderDialog extends TitleAreaDialog implements
     private TabFolder tabFolder;
 
     private List<IUploaderPage> pages;
+
+    private List<String> pageIds;
 
     public UploaderDialog(Shell parentShell) {
         super(parentShell);
@@ -92,21 +94,21 @@ public class UploaderDialog extends TitleAreaDialog implements
     private void checkUserInfoValidity() {
         String userID = info.getString(Info.USER_ID);
         String token = info.getString(Info.TOKEN);
-        Properties currentInfo = XMindNetEntry.getCurrentUserInfo();
-        if (isInvalidToken(userID, token, currentInfo)) {
+        IAccountInfo accountInfo = XMindNet.getAccountInfo();
+        if (isInvalidToken(userID, token, accountInfo)) {
             setReturnCode(CANCEL);
             close();
         }
     }
 
     private boolean isInvalidToken(String userID, String token,
-            Properties currentInfo) {
+            IAccountInfo currentInfo) {
         if (userID == null || token == null)
             return true;
         if (currentInfo == null)
             return true;
-        return !userID.equals(currentInfo.getProperty(XMindNetEntry.USER_ID))
-                || !token.equals(currentInfo.getProperty(XMindNetEntry.TOKEN));
+        return !userID.equals(currentInfo.getUser())
+                || !token.equals(currentInfo.getAuthToken());
     }
 
     private void ensurePages() {
@@ -114,20 +116,23 @@ public class UploaderDialog extends TitleAreaDialog implements
             return;
 
         pages = new ArrayList<IUploaderPage>();
+        pageIds = new ArrayList<String>();
         addPages();
     }
 
-    protected void addPage(IUploaderPage page) {
+    protected void addPage(String pageId, IUploaderPage page) {
         if (pages == null)
             return;
 
         pages.add(page);
+        pageIds.add(pageId);
         page.setContainer(this);
     }
 
     protected void addPages() {
-        addPage(new GeneralUploaderPage());
-        addPage(new ThumbnailUploaderPage());
+        addPage("org.xmind.ui.uploader.general", new GeneralUploaderPage()); //$NON-NLS-1$
+        addPage("org.xmind.ui.uploader.privacy", new PrivacyUploaderPage()); //$NON-NLS-1$
+        addPage("org.xmind.ui.uploader.thumbnail", new ThumbnailUploaderPage()); //$NON-NLS-1$
     }
 
     protected Control createDialogArea(Composite parent) {
@@ -213,9 +218,22 @@ public class UploaderDialog extends TitleAreaDialog implements
         }
     }
 
+    public void showPage(String pageId) {
+        if (pageId == null || pages == null || pageIds == null)
+            return;
+        if (tabFolder == null || tabFolder.isDisposed())
+            return;
+        int index = pageIds.indexOf(pageId);
+        if (index < 0)
+            return;
+        tabFolder.setSelection(index);
+    }
+
     protected void okPressed() {
-        getDialogSettings().put(Info.ALLOW_DOWNLOAD,
-                getInfo().getString(Info.ALLOW_DOWNLOAD, Info.Public));
+        getDialogSettings().put(Info.PRIVACY,
+                getInfo().getString(Info.PRIVACY, Info.PRIVACY_PUBLIC));
+        getDialogSettings().put(Info.DOWNLOADABLE,
+                getInfo().getString(Info.DOWNLOADABLE, Info.DOWNLOADABLE_YES));
         super.okPressed();
     }
 

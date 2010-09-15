@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,6 +18,7 @@ import java.net.URLDecoder;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTError;
 import org.eclipse.swt.browser.Browser;
@@ -127,8 +128,7 @@ public abstract class BrowserDialog extends Dialog {
                 browser.setUrl(url);
         }
 
-        if ("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                || "cocoa".equals(SWT.getPlatform())) //$NON-NLS-1$
+        if (Util.isMac())
             browser.refresh();
         return browser;
     }

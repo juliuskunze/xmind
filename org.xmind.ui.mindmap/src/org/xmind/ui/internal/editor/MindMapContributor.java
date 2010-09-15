@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -403,6 +403,8 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     private IWorkbenchAction zoomInAction;
     private IWorkbenchAction zoomOutAction;
     private IWorkbenchAction actualSizeAction;
+    private IWorkbenchAction fitMapAction;
+    private IWorkbenchAction fitSelectionAction;
     private IWorkbenchAction drillDownAction;
     private IWorkbenchAction drillUpAction;
 
@@ -531,6 +533,10 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         addRetargetAction((RetargetAction) zoomOutAction);
         actualSizeAction = MindMapActionFactory.ACTUAL_SIZE.create(window);
         addRetargetAction((RetargetAction) actualSizeAction);
+        fitMapAction = MindMapActionFactory.FIT_MAP.create(window);
+        addRetargetAction((RetargetAction) fitMapAction);
+        fitSelectionAction = MindMapActionFactory.FIT_SELECTION.create(window);
+        addRetargetAction((RetargetAction) fitSelectionAction);
         drillDownAction = MindMapActionFactory.DRILL_DOWN.create(window);
         addRetargetAction((RetargetAction) drillDownAction);
         drillUpAction = MindMapActionFactory.DRILL_UP.create(window);
@@ -828,6 +834,10 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         menu.add(actualSizeAction);
         menu.add(zoomOutAction);
         menu.add(zoomInAction);
+        menu.add(new Separator());
+
+        menu.add(fitMapAction);
+        menu.add(fitSelectionAction);
         menu.add(new Separator());
 
         menu.add(drillUpAction);
@@ -1396,7 +1406,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
             return ((INamed) ele).getName();
         if (ele instanceof IMarkerRef)
             return ((IMarkerRef) ele).getDescription();
-        return null;
+        return ""; //$NON-NLS-1$
     }
 
     private void updateContentPopupItems(ICategoryManager categoryManager,

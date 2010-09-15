@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -59,9 +59,20 @@ public class PrefConstants {
      * 
      */
     public static final String UNDO_REDO_TIPS_FADE_DELAY = "undoRedoTipsFadeDelay"; //$NON-NLS-1$
+
     /**
      * 
      */
     public static final String DEFUALT_THEME = "defaultTheme"; //$NON-NLS-1$
+
+    /**
+     * 
+     */
+    public static final String PREVIEW_SKIPPED = "previewSkipped"; //$NON-NLS-1$
+
+    /**
+     * 
+     */
+    public static final String HOME_MAP_LOCATION = "homeMapLocation"; //$NON-NLS-1$
 
 }

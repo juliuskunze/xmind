@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.jface.text.IInputChangedListener;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -46,6 +47,7 @@ import org.xmind.gef.part.IPartFactory;
 import org.xmind.gef.part.IRootPart;
 import org.xmind.gef.part.PartRegistry;
 import org.xmind.gef.service.IViewerService;
+import org.xmind.gef.service.IViewerService2;
 import org.xmind.gef.util.Properties;
 
 /**
@@ -423,6 +425,8 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
 
     private List<ISelectionChangedListener> preSelectionChangedListeners = null;
 
+    private List<IInputChangedListener> inputChangedListeners = null;
+
     private Map<Class<? extends IViewerService>, IViewerService> serviceRegistry = null;
 
     protected AbstractViewer() {
@@ -535,9 +539,14 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
     }
 
     protected void inputChanged(Object input, Object oldInput) {
+        Map<IViewerService, Object> preservedDataList = new HashMap<IViewerService, Object>();
         List<IViewerService> activeServices = getActiveServices();
         if (activeServices != null) {
             for (IViewerService service : activeServices) {
+                if (service instanceof IViewerService2) {
+                    preservedDataList.put(service, ((IViewerService2) service)
+                            .preserveData());
+                }
                 service.setActive(false);
             }
         }
@@ -555,8 +564,13 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         if (activeServices != null) {
             for (IViewerService service : activeServices) {
                 service.setActive(true);
+                if (service instanceof IViewerService2) {
+                    ((IViewerService2) service).restoreData(preservedDataList
+                            .get(service));
+                }
             }
         }
+        fireInputChanged(input);
     }
 
     protected IPart createContents(IRootPart root, Object input) {
@@ -791,6 +805,28 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         SelectionChangedEvent event = new SelectionChangedEvent(this, selection);
         for (Object listener : preSelectionChangedListeners.toArray()) {
             ((ISelectionChangedListener) listener).selectionChanged(event);
+        }
+    }
+
+    public void addInputChangedListener(IInputChangedListener listener) {
+        if (inputChangedListeners == null)
+            inputChangedListeners = new ArrayList<IInputChangedListener>();
+        inputChangedListeners.add(listener);
+    }
+
+    public void removeInputChangedListener(IInputChangedListener listener) {
+        if (inputChangedListeners == null)
+            return;
+        inputChangedListeners.remove(listener);
+        if (inputChangedListeners.isEmpty())
+            inputChangedListeners = null;
+    }
+
+    protected void fireInputChanged(Object input) {
+        if (inputChangedListeners == null)
+            return;
+        for (Object listener : inputChangedListeners.toArray()) {
+            ((IInputChangedListener) listener).inputChanged(input);
         }
     }
 

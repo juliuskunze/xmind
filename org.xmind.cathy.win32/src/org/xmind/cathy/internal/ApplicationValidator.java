@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,9 +13,10 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
+import java.lang.reflect.Method;
 import java.util.Properties;
 
-import org.eclipse.swt.internal.win32.OS;
+//import org.eclipse.swt.internal.win32.OS;
 
 public class ApplicationValidator implements IApplicationValidator {
 
@@ -40,7 +41,8 @@ public class ApplicationValidator implements IApplicationValidator {
     }
 
     private boolean isValidWindow(int hWnd) {
-        int length = OS.GetWindowTextLength(hWnd);
+        int length = invokeOSMethod("GetWindowTextLength", hWnd); //$NON-NLS-1$
+        // OS.GetWindowTextLength(hWnd);
         return length > 0;
     }
 
@@ -57,8 +59,32 @@ public class ApplicationValidator implements IApplicationValidator {
     }
 
     private void notifyOpenedWindow(int hWnd) {
-        OS.SetForegroundWindow(hWnd);
-        OS.SetFocus(hWnd);
+        invokeOSMethod("SetForegroundWindow", hWnd); //$NON-NLS-1$
+        invokeOSMethod("SetFocus", hWnd); //$NON-NLS-1$
+//        OS.SetForegroundWindow(hWnd);
+//        OS.SetFocus(hWnd);
+    }
+
+    private static Class<?> OS_CLAZZ = null;
+
+    private static int invokeOSMethod(String methodName, int hWnd) {
+        if (OS_CLAZZ == null) {
+            try {
+                OS_CLAZZ = Class.forName("org.eclipse.swt.internal.win32.OS"); //$NON-NLS-1$
+            } catch (Throwable e) {
+                OS_CLAZZ = ApplicationValidator.class;
+            }
+        }
+        if (OS_CLAZZ != ApplicationValidator.class) {
+            try {
+                Method method = OS_CLAZZ.getMethod(methodName, int.class);
+                Object result = method.invoke(null, hWnd);
+                if (result instanceof Integer)
+                    return ((Integer) result).intValue();
+            } catch (Throwable e) {
+            }
+        }
+        return -1;
     }
 
 }

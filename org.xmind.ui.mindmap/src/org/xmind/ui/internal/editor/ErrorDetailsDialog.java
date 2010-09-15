@@ -7,6 +7,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.dnd.Clipboard;
@@ -70,8 +71,7 @@ public class ErrorDetailsDialog extends Dialog {
                 | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
         logControl.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         logControl.setText(getLogText());
-        if ("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                || "cocoa".equals(SWT.getPlatform())) { //$NON-NLS-1$
+        if (Util.isMac()) {
             logControl.setFont(FontUtils.getRelativeHeight(
                     JFaceResources.DIALOG_FONT, 1));
         }
@@ -128,7 +128,7 @@ public class ErrorDetailsDialog extends Dialog {
 
         ps.println("Time: " + String.format("%1$tF %1$tT", time)); //$NON-NLS-1$ //$NON-NLS-2$
 
-        ps.print("XMind: 3.1.1"); //$NON-NLS-1$
+        ps.print("XMind: 3.2.0"); //$NON-NLS-1$
         if (isPro()) {
             ps.println(" Pro"); //$NON-NLS-1$
         } else {

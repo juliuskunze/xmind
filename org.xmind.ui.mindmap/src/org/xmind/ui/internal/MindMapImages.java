@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -176,13 +176,15 @@ public class MindMapImages implements IMindMapImages {
         String key = "org.xmind.ui.fileIcon" + extension; //$NON-NLS-1$
         ImageDescriptor image = ImageUtils.getDescriptor(key);
         if (image == null) {
-            image = createFileIcon(extension);
+            image = createFileIcon(extension, new File(path).isDirectory(),
+                    returnNullIfUnidentifiable);
             ImageUtils.putImageDescriptor(key, image);
         }
         return image;
     }
 
-    private ImageDescriptor createFileIcon(String fileExtension) {
+    private ImageDescriptor createFileIcon(String fileExtension,
+            boolean directory, boolean returnNullIfUnidentifiable) {
         Program p = Program.findProgram(fileExtension);
         if (p != null) {
             ImageData icon = p.getImageData();
@@ -190,6 +192,10 @@ public class MindMapImages implements IMindMapImages {
                 return ImageDescriptor.createFromImageData(icon);
             }
         }
+        if (directory)
+            return get(OPEN, true);
+        if (returnNullIfUnidentifiable)
+            return null;
         return get(UNKNOWN_FILE, true);
     }
 

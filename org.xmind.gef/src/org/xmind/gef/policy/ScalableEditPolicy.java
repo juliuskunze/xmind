@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -153,7 +153,7 @@ public class ScalableEditPolicy extends AbstractEditPolicy {
         }, viewer);
     }
 
-    protected void performFitSize(IGraphicalViewer viewer) {
+    protected void performFitSize(final IGraphicalViewer viewer) {
         if (viewer == null)
             return;
 
@@ -164,16 +164,22 @@ public class ScalableEditPolicy extends AbstractEditPolicy {
     }
 
     protected void fitBounds(final IGraphicalViewer viewer,
-            final Rectangle bounds, ZoomManager zoomManager) {
+            final Rectangle bounds, final ZoomManager zoomManager) {
         IFigure viewport = ((IGraphicalViewer) viewer).getCanvas()
                 .getViewport();
-        Dimension viewportSize = viewport.getSize();
+        Dimension viewportSize = getViewportSize(viewer, viewport, zoomManager);
+        bounds.getCenter().scale(zoomManager.getScale());
         zoomManager.fitScale(viewportSize, bounds.getSize());
         viewport.getUpdateManager().runWithUpdate(new Runnable() {
             public void run() {
-                ensureVisible(viewer, bounds);
+                viewer.center(bounds.getCopy().scale(zoomManager.getScale()));
             }
         });
+    }
+
+    protected Dimension getViewportSize(IGraphicalViewer viewer,
+            IFigure viewport, ZoomManager zoomManager) {
+        return viewport.getSize();
     }
 
     protected void ensureVisible(IGraphicalViewer viewer, Rectangle bounds) {
@@ -198,7 +204,7 @@ public class ScalableEditPolicy extends AbstractEditPolicy {
     }
 
     protected void performFitSelection(Request req) {
-        IGraphicalViewer viewer = getGraphicalViewer(req);
+        final IGraphicalViewer viewer = getGraphicalViewer(req);
         if (viewer == null)
             return;
 
@@ -209,7 +215,7 @@ public class ScalableEditPolicy extends AbstractEditPolicy {
         if (selectedParts.isEmpty())
             return;
 
-        Rectangle bounds = getSelectionBounds(viewer, selectedParts);
+        final Rectangle bounds = getSelectionBounds(viewer, selectedParts);
         if (bounds != null) {
             fitBounds(viewer, bounds, viewer.getZoomManager());
         }

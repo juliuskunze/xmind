@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -32,6 +32,7 @@ import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.ContentViewer;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
@@ -222,8 +223,7 @@ public class SliderViewer extends ContentViewer implements
     }
 
     protected Control createControl(Composite parent, int style) {
-        if ("carbon".equals(SWT.getPlatform()) //$NON-NLS-1$
-                || "cocoa".equals(SWT.getPlatform())) { //$NON-NLS-1$
+        if (Util.isMac()) {
             return new Scale(parent, style);
         }
 

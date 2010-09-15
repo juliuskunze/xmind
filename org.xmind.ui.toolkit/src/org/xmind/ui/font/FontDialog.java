@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -23,6 +23,7 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -135,10 +136,8 @@ public class FontDialog extends Dialog implements IFontChooser {
 
     }
 
-    private static final boolean CARBON = "carbon".equals(SWT.getPlatform()) || "cocoa".equals(SWT.getPlatform()); //$NON-NLS-1$ //$NON-NLS-2$
-
     private static final int DEFAULT_GROUP_WIDTH = SWT.DEFAULT;
-    private static final int DEFAULT_GROUP_HEIGHT = CARBON ? 200 : 185;
+    private static final int DEFAULT_GROUP_HEIGHT = Util.isMac() ? 200 : 185;
 
     private static final int MIN_FONT_HEIGHT = 5;
     private static final int MAX_FONT_HEIGHT = 72;
@@ -369,12 +368,12 @@ public class FontDialog extends Dialog implements IFontChooser {
         sizeList.setInput(Arrays.asList(8, 9, 10, 11, 12, 14, 16, 18, 20, 22,
                 24, 36, 48, 56, 64, 72));
 
-        int listWidthHint = CARBON ? SWT.DEFAULT : 40;
+        int listWidthHint = Util.isMac() ? SWT.DEFAULT : 40;
         GridDataFactory.fillDefaults().grab(false, true).hint(listWidthHint,
                 SWT.DEFAULT).applyTo(sizeList.getControl());
 
         sizeScale = new SliderViewer(parent, SWT.VERTICAL);
-        int scaleWidthHint = CARBON ? SWT.DEFAULT : 20;
+        int scaleWidthHint = Util.isMac() ? SWT.DEFAULT : 20;
         GridDataFactory.fillDefaults().grab(false, true).hint(scaleWidthHint,
                 SWT.DEFAULT).applyTo(sizeScale.getControl());
 

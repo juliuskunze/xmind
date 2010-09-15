@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -569,11 +569,13 @@ public class MindMapFindReplaceOperationProvider extends
             IPart next = nextRelationship((IRelationshipPart) current);
             if (next != null)
                 return next;
-            return getCurrentCentralTopicPart();
+            return ((IRelationshipPart) current).getOwnerSheet()
+                    .getCentralBranch().getTopicPart();
         }
         IPart next = findNavNext(current);
         if (current instanceof ITopicPart && isCentral(next)) {
-            IPart rel = firstRelationship();
+            IPart rel = firstRelationship((ISheetPart) current.getSite()
+                    .getViewer().getAdapter(ISheetPart.class));
             if (rel != null)
                 return rel;
         }
@@ -583,7 +585,8 @@ public class MindMapFindReplaceOperationProvider extends
     private IPart findPrecedingPart(IPart current) {
         if (current instanceof ITopicPart) {
             if (isCentral(current)) {
-                IPart rel = lastRelationship();
+                IPart rel = lastRelationship((ISheetPart) current.getSite()
+                        .getViewer().getAdapter(ISheetPart.class));
                 if (rel != null)
                     return rel;
             }
@@ -607,7 +610,8 @@ public class MindMapFindReplaceOperationProvider extends
             IPart prev = prevRelationship((IRelationshipPart) current);
             if (prev != null)
                 return prev;
-            return findNavPrev(getCurrentCentralTopicPart());
+            return findNavPrev(((IRelationshipPart) current).getOwnerSheet()
+                    .getCentralBranch().getTopicPart());
         }
         return null;
     }
@@ -731,33 +735,29 @@ public class MindMapFindReplaceOperationProvider extends
         return next;
     }
 
-    private List<IRelationshipPart> getRelationships() {
-        IGraphicalViewer viewer = getActiveViewer();
-        if (viewer != null) {
-            ISheetPart sheet = (ISheetPart) viewer.getAdapter(ISheetPart.class);
-            if (sheet != null) {
-                return sheet.getRelationships();
-            }
+    private List<IRelationshipPart> getRelationships(ISheetPart sheet) {
+        if (sheet != null) {
+            return sheet.getRelationships();
         }
         return null;
     }
 
-    private IPart firstRelationship() {
-        List<IRelationshipPart> rels = getRelationships();
+    private IPart firstRelationship(ISheetPart sheet) {
+        List<IRelationshipPart> rels = getRelationships(sheet);
         if (rels != null && !rels.isEmpty())
             return rels.get(0);
         return null;
     }
 
-    private IPart lastRelationship() {
-        List<IRelationshipPart> rels = getRelationships();
+    private IPart lastRelationship(ISheetPart sheet) {
+        List<IRelationshipPart> rels = getRelationships(sheet);
         if (rels != null && !rels.isEmpty())
             return rels.get(rels.size() - 1);
         return null;
     }
 
     private IPart nextRelationship(IRelationshipPart rel) {
-        List<IRelationshipPart> rels = getRelationships();
+        List<IRelationshipPart> rels = getRelationships(rel.getOwnerSheet());
         if (rels != null && !rels.isEmpty()) {
             int index = rels.indexOf(rel);
             if (index >= 0 && index < rels.size() - 1)
@@ -767,7 +767,7 @@ public class MindMapFindReplaceOperationProvider extends
     }
 
     private IPart prevRelationship(IRelationshipPart rel) {
-        List<IRelationshipPart> rels = getRelationships();
+        List<IRelationshipPart> rels = getRelationships(rel.getOwnerSheet());
         if (rels != null && !rels.isEmpty()) {
             int index = rels.indexOf(rel);
             if (index > 0)

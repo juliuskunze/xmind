@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,9 +14,9 @@
 package org.xmind.gef.event;
 
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTargetEvent;
-import org.xmind.gef.GEF;
 import org.xmind.gef.dnd.DndData;
 import org.xmind.gef.part.IPart;
 
@@ -74,7 +74,7 @@ public class DragDropEvent {
         this.sourceSWTEvent = swtEvent;
         this.target = host;
         this.location = location;
-        this.detail = GEF.IS_CARBON ? DND.DROP_COPY : detail;
+        this.detail = Util.isMac() ? DND.DROP_COPY : detail;
         this.operations = operations;
     }
 

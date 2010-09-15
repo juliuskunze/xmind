@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -35,6 +35,12 @@ public class ImportMessages extends NLS {
     public static String MindManagerImporter_ReadingElements;
     public static String MindManagerImporter_ArrangingStyles;
     public static String MindManagerImporter_GeneratingTheme;
+    public static String MindManagerImporter_ResourceLabel;
+    public static String MindManagerImporter_DurationLabel;
+    public static String MindManagerImporter_Months;
+    public static String MindManagerImporter_Weeks;
+    public static String MindManagerImporter_Days;
+    public static String MindManagerImporter_Hours;
 
     public static String FreeMindImportWizard_windowTitle;
 

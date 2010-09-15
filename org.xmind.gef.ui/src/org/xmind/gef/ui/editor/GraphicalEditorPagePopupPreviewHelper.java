@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,6 +19,7 @@ import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.SWTGraphics;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Rectangle;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -28,7 +29,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
-import org.xmind.gef.GEF;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.draw2d.IOriginBased;
 import org.xmind.gef.draw2d.geometry.Geometry;
@@ -80,7 +80,7 @@ public class GraphicalEditorPagePopupPreviewHelper {
     }
 
     protected int getAppliedBorderWidth() {
-        if (GEF.IS_CARBON)
+        if (Util.isMac())
             return getBorderWidth() + 1;
         return getBorderWidth();
     }
@@ -215,7 +215,7 @@ public class GraphicalEditorPagePopupPreviewHelper {
 
     protected int getPopupShellStyle() {
         int style = SWT.NO_FOCUS | SWT.ON_TOP | SWT.NO_BACKGROUND;
-        if (GEF.IS_CARBON) {
+        if (Util.isMac()) {
             style |= SWT.NO_TRIM;
         } else {
             style |= SWT.RESIZE;

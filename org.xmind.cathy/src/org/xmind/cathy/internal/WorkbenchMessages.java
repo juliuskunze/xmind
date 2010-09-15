@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -32,6 +32,13 @@ public class WorkbenchMessages extends NLS {
     public static String CheckUpdates_label;
     public static String AutoSave_label;
     public static String AutoSave_Minutes;
+    public static String Startup_title;
+    public static String StartupAction_label;
+    public static String StartupAction_BlankMap;
+    public static String StartupAction_HomeMap;
+    public static String StartupAction_LastSession;
+    public static String HomeMap_label;
+    public static String HomeMap_NotFound_error;
 
     public static String appWindow_ListSelectionDialog_Text;
 
@@ -39,6 +46,8 @@ public class WorkbenchMessages extends NLS {
 
     public static String KeyAssist_text;
 
+    public static String Help_text;
+    public static String Help_toolTip;
     public static String Update_text;
     public static String Update_toolTip;
 
@@ -61,6 +70,9 @@ public class WorkbenchMessages extends NLS {
 
     public static String StartupJob_jobName;
     public static String StartupJob_OpenBootstrapEditor_name;
+    public static String StartupJob_OpenBlankMap;
+    public static String StartupJob_OpenHomeMap;
+    public static String StartupJob_OpenLastSession;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, WorkbenchMessages.class);

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2009 XMind Ltd. and others.
+ * Copyright (c) 2006-2010 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -36,11 +36,15 @@ public class TempWorkbookLoader implements IWorkbookLoader {
 
     private String tempLocation;
 
-    public TempWorkbookLoader(WorkbookRef ref, String tempLocation) {
+    private String filePath;
+
+    public TempWorkbookLoader(WorkbookRef ref, String tempLocation,
+            String filePath) {
         super();
         this.ref = ref;
         this.oldLoader = ref.getWorkbookLoader();
         this.tempLocation = tempLocation;
+        this.filePath = filePath;
     }
 
     public IWorkbook loadWorkbook(IStorage storage,
@@ -51,6 +55,7 @@ public class TempWorkbookLoader implements IWorkbookLoader {
             IWorkbook workbook = Core.getWorkbookBuilder()
                     .loadFromTempLocation(tempLocation);
             workbook.setTempLocation(tempLocation);
+            workbook.setFile(filePath);
             if (workbook instanceof ICoreEventSource2) {
                 ((ICoreEventSource2) workbook).registerOnceCoreEventListener(
                         Core.WorkbookPreSaveOnce, ICoreEventListener.NULL);
