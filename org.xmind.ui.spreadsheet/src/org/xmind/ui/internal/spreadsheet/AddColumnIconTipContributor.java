@@ -135,7 +135,10 @@ public class AddColumnIconTipContributor extends AbstractIconTipContributor {
                     numCols + 1);
             while (containsColumnHead(branch, chart, newColumnHead)) {
                 numCols++;
-                newColumnHead = NLS.bind(Messages.Column_pattern, numCols + 1);
+                String newName = NLS.bind(Messages.Column_pattern, numCols + 1);
+                if (newColumnHead.equals(newName))
+                    break;
+                newColumnHead = newName;
             }
             return newColumnHead;
         }

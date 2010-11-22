@@ -25,6 +25,8 @@ public class SpellingPlugin extends AbstractUIPlugin {
 
     public static final String SPELLING_CHECK_ENABLED = "SPELLING_CHECK_ENABLED"; //$NON-NLS-1$
 
+    public static final String DEFAULT_SPELLING_CHECKER_DISABLED = "DEFAULT_SPELLING_CHECKER_DISABLED"; //$NON-NLS-1$
+
     // The plug-in ID
     public static final String PLUGIN_ID = "org.xmind.ui.spelling"; //$NON-NLS-1$
 

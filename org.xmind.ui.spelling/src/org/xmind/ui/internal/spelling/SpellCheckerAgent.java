@@ -44,6 +44,10 @@ public class SpellCheckerAgent {
 
     private List<ISpellCheckerVisitor> visitors;
 
+    public static void resetSpellChecker() {
+        getInstance().spellChecker = null;
+    }
+
     public static void visitSpellChecker(ISpellCheckerVisitor visitor) {
         getInstance().doVisitSpellChecker(visitor);
     }
@@ -78,6 +82,10 @@ public class SpellCheckerAgent {
 
         monitor.subTask(Messages.creatingSpellCheckerInstance);
         SpellChecker spellChecker = Activator.createSpellChecker();
+        if (!SpellingPlugin.getDefault().getPreferenceStore().getBoolean(
+                SpellingPlugin.DEFAULT_SPELLING_CHECKER_DISABLED)) {
+            Activator.addDefaultDictionaries(spellChecker);
+        }
         monitor.worked(1);
 
         monitor.subTask(Messages.addingSystemDictionary);
@@ -119,6 +127,16 @@ public class SpellCheckerAgent {
     }
 
     private void addUserDictionary(SpellChecker spellChecker) {
+        for (ISpellCheckerDescriptor descriptor : SpellCheckerRegistry
+                .getInstance().getDescriptors()) {
+            try {
+                spellChecker.addDictionary(new SpellDictionaryHashMap(
+                        new InputStreamReader(descriptor.openStream())));
+            } catch (IOException e) {
+                SpellingPlugin.log(e);
+            }
+        }
+
         File userDict = FileUtils.ensureFileParent(new File(Core.getWorkspace()
                 .getAbsolutePath("spelling/user.dict"))); //$NON-NLS-1$
         if (!userDict.exists()) {

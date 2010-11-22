@@ -143,7 +143,7 @@ public class CathyPlugin extends AbstractUIPlugin {
         String distribId = System
                 .getProperty("org.xmind.product.distribution.id"); //$NON-NLS-1$
         if (distribId == null || "".equals(distribId)) { //$NON-NLS-1$
-            distribId = "cathy.portable"; //$NON-NLS-1$
+            distribId = "cathy_portable"; //$NON-NLS-1$
         }
         return distribId;
     }

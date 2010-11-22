@@ -341,6 +341,7 @@
             name="%command.newWorkbook.name">
       </command>
       <command
+            categoryId="org.eclipse.ui.category.window"
             description="%command.newFromTemplate.description"
             id="org.xmind.ui.command.newFromTemplate"
             name="%command.newFromTemplate.name">
@@ -359,68 +360,63 @@
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="Font text"
+            description="%command.text.font.description"
             id="org.xmind.ui.command.text.font"
-            name="Font">
+            name="%command.text.font.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="Bold text"
+            description="%command.text.bold.description"
             id="org.xmind.ui.command.text.bold"
-            name="Bold">
+            name="%command.text.bold.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="Italic text"
+            description="%command.text.italic.description"
             id="org.xmind.ui.command.text.italic"
-            name="Italic">
+            name="%command.text.italic.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="Underline text"
+            description="%command.text.underline.description"
             id="org.xmind.ui.command.text.underline"
-            name="Underline">
+            name="%command.text.underline.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="Strikeout text"
+            description="%command.text.strikeout.description"
             id="org.xmind.ui.command.text.strikeout"
-            name="StrikeOut">
+            name="%command.text.strikeout.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="LeftAlign text"
+            description="%command.text.leftAlign.description"
             id="org.xmind.ui.command.text.leftAlign"
-            name="LeftAlign">
+            name="%command.text.leftAlign.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="CenterAlign text"
+            description="%command.text.centerAlign.description"
             id="org.xmind.ui.command.text.centerAlign"
-            name="CenterAlign">
+            name="%command.text.centerAlign.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="RightAlign text"
+            description="%command.text.rightAlign.description"
             id="org.xmind.ui.command.text.rightAlign"
-            name="RightAlign">
+            name="%command.text.rightAlign.name">
       </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="Bullet text"
-            id="org.xmind.ui.command.text.bullet"
-            name="Bullet">
-      </command>
-      <command
-            categoryId="org.xmind.ui.category.text.edit"
-            description="Indent text"
+            description="%command.text.indent.description"
             id="org.xmind.ui.command.text.indent"
-            name="Indent"></command>
+            name="%command.text.indent.name">
+      </command>
       <command
             categoryId="org.xmind.ui.category.text.edit"
-            description="Outdent text"
+            description="%command.text.outdent.description"
             id="org.xmind.ui.command.text.outdent"
-            name="Outdent">
+            name="%command.text.outdent.name">
       </command>
    </extension>
    <extension

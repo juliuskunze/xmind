@@ -96,7 +96,7 @@ public class TextDndClient implements IDndClient {
     }
 
     private Object[] buildeTopics(String text, IViewer viewer, IWorkbook wb) {
-        String[] lines = text.split(LINE_DELIMITER);
+        String[] lines = text.split("\\r\\n|\\r|\\n"); //$NON-NLS-1$
         ArrayList<ITopic> topics = new ArrayList<ITopic>(lines.length);
         HashMap<ITopic, Integer> map = new HashMap<ITopic, Integer>();
         ITopic lastTopic = null;

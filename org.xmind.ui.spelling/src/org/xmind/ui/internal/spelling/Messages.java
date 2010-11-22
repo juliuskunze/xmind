@@ -24,6 +24,15 @@ public class Messages extends NLS {
     public static String enableSpellCheck;
     public static String options;
     public static String SpellingPrefPage_title;
+    public static String dictionaries;
+    public static String dictionaries_add;
+    public static String dictionaries_remove;
+    public static String dictionaries_remove_confirm_title;
+    public static String dictionaries_remove_confirm_message;
+    public static String addingDictionary;
+    public static String removingDictionary;
+    public static String defaultDictionary;
+    public static String detailsLink_text;
 
     public static String ignoreAllCapital;
     public static String ignoreMultiCapital;

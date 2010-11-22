@@ -14,37 +14,151 @@
 package org.xmind.ui.internal.spelling;
 
 import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
+import net.xmind.signin.XMindNet;
+
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
-import org.eclipse.jface.preference.FileFieldEditor;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.ListViewer;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
+import org.eclipse.ui.forms.events.HyperlinkEvent;
+import org.eclipse.ui.forms.events.IHyperlinkListener;
+import org.eclipse.ui.forms.widgets.Hyperlink;
+import org.xmind.core.util.FileUtils;
 
 import com.swabunga.spell.engine.Configuration;
-import com.swabunga.spell.engine.SpellDictionaryHashMap;
-import com.swabunga.spell.event.SpellChecker;
 
 public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
         IWorkbenchPreferencePage {
 
-    private static final String FILE_EXT = ".dict"; //$NON-NLS-1$
+    private static final Object DEFAULT_PLACEHOLDER = Messages.defaultDictionary;
+
+    private class DictionaryContentProvider implements
+            IStructuredContentProvider {
+
+        public Object[] getElements(Object inputElement) {
+            Object[] descriptors = SpellCheckerRegistry.getInstance()
+                    .getDescriptors().toArray();
+            if (getPreferenceStore().getBoolean(
+                    SpellingPlugin.DEFAULT_SPELLING_CHECKER_DISABLED))
+                return descriptors;
+
+            Object[] elements = new Object[descriptors.length + 1];
+            elements[0] = DEFAULT_PLACEHOLDER;
+            System.arraycopy(descriptors, 0, elements, 1, descriptors.length);
+            return elements;
+        }
+
+        public void dispose() {
+        }
+
+        public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+        }
+
+    }
+
+    private static class DictionaryLabelProvider extends LabelProvider {
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
+         */
+        @Override
+        public String getText(Object element) {
+            if (element instanceof ISpellCheckerDescriptor)
+                return ((ISpellCheckerDescriptor) element).getName();
+            return super.getText(element);
+        }
+    }
+
+    private static class DictionaryComparator extends ViewerComparator {
+
+        /**
+         * 
+         */
+        public DictionaryComparator() {
+            super(new Comparator<String>() {
+                public int compare(String n1, String n2) {
+                    n1 = FileUtils.getNoExtensionFileName(n1);
+                    n2 = FileUtils.getNoExtensionFileName(n2);
+                    return n1.compareToIgnoreCase(n2);
+                }
+            });
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.jface.viewers.ViewerComparator#category(java.lang.Object)
+         */
+        @Override
+        public int category(Object element) {
+            if (element == DEFAULT_PLACEHOLDER)
+                return 0;
+            return 1;
+        }
+    }
+
+    private class DictionarySelectionListener implements
+            ISelectionChangedListener {
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.jface.viewers.ISelectionChangedListener#selectionChanged
+         * (org.eclipse.jface.viewers.SelectionChangedEvent)
+         */
+        public void selectionChanged(SelectionChangedEvent event) {
+            updateDictionaryControls();
+        }
+
+    }
 
     private List<FieldEditor> settingFields = new ArrayList<FieldEditor>();
 
     private Composite settingsParent;
+
+    private ListViewer dictionaryViewer;
+
+    private Button addButton;
+
+    private Button removeButton;
 
     public SpellingCheckPrefPage() {
         super(Messages.SpellingPrefPage_title, FLAT);
@@ -57,41 +171,11 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
     protected void createFieldEditors() {
         addField(new BooleanFieldEditor(SpellingPlugin.SPELLING_CHECK_ENABLED,
                 Messages.enableSpellCheck, getFieldEditorParent()));
+        addSpellingSettings(getFieldEditorParent());
+        addDictionariesPanel(getFieldEditorParent());
 
-        Composite composite = createCoposite();
-        addSpellingSettings(composite);
-        addImportDictationaryArea(composite);
         updateOptions(SpellingPlugin.isSpellingCheckEnabled());
-    }
-
-    private Composite createCoposite() {
-        Composite parent = getFieldEditorParent();
-        GridLayout gridLayout = new GridLayout(1, false);
-        gridLayout.marginWidth = 0;
-        gridLayout.marginHeight = 0;
-        gridLayout.verticalSpacing = 0;
-        gridLayout.horizontalSpacing = 0;
-        parent.setLayout(gridLayout);
-
-        Label blank = new Label(parent, SWT.NONE);
-        blank.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
-                false));
-        return parent;
-    }
-
-    private void addImportDictationaryArea(Composite parent) {
-        Group group = new Group(parent, SWT.NONE);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
-        GridLayout layout = new GridLayout(2, true);
-        group.setLayout(layout);
-        group.setText(Messages.importDict_Text);
-
-        FileFieldEditor field = new FileFieldEditor(
-                Configuration.SPELL_TARGET_FILE, Messages.importDictLabel_Text,
-                group);
-        String dictFile = "*" + FILE_EXT; //$NON-NLS-1$
-        field.setFileExtensions(new String[] { dictFile });
-        addField(field);
+        updateDictionaryControls();
     }
 
     private void addSpellingSettings(Composite composite) {
@@ -115,26 +199,25 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
     }
 
     private Composite createSettingsParent(Composite parent) {
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginTop = 7;
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        layout.verticalSpacing = 0;
+        layout.horizontalSpacing = 0;
+        parent.setLayout(layout);
+
         Group group = new Group(parent, SWT.NONE);
         group.setText(Messages.options);
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        GridLayout gridLayout2 = new GridLayout(1, false);
-        gridLayout2.marginWidth = 5;
-        gridLayout2.marginHeight = 5;
-        gridLayout2.verticalSpacing = 0;
-        gridLayout2.horizontalSpacing = 0;
-        group.setLayout(gridLayout2);
+        GridLayout groupLayout = new GridLayout(1, false);
+        groupLayout.marginWidth = 5;
+        groupLayout.marginHeight = 5;
+        groupLayout.verticalSpacing = 5;
+        groupLayout.horizontalSpacing = 0;
+        group.setLayout(groupLayout);
 
-        Composite composite = new Composite(group, SWT.NONE);
-        composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        GridLayout layout = new GridLayout(1, false);
-        layout.marginWidth = 0;
-        layout.marginHeight = 0;
-        layout.verticalSpacing = 5;
-        layout.horizontalSpacing = 0;
-        composite.setLayout(layout);
-
-        return composite;
+        return group;
     }
 
     private void updateOptions(boolean enabled) {
@@ -143,6 +226,211 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
             field.setEnabled(enabled, settingsParent);
         }
     }
+
+    private void addDictionariesPanel(Composite parent) {
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginTop = 7;
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        layout.verticalSpacing = 0;
+        layout.horizontalSpacing = 0;
+        parent.setLayout(layout);
+        parent.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        Group group = new Group(parent, SWT.NONE);
+        group.setText(Messages.dictionaries);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        GridLayout groupLayout = new GridLayout(2, false);
+        groupLayout.marginWidth = 5;
+        groupLayout.marginHeight = 5;
+        groupLayout.verticalSpacing = 5;
+        groupLayout.horizontalSpacing = 5;
+        group.setLayout(groupLayout);
+
+        createDictionaryViewer(group);
+        createDictionaryControls(group);
+        createDetailsLink(group);
+    }
+
+    private void createDictionaryViewer(Composite parent) {
+        dictionaryViewer = new ListViewer(parent, SWT.SINGLE | SWT.BORDER);
+        dictionaryViewer.getControl().setLayoutData(
+                new GridData(SWT.FILL, SWT.FILL, true, true));
+        dictionaryViewer.setContentProvider(new DictionaryContentProvider());
+        dictionaryViewer.setLabelProvider(new DictionaryLabelProvider());
+        dictionaryViewer.setComparator(new DictionaryComparator());
+        dictionaryViewer
+                .addSelectionChangedListener(new DictionarySelectionListener());
+        dictionaryViewer.setInput(SpellCheckerRegistry.getInstance());
+    }
+
+    private void createDictionaryControls(Composite parent) {
+        Composite composite = new Composite(parent, SWT.NONE);
+        composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
+        GridLayout layout = new GridLayout(1, true);
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        layout.verticalSpacing = 0;
+        layout.horizontalSpacing = 0;
+        composite.setLayout(layout);
+
+        Composite buttonBar = new Composite(composite, SWT.NONE);
+        buttonBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+        GridLayout buttonBarLayout = new GridLayout(1, true);
+        buttonBarLayout.marginWidth = 0;
+        buttonBarLayout.marginHeight = 0;
+        buttonBarLayout.verticalSpacing = 10;
+        buttonBarLayout.horizontalSpacing = 0;
+        buttonBar.setLayout(buttonBarLayout);
+
+        createAddDictionaryButton(buttonBar);
+        createRemoveDictionaryButton(buttonBar);
+        //createDictionaryInfoPanel(composite);
+    }
+
+    private void createDetailsLink(Composite parent) {
+        Hyperlink hyperlink = new Hyperlink(parent, SWT.SINGLE);
+        hyperlink
+                .setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        ((GridData) hyperlink.getLayoutData()).horizontalSpan = 2;
+        hyperlink.setText(Messages.detailsLink_text);
+        hyperlink.setForeground(parent.getDisplay().getSystemColor(
+                SWT.COLOR_BLUE));
+        hyperlink.addHyperlinkListener(new IHyperlinkListener() {
+            public void linkExited(HyperlinkEvent e) {
+            }
+
+            public void linkEntered(HyperlinkEvent e) {
+            }
+
+            public void linkActivated(HyperlinkEvent e) {
+                XMindNet.gotoURL("http://www.xmind.net/help/language-dic.html"); //$NON-NLS-1$
+            }
+        });
+    }
+
+    private void createAddDictionaryButton(Composite parent) {
+        addButton = new Button(parent, SWT.PUSH);
+        addButton
+                .setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        addButton.setText(Messages.dictionaries_add);
+        addButton.addListener(SWT.Selection, new Listener() {
+            public void handleEvent(Event event) {
+                addDictionary();
+            }
+        });
+    }
+
+    private void createRemoveDictionaryButton(Composite parent) {
+        removeButton = new Button(parent, SWT.PUSH);
+        removeButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false,
+                false));
+        removeButton.setText(Messages.dictionaries_remove);
+        removeButton.addListener(SWT.Selection, new Listener() {
+            public void handleEvent(Event event) {
+                removeSelectedDictionary();
+            }
+        });
+    }
+
+    private void addDictionary() {
+        FileDialog dialog = new FileDialog(getShell(), SWT.OPEN);
+        dialog.setFilterExtensions(new String[] { "*.dic;*.dict;*.txt;*.*" }); //$NON-NLS-1$
+        final String path = dialog.open();
+        if (path == null)
+            return;
+
+        final Display display = Display.getCurrent();
+        try {
+            ProgressMonitorDialog progress = new ProgressMonitorDialog(
+                    getShell());
+            progress.setOpenOnRun(false);
+            progress.run(true, false, new IRunnableWithProgress() {
+                public void run(IProgressMonitor monitor)
+                        throws InvocationTargetException, InterruptedException {
+                    monitor.beginTask(Messages.addingDictionary, 1);
+                    SafeRunner.run(new SafeRunnable() {
+                        public void run() throws Exception {
+                            SpellCheckerRegistry.getInstance().importDictFile(
+                                    new File(path));
+                        }
+                    });
+                    display.asyncExec(new Runnable() {
+                        public void run() {
+                            dictionaryViewer.refresh();
+                        }
+                    });
+                    monitor.done();
+                }
+            });
+        } catch (InvocationTargetException e) {
+        } catch (InterruptedException e) {
+        }
+
+    }
+
+    private void removeSelectedDictionary() {
+        Object selection = ((IStructuredSelection) dictionaryViewer
+                .getSelection()).getFirstElement();
+        if (selection == null)
+            return;
+
+        // Confirm remove
+        String name = ((ILabelProvider) dictionaryViewer.getLabelProvider())
+                .getText(selection);
+        if (!MessageDialog.openConfirm(getShell(),
+                Messages.dictionaries_remove_confirm_title, NLS.bind(
+                        Messages.dictionaries_remove_confirm_message, name)))
+            return;
+
+        // Default dictionary?
+        if (selection == DEFAULT_PLACEHOLDER) {
+            getPreferenceStore().setValue(
+                    SpellingPlugin.DEFAULT_SPELLING_CHECKER_DISABLED, true);
+            dictionaryViewer.refresh();
+            return;
+        }
+
+        // Remove dictionary descriptor and local file
+        final ISpellCheckerDescriptor descriptor = (ISpellCheckerDescriptor) selection;
+        final Display display = Display.getCurrent();
+        try {
+            ProgressMonitorDialog progress = new ProgressMonitorDialog(
+                    getShell());
+            progress.setOpenOnRun(false);
+            progress.run(true, false, new IRunnableWithProgress() {
+                public void run(IProgressMonitor monitor)
+                        throws InvocationTargetException, InterruptedException {
+                    monitor.beginTask(Messages.removingDictionary, 1);
+                    SafeRunner.run(new SafeRunnable() {
+                        public void run() throws Exception {
+                            SpellCheckerRegistry.getInstance()
+                                    .removeDictionary(descriptor);
+                        }
+                    });
+                    display.asyncExec(new Runnable() {
+                        public void run() {
+                            dictionaryViewer.refresh();
+                        }
+                    });
+                    monitor.done();
+                }
+            });
+        } catch (InvocationTargetException e) {
+        } catch (InterruptedException e) {
+        }
+    }
+
+    private void updateDictionaryControls() {
+        removeButton.setEnabled(!dictionaryViewer.getSelection().isEmpty());
+    }
+
+//    /**
+//     * @param composite
+//     */
+//    private void createDictionaryInfoPanel(Composite composite) {
+//
+//    }
 
     public void propertyChange(PropertyChangeEvent event) {
         FieldEditor field = (FieldEditor) event.getSource();
@@ -153,29 +441,4 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
         super.propertyChange(event);
     }
 
-    public boolean performOk() {
-        boolean ok = super.performOk();
-        if (ok) {
-            IPreferenceStore ps = getPreferenceStore();
-            SpellCheckerAgent.setConfigurations(ps);
-            String path = ps.getString(Configuration.SPELL_TARGET_FILE);
-            addFileToDict(path);
-        }
-        return ok;
-    }
-
-    private void addFileToDict(String path) {
-        try {
-            File file = new File(path);
-            final SpellDictionaryHashMap dictionary = new SpellDictionaryHashMap(
-                    file);
-            SpellCheckerAgent.visitSpellChecker(new ISpellCheckerVisitor() {
-                public void handleWith(SpellChecker spellChecker) {
-                    spellChecker.addDictionary(dictionary);
-                }
-            });
-        } catch (IOException e) {
-        }
-
-    }
 }

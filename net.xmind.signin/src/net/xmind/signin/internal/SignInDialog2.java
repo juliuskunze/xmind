@@ -62,7 +62,7 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             if (monitor.isCanceled())
                 return Status.CANCEL_STATUS;
 
-            String url = "http://www.xmind.net/_res/token/" + user; //$NON-NLS-1$
+            String url = "https://www.xmind.net/_res/token/" + user; //$NON-NLS-1$
             PostMethod method = new PostMethod(url);
             method.addParameter("user", user); //$NON-NLS-1$
             method.addParameter("password", password); //$NON-NLS-1$

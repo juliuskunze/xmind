@@ -219,7 +219,7 @@ public class CheckUpdatesJob extends Job {
     }
 
     protected void doCheck() throws Exception {
-        String url = "http://www.xmind.net/_api/checkVersion/3.2.0"; //$NON-NLS-1$
+        String url = "http://www.xmind.net/_api/checkVersion/3.2.1"; //$NON-NLS-1$
         String distribId = CathyPlugin.getDistributionId();
         url = url + "?distrib=" + distribId; //$NON-NLS-1$
         HttpMethod method = new GetMethod(url);

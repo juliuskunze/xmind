@@ -61,7 +61,7 @@ public class SiteEventNotificationService implements IStartup,
             if (monitor.isCanceled())
                 return Status.CANCEL_STATUS;
 
-            String url = "http://www.xmind.net/_api/events?version=3.2.0&os=" + Platform.getOS() //$NON-NLS-1$
+            String url = "http://www.xmind.net/_api/events?version=3.2.1&os=" + Platform.getOS() //$NON-NLS-1$
                     + "&arch=" + Platform.getOSArch() //$NON-NLS-1$
                     + "&nl=" + Platform.getNL() //$NON-NLS-1$
                     + "&distrib=" + getDistributionId() //$NON-NLS-1$
@@ -337,7 +337,7 @@ public class SiteEventNotificationService implements IStartup,
         String distribId = System
                 .getProperty("org.xmind.product.distribution.id"); //$NON-NLS-1$
         if (distribId == null || "".equals(distribId)) { //$NON-NLS-1$
-            distribId = "cathy.portable"; //$NON-NLS-1$
+            distribId = "cathy_portable"; //$NON-NLS-1$
         }
         return distribId;
     }
