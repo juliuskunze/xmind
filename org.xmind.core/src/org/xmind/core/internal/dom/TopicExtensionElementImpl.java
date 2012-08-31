@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -73,25 +73,33 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
         return child;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.xmind.core.ITopicExtensionElement#getCreatedChild(java.lang.String)
-     */
-    public ITopicExtensionElement getCreatedChild(String elementName) {
-        List<ITopicExtensionElement> children = getChildren(elementName);
-        if (!children.isEmpty())
-            return children.get(0);
-        return createChild(elementName);
-    }
-
     private void registerChild(TopicExtensionElementImpl child) {
         extension.registerElement(child);
     }
 
     private void unregisterChild(TopicExtensionElementImpl child) {
         extension.unregisterElement(child);
+    }
+
+    public void addChild(ITopicExtensionElement child, int index) {
+        TopicExtensionElementImpl c = (TopicExtensionElementImpl) child;
+        if (c.getExtension() != this.getExtension()
+                || c.getTopic() != this.getTopic())
+            return;
+
+        ITopicExtensionElement oldParent = c.getParent();
+        if (oldParent != null) {
+            oldParent.deleteChild(child);
+        }
+        Element childImpl = c.getImplementation();
+        Element[] es = DOMUtils.getChildElements(implementation);
+        if (index >= 0 && index < es.length) {
+            implementation.insertBefore(childImpl, es[index]);
+        } else {
+            implementation.appendChild(childImpl);
+        }
+        registerChild(c);
+        topic.updateModifiedTime();
     }
 
     public void deleteChild(ITopicExtensionElement child) {
@@ -104,12 +112,13 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
         }
     }
 
-    public void deleteChildren(String name) {
+    public void deleteChildren(String elementName) {
         Element[] children;
-        if (name == null)
+        if (elementName == null)
             children = DOMUtils.getChildElements(implementation);
         else
-            children = DOMUtils.getChildElementsByTag(implementation, name);
+            children = DOMUtils.getChildElementsByTag(implementation,
+                    elementName);
         for (int i = 0; i < children.length; i++) {
             implementation.removeChild(children[i]);
         }
@@ -127,6 +136,18 @@ public class TopicExtensionElementImpl extends TopicExtensionElement {
 
     public List<ITopicExtensionElement> getChildren() {
         return DOMUtils.getChildList(implementation, null, extension);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.core.ITopicExtensionElement#getFirstChild(java.lang.String)
+     */
+    public ITopicExtensionElement getFirstChild(String elementName) {
+        Element childImpl = DOMUtils.getFirstChildElementByTag(implementation,
+                elementName);
+        return childImpl == null ? null : extension.getElement(childImpl);
     }
 
     public List<ITopicExtensionElement> getChildren(String elementName) {

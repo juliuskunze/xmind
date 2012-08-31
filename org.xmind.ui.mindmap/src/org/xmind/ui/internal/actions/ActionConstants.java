@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -153,5 +153,12 @@ public class ActionConstants {
     public static final String STRUCTURE_MENU = PREFIX + "structureMenu"; //$NON-NLS-1$
 
     public static final String INSERT_IMAGE_ID = PREFIX + "insertImage"; //$NON-NLS-1$
+
+    public static final String REMOVE_REVISION_ID = PREFIX + "removeRevision"; //$NON-NLS-1$
+
+    public static final String REVERT_TO_REVISION_ID = PREFIX
+            + "revertToRevision"; //$NON-NLS-1$
+
+    public static final String PREVIEW_REVISIONS = PREFIX + "previewRevisions"; //$NON-NLS-1$
 
 }

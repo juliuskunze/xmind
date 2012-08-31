@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,27 +13,55 @@
  *******************************************************************************/
 package org.xmind.gef.draw2d;
 
+import org.eclipse.draw2d.AncestorListener;
 import org.eclipse.draw2d.Figure;
-import org.eclipse.draw2d.FigureListener;
 import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.LayoutListener;
 import org.xmind.gef.draw2d.graphics.AlphaGraphics;
+import org.xmind.gef.draw2d.graphics.ColorMaskGraphics;
 import org.xmind.gef.draw2d.graphics.GraphicsUtils;
 import org.xmind.gef.draw2d.graphics.GrayedGraphics;
 
 public class ShadowFigure extends Figure {
 
     private class SourceHooker extends LayoutListener.Stub implements
-            FigureListener {
-
-        public void figureMoved(IFigure source) {
-            updateBounds();
-        }
+            AncestorListener {
 
         public void invalidate(IFigure container) {
             super.invalidate(container);
             updateVisibility();
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.draw2d.AncestorListener#ancestorAdded(org.eclipse.draw2d
+         * .IFigure)
+         */
+        public void ancestorAdded(IFigure ancestor) {
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.draw2d.AncestorListener#ancestorMoved(org.eclipse.draw2d
+         * .IFigure)
+         */
+        public void ancestorMoved(IFigure ancestor) {
+            updateBounds();
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.draw2d.AncestorListener#ancestorRemoved(org.eclipse.draw2d
+         * .IFigure)
+         */
+        public void ancestorRemoved(IFigure ancestor) {
         }
 
     }
@@ -42,9 +70,9 @@ public class ShadowFigure extends Figure {
             0, 7, -2, 4, -1, 1, -4, 2, //
             -7, 0, -4, -2, -1, -1, -2, -4, //
             0, -7, 2, -4, 1, -1, 4, -2 };
-//    private static int[] offsets = { 1, 1, 2, 0, 1, -1, 0, -2, -1, -2, -2, 0,
-//            -1, 1, 0, 2 };
-//    private static int[] offsets = {};
+//private static int[] offsets = { 1, 1, 2, 0, 1, -1, 0, -2, -1, -2, -2, 0,
+//-1, 1, 0, 2 };
+//private static int[] offsets = {};
 
     private IFigure source = null;
 
@@ -56,9 +84,6 @@ public class ShadowFigure extends Figure {
 
     private SourceHooker sourceHooker = new SourceHooker();
 
-    public ShadowFigure() {
-    }
-
     public IFigure getSource() {
         return source;
     }
@@ -68,11 +93,11 @@ public class ShadowFigure extends Figure {
             return;
         if (this.source != null) {
             this.source.removeLayoutListener(sourceHooker);
-            this.source.removeFigureListener(sourceHooker);
+            this.source.removeAncestorListener(sourceHooker);
         }
         this.source = source;
         if (source != null) {
-            source.addFigureListener(sourceHooker);
+            source.addAncestorListener(sourceHooker);
             source.addLayoutListener(sourceHooker);
         }
         update();
@@ -153,7 +178,6 @@ public class ShadowFigure extends Figure {
         int mainAlpha = getAlpha();
         if (offsets.length > 0) {
             int subAlpha = mainAlpha / (offsets.length / 2);
-
             graphics.pushState();
             graphics.translate(getOffsetX(), getOffsetY());
             for (int i = 0; i < offsets.length - 1; i += 2) {
@@ -179,17 +203,28 @@ public class ShadowFigure extends Figure {
         if (source instanceof IShadowedFigure) {
             ((IShadowedFigure) source).paintShadow(g1);
         } else {
-            GrayedGraphics g2 = new GrayedGraphics(g1);
+            ColorMaskGraphics g2 = createGlowGraphics(g1);
             paintSourceAsShadow(g2);
             g2.dispose();
         }
         g1.dispose();
     }
 
-    protected void paintSourceAsShadow(GrayedGraphics g) {
+    protected void paintSourceAsShadow(Graphics g) {
         if (source != null) {
             source.paint(g);
         }
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.draw2d.GlowFigure#createGlowGraphics(org.eclipse.draw2d
+     * .Graphics)
+     */
+    protected ColorMaskGraphics createGlowGraphics(Graphics graphics) {
+        return new GrayedGraphics(graphics);
     }
 
 }

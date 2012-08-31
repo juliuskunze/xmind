@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,7 +22,14 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.swt.widgets.Display;
+import org.xmind.ui.tabfolder.DelegatedSelectionProvider;
 
+/**
+ * 
+ * @author Frank Shaka
+ * @deprecated Use {@link DelegatedSelectionProvider} instead.
+ */
 public class MultiGraphicalPageSelectionProvider implements
         IPostSelectionProvider, ISelectionChangedListener {
 
@@ -31,6 +38,41 @@ public class MultiGraphicalPageSelectionProvider implements
     private List<ISelectionChangedListener> postListeners = new ArrayList<ISelectionChangedListener>();
 
     private IGraphicalEditorPage activePage = null;
+
+    private class PostSelectionDispatcher implements Runnable {
+
+        private ISelection selection;
+
+        /**
+         * 
+         */
+        public PostSelectionDispatcher(ISelection selection) {
+            this.selection = selection;
+        }
+
+        public void schedule() {
+            postSelectionDispatcher = this;
+            Display.getCurrent().asyncExec(this);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.lang.Runnable#run()
+         */
+        public void run() {
+            if (postSelectionDispatcher != this)
+                return;
+            try {
+                firePostSelectionChangedEvent(new SelectionChangedEvent(
+                        MultiGraphicalPageSelectionProvider.this, selection));
+            } finally {
+                postSelectionDispatcher = null;
+            }
+        }
+    }
+
+    private PostSelectionDispatcher postSelectionDispatcher = null;
 
     public void addPostSelectionChangedListener(
             ISelectionChangedListener listener) {
@@ -66,18 +108,24 @@ public class MultiGraphicalPageSelectionProvider implements
             if (selectionProvider != null)
                 selectionProvider.addSelectionChangedListener(this);
         }
-        fireSelectionChangedEvent(new SelectionChangedEvent(this,
-                getSelection()));
+        handlePageSelectionChanged(getSelection());
+    }
+
+    private void handlePageSelectionChanged(ISelection selection) {
+        fireSelectionChangedEvent(new SelectionChangedEvent(this, selection));
+        new PostSelectionDispatcher(selection).schedule();
     }
 
     protected void fireSelectionChangedEvent(SelectionChangedEvent event) {
-        fireSelectionChangedEvent(new SelectionChangedEvent(this, event
-                .getSelection()), listeners);
+        fireSelectionChangedEvent(
+                new SelectionChangedEvent(this, event.getSelection()),
+                listeners);
     }
 
     protected void firePostSelectionChangedEvent(SelectionChangedEvent event) {
-        fireSelectionChangedEvent(new SelectionChangedEvent(this, event
-                .getSelection()), postListeners);
+        fireSelectionChangedEvent(
+                new SelectionChangedEvent(this, event.getSelection()),
+                postListeners);
     }
 
     private void fireSelectionChangedEvent(SelectionChangedEvent event,
@@ -111,8 +159,7 @@ public class MultiGraphicalPageSelectionProvider implements
      * @see org.eclipse.jface.viewers.ISelectionChangedListener#selectionChanged(org.eclipse.jface.viewers.SelectionChangedEvent)
      */
     public void selectionChanged(SelectionChangedEvent event) {
-        event = new SelectionChangedEvent(this, event.getSelection());
-        fireSelectionChangedEvent(event);
+        handlePageSelectionChanged(event.getSelection());
     }
 
 }

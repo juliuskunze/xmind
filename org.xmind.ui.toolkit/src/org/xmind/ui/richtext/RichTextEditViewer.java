@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -96,6 +96,8 @@ public class RichTextEditViewer implements IRichTextEditViewer {
 
     protected Composite createControl(Composite parent, int textControlStyle) {
         Composite composite = new Composite(parent, SWT.NONE);
+        composite.setBackground(parent.getDisplay().getSystemColor(
+                SWT.COLOR_WHITE));
         GridLayout layout = new GridLayout();
         layout.marginHeight = 0;
         layout.marginWidth = 0;
@@ -109,7 +111,6 @@ public class RichTextEditViewer implements IRichTextEditViewer {
                 handleControlDispose(e);
             }
         });
-        composite.setBackground(textViewer.getControl().getBackground());
         return composite;
     }
 
@@ -134,6 +135,8 @@ public class RichTextEditViewer implements IRichTextEditViewer {
             }
         });
         ToolBar toolBar = toolBarManager.createControl(parent);
+        toolBar.setBackground(parent.getDisplay().getSystemColor(
+                SWT.COLOR_WIDGET_BACKGROUND));
         toolBar.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         return toolBar;
     }
@@ -141,6 +144,8 @@ public class RichTextEditViewer implements IRichTextEditViewer {
     protected void createSeparator(Composite parent) {
         Label sep = new Label(parent, SWT.SEPARATOR | SWT.HORIZONTAL);
         sep.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        sep.setBackground(parent.getDisplay().getSystemColor(
+                SWT.COLOR_WIDGET_BACKGROUND));
     }
 
     protected Control createTextControl(Composite parent, int style) {
@@ -149,6 +154,9 @@ public class RichTextEditViewer implements IRichTextEditViewer {
         renderer = createRenderer(textViewer);
 
         Control textControl = textViewer.getControl();
+        textControl.setBackground(parent.getBackground());
+        textControl.setForeground(parent.getDisplay().getSystemColor(
+                SWT.COLOR_BLACK));
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 160;
         gridData.horizontalIndent = 2;

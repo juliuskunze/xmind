@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,10 +14,15 @@
 package org.xmind.core.internal;
 
 import org.xmind.core.IImage;
+import org.xmind.core.ITitled;
+import org.xmind.core.ITopic;
 
 public abstract class Image implements IImage {
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ITitled.class || adapter == ITopic.class) {
+            return getParent();
+        }
         return null;
     }
 

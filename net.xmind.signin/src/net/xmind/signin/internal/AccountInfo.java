@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,6 +15,7 @@ package net.xmind.signin.internal;
 
 import net.xmind.signin.IAccountInfo;
 
+@SuppressWarnings("deprecation")
 public class AccountInfo implements IAccountInfo {
 
     private String user;
@@ -43,14 +44,17 @@ public class AccountInfo implements IAccountInfo {
         return expireDate;
     }
 
+    @Deprecated
     public int getSubscriptionStatus() {
         return subscriptionStatus;
     }
 
+    @Deprecated
     public boolean hasValidSubscription() {
         return subscriptionStatus == SUBSCRIPTION_VALID;
     }
 
+    @Deprecated
     void setSubscriptionStatus(int status) {
         this.subscriptionStatus = status;
     }
@@ -69,8 +73,6 @@ public class AccountInfo implements IAccountInfo {
         buffer.append(authToken);
         buffer.append(",expireDate="); //$NON-NLS-1$
         buffer.append(expireDate);
-        buffer.append(",subscriptionStatus="); //$NON-NLS-1$
-        buffer.append(subscriptionStatus);
         return buffer.toString();
     }
 

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -45,68 +45,6 @@ public class MindMapViewer extends GraphicalViewer implements IMindMapViewer {
 
     protected class MindMapSelectionSupport extends GraphicalSelectionSupport {
 
-//        protected List<IPart> collectAllSelectableParts(Object[] elements,
-//                List<IPart> toReturn, boolean reveal) {
-//            if (reveal) {
-//                ITopic newCentralTopic = findNewCentralTopic(elements);//private
-//
-//                if (newCentralTopic != null) {
-//                    ISheet sheet = getSheet();
-//                    if (sheet != null) {
-//                        inputChangedOnSelectionChanged = true;
-//                        try {
-//                            setInput(new MindMap(sheet, newCentralTopic));
-//                            if (getEditDomain() != null) {
-//                                getEditDomain().handleRequest(
-//                                        MindMapUI.REQ_SELECT_CENTRAL,
-//                                        MindMapViewer.this);
-//                            }
-//                        } finally {
-//                            inputChangedOnSelectionChanged = false;
-//                        }
-//                    }
-//                }
-//            }
-//            return super.collectAllSelectableParts(elements, toReturn, reveal);
-//        }
-//
-//        private ITopic findNewCentralTopic(Object[] elements) {
-//            ITopic centralTopic = getCentralTopic();//this class
-//
-//            for (Object o : elements) {
-//                if (o instanceof ITopic) {
-//                    ITopic topic = (ITopic) o;
-//                    ITopic newCentralTopic = findVisibleAncestor(topic,
-//                            centralTopic);
-//                    if (newCentralTopic != null
-//                            && !newCentralTopic.equals(centralTopic)) {
-//                        return newCentralTopic;
-//                    }
-//                }
-//            }
-//            return null;
-//        }
-//
-//        /*
-//         * @param topic
-//         * 
-//         * @return
-//         */
-//        private ITopic findVisibleAncestor(ITopic topic, ITopic centralTopic) {
-//            if (centralTopic == null)
-//                return null;
-//            if (topic == null) {
-//                return getSheet().getRootTopic();
-//            }
-//            if (topic.equals(centralTopic))
-//                return null;
-//            ITopic parent = topic.getParent();
-//            if (ITopic.DETACHED.equals(topic.getType())) {
-//                return parent;
-//            }
-//            return findVisibleAncestor(parent, centralTopic);
-//        }
-
         public IPart findSelectablePart(Object element) {
             if (element instanceof ISheet)
                 return null;
@@ -133,8 +71,8 @@ public class MindMapViewer extends GraphicalViewer implements IMindMapViewer {
             if (selection instanceof IStructuredSelection) {
                 IStructuredSelection ss = (IStructuredSelection) selection;
                 if (ss.isEmpty() && getInput() != null) {
-                    selection = new StructuredSelection(MindMapUtils
-                            .toRealModel(getInput()));
+                    selection = new StructuredSelection(
+                            MindMapUtils.toRealModel(getInput()));
                 }
             }
             return selection;
@@ -165,7 +103,7 @@ public class MindMapViewer extends GraphicalViewer implements IMindMapViewer {
             return getCentralTopicPart();
         if (adapter == IWorkbook.class) {
             ISheet sheet = getSheet();
-            return sheet == null ? null : sheet.getParent();
+            return sheet == null ? null : sheet.getOwnedWorkbook();
         }
         return super.getAdapter(adapter);
     }
@@ -200,9 +138,27 @@ public class MindMapViewer extends GraphicalViewer implements IMindMapViewer {
 
     protected void revealParts(List<? extends IPart> parts) {
         super.revealParts(parts);
-        IRevealService revealService = (IRevealService) getService(IRevealService.class);
-        if (revealService != null) {
-            revealService.reveal(new StructuredSelection(parts));
+        if (getFocusedPart() != null && parts.contains(getFocusedPart())) {
+            IRevealService revealService = (IRevealService) getService(IRevealService.class);
+            if (revealService != null) {
+                revealService.reveal(new StructuredSelection(getFocusedPart()));
+            }
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.AbstractViewer#fireFocusedPartChanged()
+     */
+    @Override
+    protected void fireFocusedPartChanged() {
+        super.fireFocusedPartChanged();
+        if (getFocusedPart() != null) {
+            IRevealService revealService = (IRevealService) getService(IRevealService.class);
+            if (revealService != null) {
+                revealService.reveal(new StructuredSelection(getFocusedPart()));
+            }
         }
     }
 
@@ -214,14 +170,14 @@ public class MindMapViewer extends GraphicalViewer implements IMindMapViewer {
         super.ensureVisible(box, clientArea, 10);
     }
 
-    protected void inputChanged(Object input, Object oldInput) {
+//    protected void inputChanged(Object input, Object oldInput) {
 //        ISelection oldSelection = getSelection();
-        super.inputChanged(input, oldInput);
+//        super.inputChanged(input, oldInput);
 //        if (!inputChangedOnSelectionChanged && getEditDomain() != null
 //                && needSelectCentral(oldSelection)) {
 //            getEditDomain().handleRequest(MindMapUI.REQ_SELECT_CENTRAL, this);
 //        }
-    }
+//    }
 
     /*
      * (non-Javadoc)
@@ -313,6 +269,7 @@ public class MindMapViewer extends GraphicalViewer implements IMindMapViewer {
     public IPart findPart(Object element) {
         if (element instanceof ISummary)
             element = ((ISummary) element).getTopic();
-        return super.findPart(element);//goto AbstractViewer when delete not in DrillDown
+        return super.findPart(element);
     }
+
 }

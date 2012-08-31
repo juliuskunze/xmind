@@ -8,12 +8,21 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.contexts.IContextActivation;
+import org.eclipse.ui.contexts.IContextService;
+import org.eclipse.ui.services.IServiceLocator;
 
-public class DialogPaneContainer {
+public class DialogPaneContainer implements IDialogPaneContainer {
 
     private Composite composite;
 
-    private DialogPane currentDialog;
+    private IDialogPane currentPane;
+
+    private IServiceLocator serviceLocator;
+
+    public void init(IServiceLocator serviceLocator) {
+        this.serviceLocator = serviceLocator;
+    }
 
     public Control getControl() {
         return composite;
@@ -45,19 +54,46 @@ public class DialogPaneContainer {
         hideCurrentDialog();
     }
 
-    protected void showDialog(DialogPane dialog) {
+    public int open(IDialogPane dialog) {
+        if (composite == null || composite.isDisposed())
+            return IDialogPane.CANCEL;
+        showDialog(dialog);
+        return dialog.getReturnCode();
+    }
+
+    protected void showDialog(IDialogPane dialog) {
         if (composite == null || composite.isDisposed())
             return;
 
         doHideCurrentDialog();
-        currentDialog = dialog;
-        currentDialog.createControl(composite);
-        currentDialog.setFocus();
+        currentPane = dialog;
+        dialog.init(this);
+        currentPane.createControl(composite);
+        currentPane.setFocus();
         composite.layout(true);
+
+        IContextActivation activation = null;
+        IContextService contextService = serviceLocator == null ? null
+                : (IContextService) serviceLocator
+                        .getService(IContextService.class);
+        if (contextService != null) {
+            activation = contextService
+                    .activateContext("org.xmind.ui.context.backcover"); //$NON-NLS-1$
+        }
+        Display display = Display.getCurrent();
+        while (currentPane != null) {
+            if (!display.readAndDispatch()) {
+                display.sleep();
+            }
+        }
+        close();
+        if (contextService != null && activation != null) {
+            contextService.deactivateContext(activation);
+        }
     }
 
-    protected DialogPane getCurrentDialog() {
-        return currentDialog;
+    protected IDialogPane getCurrentDialog() {
+        return currentPane;
     }
 
     protected void hideCurrentDialog() {
@@ -68,29 +104,55 @@ public class DialogPaneContainer {
     }
 
     private void doHideCurrentDialog() {
-        if (currentDialog != null) {
-            Control pageControl = currentDialog.getControl();
-            currentDialog.dispose();
+        if (currentPane != null) {
+            Control pageControl = currentPane.getControl();
+            currentPane.dispose();
             if (pageControl != null && !pageControl.isDisposed()) {
                 pageControl.dispose();
             }
-            currentDialog = null;
+            currentPane = null;
         }
     }
 
     public void dispose() {
-        hideCurrentDialog();
+        close();
         if (composite != null) {
             composite.dispose();
         }
     }
 
     public void setFocus() {
-        if (currentDialog != null) {
-            currentDialog.setFocus();
+        if (currentPane != null) {
+            currentPane.setFocus();
         } else {
             composite.setFocus();
         }
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.internal.editor.IDialogPaneContainer#close()
+     */
+    public boolean close() {
+        hideCurrentDialog();
+        return currentPane == null;
+    }
+
+    public void close(int returnCode) {
+        if (currentPane != null) {
+            currentPane.setReturnCode(returnCode);
+        }
+        close();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.internal.editor.IDialogPaneContainer#isOpen()
+     */
+    public boolean isOpen() {
+        return currentPane != null;
     }
 
 }

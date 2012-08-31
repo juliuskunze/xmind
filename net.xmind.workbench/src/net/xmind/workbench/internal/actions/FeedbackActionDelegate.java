@@ -1,12 +1,13 @@
 package net.xmind.workbench.internal.actions;
 
+import net.xmind.signin.XMindNet;
+
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
-public class FeedbackActionDelegate extends XMindNetActionDelegate implements
-        IWorkbenchWindowActionDelegate {
+public class FeedbackActionDelegate implements IWorkbenchWindowActionDelegate {
 
     private IWorkbenchWindow window;
 
@@ -27,7 +28,6 @@ public class FeedbackActionDelegate extends XMindNetActionDelegate implements
      */
     public void init(IWorkbenchWindow window) {
         this.window = window;
-        setURL("http://www.xmind.net/xmind/feedback/"); //$NON-NLS-1$
     }
 
     /*
@@ -39,7 +39,7 @@ public class FeedbackActionDelegate extends XMindNetActionDelegate implements
         if (window == null)
             return;
 
-        gotoURL();
+        XMindNet.gotoURL("http://www.xmind.net/xmind/feedback/"); //$NON-NLS-1$
     }
 
     /*

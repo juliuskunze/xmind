@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -114,7 +114,7 @@ public interface IMindMapImages {
     String WORKBOOK = "workbook.gif"; //$NON-NLS-1$
     String URL = "link_obj.gif"; //$NON-NLS-1$
 
-    String ALAPHA = "alpha.gif"; //$NON-NLS-1$
+    String ALPHA = "alpha.gif"; //$NON-NLS-1$
 
     String UNLOCK = "unlock.gif"; //$NON-NLS-1$
     String NUMBERING_INHERIT = "inherited.gif"; //$NON-NLS-1$

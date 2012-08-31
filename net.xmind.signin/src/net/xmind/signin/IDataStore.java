@@ -4,16 +4,19 @@
 package net.xmind.signin;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public interface IDataStore {
 
     public static final IDataStore EMPTY = new IDataStore() {
 
-        private Map<Object, Object> map = Collections.emptyMap();
+        private final Map<Object, Object> noMap = Collections.emptyMap();
+
+        private final List<IDataStore> noChildren = Collections.emptyList();
 
         public Map<Object, Object> toMap() {
-            return map;
+            return noMap;
         }
 
         public boolean has(String key) {
@@ -32,9 +35,18 @@ public interface IDataStore {
             return 0;
         }
 
+        public double getDouble(String key) {
+            return 0;
+        }
+
         public boolean getBoolean(String key) {
             return false;
         }
+
+        public List<IDataStore> getChildren(String key) {
+            return noChildren;
+        }
+
     };
 
     boolean has(String key);
@@ -46,6 +58,10 @@ public interface IDataStore {
     boolean getBoolean(String key);
 
     long getLong(String key);
+
+    double getDouble(String key);
+
+    List<IDataStore> getChildren(String key);
 
     Map<Object, Object> toMap();
 

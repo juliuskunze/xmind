@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -375,7 +375,7 @@ public class HyperlinkDialog extends TitleAreaDialog implements
         editDomain.installTool(GEF.TOOL_SELECT, new GallerySelectTool());
         editDomain.installEditPolicy(GalleryViewer.POLICY_NAVIGABLE,
                 new GalleryNavigablePolicy());
-        editDomain.setViewer(typeViewer);
+        typeViewer.setEditDomain(editDomain);
 
         typeViewer.setPartFactory(new TypePartFactory());
         typeViewer.setLabelProvider(new TypeViewerLableProvider());

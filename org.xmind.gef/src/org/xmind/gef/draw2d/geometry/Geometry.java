@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -368,9 +368,8 @@ public class Geometry {
      * @return the distances from the point to the four sides of the rectangle
      */
     public static Insets getInsets(Point p, Rectangle box) {
-        return new Insets(p.y - box.y, p.x - box.x, box.bottom() - p.y, box
-                .right()
-                - p.x);
+        return new Insets(p.y - box.y, p.x - box.x, box.bottom() - p.y,
+                box.right() - p.x);
     }
 
     public static Rectangle getExpanded(Point p, Insets ins) {
@@ -378,8 +377,8 @@ public class Geometry {
     }
 
     public static Rectangle getExpanded(int x, int y, Insets ins) {
-        return new Rectangle(x - ins.left, y - ins.top, ins.getWidth(), ins
-                .getHeight());
+        return new Rectangle(x - ins.left, y - ins.top, ins.getWidth(),
+                ins.getHeight());
     }
 
     public static Rectangle getBounds(Rectangle box, boolean outline,
@@ -590,8 +589,9 @@ public class Geometry {
     public static Dimension getScaledConstrainedSize2(double width,
             double height, double originWidth, double originHeight,
             double minWidth, double minHeight, double maxWidth, double maxHeight) {
-        return getScaledConstrainedSize2(width, height, slope(originWidth,
-                originHeight), minWidth, minHeight, maxWidth, maxHeight);
+        return getScaledConstrainedSize2(width, height,
+                slope(originWidth, originHeight), minWidth, minHeight,
+                maxWidth, maxHeight);
     }
 
     public static Dimension getScaledConstrainedSize2(double width,
@@ -609,8 +609,8 @@ public class Geometry {
         }
         height = constrain(width * slope, minHeight, maxHeight);
         width = constrain(height / slope, minWidth, maxWidth);
-        return new Dimension((int) (Math.floor(width)), (int) (Math
-                .floor(height)));
+        return new Dimension((int) (Math.floor(width)),
+                (int) (Math.floor(height)));
     }
 
     public static double slope(Dimension size) {
@@ -633,8 +633,8 @@ public class Geometry {
             List<PrecisionPoint> points) {
         if (points.size() <= 1)
             return new ArrayList<PrecisionLine>(0);
-        ArrayList<PrecisionLine> lines = new ArrayList<PrecisionLine>(points
-                .size() - 1);
+        ArrayList<PrecisionLine> lines = new ArrayList<PrecisionLine>(
+                points.size() - 1);
         for (int i = 0; i < points.size() - 1; i++) {
             lines.add(new PrecisionLine(points.get(i), points.get(i + 1),
                     LineType.LineSegment));
@@ -659,8 +659,8 @@ public class Geometry {
         if (points.size() <= 1)
             return new ArrayList<PrecisionLine>(0);
 
-        ArrayList<PrecisionLine> lines = new ArrayList<PrecisionLine>(points
-                .size() - 1);
+        ArrayList<PrecisionLine> lines = new ArrayList<PrecisionLine>(
+                points.size() - 1);
 
         for (int i = 0; i < points.size() - 1; i++) {
             lines.add(new PrecisionLine(new PrecisionPoint(origin)
@@ -695,9 +695,9 @@ public class Geometry {
 
     public static PrecisionPoint getRayXRect(PrecisionLine ray,
             PrecisionRectangle r, int tolerance) {
-        List<PrecisionLine> lines = getLineSegments(r.getTopLeft(), r
-                .getTopRight(), r.getBottomRight(), r.getBottomLeft(), r
-                .getTopLeft());
+        List<PrecisionLine> lines = getLineSegments(r.getTopLeft(),
+                r.getTopRight(), r.getBottomRight(), r.getBottomLeft(),
+                r.getTopLeft());
         for (PrecisionLine line : lines) {
             PrecisionPoint p = getRayXLineSeg(ray, line, tolerance);
             if (p != null)
@@ -710,9 +710,9 @@ public class Geometry {
             PrecisionRectangle r, int tolerance) {
         PrecisionPoint ret = null;
         double dist = -1;
-        List<PrecisionLine> lines = getLineSegments(r.getTopLeft(), r
-                .getTopRight(), r.getBottomRight(), r.getBottomLeft(), r
-                .getTopLeft());
+        List<PrecisionLine> lines = getLineSegments(r.getTopLeft(),
+                r.getTopRight(), r.getBottomRight(), r.getBottomLeft(),
+                r.getTopLeft());
         for (PrecisionLine line : lines) {
             PrecisionPoint p = getRayXLineSeg(ray, line, tolerance);
             if (p != null) {
@@ -734,8 +734,8 @@ public class Geometry {
     public static boolean rayContainsPoint(PrecisionLine ray, PrecisionPoint p,
             int tolerance) {
         return ray.contains(p, tolerance)
-                || new PrecisionLine(ray.getOrigin(), p).contains(ray
-                        .getTerminus(), tolerance);
+                || new PrecisionLine(ray.getOrigin(), p).contains(
+                        ray.getTerminus(), tolerance);
     }
 
 //    public static PrecisionPoint getCenter( PrecisionPoint p1, PrecisionPoint p2 ) {
@@ -757,6 +757,23 @@ public class Geometry {
         if (r1 == null)
             return r2.getCopy();
         return r1.union(r2);
+    }
+
+    public static Rectangle intersect(Rectangle r1, Rectangle r2) {
+        if (r2 == null)
+            return r1;
+        if (r1 == null)
+            return r2.getCopy();
+        return r1.intersect(r2);
+    }
+
+    public static PrecisionRectangle intersect(PrecisionRectangle r1,
+            PrecisionRectangle r2) {
+        if (r2 == null)
+            return r1;
+        if (r1 == null)
+            return r2.getCopy();
+        return r1.intersect(r2);
     }
 
     public static PrecisionPoint[] intersectQuadBezier(PrecisionLine line,
@@ -921,8 +938,8 @@ public class Geometry {
 
     public static PrecisionPointPair calculatePositionPair(PrecisionPoint from,
             PrecisionPoint to, double w) {
-        PrecisionPointPair result = new PrecisionPointPair(from.getCopy(), from
-                .getCopy());
+        PrecisionPointPair result = new PrecisionPointPair(from.getCopy(),
+                from.getCopy());
         if (from.equals(to))
             return result;
 

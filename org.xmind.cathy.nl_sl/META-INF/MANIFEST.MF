@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: XMind Application  Language Support
+Bundle-SymbolicName: org.xmind.cathy.nl_sl;singleton:=true
+Bundle-Version: 3.3.0.qualifier
+Bundle-Vendor: XMind Ltd.
+Fragment-Host: org.xmind.cathy
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

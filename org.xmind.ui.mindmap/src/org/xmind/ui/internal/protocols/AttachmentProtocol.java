@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,11 +14,13 @@
 package org.xmind.ui.internal.protocols;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -113,7 +115,53 @@ public class AttachmentProtocol implements IProtocol {
                     return;
             }
 
-            Program.launch(path);
+            openDocument(path, new File(path));
+        }
+
+        protected void openDocument(String path, File file) {
+            try {
+                try {
+                    openDefault(file.getCanonicalPath());
+                } catch (IOException e) {
+                    try {
+                        openDefault(path);
+                    } catch (IOException e2) {
+                        try {
+                            Program.launch(file.getCanonicalPath());
+                        } catch (IOException e3) {
+                            Program.launch(path);
+                        }
+                    }
+                }
+            } catch (InterruptedException ignore) {
+            }
+        }
+
+        private void openDefault(String path) throws IOException,
+                InterruptedException {
+            File dir = new File(System.getProperty("user.home")); //$NON-NLS-1$
+            String os = Platform.getOS();
+            if ("win32".equals(os)) { //$NON-NLS-1$
+                try {
+                    Runtime.getRuntime().exec(new String[] { "explorer.exe", //$NON-NLS-1$
+                            "\"" + path + "\"" //$NON-NLS-1$ //$NON-NLS-2$
+                    }, null, dir);
+                } catch (Throwable e) {
+                    // Reference: http://frank.zinepal.com/open-a-file-in-the-default-application-using
+                    Runtime.getRuntime().exec(new String[] { "cmd", //$NON-NLS-1$
+                            "/c", "\"" + path + "\"" }, null, dir); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                }
+            } else if ("macosx".equals(os)) { //$NON-NLS-1$
+                Runtime.getRuntime().exec(new String[] { "open", //$NON-NLS-1$
+                        path }, null, dir);
+            } else if ("linux".equals(os)) { //$NON-NLS-1$
+                // Reference: http://pastebin.com/Ka8gkxZn
+                // Thanks for Joachim Breuer for providing us this patch.
+                Runtime.getRuntime().exec(new String[] { "xdg-open", //$NON-NLS-1$
+                        path }, null, dir);
+            } else {
+                throw new FileNotFoundException();
+            }
         }
 
         /**

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: XMind GEF UI  Language Support
+Bundle-SymbolicName: org.xmind.gef.ui.nl_ru;singleton:=true
+Bundle-Version: 3.3.0.qualifier
+Bundle-Vendor: XMind Ltd.
+Fragment-Host: org.xmind.gef.ui
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

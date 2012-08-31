@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -35,7 +35,7 @@ import org.xmind.cathy.internal.WorkbenchMessages;
  */
 public class HelpAction extends Action implements IWorkbenchAction {
 
-    private static final String ONLINE_HELP_URL = "http://www.xmind.net/help"; //$NON-NLS-1$
+    private static final String ONLINE_HELP_URL = "http://www.xmind.net/xmind/help/"; //$NON-NLS-1$
 
     private IWorkbenchWindow window;
 

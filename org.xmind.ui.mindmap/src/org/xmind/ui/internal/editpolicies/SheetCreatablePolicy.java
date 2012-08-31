@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,24 +13,14 @@
  *******************************************************************************/
 package org.xmind.ui.internal.editpolicies;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
 import org.xmind.core.IRelationshipEnd;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.gef.GEF;
-import org.xmind.gef.IGraphicalViewer;
-import org.xmind.gef.ISourceProvider;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
-import org.xmind.gef.command.Command;
-import org.xmind.gef.draw2d.IMinimizable;
-import org.xmind.gef.part.IGraphicalPart;
 import org.xmind.gef.part.IPart;
-import org.xmind.gef.service.IAnimationService;
 import org.xmind.ui.commands.AddTopicCommand;
 import org.xmind.ui.commands.CommandMessages;
 import org.xmind.ui.commands.CreateTopicCommand;
@@ -158,16 +148,17 @@ public class SheetCreatablePolicy extends MindMapPolicyBase {
 
         builder.start();
         builder.setLabel(CommandMessages.Command_CreateFloatingTopic);
-        CreateTopicCommand create = new CreateTopicCommand(rootTopic
-                .getOwnedWorkbook());
+        CreateTopicCommand create = new CreateTopicCommand(
+                rootTopic.getOwnedWorkbook());
         builder.add(create, true);
         builder.add(
                 new AddTopicCommand(create, rootTopic, -1, ITopic.DETACHED),
                 false);
         builder.add(new ModifyTitleTextCommand(create,
                 MindMapMessages.TitleText_FloatingTopic), false);
-        builder.add(new ModifyPositionCommand(create, MindMapUtils
-                .toModelPosition(position)), false);
+        builder.add(
+                new ModifyPositionCommand(create, MindMapUtils
+                        .toModelPosition(position)), false);
         builder.addSource(create.getSource(), true);
         builder.end();
 
@@ -184,43 +175,43 @@ public class SheetCreatablePolicy extends MindMapPolicyBase {
 //        }
     }
 
-    protected void doAnimateCommand(Command cmd, IAnimationService anim,
-            IViewer viewer) {
-        List<Object> creations = ((ISourceProvider) cmd).getSources();
-        final List<IMinimizable> minimizables = getMinimizables(creations,
-                viewer);
-        if (minimizables.isEmpty())
-            return;
-        for (IMinimizable min : minimizables) {
-            min.setMinimized(true);
-        }
-        ((IGraphicalViewer) viewer).getCanvas().getLightweightSystem()
-                .getUpdateManager().performValidation();
-        super.doAnimateCommand(cmd, anim, viewer);
-    }
-
-    protected void createAnimation(Command cmd, IViewer viewer) {
-        List<Object> creations = ((ISourceProvider) cmd).getSources();
-        final List<IMinimizable> minimizables = getMinimizables(creations,
-                viewer);
-        for (IMinimizable min : minimizables) {
-            min.setMinimized(false);
-        }
-    }
-
-    private List<IMinimizable> getMinimizables(List<Object> creations,
-            IViewer viewer) {
-        List<IMinimizable> list = new ArrayList<IMinimizable>(creations.size());
-        for (Object o : creations) {
-            IPart part = viewer.findPart(o);
-            if (part instanceof IGraphicalPart) {
-                IFigure figure = ((IGraphicalPart) part).getFigure();
-                if (figure instanceof IMinimizable) {
-                    list.add((IMinimizable) figure);
-                }
-            }
-        }
-        return list;
-    }
+//    protected void doAnimateCommand(Command cmd, IAnimationService anim,
+//            IViewer viewer) {
+//        List<Object> creations = ((ISourceProvider) cmd).getSources();
+//        final List<IMinimizable> minimizables = getMinimizables(creations,
+//                viewer);
+//        if (minimizables.isEmpty())
+//            return;
+//        for (IMinimizable min : minimizables) {
+//            min.setMinimized(true);
+//        }
+//        ((GraphicalViewer) viewer).getLightweightSystem().getUpdateManager()
+//                .performValidation();
+//        super.doAnimateCommand(cmd, anim, viewer);
+//    }
+//
+//    protected void createAnimation(Command cmd, IViewer viewer) {
+//        List<Object> creations = ((ISourceProvider) cmd).getSources();
+//        final List<IMinimizable> minimizables = getMinimizables(creations,
+//                viewer);
+//        for (IMinimizable min : minimizables) {
+//            min.setMinimized(false);
+//        }
+//    }
+//
+//    private List<IMinimizable> getMinimizables(List<Object> creations,
+//            IViewer viewer) {
+//        List<IMinimizable> list = new ArrayList<IMinimizable>(creations.size());
+//        for (Object o : creations) {
+//            IPart part = viewer.findPart(o);
+//            if (part instanceof IGraphicalPart) {
+//                IFigure figure = ((IGraphicalPart) part).getFigure();
+//                if (figure instanceof IMinimizable) {
+//                    list.add((IMinimizable) figure);
+//                }
+//            }
+//        }
+//        return list;
+//    }
 
 }

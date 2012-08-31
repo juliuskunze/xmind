@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,12 +13,15 @@
  *******************************************************************************/
 package org.xmind.core.internal;
 
+import org.xmind.core.INamed;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerRef;
 
 public abstract class MarkerRef implements IMarkerRef {
 
     public Object getAdapter(Class adapter) {
+        if (adapter == INamed.class)
+            return getMarker();
         return null;
     }
 

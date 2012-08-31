@@ -1,9 +1,11 @@
 package org.xmind.ui.internal.protocols;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -49,15 +51,15 @@ public class FileProtocol implements IProtocol {
         }
 
         private void open(String path) {
-            if (!new File(path).exists()) {
+            File file = new File(path);
+            if (!file.exists()) {
                 MessageDialog
                         .openInformation(
                                 window.getShell(),
                                 DialogMessages.InfoFileNotExists_title,
-                                NLS
-                                        .bind(
-                                                DialogMessages.InfoFileNotExists_message,
-                                                path));
+                                NLS.bind(
+                                        DialogMessages.InfoFileNotExists_message,
+                                        path));
                 return;
             }
             String extension = FileUtils.getExtension(path);
@@ -77,10 +79,52 @@ public class FileProtocol implements IProtocol {
                     return;
             }
 
+            openDocument(path, file);
+        }
+
+        protected void openDocument(String path, File file) {
             try {
-                Program.launch(new File(path).getCanonicalPath());
-            } catch (Exception e) {
-                Program.launch(path);
+                try {
+                    openDefault(file.getCanonicalPath());
+                } catch (IOException e) {
+                    try {
+                        openDefault(path);
+                    } catch (IOException e2) {
+                        try {
+                            Program.launch(file.getCanonicalPath());
+                        } catch (IOException e3) {
+                            Program.launch(path);
+                        }
+                    }
+                }
+            } catch (InterruptedException ignore) {
+            }
+        }
+
+        private void openDefault(String path) throws IOException,
+                InterruptedException {
+            File dir = new File(System.getProperty("user.home")); //$NON-NLS-1$
+            String os = Platform.getOS();
+            if ("win32".equals(os)) { //$NON-NLS-1$
+                try {
+                    Runtime.getRuntime().exec(new String[] { "explorer.exe", //$NON-NLS-1$
+                            "\"" + path + "\"" //$NON-NLS-1$ //$NON-NLS-2$
+                    }, null, dir);
+                } catch (Throwable e) {
+                    // Reference: http://frank.zinepal.com/open-a-file-in-the-default-application-using
+                    Runtime.getRuntime().exec(new String[] { "cmd", //$NON-NLS-1$
+                            "/c", "\"" + path + "\"" }, null, dir); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                }
+            } else if ("macosx".equals(os)) { //$NON-NLS-1$
+                Runtime.getRuntime().exec(new String[] { "open", //$NON-NLS-1$
+                        path }, null, dir);
+            } else if ("linux".equals(os)) { //$NON-NLS-1$
+                // Reference: http://pastebin.com/Ka8gkxZn
+                // Thanks for Joachim Breuer for providing us this patch.
+                Runtime.getRuntime().exec(new String[] { "xdg-open", //$NON-NLS-1$
+                        path }, null, dir);
+            } else {
+                throw new FileNotFoundException();
             }
         }
 
@@ -167,8 +211,8 @@ public class FileProtocol implements IProtocol {
                     }
                 }
             }
-            return FilePathParser.toAbsolutePath(System
-                    .getProperty("user.home"), path); //$NON-NLS-1$
+            return FilePathParser.toAbsolutePath(
+                    System.getProperty("user.home"), path); //$NON-NLS-1$
         }
         return path;
     }

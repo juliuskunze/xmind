@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,45 +13,55 @@
  *******************************************************************************/
 package net.xmind.workbench.internal.actions;
 
-import net.xmind.signin.XMindNet;
-
 /**
  * @author Frank Shaka
- * 
+ * @deprecated
  */
+@Deprecated
 public class XMindNetActionDelegate {
 
-    private String url;
-
-    public XMindNetActionDelegate() {
-    }
-
-    /**
-     * @return the url
-     */
-    public String getURL() {
-        return url;
-    }
-
-    /**
-     * @param url
-     *            the url to set
-     */
-    public XMindNetActionDelegate setURL(String url) {
-        this.url = url;
-        return this;
-    }
-
-    public XMindNetActionDelegate gotoURL() {
-        gotoURL(getURL());
-        return this;
-    }
-
-    /**
-     * @param url
-     */
-    protected void gotoURL(final String url) {
-        XMindNet.gotoURL(url);
-    }
+//    private String url = null;
+//
+//    private boolean usesExternalBrowser = false;
+//
+//    public XMindNetActionDelegate() {
+//    }
+//
+//    /**
+//     * @return the url
+//     */
+//    public String getURL() {
+//        return url;
+//    }
+//
+//    /**
+//     * @param url
+//     *            the url to set
+//     */
+//    public XMindNetActionDelegate setURL(String url, Object... values) {
+//        this.url = EncodingUtils.format(url, values);
+//        return this;
+//    }
+//
+//    public XMindNetActionDelegate setUsesExternalBrowser(boolean b) {
+//        this.usesExternalBrowser = b;
+//        return this;
+//    }
+//
+//    public boolean usesExternalBrowser() {
+//        return usesExternalBrowser;
+//    }
+//
+//    public XMindNetActionDelegate gotoURL() {
+//        gotoURL(getURL());
+//        return this;
+//    }
+//
+//    /**
+//     * @param url
+//     */
+//    protected void gotoURL(final String url) {
+//        XMindNet.gotoURL(url, usesExternalBrowser());
+//    }
 
 }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -140,8 +140,8 @@ public class AdvancedToolbarLayout extends org.eclipse.draw2d.ToolbarLayout {
             prefSpacing = (clientArea.height - totalHeight) / (numChildren - 1);
             totalHeight = clientArea.height;
         } else {
-            prefSpacing = spacing;
-            totalHeight += (numChildren - 1) * spacing;
+            prefSpacing = getSpacing();
+            totalHeight += (numChildren - 1) * getSpacing();
         }
 //        totalMinHeight += (numChildren - 1) * spacing;
 //        prefMinSumHeight = totalHeight - totalMinHeight;
@@ -165,12 +165,12 @@ public class AdvancedToolbarLayout extends org.eclipse.draw2d.ToolbarLayout {
             y += clientArea.height - totalHeight;
         }
 
-        if (matchWidth)
+        if (isStretchMinorAxis())
             totalWidth = Integer.MAX_VALUE;
         totalWidth = Math.max(0, Math.min(clientArea.width, totalWidth));
 
         int adjust = clientArea.width - totalWidth;
-        switch (minorAlignment) {
+        switch (getMinorAlignment()) {
         case ALIGN_TOPLEFT:
             adjust = 0;
             break;
@@ -196,7 +196,7 @@ public class AdvancedToolbarLayout extends org.eclipse.draw2d.ToolbarLayout {
 
             int width = Math.min(prefWidth, //totalWidth);
                     transposer.t(child.getMaximumSize()).width);
-            if (matchWidth)
+            if (isStretchMinorAxis())
                 width = transposer.t(child.getMaximumSize()).width;
             width = Math.max(minWidth, Math.min(clientArea.width, width));
             newBounds.width = width;

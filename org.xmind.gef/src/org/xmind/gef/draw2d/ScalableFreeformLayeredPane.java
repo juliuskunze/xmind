@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -29,7 +29,7 @@ public class ScalableFreeformLayeredPane extends
             boolean optimizeClip = getBorder() == null
                     || getBorder().isOpaque();
             if (!optimizeClip)
-                g.clipRect(getBounds().getCropped(getInsets()));
+                g.clipRect(getBounds().getShrinked(getInsets()));
             g.scale(getScale());
             g.pushState();
             paintChildren(g);

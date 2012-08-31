@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -123,8 +123,8 @@ public class TopicPart extends NodePart implements ITopicPart {
 
     protected void declareEditPolicies(IRequestHandler reqHandler) {
         super.declareEditPolicies(reqHandler);
-        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE,
+                NullEditPolicy.getInstance());
         reqHandler.installEditPolicy(GEF.ROLE_NAVIGABLE,
                 MindMapUI.POLICY_TOPIC_NAVIGABLE);
         reqHandler.installEditPolicy(GEF.ROLE_EDITABLE,
@@ -157,6 +157,19 @@ public class TopicPart extends NodePart implements ITopicPart {
 //        reqProc.uninstallPolicy(GEF.ROLE_SELECTABLE);
 //        super.uninstallPolicies(reqProc);
 //    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.part.GraphicalEditPart#containsPoint(org.eclipse.draw2d
+     * .geometry.Point)
+     */
+    @Override
+    public boolean containsPoint(Point position) {
+        // TODO Auto-generated method stub
+        return super.containsPoint(position);
+    }
 
     public ITitleTextPart getTitle() {
         return title;
@@ -224,6 +237,7 @@ public class TopicPart extends NodePart implements ITopicPart {
 
     protected void register() {
         registerModel(getTopic());
+//        System.out.println(getTopic().getTitleText());
         super.register();
     }
 

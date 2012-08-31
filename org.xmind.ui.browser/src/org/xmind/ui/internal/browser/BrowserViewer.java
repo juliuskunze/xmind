@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -13,7 +13,6 @@ package org.xmind.ui.internal.browser;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,6 +56,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.xmind.ui.animation.AnimationViewer;
 import org.xmind.ui.animation.IAnimationContentProvider;
+import org.xmind.ui.browser.IBrowserSupport;
 import org.xmind.ui.browser.IBrowserViewer;
 import org.xmind.ui.browser.IBrowserViewerContainer;
 import org.xmind.ui.browser.IBrowserViewerContribution;
@@ -198,6 +198,8 @@ public class BrowserViewer implements IBrowserViewer {
          * browser.LocationEvent)
          */
         public void changed(LocationEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
             if (!event.top)
                 return;
             if (!"about:blank".equals(event.location)) { //$NON-NLS-1$
@@ -221,6 +223,8 @@ public class BrowserViewer implements IBrowserViewer {
          * .browser.LocationEvent)
          */
         public void changing(LocationEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
             if (!"about:blank".equals(event.location)) { //$NON-NLS-1$
                 event.doit = firePropertyChangingEvent(PROPERTY_LOCATION,
                         locationText, event.location, event.doit);
@@ -238,6 +242,8 @@ public class BrowserViewer implements IBrowserViewer {
          * .WindowEvent)
          */
         public void open(WindowEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
             if (container != null) {
                 event.browser = container.openNewBrowser();
             }
@@ -283,6 +289,8 @@ public class BrowserViewer implements IBrowserViewer {
          * .browser.WindowEvent)
          */
         public void close(WindowEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
             if (container != null) {
                 container.close();
             }
@@ -296,6 +304,8 @@ public class BrowserViewer implements IBrowserViewer {
          * browser.ProgressEvent)
          */
         public void changed(ProgressEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
             if (event.total == 0)
                 return;
 
@@ -336,6 +346,8 @@ public class BrowserViewer implements IBrowserViewer {
          * .browser.ProgressEvent)
          */
         public void completed(ProgressEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
             if (container != null) {
                 IProgressMonitor monitor = container.getActionBars()
                         .getStatusLineManager().getProgressMonitor();
@@ -354,6 +366,8 @@ public class BrowserViewer implements IBrowserViewer {
          * .TitleEvent)
          */
         public void changed(TitleEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
             String oldTitle = titleText;
             titleText = event.title;
             firePropertyChangeEvent(PROPERTY_TITLE, oldTitle, titleText);
@@ -367,6 +381,8 @@ public class BrowserViewer implements IBrowserViewer {
          * .browser.StatusTextEvent)
          */
         public void changed(StatusTextEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
             boolean doit = true;
             String oldStatus = statusText;
             if (!firePropertyChangingEvent(PROPERTY_STATUS, oldStatus,
@@ -395,6 +411,10 @@ public class BrowserViewer implements IBrowserViewer {
     private boolean mozilla;
 
     private Clipboard clipboard;
+
+    private Composite toolBar;
+
+    private ToolBarManager actionBar;
 
     private Combo location;
 
@@ -429,12 +449,15 @@ public class BrowserViewer implements IBrowserViewer {
 
     private boolean redirect = true;
 
+    private int style = 0;
+
     public BrowserViewer(Composite parent, int style) {
         this(parent, style, null);
     }
 
     public BrowserViewer(Composite parent, int style,
             IBrowserViewerContainer container) {
+        this.style = style;
         this.container = container;
         this.composite = new Composite(parent, style);
         GridLayout layout = new GridLayout();
@@ -469,6 +492,7 @@ public class BrowserViewer implements IBrowserViewer {
         clipboard = new Clipboard(parent.getDisplay());
         createToolBar(parent);
         createBrowser(parent);
+        updateWithStyle();
         updateHistory();
         updateBackNextBusy();
 //        if (browserContainer != null) {
@@ -480,44 +504,45 @@ public class BrowserViewer implements IBrowserViewer {
     }
 
     protected void createToolBar(Composite parent) {
-        Composite toolbarContainer = new Composite(parent, SWT.NONE);
+        toolBar = new Composite(parent, SWT.NONE);
         GridLayout toolbarLayout = new GridLayout();
         toolbarLayout.marginHeight = 2;
         toolbarLayout.marginWidth = 2;
         toolbarLayout.horizontalSpacing = 5;
         toolbarLayout.verticalSpacing = 0;
-        toolbarContainer.setLayout(toolbarLayout);
-        toolbarContainer.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING,
-                true, false));
-        createToolbarContents(toolbarContainer);
-        createLocationBar(toolbarContainer);
-        createExtraContributions(toolbarContainer);
-        createHomeBusyIndicator(toolbarContainer);
-        toolbarLayout.numColumns = toolbarContainer.getChildren().length;
+        toolBar.setLayout(toolbarLayout);
+        toolBar.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
+        createActionBar(toolBar);
+        createLocationBar(toolBar);
+        createExtraContributions(toolBar);
+        createHomeBusyIndicator(toolBar);
+        toolbarLayout.numColumns = toolBar.getChildren().length;
     }
 
     private void createExtraContributions(final Composite toolbarContainer) {
-        ContributionManager toolbar = new ContributionManager() {
+        ContributionManager manager = new ContributionManager() {
             public void update(boolean force) {
-                for (IContributionItem item : getItems()) {
-                    item.fill(toolbarContainer);
+                if ((style & IBrowserSupport.NO_EXTRA_CONTRIBUTIONS) == 0) {
+                    for (IContributionItem item : getItems()) {
+                        item.fill(toolbarContainer);
+                    }
                 }
             }
         };
         for (IBrowserViewerContribution contribution : BrowserContributionManager
                 .getInstance().getContributions()) {
-            contribution.fillToolBar(this, toolbar);
+            contribution.fillToolBar(this, manager);
         }
-        toolbar.update(true);
+        manager.update(true);
     }
 
-    private void createToolbarContents(Composite parent) {
-        ToolBarManager toolbar = new ToolBarManager(SWT.FLAT);
-        toolbar.add(backAction = new BackAction());
-        toolbar.add(forwardAction = new ForwardAction());
-        toolbar.add(stopRefreshAction = new StopRefreshAction());
-        toolbar.createControl(parent);
-        toolbar.getControl().setLayoutData(
+    private void createActionBar(Composite parent) {
+        actionBar = new ToolBarManager(SWT.FLAT);
+        actionBar.add(backAction = new BackAction());
+        actionBar.add(forwardAction = new ForwardAction());
+        actionBar.add(stopRefreshAction = new StopRefreshAction());
+        actionBar.createControl(parent);
+        actionBar.getControl().setLayoutData(
                 new GridData(SWT.FILL, SWT.CENTER, false, false));
     }
 
@@ -675,6 +700,24 @@ public class BrowserViewer implements IBrowserViewer {
         return new Browser(parent, style);
     }
 
+    public void changeStyle(int newStyle) {
+        this.style = newStyle;
+        if (composite != null && !composite.isDisposed()) {
+            updateWithStyle();
+        }
+    }
+
+    protected void updateWithStyle() {
+        location.setVisible((style & IBrowserSupport.NO_LOCATION_BAR) == 0);
+        toolBar.layout(true);
+
+        boolean hasToolBar = (style & IBrowserSupport.NO_TOOLBAR) == 0;
+        toolBar.setVisible(hasToolBar);
+        ((GridData) toolBar.getLayoutData()).exclude = !hasToolBar;
+
+        composite.layout(true);
+    }
+
     public Browser getBrowser() {
         return browser;
     }
@@ -684,6 +727,8 @@ public class BrowserViewer implements IBrowserViewer {
     }
 
     private void home() {
+        if (browser == null || browser.isDisposed())
+            return;
         browser.setText(""); //$NON-NLS-1$
     }
 
@@ -734,10 +779,13 @@ public class BrowserViewer implements IBrowserViewer {
     protected void updateBackNextBusy() {
         backAction.setEnabled(isBackEnabled());
         forwardAction.setEnabled(isForwardEnabled());
-        if (loading) {
-            homeBusy.start();
-        } else {
-            homeBusy.stop();
+        if (homeBusy != null && homeBusy.getControl() != null
+                && !homeBusy.getControl().isDisposed()) {
+            if (loading) {
+                homeBusy.start();
+            } else {
+                homeBusy.stop();
+            }
         }
     }
 
@@ -1014,7 +1062,7 @@ public class BrowserViewer implements IBrowserViewer {
      *                </ul>
      */
     public boolean forward() {
-        if (browser == null)
+        if (browser == null || browser.isDisposed())
             return false;
         boolean forward = browser.forward();
         if (!forward) {
@@ -1038,7 +1086,7 @@ public class BrowserViewer implements IBrowserViewer {
      *                </ul>
      */
     public boolean back() {
-        if (browser == null)
+        if (browser == null || browser.isDisposed())
             return false;
         return browser.back();
     }
@@ -1058,7 +1106,7 @@ public class BrowserViewer implements IBrowserViewer {
      *                </ul>
      */
     public boolean isBackEnabled() {
-        if (browser == null)
+        if (browser == null || browser.isDisposed())
             return false;
         return browser.isBackEnabled();
     }
@@ -1078,7 +1126,7 @@ public class BrowserViewer implements IBrowserViewer {
      *                </ul>
      */
     public boolean isForwardEnabled() {
-        if (browser == null)
+        if (browser == null || browser.isDisposed())
             return false;
         return browser.isForwardEnabled();
     }
@@ -1096,7 +1144,7 @@ public class BrowserViewer implements IBrowserViewer {
      *                </ul>
      */
     public void stop() {
-        if (browser != null)
+        if (browser != null && !browser.isDisposed())
             browser.stop();
         setLoading(false);
     }
@@ -1110,9 +1158,12 @@ public class BrowserViewer implements IBrowserViewer {
             refresh();
             return true;
         }
-        if (browser != null)
+        if (browser != null && !browser.isDisposed())
             return browser.setUrl(url);
-        return errorText.setUrl(url);
+        if (errorText != null && errorText.getControl() != null
+                && !errorText.getControl().isDisposed())
+            return errorText.setUrl(url);
+        return false;
     }
 
     /**
@@ -1129,9 +1180,12 @@ public class BrowserViewer implements IBrowserViewer {
      */
     public void refresh() {
         if (browser != null) {
-            browser.refresh();
+            if (!browser.isDisposed())
+                browser.refresh();
         } else {
-            errorText.refresh();
+            if (errorText != null && errorText.getControl() != null
+                    && !errorText.getControl().isDisposed())
+                errorText.refresh();
         }
         try {
             Thread.sleep(50);
@@ -1196,7 +1250,8 @@ public class BrowserViewer implements IBrowserViewer {
             if (stopRefreshAction != null) {
                 stopRefreshAction.setRefresh();
             }
-            if (homeBusy != null)
+            if (homeBusy != null && homeBusy.getControl() != null
+                    && !homeBusy.getControl().isDisposed())
                 homeBusy.stop();
             if (container != null) {
                 IProgressMonitor monitor = container.getActionBars()
@@ -1228,7 +1283,7 @@ public class BrowserViewer implements IBrowserViewer {
     }
 
     protected void updateHistory() {
-        if (location == null)
+        if (location == null || location.isDisposed())
             return;
 
         String temp = location.getText();
@@ -1247,7 +1302,7 @@ public class BrowserViewer implements IBrowserViewer {
     }
 
     public void setFocus() {
-        if (browser != null) {
+        if (browser != null && !browser.isDisposed()) {
             if (browser.setFocus()) {
                 updateHistory();
             } else if (location != null) {
@@ -1276,9 +1331,9 @@ public class BrowserViewer implements IBrowserViewer {
     private String makeRedirectUrl(String source) {
         if (!source.startsWith("file:")) { //$NON-NLS-1$
             try {
-                return "http://www.xmind.net/xmind/go?r=" //$NON-NLS-1$
-                        + URLEncoder.encode(source, "UTF-8"); //$NON-NLS-1$
-            } catch (Exception e) {
+                return BrowserUtil.makeRedirectURL(source);
+            } catch (Throwable e) {
+                //ignore
             } finally {
                 redirect = false;
             }

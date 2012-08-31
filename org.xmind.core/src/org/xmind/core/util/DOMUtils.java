@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -116,6 +116,61 @@ public class DOMUtils {
 
     }
 
+    public static class AdaptableIterator<T extends IAdaptable> implements
+            Iterator<T> {
+
+        private Node node;
+
+        private String tagName;
+
+        private INodeAdaptableProvider provider;
+
+        private boolean reversed;
+
+        private T next;
+
+        public AdaptableIterator(Node parent, String tagName,
+                INodeAdaptableProvider provider, boolean reversed) {
+            this.tagName = tagName;
+            this.provider = provider;
+            this.reversed = reversed;
+            this.node = reversed ? parent.getLastChild() : parent
+                    .getFirstChild();
+            this.next = findNext();
+        }
+
+        @SuppressWarnings("unchecked")
+        private T findNext() {
+            while (node != null) {
+                IAdaptable obj;
+                if (isElementByTag(node, tagName)) {
+                    obj = provider.getAdaptable(node);
+                } else {
+                    obj = null;
+                }
+                node = reversed ? node.getPreviousSibling() : node
+                        .getNextSibling();
+                if (obj != null)
+                    return (T) obj;
+            }
+            return null;
+        }
+
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        public T next() {
+            T n = next;
+            next = findNext();
+            return n;
+        }
+
+        public void remove() {
+        }
+
+    }
+
     private static class DelegateSet<T> extends AbstractSet<T> {
 
         private Collection<T> c;
@@ -170,10 +225,9 @@ public class DOMUtils {
         if (documentBuilder == null) {
             DocumentBuilderFactory factory = DocumentBuilderFactory
                     .newInstance();
-            factory
-                    .setAttribute(
-                            "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                            true);
+            factory.setAttribute(
+                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+                    true);
             documentBuilder = factory.newDocumentBuilder();
             documentBuilder.setErrorHandler(NULL_ERROR_HANDLER);
         }
@@ -411,6 +465,15 @@ public class DOMUtils {
         return -1;
     }
 
+    public static int getNodeIndex(Node parent, Node child) {
+        NodeList children = parent.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (child == children.item(i))
+                return i;
+        }
+        return -1;
+    }
+
     public static Element getFirstChildElement(Node parent) {
         return childElementIter(parent).next();
     }
@@ -606,8 +669,8 @@ public class DOMUtils {
     public static Element addIdAttribute(Element element) {
         if (!element.hasAttribute(ATTR_ID)) {
             element.setAttribute(ATTR_ID, Core.getIdFactory().createId());
+            element.setIdAttribute(ATTR_ID, true);
         }
-        element.setIdAttribute(ATTR_ID, true);
         return element;
     }
 
@@ -625,4 +688,16 @@ public class DOMUtils {
         return element;
     }
 
+    public static boolean isOrphanNode(Node node) {
+        if (node == null)
+            return true;
+        if (node.getNodeType() == Node.DOCUMENT_NODE)
+            return false;
+        return isOrphanNode(node.getParentNode());
+    }
+
+    public static Document getOwnerDocument(Node node) {
+        return node.getNodeType() == Node.DOCUMENT_NODE ? (Document) node
+                : node.getOwnerDocument();
+    }
 }

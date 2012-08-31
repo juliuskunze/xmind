@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -42,6 +42,7 @@ import org.xmind.gef.ISelectionStack;
 import org.xmind.gef.SelectionStack;
 import org.xmind.gef.draw2d.IRelayeredPane;
 import org.xmind.gef.draw2d.ISkylightLayer;
+import org.xmind.gef.service.CenterPresercationService;
 import org.xmind.gef.service.FeedbackService;
 import org.xmind.gef.service.IAnimationService;
 import org.xmind.gef.service.IFeedbackService;
@@ -257,8 +258,8 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
         properties.set(IMindMapViewer.VIEWER_CORNERED, Boolean.TRUE);
         properties.set(IMindMapViewer.VIEWER_ACTIONS, new ActionRegistry(
                 getActionRegistry()));
-        properties.set(IMindMapViewer.VIEWER_MARGIN, Integer
-                .valueOf(MindMapUI.SHEET_MARGIN));
+        properties.set(IMindMapViewer.VIEWER_MARGIN,
+                Integer.valueOf(MindMapUI.SHEET_MARGIN));
 
         initViewerServices((MindMapViewer) viewer);
     }
@@ -269,7 +270,6 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
             selectionStack = createSelectionStack();
         selectionStack.setSelectionProvider(getViewer());
         selectionStack.setCommandStack(getEditDomain().getCommandStack());
-        getEditDomain().handleRequest(MindMapUI.REQ_SELECT_CENTRAL, viewer);
     }
 
     protected ISelectionStack createSelectionStack() {
@@ -277,6 +277,12 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
     }
 
     protected void initViewerServices(MindMapViewer viewer) {
+        CenterPresercationService centerPresercationService = new CenterPresercationService(
+                viewer);
+        viewer.installService(CenterPresercationService.class,
+                centerPresercationService);
+        centerPresercationService.setActive(true);
+
         IImageRegistryService imageCacheService = new ImageRegistryService(
                 viewer);
         viewer.installService(IImageRegistryService.class, imageCacheService);

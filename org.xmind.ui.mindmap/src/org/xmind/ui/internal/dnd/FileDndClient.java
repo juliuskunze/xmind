@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -84,19 +84,40 @@ public class FileDndClient implements IDndClient, IMindMapDndClient {
         IManifest manifest = wb.getManifest();
         List<ITopic> topics = new ArrayList<ITopic>(paths.length);
         for (String path : paths) {
-            IFileEntry entry;
-            try {
-                entry = manifest.createAttachmentFromFilePath(path);
-            } catch (IOException e) {
-                Logger.log(e, "Error occurred when transfering file: " + path); //$NON-NLS-1$
-                continue;
+            ITopic topic = buildTopic(wb, manifest, path);
+            if (topic != null) {
+                topics.add(topic);
             }
-            ITopic topic = wb.createTopic();
-            topic.setTitleText(new File(path).getName());
-            topic.setHyperlink(HyperlinkUtils.toAttachmentURL(entry.getPath()));
-            topics.add(topic);
         }
         return topics.toArray();
+    }
+
+    private ITopic buildTopic(IWorkbook wb, IManifest manifest, String path) {
+        IFileEntry entry;
+        try {
+            entry = manifest.createAttachmentFromFilePath(path);
+        } catch (IOException e) {
+            Logger.log(e, "Error occurred when transfering file: " + path); //$NON-NLS-1$
+            return null;
+        }
+        ITopic topic = wb.createTopic();
+
+        if (isImagePath(path)) {
+            Dimension size = getImageSize(path);
+            if (size != null) {
+                topic.getImage().setSource(
+                        HyperlinkUtils.toAttachmentURL(entry.getPath()));
+                topic.getImage().setSize(size.width, size.height);
+            } else {
+                topic.setTitleText(new File(path).getName());
+                topic.setHyperlink(HyperlinkUtils.toAttachmentURL(entry
+                        .getPath()));
+            }
+        } else {
+            topic.setTitleText(new File(path).getName());
+            topic.setHyperlink(HyperlinkUtils.toAttachmentURL(entry.getPath()));
+        }
+        return topic;
     }
 
     public boolean handleRequest(Request request, DndData dndData) {
@@ -124,8 +145,8 @@ public class FileDndClient implements IDndClient, IMindMapDndClient {
 
     private void addImage(Request request, ITopic topic, IFileEntry entry,
             String path) {
-        Command command = new ModifyImageSourceCommand(topic, HyperlinkUtils
-                .toAttachmentURL(entry.getPath()));
+        Command command = new ModifyImageSourceCommand(topic,
+                HyperlinkUtils.toAttachmentURL(entry.getPath()));
         Dimension size = getImageSize(path);
         if (size != null) {
             ModifyImageSizeCommand modifySize = new ModifyImageSizeCommand(
@@ -147,12 +168,12 @@ public class FileDndClient implements IDndClient, IMindMapDndClient {
     }
 
     private boolean isSingleImage(String[] paths) {
-        if (paths.length == 1) {
-            String path = paths[0];
-            String ext = FileUtils.getExtension(path);
-            return ImageFormat.findByExtension(ext, null) != null;
-        }
-        return false;
+        return paths.length == 1 && isImagePath(paths[0]);
+    }
+
+    protected boolean isImagePath(String path) {
+        String ext = FileUtils.getExtension(path);
+        return ImageFormat.findByExtension(ext, null) != null;
     }
 
     private Dimension getImageSize(String path) {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,63 +13,42 @@
  *******************************************************************************/
 package net.xmind.signin.internal;
 
-import java.net.URI;
-import java.net.URLEncoder;
-
-import net.xmind.signin.IAccountInfo;
-import net.xmind.signin.XMindNet;
-
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.util.SafeRunnable;
 import org.xmind.ui.browser.BrowserSupport;
 import org.xmind.ui.browser.IBrowser;
 import org.xmind.ui.browser.IBrowserSupport;
+import org.xmind.ui.internal.browser.BrowserUtil;
 
 public class XMindNetNavigator {
 
     private static final String BROWSER_ID = "net.xmind.browser.commmon"; //$NON-NLS-1$
 
-    public void gotoURL(final String url) {
-        if (url.startsWith("xmind:")) //$NON-NLS-1$
-            return;
-        final IBrowser browser = BrowserSupport.getInstance().createBrowser(
-                IBrowserSupport.AS_EDITOR, BROWSER_ID);
-        SafeRunner.run(new SafeRunnable() {
-            public void run() throws Exception {
-                browser.openURL(makeURL(url));
-            }
-        });
+    private static final String EXTERNAL_BROWSER_ID = "net.xmind.browser.common.external"; //$NON-NLS-1$
+
+    public void gotoURL(String url, Object... values) {
+        gotoURL(false, url, values);
     }
 
-    public String makeURL(String url) {
-        if (!url.startsWith("file:")) { //$NON-NLS-1$
-            try {
-                StringBuffer buffer = new StringBuffer(100);
-                buffer.append("http://www.xmind.net/xmind/go?r="); //$NON-NLS-1$
-                buffer.append(URLEncoder.encode(new URI(url).toString(),
-                        "UTF-8")); //$NON-NLS-1$
-                buffer.append("&u="); //$NON-NLS-1$
-                IAccountInfo info = XMindNet.getAccountInfo();
-                if (info != null) {
-                    buffer.append(info.getUser());
-                }
-                buffer.append("&t="); //$NON-NLS-1$
-                if (info != null) {
-                    buffer.append(info.getAuthToken());
-                    buffer.append("&exp="); //$NON-NLS-1$
-                    buffer.append(info.getExpireDate());
-                }
-                String distributionId = System
-                        .getProperty("org.xmind.product.distribution.id"); //$NON-NLS-1$
-                if (distributionId != null) {
-                    buffer.append("&distrib="); //$NON-NLS-1$
-                    buffer.append(distributionId);
-                }
-                return buffer.toString();
-            } catch (Exception ignore) {
-            }
+    public void gotoURL(boolean external, String urlPattern, Object... values) {
+        final String url = EncodingUtils.format(urlPattern, values);
+        if (url.startsWith("xmind:")) //$NON-NLS-1$
+            return;
+        final IBrowser browser;
+        if (external) {
+            browser = BrowserSupport.getInstance().createBrowser(
+                    IBrowserSupport.AS_EXTERNAL, EXTERNAL_BROWSER_ID);
+        } else {
+            browser = BrowserSupport.getInstance().createBrowser(
+                    IBrowserSupport.AS_EDITOR | IBrowserSupport.NO_LOCATION_BAR
+                            | IBrowserSupport.NO_EXTRA_CONTRIBUTIONS,
+                    BROWSER_ID);
         }
-        return url;
+        SafeRunner.run(new SafeRunnable() {
+            public void run() throws Exception {
+                browser.openURL(BrowserUtil.makeRedirectURL(url));
+            }
+        });
     }
 
 }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,33 +18,44 @@ import java.util.Map;
 
 /**
  * @author Brian Sun
+ * @author Frank Shaka <frank@xmind.net>
  */
 public class PartRegistry {
 
-    private Map<Object, IPart> modelToPart = new HashMap<Object, IPart>();;
+    private Map<Object, IPart> modelToPart = new HashMap<Object, IPart>();
 
-    public void register(Object model, IPart p) {
-        if (p == null || model == null)
+    private Map<IPart, Object> partToModel = new HashMap<IPart, Object>();
+
+    public void register(Object model, IPart part) {
+        if (part == null || model == null)
             return;
-        modelToPart.put(model, p);
+        modelToPart.put(model, part);
+        partToModel.put(part, model);
     }
 
-    public void unregister(Object model, IPart p) {
-        if (p == null || model == null)
+    public void unregister(Object model, IPart part) {
+        if (part == null || model == null)
             return;
-        IPart part = modelToPart.get(model);
-        if (p == part)
+        IPart part2 = modelToPart.get(model);
+        if (part2 == part)
             modelToPart.remove(model);
+        Object model2 = partToModel.get(part);
+        if (model.equals(model2)) {
+            partToModel.remove(part);
+        }
     }
 
     public IPart getPartByModel(Object model) {
-        if (model == null)
-            return null;
-        return modelToPart.get(model);
+        return model == null ? null : modelToPart.get(model);
+    }
+
+    public Object getModelByPart(IPart part) {
+        return part == null ? null : partToModel.get(part);
     }
 
     public void clear() {
         modelToPart.clear();
+        partToModel.clear();
     }
 
 }

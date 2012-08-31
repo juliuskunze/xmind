@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -34,6 +34,7 @@ public class ImageSpanImpl extends SpanImplBase implements IImageSpan {
         InternalHyperlinkUtils.deactivateHyperlink(workbook, getSource(), this);
         DOMUtils.setAttribute((Element) getImplementation(), ATTR_SRC, source);
         InternalHyperlinkUtils.activateHyperlink(workbook, getSource(), this);
+        getOwner().updateModifiedTime();
     }
 
     protected void addNotify(WorkbookImpl workbook) {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -100,10 +100,10 @@ public class SignInJob extends Job {
                     return;
 
                 if (code == SignInDialog2.OK) {
-                    data = dialog.getData();
-                    if (dialog.shouldRemember()) {
-                        setCookies(dialog.getUserID(), dialog.getToken());
-                    }
+                    data = new PropertyStore(dialog.getData());
+//                    if (dialog.shouldRemember()) {
+                    setCookies(dialog.getUserID(), dialog.getToken());
+//                    }
                 } else {
                     data = IDataStore.EMPTY;
                 }
@@ -149,8 +149,7 @@ public class SignInJob extends Job {
             buffer.append("Thu, 01-Jan-1970 00:00:01 GMT"); //$NON-NLS-1$
         } else {
             buffer.append(new Date(System.currentTimeMillis()
-                    + XMindNetAuthenticator.TOKEN_LIFE_TIME)
-                    .toGMTString());
+                    + XMindNetAuthenticator.TOKEN_LIFE_TIME).toGMTString());
         }
         buffer.append("; domain=.xmind.net; path=/;"); //$NON-NLS-1$
         //Browser.setCookie(buffer.toString(), "www.xmind.net"); //$NON-NLS-1$

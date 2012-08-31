@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -12,6 +12,9 @@
  *     XMind Ltd. - initial API and implementation
  *******************************************************************************/
 package org.xmind.ui.internal.mindmap;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.IFigure;
@@ -42,15 +45,22 @@ import org.xmind.ui.mindmap.IMindMapViewer;
 import org.xmind.ui.mindmap.MindMapUI;
 
 public class MindMapRootPart extends GraphicalRootEditPart implements
-        IZoomListener, ILayerManager, ControlListener, LayoutListener {
+        IZoomListener, ILayerManager, ControlListener, LayoutListener,
+        PropertyChangeListener {
 
     public void setViewer(IViewer viewer) {
-        if (getViewer() instanceof IGraphicalViewer) {
-            ((IGraphicalViewer) getViewer()).setLayerManager(null);
+        if (getViewer() != null) {
+            getViewer().getProperties().removePropertyChangeListener(this);
+            if (getViewer() instanceof IGraphicalViewer) {
+                ((IGraphicalViewer) getViewer()).setLayerManager(null);
+            }
         }
         super.setViewer(viewer);
-        if (getViewer() instanceof IGraphicalViewer) {
-            ((IGraphicalViewer) getViewer()).setLayerManager(this);
+        if (getViewer() != null) {
+            if (getViewer() instanceof IGraphicalViewer) {
+                ((IGraphicalViewer) getViewer()).setLayerManager(this);
+            }
+            getViewer().getProperties().addPropertyChangeListener(this);
         }
     }
 
@@ -207,6 +217,29 @@ public class MindMapRootPart extends GraphicalRootEditPart implements
     }
 
     public void setConstraint(IFigure child, Object constraint) {
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @seejava.beans.PropertyChangeListener#propertyChange(java.beans.
+     * PropertyChangeEvent)
+     */
+    public void propertyChange(PropertyChangeEvent evt) {
+        ContentsLayer contentsLayer = (ContentsLayer) getLayer(GEF.LAYER_CONTENTS);
+        Properties properties = getViewer().getProperties();
+        contentsLayer.setCentered(properties.getBoolean(
+                IMindMapViewer.VIEWER_CENTERED, false));
+        boolean constrained = properties.getBoolean(
+                IMindMapViewer.VIEWER_CONSTRAINED, false);
+        contentsLayer.setConstrained(constrained);
+        if (properties.getBoolean(IMindMapViewer.VIEWER_CORNERED, false)) {
+            contentsLayer.addCorners();
+        }
+        Object margin = properties.get(IMindMapViewer.VIEWER_MARGIN);
+        if (margin != null && margin instanceof Integer) {
+            contentsLayer.setMargin(((Integer) margin).intValue());
+        }
     }
 
 }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.xmind.gef.GEF;
 import org.xmind.gef.Request;
 import org.xmind.gef.graphicalpolicy.IStructure;
 import org.xmind.gef.part.IPart;
@@ -58,8 +59,8 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
                 if (child != null) {
                     ITopicPart childTopicPart = child.getTopicPart();
                     if (childTopicPart != null)
-                        setNavigationResult(request, Arrays
-                                .asList(childTopicPart));
+                        setNavigationResult(request,
+                                Arrays.asList(childTopicPart));
                 }
             }
         }
@@ -74,14 +75,14 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
                 if (branch.isCentral()) {
                     IBranchPart child = findFirstChild(branch);
                     if (child != null) {
-                        setNavigationResult(request, Arrays.asList(child
-                                .getTopicPart()));
+                        setNavigationResult(request,
+                                Arrays.asList(child.getTopicPart()));
                     }
                 }
                 IBranchPart sibling = findSucceedingSiblingOrAncestor(branch);
                 if (sibling != branch) {
-                    setNavigationResult(request, Arrays.asList(sibling
-                            .getTopicPart()));
+                    setNavigationResult(request,
+                            Arrays.asList(sibling.getTopicPart()));
                 }
             }
         }
@@ -150,40 +151,43 @@ public class TopicNavigablePolicy extends MindMapNavigablePolicyBase {
 
     protected void findSequentialNavParts(Request request, String navType,
             IPart sequenceStart, List<IPart> sources, List<IPart> result) {
-        ITopicPart endTopic = MindMapUtils.findTopicPart(sequenceStart);
-        if (endTopic != null) {
+        ITopicPart startTopic = MindMapUtils.findTopicPart(sequenceStart);
+        if (startTopic != null) {
             ITopicPart sourceTopic = MindMapUtils.findTopicPart(request
                     .getPrimaryTarget());
-            if (sourceTopic != null && isSibling(sourceTopic, endTopic)) {
-                IBranchPart endBranch = endTopic.getOwnerBranch();
+            if (sourceTopic != null && isSibling(sourceTopic, startTopic)) {
+                IBranchPart startBranch = startTopic.getOwnerBranch();
                 IBranchPart sourceBranch = sourceTopic.getOwnerBranch();
-                IBranchPart parentBranch = sourceBranch.getParentBranch();
-                if (parentBranch != null) {
-                    IStructure parentStructure = parentBranch.getBranchPolicy()
-                            .getStructure(parentBranch);
+                IBranchPart sourceParentBranch = sourceBranch.getParentBranch();
+                if (sourceParentBranch != null) {
+                    IStructure parentStructure = sourceParentBranch
+                            .getBranchPolicy().getStructure(sourceParentBranch);
                     if (parentStructure instanceof INavigableBranchStructureExtension) {
                         INavigableBranchStructureExtension ext = (INavigableBranchStructureExtension) parentStructure;
-                        IPart startPart = ext.calcChildNavigation(parentBranch,
-                                sourceBranch, navType, true);
-                        IBranchPart startBranch = MindMapUtils
-                                .findBranch(startPart);
-                        if (startBranch == null) {
-                            startBranch = sourceBranch;
+                        IPart endPart = ext
+                                .calcChildNavigation(sourceParentBranch,
+                                        sourceBranch, navType, true);
+                        IBranchPart endBranch = MindMapUtils
+                                .findBranch(endPart);
+                        if (endBranch == null) {
+                            endBranch = sourceBranch;
                         }
                         List<IBranchPart> list = new ArrayList<IBranchPart>();
-                        ext.calcSequentialNavigation(parentBranch, startBranch,
-                                endBranch, list);
+                        ext.calcSequentialNavigation(sourceParentBranch,
+                                startBranch, endBranch, list);
                         for (IBranchPart branch : list) {
                             result.add(branch.getTopicPart());
                         }
+                        request.setResult(GEF.RESULT_NEW_FOCUS,
+                                endBranch.getTopicPart());
                     }
                 } else {
                     addSeqPartsFromFloatingAndCentral(navType, sourceBranch,
-                            endBranch, result);
+                            startBranch, result);
                 }
             }
-            if (!result.contains(endTopic))
-                result.add(endTopic);
+            if (!result.contains(startTopic))
+                result.add(startTopic);
         } else {
             super.findSequentialNavParts(request, navType, sequenceStart,
                     sources, result);

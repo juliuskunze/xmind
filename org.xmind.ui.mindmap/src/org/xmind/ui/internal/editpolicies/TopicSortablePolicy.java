@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -65,8 +65,10 @@ public class TopicSortablePolicy extends MindMapPolicyBase {
         builder.end();
 
         CompoundCommand command = builder.getCommand();
-        List<Object> sources = command.getSources();
-        viewer.setSelection(new StructuredSelection(sources));
+        if (command != null) {
+            List<Object> sources = command.getSources();
+            viewer.setSelection(new StructuredSelection(sources));
+        }
     }
 
     private String getSortCommandLabel(String sortType) {

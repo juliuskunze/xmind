@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: XMind.net Share  Language Support
+Bundle-SymbolicName: net.xmind.share.nl_ru;singleton:=true
+Bundle-Version: 3.3.0.qualifier
+Bundle-Vendor: XMind Ltd.
+Fragment-Host: net.xmind.share
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

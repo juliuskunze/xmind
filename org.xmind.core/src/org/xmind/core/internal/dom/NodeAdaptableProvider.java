@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,6 +15,7 @@ package org.xmind.core.internal.dom;
 
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_ID;
 
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xmind.core.IAdaptable;
@@ -26,10 +27,29 @@ public class NodeAdaptableProvider implements INodeAdaptableProvider {
 
     private INodeAdaptableFactory factory;
 
+    private Document primaryDocument;
+
     public NodeAdaptableProvider(ElementRegistry registry,
-            INodeAdaptableFactory factory) {
+            INodeAdaptableFactory factory, Document primaryDocument) {
         this.registry = registry;
         this.factory = factory;
+        this.primaryDocument = primaryDocument;
+    }
+
+    private Object getID(Node node) {
+        if (node instanceof Element) {
+            Element e = (Element) node;
+            String id = e.getAttribute(ATTR_ID);
+            if (id != null && !"".equals(id)) { //$NON-NLS-1$
+                Document doc = node.getNodeType() == Node.DOCUMENT_NODE ? (Document) node
+                        : node.getOwnerDocument();
+                if (doc.equals(primaryDocument)) {
+                    return id;
+                }
+                return new IDKey(doc, id);
+            }
+        }
+        return null;
     }
 
     /**
@@ -48,13 +68,11 @@ public class NodeAdaptableProvider implements INodeAdaptableProvider {
          * first, if the element has an ID, we look through the registry to see
          * if there's any existing element with that ID
          */
-        if (node instanceof Element) {
-            String id = ((Element) node).getAttribute(ATTR_ID);
-            if (id != null && !"".equals(id)) { //$NON-NLS-1$
-                Object e = registry.getElement(id);
-                if (e instanceof IAdaptable)
-                    return (IAdaptable) e;
-            }
+        Object id = getID(node);
+        if (id != null) {
+            Object e = registry.getElement(id);
+            if (e != null && e instanceof IAdaptable)
+                return (IAdaptable) e;
         }
 
         /*
@@ -77,12 +95,9 @@ public class NodeAdaptableProvider implements INodeAdaptableProvider {
     }
 
     private void register(IAdaptable adapter, Node node) {
-        if (node instanceof Element) {
-            String id = ((Element) node).getAttribute(ATTR_ID);
-            if (id != null && !"".equals(id)) { //$NON-NLS-1$
-                registry.registerByKey(id, adapter);
-                return;
-            }
+        Object id = getID(node);
+        if (id != null) {
+            registry.registerByKey(id, adapter);
         }
         registry.registerByKey(node, adapter);
     }

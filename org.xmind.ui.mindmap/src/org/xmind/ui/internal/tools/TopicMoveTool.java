@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -317,7 +317,7 @@ public class TopicMoveTool extends DummyMoveTool implements IStatusListener {
         IBranchPart targetParentBranch = this.targetParent;
         ITopicPart targetParent = targetParentBranch == null ? null
                 : targetParentBranch.getTopicPart();
-        boolean relative = isRelative();
+        boolean relative = true;//isRelative();
         Point position = relative ? getRelativePosition()
                 : getAbsolutePosition();
         boolean copy = isCopyMove();
@@ -350,7 +350,14 @@ public class TopicMoveTool extends DummyMoveTool implements IStatusListener {
         Request request = new Request(reqType);
         request.setDomain(getDomain());
         request.setViewer(getTargetViewer());
-        fillTargets(request, getTargetViewer(), false);
+        List<IPart> parts = new ArrayList<IPart>();
+        for (IPart p : getSelectedParts(getTargetViewer())) {
+            if (p.hasRole(GEF.ROLE_MOVABLE)) {
+                parts.add(p);
+            }
+        }
+        request.setTargets(parts);
+//        fillTargets(request, getTargetViewer(), false);
         request.setPrimaryTarget(getSourceTopic());
         request.setParameter(GEF.PARAM_POSITION, position);
         request.setParameter(GEF.PARAM_POSITION_RELATIVE, Boolean
@@ -417,9 +424,9 @@ public class TopicMoveTool extends DummyMoveTool implements IStatusListener {
         return null;
     }
 
-    private boolean isRelative() {
-        return targetParent != null;
-    }
+//    private boolean isRelative() {
+//        return targetParent != null;
+//    }
 
     private Point getRelativePosition() {
         Dimension off = getCursorPosition()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -11,6 +11,7 @@
  */
 package net.xmind.share.jobs;
 
+import java.io.File;
 import java.io.IOException;
 
 import net.xmind.share.Info;
@@ -128,6 +129,8 @@ public class UploadJob extends Job {
 
     private UploadSession session;
 
+    private TransferWorker transferWorker;
+
     public UploadJob(Info info) {
         super(NLS.bind(Messages.UploadJob_name, info.getString(Info.TITLE)));
         this.info = info;
@@ -152,11 +155,11 @@ public class UploadJob extends Job {
             // log this error, but prevent system from prompting dialogs,
             // because we have shown our own dialogs above.
             XmindSharePlugin.getDefault().getLog().log(status);
-            return new Status(IStatus.WARNING, status.getPlugin(), status
-                    .getCode(), status.getMessage() == null
-                    || "".equals(status.getMessage()) ? //$NON-NLS-1$ 
-            Messages.UploadJob_Failure_message
-                    : status.getMessage(), status.getException());
+            return new Status(IStatus.WARNING, status.getPlugin(),
+                    status.getCode(), status.getMessage() == null
+                            || "".equals(status.getMessage()) ? //$NON-NLS-1$ 
+                    Messages.UploadJob_Failure_message
+                            : status.getMessage(), status.getException());
         }
 
         // other status
@@ -184,7 +187,8 @@ public class UploadJob extends Job {
 
         // start transfering file data up to XMind server
         monitor.subTask(Messages.UploadJob_Task_TransferFile);
-        new TransferWorker().start();
+        transferWorker = new TransferWorker();
+        transferWorker.start();
         if (session.hasError())
             return session.getError();
         if (monitor.isCanceled())
@@ -230,10 +234,20 @@ public class UploadJob extends Job {
         if (workbook != null) {
             workbook.getMeta().setValue(Info.SHARE + IMeta.SEP + "SourceUrl", //$NON-NLS-1$
                     session.getPermalink());
-            try {
-                workbook.save();
-            } catch (IOException ignore) {
-            } catch (CoreException ignore) {
+            File file = (File) info.getProperty(Info.FILE);
+            if (file != null) {
+                try {
+                    workbook.saveTemp();
+                    workbook.save(file.getAbsolutePath());
+                } catch (IOException ignore) {
+                } catch (CoreException ignore) {
+                }
+            } else {
+                try {
+                    workbook.save();
+                } catch (IOException ignore) {
+                } catch (CoreException ignore) {
+                }
             }
         }
     }
@@ -267,7 +281,7 @@ public class UploadJob extends Job {
 
     private void showUploadedMap(String url) {
         if (url != null) {
-            XMindNet.gotoURL(url);
+            XMindNet.gotoURL(true, url);
             return;
         }
 
@@ -277,9 +291,9 @@ public class UploadJob extends Job {
 
         String userId = accountInfo.getUser();
         String token = accountInfo.getAuthToken();
-        XMindNet.gotoURL(String.format(
-                "http://www.xmind.net/xmind/account/%s/%s/", //$NON-NLS-1$
-                userId, token));
+        XMindNet.gotoURL(
+                String.format("http://www.xmind.net/xmind/account/%s/%s/", //$NON-NLS-1$
+                        userId, token), true);
     }
 
     private IStatus promptError(int uploadStatus, IStatus error) {
@@ -348,4 +362,11 @@ public class UploadJob extends Job {
         }, false);
     }
 
+    @Override
+    protected void canceling() {
+        if (session != null) {
+            session.cancel();
+        }
+        super.canceling();
+    }
 }

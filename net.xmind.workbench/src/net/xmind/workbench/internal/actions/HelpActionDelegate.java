@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,6 +17,8 @@ package net.xmind.workbench.internal.actions;
 import java.io.IOException;
 import java.net.URL;
 
+import net.xmind.signin.XMindNet;
+
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
@@ -30,10 +32,9 @@ import org.osgi.framework.Bundle;
  * @author Frank Shaka
  * 
  */
-public class HelpActionDelegate extends XMindNetActionDelegate implements
-        IWorkbenchWindowActionDelegate {
+public class HelpActionDelegate implements IWorkbenchWindowActionDelegate {
 
-    private static final String ONLINE_HELP_URL = "http://www.xmind.net/help"; //$NON-NLS-1$
+    private static final String ONLINE_HELP_URL = "http://www.xmind.net/xmind/help/"; //$NON-NLS-1$
 
     private IWorkbenchWindow window;
 
@@ -65,8 +66,7 @@ public class HelpActionDelegate extends XMindNetActionDelegate implements
         if (window == null)
             return;
 
-        setURL(findHelpURL());
-        gotoURL();
+        XMindNet.gotoURL(false, findHelpURL());
     }
 
     private String findHelpURL() {

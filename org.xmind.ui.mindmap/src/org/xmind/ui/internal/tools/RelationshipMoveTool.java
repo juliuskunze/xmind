@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -222,15 +222,15 @@ public class RelationshipMoveTool extends DummyMoveTool {
             ref = figure.getSourceAnchor().getReferencePoint();
         else
             ref = figure.getTargetAnchor().getReferencePoint();
-        newPosition = new Point(pos.x - ref.x, pos.y - ref.y);
+        newPosition = new Point((int) (pos.x - ref.x), (int) (pos.y - ref.y));
         if (sourceOrTarget) {
             decoration.setRelativeSourceControlPoint(figure, newPosition);
         } else {
             decoration.setRelativeTargetControlPoint(figure, newPosition);
         }
-        relDummy.getRelDummy().getRelationship().getControlPoint(
-                sourceOrTarget ? 0 : 1).setPosition(newPosition.x,
-                newPosition.y);
+        relDummy.getRelDummy().getRelationship()
+                .getControlPoint(sourceOrTarget ? 0 : 1)
+                .setPosition(newPosition.x, newPosition.y);
 //
 //        PrecisionPoint ref1 = figure.getSourceAnchor().getReferencePoint();
 //        PrecisionPoint ref2 = figure.getTargetAnchor().getReferencePoint();
@@ -295,9 +295,7 @@ public class RelationshipMoveTool extends DummyMoveTool {
         if (pointId == SOURCE_ANCHOR || pointId == TARGET_ANCHOR) {
             if (newNode != null) {
                 request = new Request(MindMapUI.REQ_RETARGET_REL);
-                request
-                        .setParameter(MindMapUI.PARAM_MOVE_REL_NEW_NODE,
-                                newNode);
+                request.setParameter(MindMapUI.PARAM_MOVE_REL_NEW_NODE, newNode);
 //                MoveRelationshipRequest req = new MoveRelationshipRequest(
 //                        MindMapUI.REQ_RETARGET_REL, getSourceRelationship(),
 //                        pointId);
@@ -328,8 +326,8 @@ public class RelationshipMoveTool extends DummyMoveTool {
             request.setPrimaryTarget(getSourceRelationship());
             request.setDomain(getDomain());
             request.setViewer(getTargetViewer());
-            request.setParameter(MindMapUI.PARAM_MOVE_REL_POINT_ID, Integer
-                    .valueOf(pointId));
+            request.setParameter(MindMapUI.PARAM_MOVE_REL_POINT_ID,
+                    Integer.valueOf(pointId));
         }
         return request;
     }

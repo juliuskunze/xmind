@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -23,9 +23,12 @@ import net.xmind.signin.IPreauthorizationListener;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.SafeRunnable;
 
+@SuppressWarnings("deprecation")
 public class XMindNetAccount {
 
     public static final String USER = "user"; //$NON-NLS-1$
@@ -36,8 +39,10 @@ public class XMindNetAccount {
 
     private List<IAuthenticationListener> authenticationListeners = new ArrayList<IAuthenticationListener>();
 
+    @Deprecated
     private List<IAuthorizationListener> authorizationListeners = new ArrayList<IAuthorizationListener>();
 
+    @Deprecated
     private List<IPreauthorizationListener> preauthorizationListeners = new ArrayList<IPreauthorizationListener>();
 
     private IPreferenceStore localStore;
@@ -50,8 +55,8 @@ public class XMindNetAccount {
         this.localStore = prefStore;
 
         // Clear previously stored info
-        prefStore.setToDefault("USER_ID"); //$NON-NLS-1$
-        prefStore.setToDefault("TOKEN"); //$NON-NLS-1$
+        prefStore.setValue("USER_ID", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        prefStore.setValue("TOKEN", ""); //$NON-NLS-1$ //$NON-NLS-2$
 
         readFromStore();
     }
@@ -64,14 +69,17 @@ public class XMindNetAccount {
         authenticationListeners.remove(listener);
     }
 
+    @Deprecated
     public void addAuthorizationListener(IAuthorizationListener listener) {
         authorizationListeners.add(listener);
     }
 
+    @Deprecated
     public void removeAuthorizationListener(IAuthorizationListener listener) {
         authorizationListeners.remove(listener);
     }
 
+    @Deprecated
     public void addPreauthorizationListener(IPreauthorizationListener listener) {
         if (preauthorized)
             listener.preauthorized();
@@ -82,6 +90,7 @@ public class XMindNetAccount {
     /**
      * @param listener
      */
+    @Deprecated
     public void removePreauthorizationListener(
             IPreauthorizationListener listener) {
         if (preauthorizationListeners != null) {
@@ -97,11 +106,12 @@ public class XMindNetAccount {
             boolean remember) {
         IAccountInfo oldAccountInfo = this.accountInfo;
         this.accountInfo = new AccountInfo(user, authToken, expireDate);
-        if (remember) {
-            saveToStore(user, authToken, expireDate);
-        } else {
-            clearStore();
-        }
+//        if (remember) {
+        saveToStore(user, authToken, expireDate);
+//        } else {
+//            clearStore();
+//        }
+        saveToSystemProperties(user, authToken, expireDate);
         if (oldAccountInfo != null)
             firePostSignOut(oldAccountInfo);
         firePostSignIn(this.accountInfo);
@@ -110,9 +120,26 @@ public class XMindNetAccount {
     public void signedOut() {
         IAccountInfo oldAccountInfo = this.accountInfo;
         this.accountInfo = null;
+        clearSystemProperties();
+        clearStore();
         firePostSignOut(oldAccountInfo);
     }
 
+    private void saveToSystemProperties(String user, String authToken,
+            long expireDate) {
+        System.setProperty("net.xmind.signin.account.user", user); //$NON-NLS-1$
+        System.setProperty("net.xmind.signin.account.token", authToken); //$NON-NLS-1$
+        System.setProperty(
+                "net.xmind.signin.account.expireDate", String.valueOf(expireDate)); //$NON-NLS-1$
+    }
+
+    private void clearSystemProperties() {
+        System.setProperty("net.xmind.signin.account.user", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("net.xmind.signin.account.token", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("net.xmind.signin.account.expireDate", ""); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    @Deprecated
     public void authorized(int subscriptionStatus) {
         if (this.accountInfo == null)
             return;
@@ -121,12 +148,14 @@ public class XMindNetAccount {
         fireAuthorized(this.accountInfo);
     }
 
+    @Deprecated
     public void unauthorized(IStatus result) {
         if (this.accountInfo != null)
             this.accountInfo.setSubscriptionStatus(IAccountInfo.UNKNOWN);
         fireUnauthorized(result, this.accountInfo);
     }
 
+    @Deprecated
     public void preauthorized() {
         this.preauthorized = true;
         firePreauthorized();
@@ -168,6 +197,7 @@ public class XMindNetAccount {
         }
     }
 
+    @Deprecated
     private void fireAuthorized(final IAccountInfo accountInfo) {
         for (final IAuthorizationListener listener : authorizationListeners
                 .toArray(new IAuthorizationListener[authorizationListeners
@@ -186,6 +216,7 @@ public class XMindNetAccount {
         }
     }
 
+    @Deprecated
     private void fireUnauthorized(final IStatus result,
             final IAccountInfo accountInfo) {
         for (final IAuthorizationListener listener : authorizationListeners
@@ -205,6 +236,7 @@ public class XMindNetAccount {
         }
     }
 
+    @Deprecated
     private void firePreauthorized() {
         IPreauthorizationListener[] listeners = preauthorizationListeners
                 .toArray(new IPreauthorizationListener[preauthorizationListeners
@@ -232,6 +264,7 @@ public class XMindNetAccount {
         if (user != null && !"".equals(user) //$NON-NLS-1$
                 && authToken != null && !"".equals(authToken) && expireDate > 0) { //$NON-NLS-1$
             this.accountInfo = new AccountInfo(user, authToken, expireDate);
+            saveToSystemProperties(user, authToken, expireDate);
         }
     }
 
@@ -239,12 +272,25 @@ public class XMindNetAccount {
         localStore.setValue(USER, user);
         localStore.setValue(TOKEN, authToken);
         localStore.setValue(EXPIRE_DATE, expireDate);
+        flushStore();
     }
 
     private void clearStore() {
-        localStore.setToDefault(USER);
-        localStore.setToDefault(TOKEN);
-        localStore.setToDefault(EXPIRE_DATE);
+        localStore.setValue(USER, ""); //$NON-NLS-1$
+        localStore.setValue(TOKEN, ""); //$NON-NLS-1$
+        localStore.setValue(EXPIRE_DATE, 0);
+        flushStore();
+    }
+
+    private void flushStore() {
+        IEclipsePreferences node = InstanceScope.INSTANCE
+                .getNode(Activator.PLUGIN_ID);
+        if (node != null) {
+            try {
+                node.flush();
+            } catch (Throwable e) {
+            }
+        }
     }
 
 }

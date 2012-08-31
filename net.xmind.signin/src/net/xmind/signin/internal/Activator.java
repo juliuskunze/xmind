@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -24,7 +24,7 @@ import org.osgi.framework.BundleContext;
 public class Activator extends AbstractUIPlugin {
 
     // The plug-in ID
-    public static final String PLUGIN_ID = "net.xmind.login"; //$NON-NLS-1$
+    public static final String PLUGIN_ID = "net.xmind.signin"; //$NON-NLS-1$
 
     // The shared instance
     private static Activator plugin;
@@ -66,6 +66,10 @@ public class Activator extends AbstractUIPlugin {
      */
     public static Activator getDefault() {
         return plugin;
+    }
+
+    public static void log(String message) {
+        getDefault().getLog().log(new Status(IStatus.INFO, PLUGIN_ID, message));
     }
 
     public static void log(Throwable e) {

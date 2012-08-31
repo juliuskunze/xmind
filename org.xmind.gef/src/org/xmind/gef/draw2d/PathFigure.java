@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -31,27 +31,12 @@ public class PathFigure extends Shape {
     private static final float[] _bounds = new float[4];
 
     private Path path = null;
-    private boolean outline = true;
-    private boolean fill = true;
-    private int tolerance = 0;
 
-//    private int alpha = 0xff;
-//
-//    public int getAlpha() {
-//        return alpha;
-//    }
-//
-//    public void setAlpha(int alpha) {
-//        if (alpha == this.alpha)
-//            return;
-//        this.alpha = alpha;
-//        repaint();
-//    }
-//  @Override
-//  public void paintFigure(Graphics graphics) {
-//      graphics.setAlpha(alpha);
-//      super.paintFigure(graphics);
-//  }
+    private boolean outline = true;
+
+    private boolean fill = true;
+
+    private int tolerance = 0;
 
     /**
      * 
@@ -76,9 +61,8 @@ public class PathFigure extends Shape {
         if (this.path == path || (this.path != null && this.path.equals(path)))
             return;
         this.path = path;
-        revalidate();
-//        repaint();
-//        bounds = null;
+        setBounds(getPreferredBounds());
+//        revalidate();
     }
 
     /**
@@ -130,14 +114,7 @@ public class PathFigure extends Shape {
         return super.getPreferredSize(wHint, hHint);
     }
 
-//    public Rectangle getBounds() {
-//        if ( bounds == null ) {
-//            bounds = getPreferredBounds();
-//        }
-//        return bounds;
-//    }
-
-    public Rectangle getPreferredBounds() {
+    protected Rectangle getPreferredBounds() {
         if (path == null)
             return new Rectangle();
         path.getBounds(_bounds);

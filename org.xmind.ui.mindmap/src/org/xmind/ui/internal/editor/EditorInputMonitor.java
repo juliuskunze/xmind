@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,13 +16,13 @@ package org.xmind.ui.internal.editor;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPropertyListener;
 import org.xmind.core.Core;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventSource2;
+import org.xmind.ui.mindmap.IWorkbookRef;
 
 /**
  * @author frankshaka
@@ -30,26 +30,30 @@ import org.xmind.core.event.ICoreEventSource2;
  */
 public class EditorInputMonitor implements ShellListener, IPropertyListener {
 
+    private IEditorPart editor;
+
     private Shell shell;
 
-    private MindMapEditor editor;
-
-    private Boolean lastExisting = null;
+    private Boolean oldValue = null;
 
     /**
      * 
      */
-    public EditorInputMonitor(MindMapEditor editor) {
+    public EditorInputMonitor(IEditorPart editor) {
         this.editor = editor;
+        this.editor.addPropertyListener(this);
         this.shell = editor.getSite().getShell();
-        if (shell != null) {
+        if (shell != null && !shell.isDisposed()) {
             shell.addShellListener(this);
         }
     }
 
     public void dispose() {
+        editor.removePropertyListener(this);
         if (shell != null) {
-            shell.removeShellListener(this);
+            if (!shell.isDisposed()) {
+                shell.removeShellListener(this);
+            }
             shell = null;
         }
     }
@@ -58,14 +62,13 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
      * 
      */
     private void checkFiles() {
-        if (lastExisting == null) {
-            recordLastExisting();
+        if (oldValue == null) {
+            recordOldValue();
         } else {
-            IEditorInput input = editor.getEditorInput();
-            if (input != null) {
-                if (input.exists() != lastExisting.booleanValue()) {
-                    addDirtyMarker();
-                }
+            boolean newValue = canSaveToTarget();
+            if (oldValue.booleanValue() != newValue) {
+                addDirtyMarker();
+                oldValue = Boolean.valueOf(newValue);
             }
         }
     }
@@ -81,9 +84,13 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
     /**
      * 
      */
-    private void recordLastExisting() {
-        IEditorInput input = editor.getEditorInput();
-        lastExisting = Boolean.valueOf(input == null ? false : input.exists());
+    private void recordOldValue() {
+        oldValue = Boolean.valueOf(canSaveToTarget());
+    }
+
+    private boolean canSaveToTarget() {
+        WorkbookRef ref = (WorkbookRef) editor.getAdapter(IWorkbookRef.class);
+        return ref != null && ref.canSaveToTarget();
     }
 
     /*
@@ -115,7 +122,7 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
      * .events.ShellEvent)
      */
     public void shellDeactivated(ShellEvent e) {
-        recordLastExisting();
+        recordOldValue();
     }
 
     /*
@@ -140,7 +147,7 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
 
     public void propertyChanged(Object source, int propId) {
         if (propId == IEditorPart.PROP_INPUT) {
-            recordLastExisting();
+            recordOldValue();
         }
     }
 

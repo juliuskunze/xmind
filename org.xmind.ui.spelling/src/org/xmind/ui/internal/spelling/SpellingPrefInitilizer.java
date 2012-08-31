@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -26,29 +26,27 @@ public class SpellingPrefInitilizer extends AbstractPreferenceInitializer {
     }
 
     public void initializeDefaultPreferences() {
-        IScopeContext context = new DefaultScope();
+        IScopeContext context = DefaultScope.INSTANCE;
         IEclipsePreferences node = context.getNode(SpellingPlugin.getDefault()
                 .getBundle().getSymbolicName());
 
         node.putBoolean(SpellingPlugin.SPELLING_CHECK_ENABLED, true);
 
         Configuration configuration = Configuration.getConfiguration();
-        node.putBoolean(Configuration.SPELL_IGNOREDIGITWORDS, configuration
-                .getBoolean(Configuration.SPELL_IGNOREDIGITWORDS));
-        node
-                .putBoolean(
-                        Configuration.SPELL_IGNOREINTERNETADDRESSES,
-                        configuration
-                                .getBoolean(Configuration.SPELL_IGNOREINTERNETADDRESSES));
-        node.putBoolean(Configuration.SPELL_IGNOREMIXEDCASE, configuration
-                .getBoolean(Configuration.SPELL_IGNOREMIXEDCASE));
-        node
-                .putBoolean(
-                        Configuration.SPELL_IGNORESENTENCECAPITALIZATION,
-                        configuration
-                                .getBoolean(Configuration.SPELL_IGNORESENTENCECAPITALIZATION));
-        node.putBoolean(Configuration.SPELL_IGNOREUPPERCASE, configuration
-                .getBoolean(Configuration.SPELL_IGNOREUPPERCASE));
+        node.putBoolean(Configuration.SPELL_IGNOREDIGITWORDS,
+                configuration.getBoolean(Configuration.SPELL_IGNOREDIGITWORDS));
+        node.putBoolean(
+                Configuration.SPELL_IGNOREINTERNETADDRESSES,
+                configuration
+                        .getBoolean(Configuration.SPELL_IGNOREINTERNETADDRESSES));
+        node.putBoolean(Configuration.SPELL_IGNOREMIXEDCASE,
+                configuration.getBoolean(Configuration.SPELL_IGNOREMIXEDCASE));
+        node.putBoolean(
+                Configuration.SPELL_IGNORESENTENCECAPITALIZATION,
+                configuration
+                        .getBoolean(Configuration.SPELL_IGNORESENTENCECAPITALIZATION));
+        node.putBoolean(Configuration.SPELL_IGNOREUPPERCASE,
+                configuration.getBoolean(Configuration.SPELL_IGNOREUPPERCASE));
 
     }
 

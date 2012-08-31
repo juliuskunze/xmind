@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -114,7 +114,8 @@ public class EditPart extends Part {
     }
 
     protected void sendRequest(String reqType) {
-        sendRequest(new Request(reqType).setPrimaryTarget(this));
+        sendRequest(new Request(reqType).setViewer(getSite().getViewer())
+                .setPrimaryTarget(this));
     }
 
     protected void sendRequest(Request request) {

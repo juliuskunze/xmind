@@ -60,7 +60,8 @@ public class WorkbookRefInitializer {
 
         FileStoreWorkbookAdapter adapter = new FileStoreWorkbookAdapter(
                 fileStore);
-        ref.setWorkbookLoader(adapter).setWorkbookSaver(adapter);
+        ref.setWorkbookLoader(adapter);
+        ref.setWorkbookSaver(adapter);
         return true;
     }
 

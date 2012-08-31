@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -23,23 +23,68 @@ import org.xmind.core.ICloneData;
 
 public class CloneData implements ICloneData {
 
+    private static class CategorizedString {
+        private String category;
+        private String source;
+
+        public CategorizedString(String category, String source) {
+            this.category = category;
+            this.source = source;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this)
+                return true;
+            if (obj == null || !(obj instanceof CategorizedString))
+                return false;
+            CategorizedString that = (CategorizedString) obj;
+            return this.category.equals(that.category)
+                    && this.source.equals(that.source);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            return this.category.hashCode() ^ this.source.hashCode();
+        }
+    }
+
     private Collection<Object> sources;
 
     private ICloneData parent;
 
-    private Map<Object, Object> clonedElements;
+    private Map<Object, Object> clonedElements = new HashMap<Object, Object>();
 
-    private Map<Object, List<ICloneDataListener>> listeners;
+    private Map<Object, List<ICloneDataListener>> listeners = new HashMap<Object, List<ICloneDataListener>>();
 
-    private Map<Object, Object> caches;
+    private Map<Object, Object> caches = new HashMap<Object, Object>();
 
     public CloneData(Collection<? extends Object> sources, ICloneData parent) {
         this.sources = new ArrayList<Object>(sources);
         this.parent = parent;
     }
 
+    public String getString(String category, String source) {
+        return (String) get(new CategorizedString(category, source));
+    }
+
+    public void putString(String category, String source, String cloned) {
+        doPut(new CategorizedString(category, source), cloned);
+        fireStringCloned(category, source, cloned);
+    }
+
     public Object get(Object source) {
-        Object cloned = clonedElements == null ? null : clonedElements
+        Object cloned = clonedElements.isEmpty() ? null : clonedElements
                 .get(source);
         if (cloned == null && parent != null)
             cloned = parent.get(source);
@@ -47,7 +92,7 @@ public class CloneData implements ICloneData {
     }
 
     public boolean hasCloned() {
-        if (clonedElements != null) {
+        if (!clonedElements.isEmpty()) {
             for (Object cloned : clonedElements.values())
                 if (cloned != null)
                     return true;
@@ -76,27 +121,27 @@ public class CloneData implements ICloneData {
     }
 
     public void put(Object source, Object cloned) {
-        if (clonedElements == null)
-            clonedElements = new HashMap<Object, Object>();
+        doPut(source, cloned);
+        fireObjectCloned(source, cloned);
+    }
+
+    protected void doPut(Object source, Object cloned) {
         clonedElements.put(source, cloned);
         if (parent != null) {
             parent.put(source, cloned);
         }
-        fireObjectCloned(source, cloned);
     }
 
     public void cache(Object key, Object value) {
-        if (caches == null)
-            caches = new HashMap<Object, Object>();
         caches.put(key, value);
     }
 
     public Object getCache(Object key) {
-        return caches == null ? null : caches.get(key);
+        return caches.isEmpty() ? null : caches.get(key);
     }
 
     private void fireObjectCloned(Object source, Object cloned) {
-        if (listeners == null || listeners.isEmpty())
+        if (listeners.isEmpty())
             return;
         List<ICloneDataListener> list = listeners.get(source);
         if (list == null || list.isEmpty()) {
@@ -108,9 +153,20 @@ public class CloneData implements ICloneData {
         }
     }
 
+    private void fireStringCloned(String category, String source, String cloned) {
+        if (listeners.isEmpty())
+            return;
+        List<ICloneDataListener> list = listeners.get(source);
+        if (list == null || list.isEmpty()) {
+            listeners.remove(source);
+            return;
+        }
+        for (Object o : list.toArray()) {
+            ((ICloneDataListener) o).stringCloned(category, source, cloned);
+        }
+    }
+
     public void addCloneDataListener(Object source, ICloneDataListener listener) {
-        if (listeners == null)
-            listeners = new HashMap<Object, List<ICloneDataListener>>();
         List<ICloneDataListener> list = listeners.get(source);
         if (list == null) {
             list = new ArrayList<ICloneDataListener>();
@@ -121,7 +177,7 @@ public class CloneData implements ICloneData {
 
     public void removeCloneDataListener(Object source,
             ICloneDataListener listener) {
-        if (listeners == null)
+        if (listeners.isEmpty())
             return;
         List<ICloneDataListener> list = listeners.get(source);
         if (list == null)
@@ -129,8 +185,17 @@ public class CloneData implements ICloneData {
         list.remove(listener);
         if (list.isEmpty())
             listeners.remove(source);
-        if (listeners.isEmpty())
-            listeners = null;
+    }
+
+    public void addCloneDataListener(String category, String source,
+            ICloneDataListener listener) {
+        addCloneDataListener(new CategorizedString(category, source), listener);
+    }
+
+    public void removeCloneDataListener(String category, String source,
+            ICloneDataListener listener) {
+        removeCloneDataListener(new CategorizedString(category, source),
+                listener);
     }
 
     public boolean isCloned(Object source) {
@@ -139,13 +204,23 @@ public class CloneData implements ICloneData {
         return parent != null && parent.isCloned(source);
     }
 
-    public String getString(String sourceString) {
-        Object cloned = clonedElements == null ? null : clonedElements
-                .get(sourceString);
-        if ((cloned == null || !(cloned instanceof String)) && parent != null) {
-            cloned = parent.get(sourceString);
-        }
-        return cloned instanceof String ? (String) cloned : null;
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.ICloneData#isCloned(java.lang.String,
+     * java.lang.String)
+     */
+    public boolean isCloned(String category, String source) {
+        return isCloned(new CategorizedString(category, source));
     }
+
+//    public String getString(String sourceString) {
+//        Object cloned = clonedElements == null ? null : clonedElements
+//                .get(sourceString);
+//        if ((cloned == null || !(cloned instanceof String)) && parent != null) {
+//            cloned = parent.get(sourceString);
+//        }
+//        return cloned instanceof String ? (String) cloned : null;
+//    }
 
 }

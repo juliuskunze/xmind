@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -31,6 +31,7 @@ import org.xmind.core.IEncryptionData;
 import org.xmind.core.IEncryptionHandler;
 import org.xmind.core.IFileEntry;
 import org.xmind.core.IManifest;
+import org.xmind.core.IRevision;
 import org.xmind.core.ISheet;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.compatibility.Compatibility;
@@ -213,8 +214,13 @@ public class WorkbookLoader extends XMLLoader {
         if (ignoreCopy || source == null || storage == null)
             return;
 
-        IOutputTarget target = storage.getOutputTarget();
-        copyAll(source, target);
+        if (!source.equals(storage.getInputSource())) {
+            IOutputTarget target = storage.getOutputTarget();
+            copyAll(source, target);
+        } else {
+            // Prefetch all file entries:
+            workbook.getManifest().getFileEntries();
+        }
     }
 
     private void copyAll(IInputSource source, IOutputTarget target)
@@ -289,14 +295,18 @@ public class WorkbookLoader extends XMLLoader {
         workbook.setPassword(password);
     }
 
-    private void initWorkbookContents(IWorkbook workbook) {
+    private void initWorkbookContents(WorkbookImpl workbook) {
         for (ISheet s : workbook.getSheets()) {
             initSheet(s, workbook);
         }
     }
 
-    private void initSheet(ISheet s, IWorkbook wb) {
-        ((SheetImpl) s).addNotify((WorkbookImpl) wb);
+    private void initSheet(ISheet sheet, WorkbookImpl wb) {
+        ((SheetImpl) sheet).addNotify(wb);
+
+        // Prefetch all revisions of this sheet.
+        workbook.getRevisionRepository().getRevisionManager(sheet.getId(),
+                IRevision.SHEET);
     }
 
     private void clearEncryptionData() {
@@ -312,7 +322,8 @@ public class WorkbookLoader extends XMLLoader {
         } catch (Throwable e) {
             if (e instanceof CoreException) {
                 CoreException coreEx = (CoreException) e;
-                if (coreEx.getType() == Core.ERROR_CANCELLATION) {
+                if (coreEx.getType() == Core.ERROR_WRONG_PASSWORD
+                        || coreEx.getType() == Core.ERROR_CANCELLATION) {
                     throw coreEx;
                 }
             }

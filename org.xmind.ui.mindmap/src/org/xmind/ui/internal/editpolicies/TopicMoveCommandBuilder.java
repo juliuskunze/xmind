@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -47,6 +47,14 @@ import org.xmind.ui.commands.ModifyRangeCommand;
 import org.xmind.ui.util.MindMapUtils;
 
 public class TopicMoveCommandBuilder extends DeleteCommandBuilder {
+
+    private static class TopicInfo {
+        public ITopic oldParent;
+        public int oldIndex;
+        public String oldType;
+        public Point newPosition;
+        public boolean needsReorganize;
+    }
 
     private static final List<ITopic> EMPTY_TOPICS = Collections.emptyList();
 
@@ -138,38 +146,46 @@ public class TopicMoveCommandBuilder extends DeleteCommandBuilder {
     }
 
     public void moveTopics(List<ITopic> topics) {
+        Map<ITopic, TopicInfo> oldInfo = new HashMap<ITopic, TopicInfo>(topics
+                .size());
         for (ITopic topic : topics) {
-            deleteTopic(topic, insertIndex);
+            TopicInfo info = deleteTopic(topic, insertIndex);
+            if (!oldInfo.containsKey(topic)) {
+                oldInfo.put(topic, info);
+            }
         }
         for (ITopic topic : topics) {
-            moveTopic(topic, insertIndex);
+            moveTopic(topic, insertIndex, oldInfo.get(topic));
             insertIndex++;
         }
     }
 
-    private void deleteTopic(ITopic topic, int toIndex) {
-        ITopic oldParent = topic.getParent();
-        int oldIndex = topic.getIndex();
-        String oldType = topic.getType();
-        boolean needsReorganize = needsReorganize(topic, toIndex, oldParent,
-                oldIndex, oldType);
-        if (needsReorganize) {
-            if (!isCached(oldParent)) {
-                for (ITopicRange range : getSubRanges(oldParent)) {
-                    cacheOldRangedTopics(range, oldParent);
+    private TopicInfo deleteTopic(ITopic topic, int toIndex) {
+        TopicInfo info = new TopicInfo();
+        info.oldParent = topic.getParent();
+        info.oldIndex = topic.getIndex();
+        info.oldType = topic.getType();
+        info.newPosition = calculateTargetPosition(topic);
+        info.needsReorganize = needsReorganize(topic, toIndex, info.oldParent,
+                info.oldIndex, info.oldType);
+        if (info.needsReorganize) {
+            if (!isCached(info.oldParent)) {
+                for (ITopicRange range : getSubRanges(info.oldParent)) {
+                    cacheOldRangedTopics(range, info.oldParent);
                 }
             }
             deleteTopic(topic, true);
         }
+        return info;
     }
 
-    private void moveTopic(ITopic topic, int toIndex) {
-        ITopic oldParent = topic.getParent();
-        int oldIndex = topic.getIndex();
-        String oldType = topic.getType();
-        Point toPosition = calculateTargetPosition(topic);
-        boolean needsReorganize = needsReorganize(topic, toIndex, oldParent,
-                oldIndex, oldType);
+    private void moveTopic(ITopic topic, int toIndex, TopicInfo info) {
+//        ITopic oldParent = topic.getParent();
+//        int oldIndex = topic.getIndex();
+//        String oldType = topic.getType();
+//        Point toPosition = calculateTargetPosition(topic);
+//        boolean needsReorganize = needsReorganize(topic, toIndex, oldParent,
+//                oldIndex, oldType);
 //        if (needsReorganize) {
 //            if (!isCached(oldParent)) {
 //                for (ITopicRange range : getSubRanges(oldParent)) {
@@ -180,8 +196,8 @@ public class TopicMoveCommandBuilder extends DeleteCommandBuilder {
 //        }
 
         add(new ModifyPositionCommand(topic, MindMapUtils
-                .toModelPosition(toPosition)), !needsReorganize);
-        if (needsReorganize) {
+                .toModelPosition(info.newPosition)), !info.needsReorganize);
+        if (info.needsReorganize) {
             addTopic(topic, getTargetParent(), toIndex, getTargetType(), true);
             if (rangesToMove != null && !rangesToMove.isEmpty()) {
                 while (!rangesToMove.isEmpty()) {

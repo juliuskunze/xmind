@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -161,7 +161,7 @@ public class StylesViewer extends CategorizedGalleryViewer implements
 
     private static class StyleSelectTool extends GallerySelectTool {
 
-        public boolean isTitleEditable(IPart p) {
+        protected boolean isTitleEditable(IPart p) {
             return super.isTitleEditable(p)
                     && ((IStyle) p.getModel()).getOwnedStyleSheet() != MindMapUI
                             .getResourceManager().getSystemStyleSheet();
@@ -196,8 +196,6 @@ public class StylesViewer extends CategorizedGalleryViewer implements
     }
 
     protected void configureNestedViewer(GalleryViewer viewer) {
-        super.configureNestedViewer(viewer);
-        viewer.setPartFactory(new StylePartFactory(viewer.getPartFactory()));
         Properties properties = getProperties();
         properties.set(GalleryViewer.Horizontal, Boolean.TRUE);
         properties.set(GalleryViewer.Wrap, Boolean.TRUE);
@@ -209,10 +207,12 @@ public class StylesViewer extends CategorizedGalleryViewer implements
         properties.set(GalleryViewer.TitlePlacement, GalleryViewer.TITLE_TOP);
         properties.set(GalleryViewer.SingleClickToOpen, Boolean.FALSE);
 
+        super.configureNestedViewer(viewer);
+        viewer.setPartFactory(new StylePartFactory(viewer.getPartFactory()));
         EditDomain editDomain = new EditDomain();
         editDomain.installTool(GEF.TOOL_SELECT, new StyleSelectTool());
         editDomain.installTool(GEF.TOOL_EDIT, new StyleNameEditTool());
-        editDomain.setViewer(viewer);
+        viewer.setEditDomain(editDomain);
     }
 
     protected void inputChanged(Object input, Object oldInput) {

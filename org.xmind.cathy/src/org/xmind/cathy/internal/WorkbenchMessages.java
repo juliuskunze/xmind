@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -25,15 +25,30 @@ public class WorkbenchMessages extends NLS {
     public static String File_menu_text;
     public static String Edit_menu_text;
     public static String Help_menu_text;
+    public static String SaveAction_text;
 
     public static String GeneralPrefPage_title;
     public static String RecentFiles_label;
     public static String RestoreLastSession_label;
     public static String CheckUpdates_label;
+    public static String AutoBackupIndicator_AutoSaveDisabled_description;
+
+    public static String AutoBackupIndicator_AutoSaveDisabled_label;
+
+    public static String AutoBackupIndicator_AutoSaveEnabled_label;
+
+    public static String AutoBackupIndicator_DisableAutoSaveAction_text;
+
+    public static String AutoBackupIndicator_EnableAutoSaveAction_text;
+
+    public static String AutoBackupIndicator_OpenPreferenceAction_text;
+
     public static String AutoSave_label;
     public static String AutoSave_Minutes;
+    public static String AutoSave_label2;
     public static String Startup_title;
     public static String StartupAction_label;
+    public static String StartupAction_OpenDialog;
     public static String StartupAction_BlankMap;
     public static String StartupAction_HomeMap;
     public static String StartupAction_LastSession;
@@ -73,6 +88,15 @@ public class WorkbenchMessages extends NLS {
     public static String StartupJob_OpenBlankMap;
     public static String StartupJob_OpenHomeMap;
     public static String StartupJob_OpenLastSession;
+
+    public static String PromptSaveEditorOnClosing_message;
+
+    public static String About_LicensedTo;
+    public static String About_ProTitle;
+    public static String About_PlusTitle;
+    public static String About_ProSubscriptionTitle;
+    public static String About_LicenseTypePattern;
+    public static String About_LicenseType_Unactivated;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, WorkbenchMessages.class);

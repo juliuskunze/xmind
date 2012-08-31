@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -30,8 +30,11 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.IWorkbench;
+import org.xmind.core.Core;
 import org.xmind.core.ISheet;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.event.ICoreEventListener;
+import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.gef.command.Command;
 import org.xmind.gef.command.CompoundCommand;
 import org.xmind.gef.command.ICommandStack;
@@ -166,6 +169,13 @@ public abstract class AbstractMindMapImportWizard extends Wizard implements
                                             .getActivePage()
                                             .openEditor(input,
                                                     MindMapUI.MINDMAP_EDITOR_ID);
+                                    // Forcely make editor saveable:
+                                    if (workbook instanceof ICoreEventSource2) {
+                                        ((ICoreEventSource2) workbook)
+                                                .registerOnceCoreEventListener(
+                                                        Core.WorkbookPreSaveOnce,
+                                                        ICoreEventListener.NULL);
+                                    }
                                 } catch (Throwable e) {
                                     exception[0] = e;
                                 }
@@ -197,8 +207,7 @@ public abstract class AbstractMindMapImportWizard extends Wizard implements
                                         commands.add(command);
                                     }
                                     String label = NLS
-                                            .bind(
-                                                    WizardMessages.Command_ImportFrom,
+                                            .bind(WizardMessages.Command_ImportFrom,
                                                     new File(getSourcePath())
                                                             .getName());
                                     commandStack.execute(new CompoundCommand(

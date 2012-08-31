@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -20,8 +20,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.Map.Entry;
+import java.util.Stack;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -321,14 +321,16 @@ public class FreeMindImporter extends MindMapImporter implements
             LinkPoint link = new LinkPoint(linkEle);
             ITopic end1 = link.end1;
             ITopic end2 = link.end2;
-            IRelationship relationship = getTargetWorkbook()
-                    .createRelationship(end1, end2);
-            relationship.setEnd1Id(end1.getId());
-            relationship.setEnd2Id(end2.getId());
+            if (end1 != null && end2 != null) {
+                IRelationship relationship = getTargetWorkbook()
+                        .createRelationship(end1, end2);
+                relationship.setEnd1Id(end1.getId());
+                relationship.setEnd2Id(end2.getId());
 
-            Element arrowEle = child(linkEle, "arrowlink"); //$NON-NLS-1$
-            loadLinkShape(relationship, arrowEle);
-            loadLinkColor(relationship, arrowEle);
+                Element arrowEle = child(linkEle, "arrowlink"); //$NON-NLS-1$
+                loadLinkShape(relationship, arrowEle);
+                loadLinkColor(relationship, arrowEle);
+            }
         }
     }
 
@@ -555,8 +557,10 @@ public class FreeMindImporter extends MindMapImporter implements
             throws InterruptedException {
         checkInterrupted();
         IFileEntry imgEntry = loadAttachment(path);
-        IImage image = topic.getImage();
-        image.setSource(HyperlinkUtils.toAttachmentURL(imgEntry.getPath()));
+        if (imgEntry != null) {
+            IImage image = topic.getImage();
+            image.setSource(HyperlinkUtils.toAttachmentURL(imgEntry.getPath()));
+        }
     }
 
     private IFileEntry loadAttachment(String path) throws InterruptedException {
@@ -663,10 +667,9 @@ public class FreeMindImporter extends MindMapImporter implements
         if (documentBuilder == null) {
             DocumentBuilderFactory factory = DocumentBuilderFactory
                     .newInstance();
-            factory
-                    .setAttribute(
-                            "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                            true);
+            factory.setAttribute(
+                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+                    true);
             documentBuilder = factory.newDocumentBuilder();
         }
         return documentBuilder;

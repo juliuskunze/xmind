@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,12 +13,11 @@
  *******************************************************************************/
 package org.xmind.cathy.internal.jobs;
 
+import net.xmind.signin.IDataStore;
 import net.xmind.signin.XMindNet;
+import net.xmind.signin.internal.XMindNetRequest;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -43,7 +42,6 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
-import org.json.JSONObject;
 import org.xmind.cathy.internal.CathyPlugin;
 import org.xmind.cathy.internal.WorkbenchMessages;
 import org.xmind.ui.resources.FontUtils;
@@ -156,11 +154,8 @@ public class CheckUpdatesJob extends Job {
 
         private void createMoreDownloadsArea(Composite parent) {
             Label label = new Label(parent, SWT.NONE);
-            label
-                    .setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-                            false));
-            label
-                    .setText(WorkbenchMessages.CheckUpdatesJob_NewUpdate_moreDownloads_text);
+            label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+            label.setText(WorkbenchMessages.CheckUpdatesJob_NewUpdate_moreDownloads_text);
             label.setForeground(parent.getDisplay().getSystemColor(
                     SWT.COLOR_BLUE));
             label.addListener(SWT.MouseUp, new Listener() {
@@ -179,7 +174,7 @@ public class CheckUpdatesJob extends Job {
         }
 
         private void openAllDownloadsUrl() {
-            XMindNet.gotoURL(allDownloadsUrl);
+            XMindNet.gotoURL(true, allDownloadsUrl);
         }
 
         private void openDownloadUrl() {
@@ -189,68 +184,110 @@ public class CheckUpdatesJob extends Job {
 
     private final IWorkbench workbench;
 
-    private boolean showFailResult;
+    private boolean showFailureResult;
 
-    public CheckUpdatesJob(IWorkbench workbench, boolean showFailResult) {
+    private XMindNetRequest checkVersionRequest = null;
+
+    public CheckUpdatesJob(IWorkbench workbench, boolean showFailureResult) {
         super(WorkbenchMessages.CheckUpdatesJob_jobName);
         this.workbench = workbench;
-        this.showFailResult = showFailResult;
+        this.showFailureResult = showFailureResult;
     }
 
     protected IStatus run(IProgressMonitor monitor) {
         monitor.beginTask(null, 1);
-        if (showFailResult) {
+        if (showFailureResult) {
             try {
                 doCheck();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 return new Status(IStatus.ERROR, CathyPlugin.PLUGIN_ID,
                         WorkbenchMessages.CheckUpdatesJob_Fail_message, e);
             }
         } else {
             try {
                 doCheck();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 return new Status(IStatus.WARNING, CathyPlugin.PLUGIN_ID,
                         WorkbenchMessages.CheckUpdatesJob_Fail_message, e);
             }
         }
+        if (monitor.isCanceled())
+            return Status.CANCEL_STATUS;
         monitor.done();
         return Status.OK_STATUS;
     }
 
-    protected void doCheck() throws Exception {
-        String url = "http://www.xmind.net/_api/checkVersion/3.2.1"; //$NON-NLS-1$
-        String distribId = CathyPlugin.getDistributionId();
-        url = url + "?distrib=" + distribId; //$NON-NLS-1$
-        HttpMethod method = new GetMethod(url);
-        int code = new HttpClient().executeMethod(method);
-        if (code == HttpStatus.SC_OK) {
-            String resp = method.getResponseBodyAsString();
-            JSONObject json = new JSONObject(resp);
-            code = json.getInt("_code"); //$NON-NLS-1$
-            if (code == HttpStatus.SC_OK) {
-                String downloadUrl = json.getString("download"); //$NON-NLS-1$
-                String allDownloadsUrl = json.getString("allDownloads"); //$NON-NLS-1$
-                int size = json.getInt("size"); //$NON-NLS-1$
-                String version = json.getString("version"); //$NON-NLS-1$
-                if (downloadUrl != null) {
-                    if (allDownloadsUrl == null)
-                        allDownloadsUrl = "http://www.xmind.net/downloads/"; //$NON-NLS-1$
-                    showNewUpdateDialog(downloadUrl, version, size,
-                            allDownloadsUrl);
-                } else {
-                    showNoUpdateDialog();
+    protected void doCheck() throws Throwable {
+        XMindNetRequest request = new XMindNetRequest();
+        this.checkVersionRequest = request;
+        request.uri("/_api/checkVersion/3.3.0"); //$NON-NLS-1$
+        request.addParameter("distrib", CathyPlugin.getDistributionId()); //$NON-NLS-1$
+        request.get();
+
+        if (request.isAborted())
+            return;
+
+        int code = request.getCode();
+        IDataStore data = request.getData();
+        if (code == HttpStatus.SC_OK && data != null) {
+            String downloadUrl = data.getString("download"); //$NON-NLS-1$
+            if (downloadUrl != null) {
+                String allDownloadsUrl = data.getString("allDownloads"); //$NON-NLS-1$
+                int size = data.getInt("size"); //$NON-NLS-1$
+                String version = data.getString("version"); //$NON-NLS-1$
+                if (allDownloadsUrl == null) {
+                    allDownloadsUrl = "http://www.xmind.net/xmind/downloads/"; //$NON-NLS-1$
                 }
+                showNewUpdateDialog(downloadUrl, version, size, allDownloadsUrl);
             } else {
                 showNoUpdateDialog();
             }
         } else {
+            if (request.getException() != null)
+                throw request.getException();
             showNoUpdateDialog();
         }
+
+//        String url = "http://www.xmind.net/_api/checkVersion/3.3.0"; //$NON-NLS-1$
+//        String distribId = CathyPlugin.getDistributionId();
+//        url = url + "?distrib=" + distribId; //$NON-NLS-1$
+//        HttpMethod method = new GetMethod(url);
+//        int code = new HttpClient().executeMethod(method);
+//        if (code == HttpStatus.SC_OK) {
+//            String resp = method.getResponseBodyAsString();
+//            JSONObject json = new JSONObject(resp);
+//            code = json.getInt("_code"); //$NON-NLS-1$
+//            if (code == HttpStatus.SC_OK) {
+//                String downloadUrl = json.getString("download"); //$NON-NLS-1$
+//                String allDownloadsUrl = json.getString("allDownloads"); //$NON-NLS-1$
+//                int size = json.getInt("size"); //$NON-NLS-1$
+//                String version = json.getString("version"); //$NON-NLS-1$
+//                if (downloadUrl != null) {
+//                    if (allDownloadsUrl == null)
+//                        allDownloadsUrl = "http://www.xmind.net/downloads/"; //$NON-NLS-1$
+//                    showNewUpdateDialog(downloadUrl, version, size,
+//                            allDownloadsUrl);
+//                } else {
+//                    showNoUpdateDialog();
+//                }
+//            } else {
+//                showNoUpdateDialog();
+//            }
+//        } else {
+//            showNoUpdateDialog();
+//        }
+    }
+
+    @Override
+    protected void canceling() {
+        if (checkVersionRequest != null) {
+            checkVersionRequest.abort();
+        }
+        super.canceling();
     }
 
     private void showNoUpdateDialog() {
-        if (showFailResult) {
+        if (showFailureResult) {
             workbench.getDisplay().asyncExec(new Runnable() {
                 public void run() {
                     MessageDialog.openInformation(null,

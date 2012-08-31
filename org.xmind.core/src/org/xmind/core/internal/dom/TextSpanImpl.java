@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -55,6 +55,7 @@ public class TextSpanImpl extends SpanImplBase implements ITextSpan {
                 p.replaceChild(oldImpl, text);
             }
             setImplementation(text);
+            getOwner().updateModifiedTime();
         } else {
             if (getImplementation() == ele) {
                 super.setStyleId(styleId);
@@ -74,6 +75,7 @@ public class TextSpanImpl extends SpanImplBase implements ITextSpan {
                 DOMUtils.setAttribute(ele, ATTR_STYLE_ID, styleId);
                 WorkbookUtilsImpl.increaseStyleRef(getOwner()
                         .getRealizedWorkbook(), this);
+                getOwner().updateModifiedTime();
             }
         }
     }
@@ -84,6 +86,7 @@ public class TextSpanImpl extends SpanImplBase implements ITextSpan {
 
     public void setTextContent(String textContent) {
         getImplementation().setTextContent(textContent);
+        getOwner().updateModifiedTime();
     }
 
 }

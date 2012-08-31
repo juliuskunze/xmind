@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,14 +13,10 @@
  *******************************************************************************/
 package org.xmind.gef.image;
 
-import org.eclipse.draw2d.FreeformFigure;
-import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Insets;
 import org.eclipse.draw2d.geometry.Rectangle;
 
 public class ExportAreaProvider implements IExportAreaProvider {
-
-    protected final IFigure figure;
 
     protected final Rectangle sourceArea;
 
@@ -34,49 +30,43 @@ public class ExportAreaProvider implements IExportAreaProvider {
 
     protected double scale = -1;
 
-    public ExportAreaProvider(IFigure figure, Rectangle sourceArea,
-            int constrainedWidth, int constrainedHeight, Insets margins) {
-        this.figure = figure;
+    public ExportAreaProvider(Rectangle sourceArea, int constrainedWidth,
+            int constrainedHeight, Insets margins) {
         this.sourceArea = sourceArea == null ? null : new Rectangle(sourceArea);
         this.constrainedWidth = constrainedWidth;
         this.constrainedHeight = constrainedHeight;
         this.margins = margins == null ? new Insets() : new Insets(margins);
     }
 
-    public IFigure getFigure() {
-        return figure;
-    }
-
     public Insets getMargins() {
         return margins;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.xmind.gef.image.IExportAreaProvider#getExportArea()
      */
     public Rectangle getExportArea() {
         if (exportArea == null) {
-            exportArea = new Rectangle(getSourceArea(figure));
-            adjustExportArea();
+            if (sourceArea != null) {
+                exportArea = new Rectangle(sourceArea);
+                adjustExportArea();
+            } else {
+                exportArea = new Rectangle();
+            }
         }
         return exportArea;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.xmind.gef.image.IExportAreaProvider#getScale()
      */
     public double getScale() {
         getExportArea();
         return scale;
-    }
-
-    protected Rectangle getSourceArea(IFigure figure) {
-        if (sourceArea != null)
-            return sourceArea;
-        if (figure instanceof FreeformFigure) {
-            return ((FreeformFigure) figure).getFreeformExtent();
-        }
-        return figure.getBounds();
     }
 
     protected void adjustExportArea() {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -51,8 +51,9 @@ import org.xmind.gef.image.ImageWriter;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogUtils;
 import org.xmind.ui.io.MonitoredOutputStream;
+import org.xmind.ui.mindmap.GhostShellProvider;
 import org.xmind.ui.mindmap.IMindMapImages;
-import org.xmind.ui.mindmap.MindMapImageExtractor;
+import org.xmind.ui.mindmap.MindMapImageExporter;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.resources.FontUtils;
 import org.xmind.ui.util.ImageFormat;
@@ -122,7 +123,7 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
 
             private Display display;
 
-            private Shell parentShell;
+//            private Shell parentShell;
 
             public GeneratePreviewJob(String destPath, ImageFormat format,
                     Display display) {
@@ -131,19 +132,17 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
                         format.getName()));
                 this.destPath = destPath;
                 this.display = display;
-                this.parentShell = findParentShell(display);
             }
 
             protected IStatus run(IProgressMonitor monitor) {
                 monitor.beginTask(null, 100);
 
-                monitor
-                        .subTask(WizardMessages.ImageExportPage_GeneratePreview_CreatingSourceImage);
-                MindMapImageExtractor imageExtractor = getImageExtractor(
-                        display, parentShell);
+                monitor.subTask(WizardMessages.ImageExportPage_GeneratePreview_CreatingSourceImage);
+                MindMapImageExporter exporter = getImageExporter(display);
+
                 Image image;
                 try {
-                    image = imageExtractor.getImage();
+                    image = exporter.createImage();
                 } catch (Throwable e) {
                     if (generatePreviewJob == this)
                         generatePreviewJob = null;
@@ -156,35 +155,7 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
                             e);
                 }
 
-                if (monitor.isCanceled()) {
-                    releaseImageExtractor(imageExtractor);
-                    if (generatePreviewJob == this)
-                        generatePreviewJob = null;
-                    return new Status(
-                            IStatus.CANCEL,
-                            MindMapUIPlugin.PLUGIN_ID,
-                            WizardMessages.ImageExportPage_GeneratePreview_Canceled);
-                }
-                monitor.worked(40);
-
-                boolean largeImage = isImageLarge(image);
-                Point origin = null;
-
-                monitor
-                        .subTask(WizardMessages.ImageExportPage_GeneratePreview_SavingTempFile);
                 try {
-                    writeImage(image, destPath, monitor);
-                    origin = imageExtractor.getOrigin();
-                } catch (InterruptedIOException e) {
-                    deleteTemporaryPath(destPath);
-                    if (generatePreviewJob == this)
-                        generatePreviewJob = null;
-                    return new Status(
-                            IStatus.CANCEL,
-                            MindMapUIPlugin.PLUGIN_ID,
-                            WizardMessages.ImageExportPage_GeneratePreview_Canceled);
-                } catch (Throwable e) {
-                    deleteTemporaryPath(destPath);
                     if (monitor.isCanceled()) {
                         if (generatePreviewJob == this)
                             generatePreviewJob = null;
@@ -193,65 +164,93 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
                                 MindMapUIPlugin.PLUGIN_ID,
                                 WizardMessages.ImageExportPage_GeneratePreview_Canceled);
                     }
-                    asyncUpdateViewer(display, null, PreviewState.Error,
-                            largeImage, origin);
+                    monitor.worked(40);
+
+                    boolean largeImage = isImageLarge(image);
+                    Point origin = null;
+
+                    monitor.subTask(WizardMessages.ImageExportPage_GeneratePreview_SavingTempFile);
+                    try {
+                        writeImage(image, destPath, monitor);
+                        origin = exporter.calcRelativeOrigin();
+                    } catch (InterruptedIOException e) {
+                        deleteTemporaryPath(destPath);
+                        if (generatePreviewJob == this)
+                            generatePreviewJob = null;
+                        return new Status(
+                                IStatus.CANCEL,
+                                MindMapUIPlugin.PLUGIN_ID,
+                                WizardMessages.ImageExportPage_GeneratePreview_Canceled);
+                    } catch (Throwable e) {
+                        deleteTemporaryPath(destPath);
+                        if (monitor.isCanceled()) {
+                            if (generatePreviewJob == this)
+                                generatePreviewJob = null;
+                            return new Status(
+                                    IStatus.CANCEL,
+                                    MindMapUIPlugin.PLUGIN_ID,
+                                    WizardMessages.ImageExportPage_GeneratePreview_Canceled);
+                        }
+                        asyncUpdateViewer(display, null, PreviewState.Error,
+                                largeImage, origin);
+                        return new Status(
+                                IStatus.CANCEL,
+                                MindMapUIPlugin.PLUGIN_ID,
+                                makeErrorMessage(
+                                        WizardMessages.ImageExportPage_GeneratePreview_CouldNotSavePreviewImage,
+                                        largeImage), e);
+                    }
+                    if (monitor.isCanceled()) {
+                        deleteTemporaryPath(destPath);
+                        if (generatePreviewJob == this)
+                            generatePreviewJob = null;
+                        return new Status(
+                                IStatus.CANCEL,
+                                MindMapUIPlugin.PLUGIN_ID,
+                                WizardMessages.ImageExportPage_GeneratePreview_Canceled);
+                    }
+                    monitor.worked(40);
+
+                    monitor.subTask(WizardMessages.ImageExportPage_GeneratePreview_LoadingTempFile);
+                    File previewFile = new File(destPath);
+                    if (!previewFile.exists() || !previewFile.canRead()) {
+                        if (generatePreviewJob == this)
+                            generatePreviewJob = null;
+                        asyncUpdateViewer(display, null, PreviewState.Error,
+                                largeImage, origin);
+                        return new Status(
+                                IStatus.CANCEL,
+                                MindMapUIPlugin.PLUGIN_ID,
+                                WizardMessages.ImageExportPage_GeneratePreview_CouldNotLoadPreviewImage);
+                    }
+
+                    try {
+                        previewImage = new Image(Display.getCurrent(), destPath);
+                    } catch (Throwable e) {
+                        if (generatePreviewJob == this)
+                            generatePreviewJob = null;
+                        asyncUpdateViewer(display, null, PreviewState.Error,
+                                largeImage, origin);
+                        return new Status(
+                                IStatus.CANCEL,
+                                MindMapUIPlugin.PLUGIN_ID,
+                                WizardMessages.ImageExportPage_GeneratePreview_CouldNotLoadPreviewImage,
+                                e);
+                    }
+
+                    asyncUpdateViewer(display, previewImage,
+                            PreviewState.Showing, false, origin);
+                    if (generatePreviewJob == this)
+                        generatePreviewJob = null;
+                    monitor.done();
                     return new Status(
-                            IStatus.CANCEL,
+                            IStatus.OK,
                             MindMapUIPlugin.PLUGIN_ID,
-                            makeErrorMessage(
-                                    WizardMessages.ImageExportPage_GeneratePreview_CouldNotSavePreviewImage,
-                                    largeImage), e);
+                            WizardMessages.ImageExportPage_GeneratePreview_Completed);
                 } finally {
-                    releaseImageExtractor(imageExtractor);
-                }
-                if (monitor.isCanceled()) {
-                    deleteTemporaryPath(destPath);
-                    if (generatePreviewJob == this)
-                        generatePreviewJob = null;
-                    return new Status(
-                            IStatus.CANCEL,
-                            MindMapUIPlugin.PLUGIN_ID,
-                            WizardMessages.ImageExportPage_GeneratePreview_Canceled);
-                }
-                monitor.worked(40);
-
-                monitor
-                        .subTask(WizardMessages.ImageExportPage_GeneratePreview_LoadingTempFile);
-                File previewFile = new File(destPath);
-                if (!previewFile.exists() || !previewFile.canRead()) {
-                    if (generatePreviewJob == this)
-                        generatePreviewJob = null;
-                    asyncUpdateViewer(display, null, PreviewState.Error,
-                            largeImage, origin);
-                    return new Status(
-                            IStatus.CANCEL,
-                            MindMapUIPlugin.PLUGIN_ID,
-                            WizardMessages.ImageExportPage_GeneratePreview_CouldNotLoadPreviewImage);
+                    image.dispose();
                 }
 
-                try {
-                    previewImage = new Image(Display.getCurrent(), destPath);
-                } catch (Throwable e) {
-                    if (generatePreviewJob == this)
-                        generatePreviewJob = null;
-                    asyncUpdateViewer(display, null, PreviewState.Error,
-                            largeImage, origin);
-                    return new Status(
-                            IStatus.CANCEL,
-                            MindMapUIPlugin.PLUGIN_ID,
-                            WizardMessages.ImageExportPage_GeneratePreview_CouldNotLoadPreviewImage,
-                            e);
-                }
-
-                asyncUpdateViewer(display, previewImage, PreviewState.Showing,
-                        false, origin);
-                if (generatePreviewJob == this)
-                    generatePreviewJob = null;
-                monitor.done();
-                return new Status(
-                        IStatus.OK,
-                        MindMapUIPlugin.PLUGIN_ID,
-                        WizardMessages.ImageExportPage_GeneratePreview_Completed);
             }
         }
 
@@ -317,8 +316,7 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
             GridData gd = new GridData(SWT.FILL, SWT.FILL, true, false);
             gd.widthHint = 400;
             label.setLayoutData(gd);
-            label
-                    .setText(WizardMessages.ImageExportPage_FormatGroup_description);
+            label.setText(WizardMessages.ImageExportPage_FormatGroup_description);
 
             formatCombo = new Combo(group, SWT.READ_ONLY | SWT.SIMPLE
                     | SWT.DROP_DOWN | SWT.BORDER);
@@ -428,8 +426,8 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
                 List<String> exts = getFormat().getExtensions();
                 String ext = FileUtils.getExtension(getTargetPath());
                 if (!exts.contains(ext)) {
-                    setTargetPath(replaceExtension(getTargetPath(), ext, exts
-                            .get(0)));
+                    setTargetPath(replaceExtension(getTargetPath(), ext,
+                            exts.get(0)));
                 }
             }
             updateStatus();
@@ -510,7 +508,10 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
 
     private ImageExportPage page;
 
-    private MindMapImageExtractor imageExtractor;
+//    private MindMapImageExtractor imageExtractor;
+    private MindMapImageExporter exporter = null;
+
+    private GhostShellProvider shell = null;
 
     public ImageExportWizard() {
         setWindowTitle(WizardMessages.ImageExportWizard_windowTitle);
@@ -582,52 +583,82 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
         return r.width * r.height > LARGE_SIZE;
     }
 
-    private Shell findParentShell(Display display) {
-        Shell shell = getContainer().getShell();
-        if (shell != null) {
-            Composite shellParent = shell.getParent();
-            if (shellParent instanceof Shell) {
-                Shell parentShell = (Shell) shellParent;
-                if (!parentShell.isDisposed()
-                        && parentShell.getDisplay() == display)
-                    return parentShell;
-            }
+//    private Shell findParentShell(Display display) {
+//        Shell shell = getContainer().getShell();
+//        if (shell != null) {
+//            Composite shellParent = shell.getParent();
+//            if (shellParent instanceof Shell) {
+//                Shell parentShell = (Shell) shellParent;
+//                if (!parentShell.isDisposed()
+//                        && parentShell.getDisplay() == display)
+//                    return parentShell;
+//            }
+//        }
+//        return null;
+//    }
+
+    protected MindMapImageExporter getImageExporter(Display display) {
+        if (this.exporter == null) {
+            this.exporter = createImageExporter(display);
         }
-        return null;
+        return this.exporter;
     }
 
-    protected void releaseImageExtractor(MindMapImageExtractor imageExtractor) {
-        if (imageExtractor == this.imageExtractor) {
-            // dispose our own image extractor when wizard dispose
-            return;
-        }
-        imageExtractor.dispose();
+    /**
+     * @param display
+     * @return
+     */
+    private MindMapImageExporter createImageExporter(Display display) {
+        MindMapImageExporter exporter = new MindMapImageExporter(display);
+        exporter.setSource(getSourceMindMap(), getShellProvider(display), null,
+                null);
+        return exporter;
     }
 
-    protected MindMapImageExtractor getImageExtractor(Display display,
-            Shell parentShell) {
-        if (imageExtractor == null) {
-            imageExtractor = createImageExtractor(display, parentShell);
-        }
-        return imageExtractor;
-    }
+//    protected void releaseImageExtractor(MindMapImageExtractor imageExtractor) {
+//        if (imageExtractor == this.imageExtractor) {
+//            // dispose our own image extractor when wizard dispose
+//            return;
+//        }
+//        imageExtractor.dispose();
+//    }
+//
+//    protected MindMapImageExtractor getImageExtractor(Display display,
+//            Shell parentShell) {
+//        if (imageExtractor == null) {
+//            imageExtractor = createImageExtractor(display, parentShell);
+//        }
+//        return imageExtractor;
+//    }
+//
+//    private MindMapImageExtractor createImageExtractor(Display display,
+//            Shell parentShell) {
+//        if (parentShell != null && !parentShell.isDisposed()) {
+//            return new MindMapImageExtractor(parentShell, getSourceMindMap()
+//                    .getSheet(), getSourceMindMap().getCentralTopic());
+//        } else {
+//            return new MindMapImageExtractor(display, getSourceMindMap()
+//                    .getSheet(), getSourceMindMap().getCentralTopic());
+//        }
+//    }
 
-    private MindMapImageExtractor createImageExtractor(Display display,
-            Shell parentShell) {
-        if (parentShell != null && !parentShell.isDisposed()) {
-            return new MindMapImageExtractor(parentShell, getSourceMindMap()
-                    .getSheet(), getSourceMindMap().getCentralTopic());
-        } else {
-            return new MindMapImageExtractor(display, getSourceMindMap()
-                    .getSheet(), getSourceMindMap().getCentralTopic());
+    protected GhostShellProvider getShellProvider(Display display) {
+        if (shell == null) {
+            shell = new GhostShellProvider(display);
         }
+        return shell;
     }
 
     public void dispose() {
-        if (imageExtractor != null) {
-            imageExtractor.dispose();
-            imageExtractor = null;
+//        if (imageExtractor != null) {
+//            imageExtractor.dispose();
+//            imageExtractor = null;
+//        }
+        if (shell != null) {
+            shell.dispose();
+            shell = null;
         }
+        exporter = null;
         super.dispose();
     }
 
@@ -654,32 +685,36 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
         monitor.beginTask(null, 100);
 
         monitor.subTask(WizardMessages.ImageExport_CreatingSourceImage);
-        MindMapImageExtractor imageExtractor = getImageExtractor(display,
-                parentShell);
+//        MindMapImageExtractor imageExtractor = getImageExtractor(display,
+//                parentShell);
+        MindMapImageExporter exporter = getImageExporter(display);
         Image image;
         try {
-            image = imageExtractor.getImage();
+//            image = imageExtractor.getImage();
+            image = exporter.createImage();
         } catch (Throwable e) {
             monitor.setCanceled(true);
             throw new InvocationTargetException(e);
         }
-        if (monitor.isCanceled()) {
-            throw new InterruptedException();
-        }
-        monitor.worked(50);
-
-        String path = getTargetPath();
-        monitor.subTask(NLS.bind(WizardMessages.ImageExport_WritingTargetFile,
-                path));
         try {
-            writeImage(image, path, monitor);
-        } catch (IOException e) {
             if (monitor.isCanceled()) {
                 throw new InterruptedException();
             }
-            throw new InvocationTargetException(e);
+            monitor.worked(50);
+
+            String path = getTargetPath();
+            monitor.subTask(NLS.bind(
+                    WizardMessages.ImageExport_WritingTargetFile, path));
+            try {
+                writeImage(image, path, monitor);
+            } catch (IOException e) {
+                if (monitor.isCanceled()) {
+                    throw new InterruptedException();
+                }
+                throw new InvocationTargetException(e);
+            }
         } finally {
-            releaseImageExtractor(imageExtractor);
+            image.dispose();
         }
 
         monitor.worked(49);

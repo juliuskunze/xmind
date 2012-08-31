@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -26,9 +26,8 @@ import org.eclipse.ui.IActionDelegate2;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
-public class SignInActionDelegate extends XMindNetActionDelegate implements
-        IWorkbenchWindowActionDelegate, IActionDelegate2,
-        IAuthenticationListener {
+public class SignInActionDelegate implements IWorkbenchWindowActionDelegate,
+        IActionDelegate2, IAuthenticationListener {
 
     private IWorkbenchWindow window;
 
@@ -119,18 +118,14 @@ public class SignInActionDelegate extends XMindNetActionDelegate implements
     }
 
     private void signOutInBrowser() {
-        setURL("http://www.xmind.net/xmind/go?r=http%3A%2F%2Fwww.xmind.net%2Fxmind%2Fsignout2%2F"); //$NON-NLS-1$
-        gotoURL();
+        XMindNet.gotoURL("http://www.xmind.net/xmind/signout2/"); //$NON-NLS-1$
     }
 
     private void showAccount(IAccountInfo accountInfo) {
         String userID = accountInfo.getUser();
         String token = accountInfo.getAuthToken();
-        final String url = String.format(
-                "http://www.xmind.net/xmind/account/%s/%s", //$NON-NLS-1$ 
+        XMindNet.gotoURL("http://www.xmind.net/xmind/account/%s/%s", //$NON-NLS-1$ 
                 userID, token);
-        setURL(url);
-        gotoURL();
     }
 
     /*

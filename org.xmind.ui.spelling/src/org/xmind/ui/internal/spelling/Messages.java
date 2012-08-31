@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -51,6 +51,21 @@ public class Messages extends NLS {
 
     public static String importDict_Text;
     public static String importDictLabel_Text;
+
+    public static String SpellingCheckView_button_ScanAllWorkbooks;
+    public static String SpellingCheckView_button_ScanWorkbook;
+    public static String SpellingCheckView_column_Word;
+    public static String SpellingCheckView_column_Suggestions;
+    public static String SpellingCheckView_Scanning;
+    public static String SpellingCheckView_dialogTitle;
+    public static String SpellingCheckView_NoEditors_message;
+    public static String SpellingCheckView_NoProviders_message;
+    public static String SpellingCheckView_ScanCompleted_message;
+    public static String SpellingCheckView_ScanCompleted_link;
+    public static String SpellingCheckView_NoSpellingError_text;
+
+    public static String CheckSpellingJob_name;
+    public static String CheckSpellingJob_task_Scanning;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);

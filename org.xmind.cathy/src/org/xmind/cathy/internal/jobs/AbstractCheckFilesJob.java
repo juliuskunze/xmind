@@ -34,10 +34,26 @@ public abstract class AbstractCheckFilesJob extends Job {
             public void aboutToRun(IJobChangeEvent event) {
                 prepare();
             }
+
+            /*
+             * (non-Javadoc)
+             * 
+             * @see
+             * org.eclipse.core.runtime.jobs.JobChangeAdapter#done(org.eclipse
+             * .core.runtime.jobs.IJobChangeEvent)
+             */
+            @Override
+            public void done(IJobChangeEvent event) {
+                finish();
+            }
         });
     }
 
     protected void prepare() {
+        editorsToOpen = null;
+    }
+
+    protected void finish() {
         editorsToOpen = null;
     }
 
@@ -91,18 +107,15 @@ public abstract class AbstractCheckFilesJob extends Job {
                     return;
                 final IWorkbenchPage page = window.getActivePage();
                 if (page != null) {
-                    SafeRunner
-                            .run(new SafeRunnable(
-                                    NLS
-                                            .bind(
-                                                    WorkbenchMessages.CheckOpenFilesJob_FailsToOpen_message,
-                                                    input.getName())) {
-                                public void run() throws Exception {
-                                    result[0] = page.openEditor(input,
-                                            MindMapUI.MINDMAP_EDITOR_ID,
-                                            activate);
-                                }
-                            });
+                    SafeRunner.run(new SafeRunnable(
+                            NLS.bind(
+                                    WorkbenchMessages.CheckOpenFilesJob_FailsToOpen_message,
+                                    input.getName())) {
+                        public void run() throws Exception {
+                            result[0] = page.openEditor(input,
+                                    MindMapUI.MINDMAP_EDITOR_ID, activate);
+                        }
+                    });
                 }
             }
 

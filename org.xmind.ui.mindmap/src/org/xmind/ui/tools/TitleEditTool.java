@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,7 +20,9 @@ import org.xmind.gef.GEF;
 import org.xmind.gef.Request;
 import org.xmind.gef.draw2d.ITextFigure;
 import org.xmind.gef.draw2d.ITitledFigure;
+import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IPart;
+import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.texteditor.FloatingTextEditor;
 import org.xmind.ui.texteditor.FloatingTextEditorHelper;
 import org.xmind.ui.util.MindMapUtils;
@@ -28,6 +30,18 @@ import org.xmind.ui.util.MindMapUtils;
 public class TitleEditTool extends MindMapEditToolBase {
 
     private FloatingTextEditorHelper helper = null;
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.tool.EditTool#canEdit(org.xmind.gef.part.IGraphicalEditPart
+     * )
+     */
+    @Override
+    protected boolean canEdit(IGraphicalEditPart target) {
+        return super.canEdit(target) && !(target instanceof ITopicPart);
+    }
 
     protected String getInitialText(IPart source) {
         Object m = MindMapUtils.getRealModel(source);

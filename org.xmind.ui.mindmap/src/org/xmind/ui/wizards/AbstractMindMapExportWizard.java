@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -115,8 +115,8 @@ public abstract class AbstractMindMapExportWizard extends AbstractExportWizard {
         if (!hasSource() || !hasTargetPath())
             return false;
 
-        if (!isExtensionCompatible(getTargetPath(), FileUtils
-                .getExtension(getTargetPath()))) {
+        if (!isExtensionCompatible(getTargetPath(),
+                FileUtils.getExtension(getTargetPath()))) {
             String fileName = new File(getTargetPath()).getName();
             String formatName = getFormatName();
             String messages = NLS.bind(
@@ -142,7 +142,16 @@ public abstract class AbstractMindMapExportWizard extends AbstractExportWizard {
             getContainer().run(true, true, new IRunnableWithProgress() {
                 public void run(IProgressMonitor monitor)
                         throws InvocationTargetException, InterruptedException {
-                    doExport(monitor, display, parentShell);
+                    try {
+                        doExport(monitor, display, parentShell);
+                    } catch (OutOfMemoryError e) {
+                        try {
+                            throw new Exception(
+                                    WizardMessages.ImageTooLarge_Error, e);
+                        } catch (Exception e2) {
+                            throw new InvocationTargetException(e2);
+                        }
+                    }
                 }
             });
             return true;

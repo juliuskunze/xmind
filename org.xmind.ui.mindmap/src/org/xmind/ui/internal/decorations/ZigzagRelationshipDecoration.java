@@ -151,28 +151,23 @@ public class ZigzagRelationshipDecoration extends
             PrecisionPoint sourceCP, PrecisionPoint targetCP) {
 
         double x = 0.0, y = 0.0;
-        if (Math.abs(targetCP.x - targetPos.x) <= Math.abs(targetCP.y
-                - targetPos.y)
-                && Math.abs(sourceCP.x - sourcePos.x) <= Math.abs(sourceCP.y
-                        - sourcePos.y)) {
+        double targetXOffset = Math.abs(targetCP.x - targetPos.x);
+        double targetYOffset = Math.abs(targetCP.y - targetPos.y);
+        double sourceXOffset = Math.abs(sourceCP.x - sourcePos.x);
+        double sourceYOffset = Math.abs(sourceCP.y - sourcePos.y);
+        if (targetXOffset <= targetYOffset && sourceXOffset <= sourceYOffset) {
             x = (sourcePos.x + targetPos.x) / 2;
             y = (sourceCP.y + targetCP.y) / 2;
-        } else if (Math.abs(targetCP.x - targetPos.x) <= Math.abs(targetCP.y
-                - targetPos.y)
-                && Math.abs(sourceCP.x - sourcePos.x) > Math.abs(sourceCP.y
-                        - sourcePos.y)) {
+        } else if (targetXOffset <= targetYOffset
+                && sourceXOffset > sourceYOffset) {
             x = targetPos.x;
             y = sourcePos.y;
-        } else if (Math.abs(targetCP.x - targetPos.x) > Math.abs(targetCP.y
-                - targetPos.y)
-                && Math.abs(sourceCP.x - sourcePos.x) <= Math.abs(sourceCP.y
-                        - sourcePos.y)) {
+        } else if (targetXOffset > targetYOffset
+                && sourceXOffset <= sourceYOffset) {
             x = sourcePos.x;
             y = targetPos.y;
-        } else if (Math.abs(targetCP.x - targetPos.x) > Math.abs(targetCP.y
-                - targetPos.y)
-                && Math.abs(sourceCP.x - sourcePos.x) > Math.abs(sourceCP.y
-                        - sourcePos.y)) {
+        } else if (targetXOffset > targetYOffset
+                && sourceXOffset > sourceYOffset) {
             x = (sourceCP.x + targetCP.x) / 2;
             y = (sourcePos.y + targetPos.y) / 2;
         }

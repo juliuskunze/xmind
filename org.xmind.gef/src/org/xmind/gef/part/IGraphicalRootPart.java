@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,28 +13,9 @@
  *******************************************************************************/
 package org.xmind.gef.part;
 
-
 /**
  * @author Brian Sun
  */
-public interface IGraphicalRootPart extends IRootPart {
-
-//    IGraphicalViewer getViewer();
-
-//    IEditPart getFocused();
-//
-//    void setFocused(IEditPart focused);
-//
-//    void focusLost();
-//
-//    void focusGained();
-//
-//    IEditPart getLastFocused();
-//
-//    void setLastFocused(IEditPart lastFocused);
-//
-//    IEditPart getPreSelected();
-//
-//    void setPreSelected(IEditPart preSelected);
+public interface IGraphicalRootPart extends IRootPart, IGraphicalPart {
 
 }

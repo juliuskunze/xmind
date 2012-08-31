@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -137,7 +137,7 @@ public class WallpaperPropertySectionPart extends StyledPropertySectionPart {
 
             EditDomain editDomain = new EditDomain();
             editDomain.installTool(GEF.TOOL_SELECT, new GallerySelectTool());
-            editDomain.setViewer(viewer);
+            viewer.setEditDomain(editDomain);
 
             viewer.createControl(composite);
             GridData galleryData = new GridData(GridData.FILL, GridData.FILL,

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,6 +16,7 @@ package org.xmind.ui.internal.editpolicies;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.eclipse.draw2d.geometry.Point;
 import org.xmind.core.ICloneData;
 import org.xmind.core.IImage;
 import org.xmind.core.IRelationship;
@@ -115,6 +116,8 @@ public class DropTargetPolicy extends MindMapPolicyBase {
         }
         ISheet sheet = (ISheet) viewer.getAdapter(ISheet.class);
         int index = request.getIntParameter(GEF.PARAM_INDEX, -1);
+        boolean floating = request.getParameter(GEF.PARAM_PARENT) == null;
+        Point position = (Point) request.getParameter(GEF.PARAM_POSITION);
 
         PropertyCommandBuilder builder = new PropertyCommandBuilder(request);
         if (!builder.canStart())
@@ -127,12 +130,21 @@ public class DropTargetPolicy extends MindMapPolicyBase {
             if (cloned instanceof ITopic) {
                 if (parentTopic != null) {
                     ITopic clonedTopic = (ITopic) cloned;
-                    builder.add(new AddTopicCommand(clonedTopic, parentTopic,
-                            index, ITopic.ATTACHED), true);
-                    builder.add(new ModifyPositionCommand(clonedTopic, null),
-                            true);
-                    if (index >= 0)
-                        index++;
+                    if (floating && position != null) {
+                        builder.add(new AddTopicCommand(clonedTopic,
+                                parentTopic, -1, ITopic.DETACHED), true);
+                        builder.add(new ModifyPositionCommand(clonedTopic,
+                                new org.xmind.core.util.Point(position.x,
+                                        position.y)), true);
+                    } else {
+                        builder.add(new AddTopicCommand(clonedTopic,
+                                parentTopic, index, ITopic.ATTACHED), true);
+                        builder.add(
+                                new ModifyPositionCommand(clonedTopic, null),
+                                true);
+                        if (index >= 0)
+                            index++;
+                    }
                 }
             } else if (cloned instanceof IRelationship) {
                 if (sheet != null) {
@@ -156,8 +168,7 @@ public class DropTargetPolicy extends MindMapPolicyBase {
                             }
                         }
                         String markerId = (cloned instanceof IMarker) ? ((IMarker) cloned)
-                                .getId()
-                                : ((IMarkerRef) cloned).getMarkerId();
+                                .getId() : ((IMarkerRef) cloned).getMarkerId();
                         AddMarkerCommand addMarker = new AddMarkerCommand(
                                 parentTopic, markerId);
                         builder.add(addMarker, true);
@@ -166,10 +177,12 @@ public class DropTargetPolicy extends MindMapPolicyBase {
             } else if (cloned instanceof IImage) {
                 IImage image = (IImage) cloned;
                 if (parentTopic != null) {
-                    builder.add(new ModifyImageSourceCommand(parentTopic, image
-                            .getSource()), true);
-                    builder.add(new ModifyImageSizeCommand(parentTopic, image
-                            .getWidth(), image.getHeight()), true);
+                    builder.add(
+                            new ModifyImageSourceCommand(parentTopic, image
+                                    .getSource()), true);
+                    builder.add(
+                            new ModifyImageSizeCommand(parentTopic, image
+                                    .getWidth(), image.getHeight()), true);
                     builder.add(new ModifyImageAlignmentCommand(parentTopic,
                             image.getAlignment()), true);
                 }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -45,7 +45,7 @@ import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.core.util.FileUtils;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.GEF;
-import org.xmind.gef.IGraphicalViewer;
+import org.xmind.gef.GraphicalViewer;
 import org.xmind.gef.ISourceProvider;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
@@ -147,8 +147,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
             cmd.setLabel(CommandMessages.Command_CreateSummary);
             saveAndRun(cmd, request.getTargetDomain());
             if (cmd instanceof ISourceProvider) {
-                select(((ISourceProvider) cmd).getSources(), request
-                        .getTargetViewer());
+                select(((ISourceProvider) cmd).getSources(),
+                        request.getTargetViewer());
             }
         }
     }
@@ -231,8 +231,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
             cmd.setLabel(CommandMessages.Command_CreateBoundary);
             saveAndRun(cmd, request.getTargetDomain());
             if (cmd instanceof ISourceProvider) {
-                select(((ISourceProvider) cmd).getSources(), request
-                        .getTargetViewer());
+                select(((ISourceProvider) cmd).getSources(),
+                        request.getTargetViewer());
             }
         }
     }
@@ -332,8 +332,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
                     range.overTopic);
             return new CompoundCommand(create, modify, add);
         }
-        CreateBoundaryCommand create = new CreateBoundaryCommand(parent
-                .getOwnedWorkbook());
+        CreateBoundaryCommand create = new CreateBoundaryCommand(
+                parent.getOwnedWorkbook());
         ModifyRangeCommand modify1 = new ModifyRangeCommand(create,
                 range.start, true);
         ModifyRangeCommand modify2 = new ModifyRangeCommand(create, range.end,
@@ -376,8 +376,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
             cmd.setLabel(CommandMessages.Command_AddMarker);
             saveAndRun(cmd, request.getTargetDomain());
             if (cmd instanceof ISourceProvider) {
-                select(((ISourceProvider) cmd).getSources(), request
-                        .getTargetViewer());
+                select(((ISourceProvider) cmd).getSources(),
+                        request.getTargetViewer());
             }
         }
     }
@@ -482,8 +482,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
             command.setLabel(CommandMessages.Command_InsertImage);
             saveAndRun(command, request.getTargetDomain());
             if (command instanceof ISourceProvider) {
-                select(((ISourceProvider) command).getSources(), request
-                        .getTargetViewer());
+                select(((ISourceProvider) command).getSources(),
+                        request.getTargetViewer());
             }
         }
     }
@@ -522,8 +522,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
     private Command createAddImageCommand(IWorkbook workbook, String path,
             List<ITopic> topics) throws Exception {
         Dimension size = getImageSize(path);
-        ImageFormat format = ImageFormat.findByExtension(FileUtils
-                .getExtension(path), ImageFormat.PNG);
+        ImageFormat format = ImageFormat.findByExtension(
+                FileUtils.getExtension(path), ImageFormat.PNG);
         IFileEntry e = workbook.getManifest().createAttachmentFromFilePath(
                 path, format.getMediaType());
         if (e == null)
@@ -582,8 +582,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
             cmd.setLabel(CommandMessages.Command_InsertAttachment);
             saveAndRun(cmd, request.getTargetDomain());
             if (cmd instanceof ISourceProvider) {
-                select(((ISourceProvider) cmd).getSources(), request
-                        .getTargetViewer());
+                select(((ISourceProvider) cmd).getSources(),
+                        request.getTargetViewer());
             }
         }
     }
@@ -640,8 +640,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
 
     private Command createAddAttachmentCommand(ITopic parent, String title,
             String hyperlink) {
-        CreateTopicCommand create = new CreateTopicCommand(parent
-                .getOwnedWorkbook());
+        CreateTopicCommand create = new CreateTopicCommand(
+                parent.getOwnedWorkbook());
 
         AddTopicCommand insert = new AddTopicCommand(create, parent, -1,
                 ITopic.ATTACHED);
@@ -945,7 +945,7 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
             IMinimizable min = getMinimizable(source, viewer);
             if (min != null) {
                 min.setMinimized(true);
-                ((IGraphicalViewer) viewer).getCanvas().getLightweightSystem()
+                ((GraphicalViewer) viewer).getLightweightSystem()
                         .getUpdateManager().performValidation();
             }
         }

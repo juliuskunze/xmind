@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -26,6 +26,10 @@ public class SpellingPlugin extends AbstractUIPlugin {
     public static final String SPELLING_CHECK_ENABLED = "SPELLING_CHECK_ENABLED"; //$NON-NLS-1$
 
     public static final String DEFAULT_SPELLING_CHECKER_DISABLED = "DEFAULT_SPELLING_CHECKER_DISABLED"; //$NON-NLS-1$
+
+    public static final String HIDE_SPELLING_CHECK_PROGRESS = "HIDE_SPELLING_CHECK_PROGRESS"; //$NON-NLS-1$
+
+    public static final String SPELLING_CHECK_VIEW_ID = "org.xmind.ui.SpellingCheckView"; //$NON-NLS-1$
 
     // The plug-in ID
     public static final String PLUGIN_ID = "org.xmind.ui.spelling"; //$NON-NLS-1$

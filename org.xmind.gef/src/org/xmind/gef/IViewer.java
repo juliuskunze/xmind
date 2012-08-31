@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,12 +14,13 @@
 package org.xmind.gef;
 
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.jface.text.IInputChangedListener;
 import org.eclipse.jface.viewers.IInputSelectionProvider;
+import org.eclipse.jface.viewers.IPostSelectionProvider;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Control;
 import org.xmind.gef.acc.AccessibleRegistry;
 import org.xmind.gef.dnd.IDndSupport;
@@ -33,13 +34,20 @@ import org.xmind.gef.util.Properties;
 /**
  * @author Brian Sun
  */
-public interface IViewer extends IAdaptable, IInputSelectionProvider {
+public interface IViewer extends IAdaptable, IInputSelectionProvider,
+        IPostSelectionProvider {
+
+    public static interface IPartSearchCondition {
+
+        boolean evaluate(IPart part);
+
+    }
 
     Control getControl();
 
     EditDomain getEditDomain();
 
-    void setEditDomain(EditDomain editDomain);
+    void setEditDomain(EditDomain domain);
 
     void setInput(Object input);
 
@@ -50,6 +58,8 @@ public interface IViewer extends IAdaptable, IInputSelectionProvider {
     void reveal(Object[] elements);
 
     void updateToolTip();
+
+    void setCursor(Cursor cursor);
 
     void addFilter(ViewerFilter filter);
 
@@ -75,11 +85,18 @@ public interface IViewer extends IAdaptable, IInputSelectionProvider {
 
     IPart findPart(Object element);
 
+    /**
+     * Coordinates represents position relative to the viewer's control.
+     * 
+     * @param x
+     * @param y
+     * @return
+     */
     IPart findPart(int x, int y);
 
-//    IModelContentProvider getContentProvider();
-//
-//    void setContentProvider(IModelContentProvider contentProvider);
+    void setPartSearchCondition(IPartSearchCondition condition);
+
+    IPartSearchCondition getPartSearchCondition();
 
     Properties getProperties();
 
@@ -106,6 +123,10 @@ public interface IViewer extends IAdaptable, IInputSelectionProvider {
     void addInputChangedListener(IInputChangedListener listener);
 
     void removeInputChangedListener(IInputChangedListener listener);
+
+    void addFocusedPartChangedListener(ISelectionChangedListener listener);
+
+    void removeFocusedPartChangedListener(ISelectionChangedListener listener);
 
     IViewerService getService(Class<? extends IViewerService> serviceType);
 

@@ -17,7 +17,6 @@ import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Insets;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
-import org.eclipse.jface.text.IInputChangedListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
@@ -29,6 +28,8 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.part.Page;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IGraphicalViewer;
+import org.xmind.gef.IInputChangedListener;
+import org.xmind.gef.IViewer;
 import org.xmind.gef.IZoomListener;
 import org.xmind.gef.ZoomManager;
 import org.xmind.gef.ZoomObject;
@@ -178,7 +179,7 @@ public class SheetOverviewPage extends Page implements
         update();
     }
 
-    public void inputChanged(Object newInput) {
+    public void inputChanged(IViewer viewer, Object newInput, Object oldInput) {
         unhookContents();
         unhookViewport();
         hookViewport();
@@ -251,18 +252,19 @@ public class SheetOverviewPage extends Page implements
                 margins = new Insets(0, m, 0, m);
             }
             Viewport sourceViewport = sourceViewer.getCanvas().getViewport();
-            PrecisionPoint loc = new PrecisionPoint(sourceViewport
-                    .getViewLocation());
+            PrecisionPoint loc = new PrecisionPoint(
+                    sourceViewport.getViewLocation());
             Dimension size = sourceViewport.getSize();
             double sourceScale = sourceZoomManager.getScale();
-            feedbackBounds = new Rectangle(loc.scale(1 / sourceScale)
+            feedbackBounds = new Rectangle(loc
+                    .scale(1 / sourceScale)
                     .translate(
                             new PrecisionPoint(sourceBounds.getLocation())
-                                    .negate()).scale(zoomScale).translate(
-                            margins.left, margins.top).toDraw2DPoint(), size
-                    .scale(zoomScale / sourceScale));
+                                    .negate()).scale(zoomScale)
+                    .translate(margins.left, margins.top).toDraw2DPoint(),
+                    size.scale(zoomScale / sourceScale));
         }
-        contents.setBounds(area.getCropped(margins));
+        contents.setBounds(area.getShrinked(margins));
         contents.repaint();
         if (feedbackBounds == null) {
             feedback.setBounds(new Rectangle(1, 1, 0, 0));

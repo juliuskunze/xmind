@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,6 +13,11 @@
  *******************************************************************************/
 package org.xmind.core.internal;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.xmind.core.IFileEntry;
 import org.xmind.core.IManifest;
 import org.xmind.core.IWorkbook;
 
@@ -22,6 +27,15 @@ public abstract class Manifest implements IManifest {
         if (adapter == IWorkbook.class)
             return getOwnedWorkbook();
         return null;
+    }
+
+    public List<IFileEntry> getFileEntries() {
+        List<IFileEntry> list = new ArrayList<IFileEntry>();
+        Iterator<IFileEntry> it = iterFileEntries();
+        while (it.hasNext()) {
+            list.add(it.next());
+        }
+        return list;
     }
 
 }

@@ -8,8 +8,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
-public class WelcomeActionDelegate extends XMindNetActionDelegate implements
-        IWorkbenchWindowActionDelegate {
+public class WelcomeActionDelegate implements IWorkbenchWindowActionDelegate {
 
     private static final String DEFAULT_URL = "http://www.xmind.net/xmind/welcome/"; //$NON-NLS-1$
 
@@ -45,12 +44,11 @@ public class WelcomeActionDelegate extends XMindNetActionDelegate implements
 
         IAccountInfo accountInfo = XMindNet.getAccountInfo();
         if (accountInfo != null) {
-            setURL(String.format("http://www.xmind.net/xmind/welcome/%s/%s", //$NON-NLS-1$
-                    accountInfo.getUser(), accountInfo.getAuthToken()));
+            XMindNet.gotoURL("http://www.xmind.net/xmind/welcome/%s/%s", //$NON-NLS-1$
+                    accountInfo.getUser(), accountInfo.getAuthToken());
         } else {
-            setURL(DEFAULT_URL);
+            XMindNet.gotoURL(DEFAULT_URL);
         }
-        gotoURL();
     }
 
     /*

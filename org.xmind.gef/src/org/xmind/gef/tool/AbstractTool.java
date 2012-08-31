@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,7 +18,6 @@ import static org.xmind.gef.GEF.ST_ALT_PRESSED;
 import static org.xmind.gef.GEF.ST_CONTROL_PRESSED;
 import static org.xmind.gef.GEF.ST_SHIFT_PRESSED;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
@@ -48,11 +47,11 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
 
     private String contextId = null;
 
-    private IViewer targetViewer = null;
+//    private IViewer targetViewer = null;
 
-    private List<Request> requestQueue = new ArrayList<Request>(5);
-
-    private boolean handlingQueue = false;
+//    private List<Request> requestQueue = new ArrayList<Request>(5);
+//
+//    private boolean handlingQueue = false;
 
 //    public void setType(String type) {
 //        this.type = type;
@@ -86,14 +85,14 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
     }
 
     public IViewer getTargetViewer() {
-        if (targetViewer == null) {
-            targetViewer = getDomain().getViewer();
-        }
-        return targetViewer;
+//        if (targetViewer == null) {
+//            targetViewer = getDomain().getViewer();
+//        }
+        return getDomain().getTargetViewer();
     }
 
     public void setTargetViewer(IViewer viewer) {
-        this.targetViewer = viewer;
+        getDomain().setTargetViewer(viewer);
     }
 
     /**
@@ -131,7 +130,6 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      * extended clients.
      * 
      * @param prevTool
-     *            TODO
      */
     protected void onActivated(ITool prevTool) {
     }
@@ -141,7 +139,6 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
      * extended by clients.
      * 
      * @param nextTool
-     *            TODO
      */
     protected void onDeactivated(ITool nextTool) {
         if (nextTool != null) {
@@ -177,7 +174,6 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
     /**
      * @param key
      * @param fromStatus
-     *            TODO
      * @param toStatus
      */
     private void copyStatus(int key, IStatusMachine fromStatus,
@@ -492,55 +488,40 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
     }
 
     /**
-     * @see org.xmind.gef.tool.ITool#handleRequest(int)
+     * @deprecated see {@link ITool#handleRequest(String, IViewer)}
      */
     public final void handleRequest(String requestType, IViewer targetViewer) {
-        Request request = new Request(requestType);
-        request.setViewer(targetViewer);
-        handleRequest(request);
+//        setTargetViewer(targetViewer);
+//        Request request = new Request(requestType);
+//        request.setViewer(targetViewer);
+//        handleRequest(request);
+        getDomain().handleRequest(requestType, targetViewer);
     }
 
     /**
      * @see org.xmind.gef.tool.ITool#handleRequest(org.xmind.gef.Request)
      */
     public final void handleRequest(Request request) {
-        if (requestQueue.contains(request))
-            return;
-
-        requestQueue.add(request);
-        if (handlingQueue) {
-            return;
-        }
-        handlingQueue = true;
-        try {
-            handleQueuedRequests();
-        } finally {
-            requestQueue.clear();
-            handlingQueue = false;
-        }
+        setTargetViewer(request.getTargetViewer());
+        internalHandleRequest(request);
     }
 
-    protected void handleQueuedRequests() {
-        for (int i = 0; i < requestQueue.size(); i++) {
-            Request request = requestQueue.get(i);
-            handleSingleRequest(request);
-            requestQueue.set(i, null);
-        }
-    }
-
-    protected void handleSingleRequest(Request request) {
-        if (request.getTargetViewer() == null) {
-            request.setViewer(getTargetViewer());
-        }
-        if (request.getTargetDomain() == null) {
-            request.setDomain(getDomain());
-        }
+    protected void internalHandleRequest(Request request) {
         if (request.hasTargets()) {
             handleTargetedRequest(request);
         } else {
             handleNonTargetedRequest(request);
         }
     }
+
+//    protected final void handleSingleRequest(Request request) {
+//        if (request.getTargetViewer() == null) {
+//            request.setViewer(getTargetViewer());
+//        }
+//        if (request.getTargetDomain() == null) {
+//            request.setDomain(getDomain());
+//        }
+//    }
 
     protected void handleTargetedRequest(Request request) {
         IPart target = request.getPrimaryTarget();

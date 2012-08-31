@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -12,6 +12,10 @@
  *     XMind Ltd. - initial API and implementation
  *******************************************************************************/
 package org.xmind.ui.internal.browser;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLEncoder;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -84,12 +88,11 @@ public class BrowserUtil {
             BrowserPlugin
                     .getDefault()
                     .getLog()
-                    .log(
-                            new Status(
-                                    IStatus.WARNING,
-                                    BrowserPlugin.PLUGIN_ID,
-                                    0,
-                                    "Internal browser is not available: " + t.getMessage(), null)); //$NON-NLS-1$
+                    .log(new Status(
+                            IStatus.WARNING,
+                            BrowserPlugin.PLUGIN_ID,
+                            0,
+                            "Internal browser is not available: " + t.getMessage(), null)); //$NON-NLS-1$
             isInternalBrowserOperational = new Boolean(false);
             return false;
         } finally {
@@ -116,4 +119,54 @@ public class BrowserUtil {
     public static String decodeClientId(String id) {
         return id.substring(0, id.lastIndexOf('-'));
     }
+
+    public static String makeRedirectURL(String url) {
+        if (url.startsWith("file:")) //$NON-NLS-1$
+            return url;
+        try {
+            url = new URI(url).toString();
+        } catch (Exception ignore) {
+        }
+        StringBuffer buffer = new StringBuffer(100);
+        buffer.append("http://www.xmind.net/xmind/go?r="); //$NON-NLS-1$
+        buffer.append(encode(url));
+        buffer.append("&u="); //$NON-NLS-1$
+        String user = System.getProperty("net.xmind.signin.account.user"); //$NON-NLS-1$
+        if (user != null) {
+            buffer.append(encode(user));
+        }
+        buffer.append("&t="); //$NON-NLS-1$
+        String token = System.getProperty("net.xmind.signin.account.token"); //$NON-NLS-1$
+        if (token != null) {
+            buffer.append(encode(token));
+            buffer.append("&exp="); //$NON-NLS-1$
+            buffer.append(System.getProperty(
+                    "net.xmind.signin.account.expireDate", "")); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        String distributionId = System
+                .getProperty("org.xmind.product.distribution.id"); //$NON-NLS-1$
+        if (distributionId != null) {
+            buffer.append("&distrib="); //$NON-NLS-1$
+            buffer.append(encode(distributionId));
+        }
+        buffer.append("&nl="); //$NON-NLS-1$
+        buffer.append(encode(Platform.getNL()));
+        buffer.append("&os="); //$NON-NLS-1$
+        buffer.append(encode(Platform.getOS()));
+        buffer.append("&arch="); //$NON-NLS-1$
+        buffer.append(encode(Platform.getOSArch()));
+        buffer.append("&app="); //$NON-NLS-1$
+        buffer.append(encode(Platform.getProduct().getApplication()));
+
+        return buffer.toString();
+    }
+
+    private static String encode(String text) {
+        try {
+            return URLEncoder.encode(text, "UTF-8"); //$NON-NLS-1$
+        } catch (UnsupportedEncodingException e) {
+            return text;
+        }
+    }
+
 }

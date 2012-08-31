@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,11 +17,15 @@ import org.w3c.dom.Element;
 
 public enum NS {
 
+    /* Internal Namespaces */
     XMAP("xmap", "urn:xmind:xmap:xmlns:content:2.0"), //$NON-NLS-1$ //$NON-NLS-2$
     Style("style", "urn:xmind:xmap:xmlns:style:2.0"), //$NON-NLS-1$ //$NON-NLS-2$
     Marker("marker", "urn:xmind:xmap:xmlns:marker:2.0"), //$NON-NLS-1$ //$NON-NLS-2$
     Meta("meta", "urn:xmind:xmap:xmlns:meta:2.0"), //$NON-NLS-1$ //$NON-NLS-2$
     Manifest("manifest", "urn:xmind:xmap:xmlns:manifest:1.0"), //$NON-NLS-1$ //$NON-NLS-2$
+    Revision("revision", "urn:xmind:xmap:xmlns:revision:1.0"), //$NON-NLS-1$ //$NON-NLS-2$
+
+    /* External Namespaces */
     Xhtml("xhtml", "http://www.w3.org/1999/xhtml"), //$NON-NLS-1$ //$NON-NLS-2$
     Xlink("xlink", "http://www.w3.org/1999/xlink"), //$NON-NLS-1$ //$NON-NLS-2$
     Fo("fo", "http://www.w3.org/1999/XSL/Format"), //$NON-NLS-1$ //$NON-NLS-2$

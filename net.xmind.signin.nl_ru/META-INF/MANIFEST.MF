@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: XMind.net Login Plug-in  Language Support
+Bundle-SymbolicName: net.xmind.signin.nl_ru;singleton:=true
+Bundle-Version: 3.3.0.qualifier
+Bundle-Vendor: XMind Ltd.
+Fragment-Host: net.xmind.signin
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

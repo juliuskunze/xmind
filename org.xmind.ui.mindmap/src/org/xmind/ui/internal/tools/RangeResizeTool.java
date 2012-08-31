@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -210,9 +210,10 @@ public class RangeResizeTool extends FeedbackResizeTool implements ISourceTool {
     private void sendRequest(List<Object> newRange) {
         IBranchRangePart rangeSource = getRangeSourcePart();
         Request request = new Request(MindMapUI.REQ_MODIFY_RANGE);
+        request.setViewer(getTargetViewer());
         request.setPrimaryTarget(rangeSource);
         request.setParameter(MindMapUI.PARAM_RANGE, newRange.toArray());
-        internalHandleRequest(request);
+        getDomain().handleRequest(request);
     }
 
     private void clearRange() {

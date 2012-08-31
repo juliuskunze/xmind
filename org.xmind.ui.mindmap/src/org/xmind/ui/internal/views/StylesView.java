@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -25,6 +25,7 @@ import org.eclipse.ui.part.ViewPart;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.style.IStyleSheet;
 import org.xmind.gef.EditDomain;
+import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.Request;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
@@ -92,11 +93,16 @@ public class StylesView extends ViewPart implements IContributedContentsView {
         if (page == null)
             return;
 
+        IGraphicalViewer viewer = page.getViewer();
+        if (viewer == null)
+            return;
+
         EditDomain editDomain = page.getEditDomain();
         if (editDomain == null)
             return;
 
         editDomain.handleRequest(new Request(MindMapUI.REQ_MODIFY_STYLE)
+                .setViewer(viewer)
                 .setParameter(MindMapUI.PARAM_RESOURCE, style));
     }
 

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,10 +22,21 @@ import org.xmind.gef.part.IPart;
  */
 public class MouseDragEvent extends MouseEvent {
 
+    /**
+     * The SWT mouse down event that initially triggered this drag event.
+     */
     protected org.eclipse.swt.events.MouseEvent startingSWTEvent;
 
+    /**
+     * The location of the mouse cursor where this drag event got initiated by a
+     * mouse down event.
+     */
     public Point startingLocation;
 
+    /**
+     * The part which was under the mouse cursor when this drag event got
+     * initiated.
+     */
     public IPart source;
 
     public MouseDragEvent(org.eclipse.swt.events.MouseEvent startEvent,

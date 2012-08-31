@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -65,6 +65,9 @@ public class MindMapDndTool extends GraphicalTool implements IStatusListener {
     private boolean acceptEvent(DragDropEvent de) {
         if ((de.operations & DND.DROP_COPY) != 0) {
             de.detail = DND.DROP_COPY;
+            return true;
+        } else if ((de.operations & DND.DROP_MOVE) != 0) {
+            de.detail = DND.DROP_MOVE;
             return true;
         } else if ((de.operations & DND.DROP_LINK) != 0) {
             de.detail = DND.DROP_LINK;
@@ -243,7 +246,7 @@ public class MindMapDndTool extends GraphicalTool implements IStatusListener {
             }
             request.setParameter(GEF.PARAM_INDEX, targetIndex);
         }
-        if (!isFloatMove()) {
+        if (isFloatMove() || targetParent == null) {
             Point position = getCursorPosition();
             request.setParameter(GEF.PARAM_POSITION, position);
         }

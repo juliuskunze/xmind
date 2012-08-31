@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,7 +16,6 @@ package org.xmind.gef.ui.editor;
 import org.eclipse.jface.dialogs.IPageChangeProvider;
 import org.eclipse.ui.IEditorPart;
 import org.xmind.gef.command.ICommandStack;
-import org.xmind.ui.tabfolder.IPageClosedListener;
 
 public interface IGraphicalEditor extends IEditorPart, IPageChangeProvider {
 
@@ -60,8 +59,8 @@ public interface IGraphicalEditor extends IEditorPart, IPageChangeProvider {
 
     void setPageText(int index, String text);
 
-    void addPageClosedListener(IPageClosedListener listener);
-
-    void removePageClosedListener(IPageClosedListener listener);
-
+//    void addPageClosedListener(IPageClosedListener listener);
+//
+//    void removePageClosedListener(IPageClosedListener listener);
+//
 }

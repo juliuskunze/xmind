@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,16 +13,21 @@
  *******************************************************************************/
 package org.xmind.ui.internal.actions;
 
+import java.io.File;
+
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.xmind.ui.internal.MindMapMessages;
+import org.xmind.ui.internal.MindMapTemplateManager;
 import org.xmind.ui.internal.dialogs.DialogMessages;
+import org.xmind.ui.internal.editor.MME;
 import org.xmind.ui.internal.editor.MindMapEditor;
 import org.xmind.ui.mindmap.MindMapUI;
 
@@ -51,8 +56,21 @@ public class SaveAsTemplateAction extends Action implements IWorkbenchAction,
                 targetEditor.doSaveAs(new NullProgressMonitor(),
                         MindMapUI.FILE_EXT_TEMPLATE,
                         DialogMessages.TemplateFilterName);
+                IEditorInput input = targetEditor.getEditorInput();
+                if (input != null) {
+                    File file = MME.getFile(input);
+                    if (file != null) {
+                        saveTemplateFromFile(file);
+                    }
+                }
             }
         });
+
+    }
+
+    private void saveTemplateFromFile(File file) {
+        MindMapTemplateManager.getInstance().importCustomTemplate(
+                file.getAbsolutePath());
     }
 
     public void dispose() {

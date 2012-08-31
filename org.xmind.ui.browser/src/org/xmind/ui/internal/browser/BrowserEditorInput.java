@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -29,6 +29,8 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
 
     private static final String TAG_NAME = "name"; //$NON-NLS-1$
 
+    private static final String TAG_STYLE = "style"; //$NON-NLS-1$
+
     private static final String TAG_TOOLTIP = "tooltip"; //$NON-NLS-1$
 
     private static final String TAG_CLIENT_ID = "clientId"; //$NON-NLS-1$
@@ -36,6 +38,8 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
     private String url;
 
     private String name;
+
+    private int style;
 
     private String tooltip;
 
@@ -45,12 +49,13 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
     }
 
     public BrowserEditorInput(String url) {
-        this(url, null);
+        this(url, null, 0);
     }
 
-    public BrowserEditorInput(String url, String clientId) {
+    public BrowserEditorInput(String url, String clientId, int style) {
         this.url = url;
         this.clientId = clientId;
+        this.style = style;
     }
 
     public void setUrl(String url) {
@@ -61,12 +66,20 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
         this.clientId = clientId;
     }
 
+    public void setStyle(int style) {
+        this.style = style;
+    }
+
     public String getClientId() {
         return clientId;
     }
 
     public String getURL() {
         return url;
+    }
+
+    public int getStyle() {
+        return style;
     }
 
     public void setName(String name) {
@@ -125,6 +138,9 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
         if (name != null) {
             memento.putString(TAG_NAME, name);
         }
+        if (style != 0) {
+            memento.putInteger(TAG_STYLE, style);
+        }
         if (tooltip != null) {
             memento.putString(TAG_TOOLTIP, tooltip);
         }
@@ -136,6 +152,7 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
     public IAdaptable createElement(IMemento memento) {
         String url = memento.getString(TAG_URL);
         String name = memento.getString(TAG_NAME);
+        Integer style = memento.getInteger(TAG_STYLE);
         String tooltip = memento.getString(TAG_TOOLTIP);
         String clientId = memento.getString(TAG_CLIENT_ID);
         BrowserEditorInput input = new BrowserEditorInput();
@@ -143,6 +160,8 @@ public class BrowserEditorInput implements IEditorInput, IPersistableElement,
         input.setClientId(clientId);
         input.setName(name);
         input.setToolTipText(tooltip);
+        if (style != null)
+            input.setStyle(style.intValue());
         return input;
     }
 

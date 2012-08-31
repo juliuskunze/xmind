@@ -4,6 +4,7 @@
 package net.xmind.signin.internal;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -21,25 +22,50 @@ public class PropertyStore implements IDataStore {
         return properties;
     }
 
+    public boolean has(String key) {
+        return properties.containsKey(key);
+    }
+
     public boolean getBoolean(String key) {
         return Boolean.parseBoolean(properties.getProperty(key));
     }
 
     public long getLong(String key) {
-        return Long.parseLong(properties.getProperty(key));
-    }
-
-    public boolean has(String key) {
-        return properties.containsKey(key);
+        String value = properties.getProperty(key);
+        if (value != null) {
+            try {
+                return Long.parseLong(value);
+            } catch (Exception e) {
+            }
+        }
+        return 0;
     }
 
     public int getInt(String key) {
-        return Integer.parseInt(properties.getProperty(key));
+        String value = properties.getProperty(key);
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            } catch (Exception e) {
+            }
+        }
+        return 0;
+    }
+
+    public double getDouble(String key) {
+        String value = properties.getProperty(key);
+        if (value != null) {
+            try {
+                return Double.parseDouble(value);
+            } catch (Exception e) {
+            }
+        }
+        return 0;
     }
 
     public String getString(String key) {
         return properties.getProperty(key);
-    };
+    }
 
     public Map<Object, Object> toMap() {
         Map<Object, Object> map = new HashMap<Object, Object>();
@@ -47,6 +73,10 @@ public class PropertyStore implements IDataStore {
             map.put(key, properties.get(key));
         }
         return map;
+    }
+
+    public List<IDataStore> getChildren(String key) {
+        return EMPTY.getChildren(key);
     }
 
 }

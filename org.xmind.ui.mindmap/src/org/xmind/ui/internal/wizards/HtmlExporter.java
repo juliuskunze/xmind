@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -28,8 +28,6 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -52,7 +50,7 @@ import org.xmind.core.util.DOMUtils;
 import org.xmind.core.util.FileUtils;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.core.util.Property;
-import org.xmind.ui.mindmap.MindMapPreviewBuilder;
+import org.xmind.ui.mindmap.MindMapImageExporter;
 import org.xmind.ui.util.ImageFormat;
 import org.xmind.ui.util.MindMapUtils;
 import org.xmind.ui.wizards.ExportContants;
@@ -79,9 +77,7 @@ public class HtmlExporter extends Exporter {
             Element ele = createDOMElement(tag);
 
             boolean isRoot = isCentralTopic(topic);
-            ele
-                    .setAttribute(HtmlConstants.ATT_CLASS,
-                            isRoot ? "root" : "topic"); //$NON-NLS-1$ //$NON-NLS-2$
+            ele.setAttribute(HtmlConstants.ATT_CLASS, isRoot ? "root" : "topic"); //$NON-NLS-1$ //$NON-NLS-2$
             if (isRoot) {
                 ele.setAttribute(HtmlConstants.ATT_ALIGN, HtmlConstants.CENTER);
             }
@@ -245,14 +241,14 @@ public class HtmlExporter extends Exporter {
 
                 int width = image.getWidth();
                 if (width != IImage.UNSPECIFIED) {
-                    img.setAttribute(HtmlConstants.ATT_WIDTH, String
-                            .valueOf(width));
+                    img.setAttribute(HtmlConstants.ATT_WIDTH,
+                            String.valueOf(width));
                 }
 
                 int height = image.getHeight();
                 if (height != IImage.UNSPECIFIED) {
-                    img.setAttribute(HtmlConstants.ATT_HEIGHT, String
-                            .valueOf(height));
+                    img.setAttribute(HtmlConstants.ATT_HEIGHT,
+                            String.valueOf(height));
                 }
                 ele.appendChild(img);
             }
@@ -394,9 +390,7 @@ public class HtmlExporter extends Exporter {
             while (topicIt.hasNext()) {
                 ITopic topic = topicIt.next();
                 Element anchor = createDOMElement(HtmlConstants.TAG_A);
-                anchor
-                        .setAttribute(HtmlConstants.ATT_HREF,
-                                "#" + topic.getId()); //$NON-NLS-1$
+                anchor.setAttribute(HtmlConstants.ATT_HREF, "#" + topic.getId()); //$NON-NLS-1$
                 anchor.setTextContent(topic.getTitleText());
                 ele.appendChild(anchor);
                 if (topicIt.hasNext()) {
@@ -926,22 +920,25 @@ public class HtmlExporter extends Exporter {
         String relativePath = connectPath(getRelativeImagesPath(), new File(
                 path).getName());
 
-        Display display = getDisplay();
-        Shell shell = getShell();
-        MindMapPreviewBuilder overviewBuilder = createOverviewBuilder(topic);
-        if (overviewBuilder != null) {
-            try {
-                if (shell != null) {
-                    overviewBuilder.build(shell, path);
-                } else {
-                    overviewBuilder.build(display, path);
-                }
-            } catch (IOException e) {
-                String message = NLS
-                        .bind(Message_FailedToCreateOverview, title);
-                log(e, message);
-            }
-        }
+        MindMapImageExporter exporter = createOverviewExporter(topic);
+        exporter.setTargetFile(new File(path));
+        exporter.export();
+//        Display display = getDisplay();
+//        Shell shell = getShell();
+//        MindMapPreviewBuilder overviewBuilder = createOverviewBuilder(topic);
+//        if (overviewBuilder != null) {
+//            try {
+//                if (shell != null) {
+//                    overviewBuilder.build(shell, path);
+//                } else {
+//                    overviewBuilder.build(display, path);
+//                }
+//            } catch (IOException e) {
+//                String message = NLS
+//                        .bind(Message_FailedToCreateOverview, title);
+//                log(e, message);
+//            }
+//        }
         return relativePath;
     }
 

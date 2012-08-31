@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -98,6 +98,18 @@ public class TopicTitleEditTool extends TitleEditTool {
 
     public String getType() {
         return MindMapUI.TOOL_EDIT_TOPIC_TITLE;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.tool.EditTool#canEdit(org.xmind.gef.part.IGraphicalEditPart
+     * )
+     */
+    @Override
+    protected boolean canEdit(IGraphicalEditPart target) {
+        return target instanceof ITopicPart;
     }
 
     public void setSource(IGraphicalEditPart source) {

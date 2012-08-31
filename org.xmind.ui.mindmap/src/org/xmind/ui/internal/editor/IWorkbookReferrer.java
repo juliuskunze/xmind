@@ -3,13 +3,12 @@ package org.xmind.ui.internal.editor;
 import java.io.IOException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.viewers.ISelection;
 import org.xmind.core.CoreException;
 import org.xmind.core.IWorkbook;
 
 public interface IWorkbookReferrer {
 
-    void setSelection(ISelection selection, boolean reveal, boolean forceFocus);
+//    void setSelection(ISelection selection, boolean reveal, boolean forceFocus);
 
     void savePreivew(IWorkbook workbook, IProgressMonitor monitor)
             throws IOException, CoreException;

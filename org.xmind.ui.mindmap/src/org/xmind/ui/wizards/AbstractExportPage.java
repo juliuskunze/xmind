@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -101,7 +101,7 @@ public abstract class AbstractExportPage extends WizardPage {
 
         Label toFileLabel = new Label(group, SWT.WRAP);
         toFileLabel.setLayoutData(new GridData(GridData.BEGINNING,
-                GridData.CENTER, false, false));
+                GridData.CENTER, false, true));
         toFileLabel.setText(WizardMessages.ExportPage_ToFile_text);
 
         pathInput = new Combo(group, SWT.DROP_DOWN | SWT.SIMPLE | SWT.SINGLE
@@ -112,8 +112,8 @@ public abstract class AbstractExportPage extends WizardPage {
         if (getTargetPath() != null) {
             pathInput.setText(getTargetPath());
         }
-        pathInput.setLayoutData(new GridData(GridData.FILL, GridData.FILL,
-                true, false));
+        pathInput.setLayoutData(new GridData(GridData.FILL, GridData.CENTER,
+                true, true));
         hookWidget(pathInput, SWT.Modify);
         hookWidget(pathInput, SWT.FocusIn);
 
@@ -121,7 +121,7 @@ public abstract class AbstractExportPage extends WizardPage {
         browseButton.setText(WizardMessages.ExportPage_Browse_text);
         int width = browseButton.computeSize(SWT.DEFAULT, SWT.DEFAULT).x;
         GridData layoutData = new GridData(GridData.END, GridData.CENTER,
-                false, false);
+                false, true);
         layoutData.widthHint = Math.max(93, width);
         browseButton.setLayoutData(layoutData);
         hookWidget(browseButton, SWT.Selection);
@@ -209,8 +209,7 @@ public abstract class AbstractExportPage extends WizardPage {
 
     protected void setDialogFilters(FileDialog dialog,
             List<String> filterNames, List<String> filterExtensions) {
-        dialog.setFilterNames(filterNames
-                .toArray(new String[filterNames.size()]));
+        dialog.setFilterNames(filterNames.toArray(new String[filterNames.size()]));
         dialog.setFilterExtensions(filterExtensions
                 .toArray(new String[filterExtensions.size()]));
     }

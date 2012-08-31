@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -47,9 +47,9 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.actions.ContributionItemFactory;
 import org.eclipse.ui.actions.RetargetAction;
-import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.handlers.IHandlerActivation;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.xmind.core.INamed;
@@ -181,8 +181,8 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
                     manager.add((IContributionItem) item);
                 } else if (item instanceof Contributor) {
                     Contributor subContributor = (Contributor) item;
-                    MenuManager subManager = new MenuManager(subContributor
-                            .getName(), subContributor.getIcon(),
+                    MenuManager subManager = new MenuManager(
+                            subContributor.getName(), subContributor.getIcon(),
                             subContributor.getId());
                     subContributor.applyTo(subManager);
                     manager.add(subManager);
@@ -544,7 +544,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
 
         insertSheetAction = MindMapActionFactory.INSERT_SHEET_FROM
                 .create(window);
-        addRetargetAction((RetargetAction) insertSheetAction);///
+        addRetargetAction((RetargetAction) insertSheetAction);
 
         insertTopicAction = MindMapActionFactory.INSERT_TOPIC.create(window);
         addRetargetAction((RetargetAction) insertTopicAction);
@@ -1126,7 +1126,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         menu.add(new GroupMarker(ActionConstants.INSERT_TOPIC_EXT));
         menu.add(new Separator());
         menu.add(new GroupMarker(ActionConstants.GROUP_INSERT));
-        menu.add(insertImageAction);
+        menu.add(getInsertImageAction());
         menu.add(createRelationshipAction);
         menu.add(createBoundaryAction);
         menu.add(createSummaryAction);
@@ -1345,8 +1345,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     public void selectionChanged(IWorkbenchPart part, ISelection selection) {
         ICategoryManager manager = MindMapUI.getCategoryManager();
         Object[] elements = (selection instanceof IStructuredSelection) ? ((IStructuredSelection) selection)
-                .toArray()
-                : null;
+                .toArray() : null;
         ICategoryAnalyzation categories = elements == null ? null : manager
                 .analyze(elements);
         updateStatusLine(manager, categories);
@@ -1384,10 +1383,9 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
                         m = NLS.bind(MindMapMessages.StatusLine_OneItemPattern,
                                 name, title);
                     } else {
-                        m = NLS
-                                .bind(
-                                        MindMapMessages.StatusLine_OneItemNoTitlePattern,
-                                        name);
+                        m = NLS.bind(
+                                MindMapMessages.StatusLine_OneItemNoTitlePattern,
+                                name);
                     }
                 } else {
                     m = NLS.bind(

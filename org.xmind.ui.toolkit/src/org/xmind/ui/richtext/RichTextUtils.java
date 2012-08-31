@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -39,18 +39,53 @@ import org.xmind.ui.resources.FontUtils;
  */
 public class RichTextUtils {
 
+    private static class SystemColorFactory {
+        private static Color getColor(final int which) {
+            Display display = Display.getCurrent();
+            if (display != null)
+                return display.getSystemColor(which);
+            display = Display.getDefault();
+            final Color result[] = new Color[1];
+            display.syncExec(new Runnable() {
+                public void run() {
+                    synchronized (result) {
+                        result[0] = Display.getCurrent().getSystemColor(which);
+                    }
+                }
+            });
+            synchronized (result) {
+                return result[0];
+            }
+        }
+    }
+
     static final String LineDelimiter = System.getProperty("line.separator"); //$NON-NLS-1$
 
     public static Font DEFAULT_FONT = JFaceResources.getDefaultFont();
     public static FontData DEFAULT_FONT_DATA = DEFAULT_FONT.getFontData()[0];
-    public static Color DEFAULT_FOREGROUND = Display.getCurrent()
-            .getSystemColor(SWT.COLOR_LIST_FOREGROUND);
-    public static Color DEFAULT_BACKGROUND = Display.getCurrent()
-            .getSystemColor(SWT.COLOR_LIST_BACKGROUND);
+    public static Color DEFAULT_FOREGROUND = SystemColorFactory
+            .getColor(SWT.COLOR_BLACK);
+    public static Color DEFAULT_BACKGROUND = SystemColorFactory
+            .getColor(SWT.COLOR_WHITE);
 
     public static final char INDENT_CHAR = '\t';
     public static final String EMPTY = ""; //$NON-NLS-1$
-    public static final StyleRange DEFAULT_STYLE = new StyleRange();
+
+    public static final StyleRange DEFAULT_STYLE;
+
+    static {
+        DEFAULT_STYLE = new StyleRange(0, 0, DEFAULT_FOREGROUND,
+                DEFAULT_BACKGROUND, 0);
+        DEFAULT_STYLE.font = DEFAULT_FONT;
+        DEFAULT_STYLE.borderColor = DEFAULT_FOREGROUND;
+        DEFAULT_STYLE.borderStyle = SWT.NONE;
+        DEFAULT_STYLE.strikeout = false;
+        DEFAULT_STYLE.strikeoutColor = DEFAULT_FOREGROUND;
+        DEFAULT_STYLE.underline = false;
+        DEFAULT_STYLE.underlineColor = DEFAULT_FOREGROUND;
+        DEFAULT_STYLE.underlineStyle = SWT.UNDERLINE_SINGLE;
+    }
+
     public static final LineStyle DEFAULT_LINE_STYLE = new LineStyle();
 
     private RichTextUtils() {

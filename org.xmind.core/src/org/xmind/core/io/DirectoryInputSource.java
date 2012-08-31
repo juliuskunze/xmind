@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -105,12 +105,14 @@ public class DirectoryInputSource implements IInputSource {
         if (!isAvailable())
             return null;
 
-        try {
-            File file = new File(dir, entryName);
-            return new FileInputStream(file);
-        } catch (FileNotFoundException e) {
-            Core.getLogger().log(e,
-                    "Failed to get entry input stream: " + entryName); //$NON-NLS-1$
+        File file = new File(dir, entryName);
+        if (file.isFile() && file.canRead()) {
+            try {
+                return new FileInputStream(file);
+            } catch (FileNotFoundException e) {
+                Core.getLogger().log(e,
+                        "Failed to get entry input stream: " + entryName); //$NON-NLS-1$
+            }
         }
         return null;
     }
@@ -148,6 +150,34 @@ public class DirectoryInputSource implements IInputSource {
         if (f.exists())
             return f.lastModified();
         return -1;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        if (obj == null || !(obj instanceof DirectoryInputSource))
+            return false;
+        DirectoryInputSource that = (DirectoryInputSource) obj;
+        return this.dir.equals(that.dir)
+                && (this.filter == that.filter || (this.filter != null && this.filter
+                        .equals(that.filter)));
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        return this.dir.hashCode()
+                ^ (this.filter == null ? 1 : this.filter.hashCode());
     }
 
 }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -34,10 +34,14 @@ public class GallerySelectTool extends SelectTool {
                 GalleryViewer.SingleClickToOpen, false);
     }
 
-    public boolean isTitleEditable(IPart p) {
+    protected boolean isCursorInTitle(IPart p) {
         return p instanceof FramePart
-                && ((FramePart) p).getFigure().getTitle().containsPoint(
-                        getCursorPosition());
+                && ((FramePart) p).getFigure().getTitle()
+                        .containsPoint(getCursorPosition());
+    }
+
+    protected boolean isTitleEditable(IPart p) {
+        return false;
     }
 
     /*
@@ -58,7 +62,7 @@ public class GallerySelectTool extends SelectTool {
             }
         }
         boolean ret = handleSelectionOnMouseDown(me);
-        if (isTitleEditable(me.target)) {
+        if (isCursorInTitle(me.target) && isTitleEditable(me.target)) {
             Request request = new Request(GEF.REQ_EDIT);
             request.setDomain(getDomain());
             request.setViewer(getTargetViewer());
@@ -103,7 +107,8 @@ public class GallerySelectTool extends SelectTool {
      */
     protected boolean handleMouseDoubleClick(MouseEvent me) {
         if (me.target instanceof FramePart) {
-            if (!isSingleClickToOpen() && !isTitleEditable(me.target)) {
+            if (!isSingleClickToOpen()
+                    && (!isCursorInTitle(me.target) || !isTitleEditable(me.target))) {
                 performOpen();
                 me.consume();
                 return true;

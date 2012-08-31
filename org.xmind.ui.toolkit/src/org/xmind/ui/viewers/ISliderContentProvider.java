@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,33 +17,49 @@ import org.eclipse.jface.viewers.IContentProvider;
 
 public interface ISliderContentProvider extends IContentProvider {
 
-    /**
-     * Gets values from the given input. At least the minimum and maximum values
-     * should be returned. This is useful when the values are discrete.
-     * 
-     * @param input
-     * @return
-     */
-    Object[] getValues(Object input);
+//    /**
+//     * Gets major tick values from the given input. <b>At least the minimum and
+//     * maximum values should be returned.</b> To return multiple values is
+//     * useful when the values are discrete.
+//     * 
+//     * @param input
+//     *            The input of the viewer
+//     * @return The major tick values including the minimum and maximum values
+//     */
+//    Object[] getValues(Object input);
 
     /**
-     * Returns the value of the given input on the specified point.
+     * Returns a selectable value at the specified position on the slider.
      * 
      * @param input
-     * @param portion
-     *            The portion of the value from the minimum to the desired value
-     *            comparing to the whole min-max value.
-     * @return
+     *            The input of the viewer
+     * @param ratio
+     *            The ratio of the position compared to the whole slider slot
+     *            length, ranged from <code>0</code> (inclusive) to
+     *            <code>1</code> (inclusive), where <code>0</code> means the
+     *            position is at the 'minimum value' end and <code>1</code> at
+     *            the 'maximum value' end
+     * @return A selectable value at the specified position on the slider
      */
-    Object getValue(Object input, double portion);
+    Object getValue(Object input, double ratio);
 
     /**
-     * Returns the portion of the given value comparing to the min-max value.
+     * Returns the ratio of the position to represent the specified value
+     * compared to the whole slider slot length.
+     * 
+     * <p>
+     * <b>NOTE: The ratio should NOT be less then <code>0</code> or greater than
+     * <code>1</code>.</b>
+     * </p>
      * 
      * @param input
+     *            The input of the viewer
      * @param value
-     * @return
+     *            The value to represent
+     * @return The ratio of the position to represent the specified value
+     *         compared to the whole slider slot length, ranged from
+     *         <code>0</code> (inclusive) to <code>1</code> (inclusive)
      */
-    double getPortion(Object input, Object value);
+    double getRatio(Object input, Object value);
 
 }

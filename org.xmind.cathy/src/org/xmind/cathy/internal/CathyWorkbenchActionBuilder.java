@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,6 +20,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
@@ -27,17 +28,17 @@ import org.eclipse.jface.util.Util;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
-import org.eclipse.ui.actions.ContributionItemFactory;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
+import org.eclipse.ui.actions.ContributionItemFactory;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.internal.provisional.application.IActionBarConfigurer2;
 import org.xmind.cathy.internal.actions.HelpAction;
-import org.xmind.cathy.internal.actions.NewMenu;
 import org.xmind.cathy.internal.actions.ShowKeyAssistAction;
 import org.xmind.cathy.internal.actions.UpdateAction;
-import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.actions.ActionConstants;
+import org.xmind.ui.internal.actions.NewWorkbookAction;
+import org.xmind.ui.internal.actions.NewWorkbookWizardAction;
 import org.xmind.ui.internal.actions.OpenHomeMapAction;
 import org.xmind.ui.internal.actions.OpenWorkbookAction;
 
@@ -47,6 +48,10 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
     // them
     // in the fill methods. This ensures that the actions aren't recreated
     // when fillActionBars is called with FILL_PROXY.
+
+    private IWorkbenchAction newWizardAction;
+
+    private IWorkbenchAction newBlankAction;
 
     private IWorkbenchAction openAction;
 
@@ -100,7 +105,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
     private IAction keyAssistAction;
 
-    private NewMenu newMenu;
+//    private NewMenu newMenu;
 
     public CathyWorkbenchActionBuilder(IActionBarConfigurer configurer) {
         super(configurer);
@@ -114,9 +119,14 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         // Registering also provides automatic disposal of the actions when
         // the window is closed.
 
-        this.newMenu = new NewMenu(window);
-        register(newMenu.getNewWorkbookAction());
-        register(newMenu.getNewFromTemplateAction());
+//        this.newMenu = new NewMenu(window);
+//        register(newMenu.getNewWorkbookAction());
+//        register(newMenu.getNewFromTemplateAction());
+        newWizardAction = new NewWorkbookWizardAction(window);
+        register(newWizardAction);
+
+        newBlankAction = new NewWorkbookAction(window);
+        register(newBlankAction);
 
         openAction = new OpenWorkbookAction(window);
         register(openAction);
@@ -131,6 +141,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         register(closeAllAction);
 
         saveAction = ActionFactory.SAVE.create(window);
+        saveAction.setText(WorkbenchMessages.SaveAction_text);
         register(saveAction);
 
         saveAsAction = ActionFactory.SAVE_AS.create(window);
@@ -195,7 +206,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         keyAssistAction = new ShowKeyAssistAction();
         register(keyAssistAction);
-
     }
 
     private static boolean isPro() {
@@ -214,15 +224,16 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
                 IWorkbenchActionConstants.M_FILE);
         menu.add(new GroupMarker(IWorkbenchActionConstants.FILE_START));
 
-        String newText = MindMapMessages.NewWorkbook_text;
-        String newId = ActionFactory.NEW.getId();
-
-        MenuManager newMenu = new MenuManager(newText, newId);
-        newMenu.setActionDefinitionId("org.eclipse.ui.file.newQuickMenu"); //$NON-NLS-1$
-        newMenu.add(new Separator(newId));
-        newMenu.add(this.newMenu);
-        newMenu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-        menu.add(newMenu);
+//        String newText = MindMapMessages.NewWorkbook_text;
+//        String newId = ActionFactory.NEW.getId();
+//        MenuManager newMenu = new MenuManager(newText, newId);
+//        newMenu.setActionDefinitionId("org.eclipse.ui.file.newQuickMenu"); //$NON-NLS-1$
+//        newMenu.add(new Separator(newId));
+//        newMenu.add(this.newMenu);
+//        newMenu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+//        menu.add(newMenu);
+        menu.add(newWizardAction);
+        menu.add(newBlankAction);
 
         menu.add(new GroupMarker(IWorkbenchActionConstants.NEW_EXT));
         menu.add(new Separator());
@@ -356,7 +367,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         IToolBarManager fileBar = actionBarConfigurer.createToolBarManager();
         fileBar.add(new GroupMarker(IWorkbenchActionConstants.NEW_GROUP));
-        fileBar.add(newMenu.getNewWorkbookAction());
+//        fileBar.add(newMenu.getNewWorkbookAction());
+        fileBar.add(newBlankAction);
         fileBar.add(new GroupMarker(IWorkbenchActionConstants.NEW_EXT));
         fileBar.add(openAction);
         fileBar.add(new GroupMarker(IWorkbenchActionConstants.OPEN_EXT));
@@ -412,5 +424,20 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 //            }
 //        }
 //    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.ui.application.ActionBarAdvisor#fillStatusLine(org.eclipse
+     * .jface.action.IStatusLineManager)
+     */
+    @Override
+    protected void fillStatusLine(IStatusLineManager statusLine) {
+        super.fillStatusLine(statusLine);
+        AutoBackupIndicator item = new AutoBackupIndicator();
+        statusLine.add(item);
+        statusLine.update(true);
+    }
 
 }

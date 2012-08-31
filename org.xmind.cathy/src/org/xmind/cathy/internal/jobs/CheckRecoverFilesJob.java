@@ -88,10 +88,11 @@ public class CheckRecoverFilesJob extends AbstractCheckFilesJob {
                         loadedFiles, new ArrayContentProvider(),
                         new ListLabelProvider(),
                         WorkbenchMessages.appWindow_ListSelectionDialog_Text);
-                dialog
-                        .setTitle(WorkbenchMessages.appWindow_ListSelectionDialog_Title);
+                dialog.setTitle(WorkbenchMessages.appWindow_ListSelectionDialog_Title);
                 dialog.setInitialElementSelections(loadedFiles);
-                dialog.open();
+                int ret = dialog.open();
+                if (ret == ListSelectionDialog.CANCEL)
+                    return;
                 Object[] result = dialog.getResult();
                 for (Object input : result) {
                     addEditorToOpen((IEditorInput) input);

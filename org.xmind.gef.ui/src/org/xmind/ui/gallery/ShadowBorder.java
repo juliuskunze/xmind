@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -210,7 +210,7 @@ public class ShadowBorder extends AbstractBorder {
      */
     public void paint(IFigure figure, Graphics graphics, Insets insets) {
         Rectangle r = getPaintRectangle(figure, insets);
-        Rectangle c = r.getCropped(getInsets(figure));
+        Rectangle c = r.getShrinked(getInsets(figure));
         int left = c.x;
         int right = c.right();
         int top = c.y;
@@ -223,8 +223,8 @@ public class ShadowBorder extends AbstractBorder {
         if (isShadowVisible() && (hd != 0 || vd != 0)) {
             Rectangle r1 = new Rectangle(left - bw + hd, 0, width
                     - Math.abs(hd), Math.min(height, Math.abs(vd)));
-            Rectangle r2 = new Rectangle(0, top - bw + vd, Math.min(width, Math
-                    .abs(hd)), height);
+            Rectangle r2 = new Rectangle(0, top - bw + vd, Math.min(width,
+                    Math.abs(hd)), height);
             if (hd < 0)
                 r1.x -= hd;
             r1.y = vd > 0 ? bottom + bw : top - bw + vd;

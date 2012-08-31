@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -26,7 +26,7 @@ public class DefaultBrowser extends InternalBrowser {
     private IWebBrowser externalWorkbenchBrowser = null;
 
     public DefaultBrowser(BrowserSupportImpl support, String clientId) {
-        super(support, clientId, false);
+        super(support, clientId, false, 0);
     }
 
     public void openURL(String url) throws PartInitException {
@@ -69,11 +69,14 @@ public class DefaultBrowser extends InternalBrowser {
 
     protected IWebBrowser createExternalWorkbenchBrowser()
             throws PartInitException {
-        return PlatformUI.getWorkbench().getBrowserSupport().createBrowser(
-                IWorkbenchBrowserSupport.AS_EXTERNAL
-                        | IWorkbenchBrowserSupport.LOCATION_BAR
-                        | IWorkbenchBrowserSupport.NAVIGATION_BAR,
-                getClientId(), getName(), getTooltip());
+        return PlatformUI
+                .getWorkbench()
+                .getBrowserSupport()
+                .createBrowser(
+                        IWorkbenchBrowserSupport.AS_EXTERNAL
+                                | IWorkbenchBrowserSupport.LOCATION_BAR
+                                | IWorkbenchBrowserSupport.NAVIGATION_BAR,
+                        getClientId(), getName(), getTooltip());
     }
 
     protected void doOpenURLByDefault(String url) {

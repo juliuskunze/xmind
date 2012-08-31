@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -81,7 +81,8 @@ public class MarkerRefImpl extends MarkerRef {
         if (DOMUtils.isElementByTag(p, TAG_MARKER_REFS)) {
             p = p.getParentNode();
             if (DOMUtils.isElementByTag(p, TAG_TOPIC)) {
-                return (ITopic) ownedWorkbook.getAdaptable(p);
+                return (ITopic) ownedWorkbook.getAdaptableRegistry()
+                        .getAdaptable(p);
             }
         }
         return null;
@@ -96,6 +97,10 @@ public class MarkerRefImpl extends MarkerRef {
 
     public IWorkbook getOwnedWorkbook() {
         return ownedWorkbook;
+    }
+
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(implementation);
     }
 
 }

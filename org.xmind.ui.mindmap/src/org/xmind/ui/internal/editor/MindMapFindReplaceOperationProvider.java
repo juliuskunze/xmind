@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,17 +16,11 @@ package org.xmind.ui.internal.editor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.TextSelection;
-import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IViewPart;
-import org.xmind.core.INotes;
-import org.xmind.core.INotesContent;
-import org.xmind.core.IPlainNotesContent;
 import org.xmind.core.ITitled;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
@@ -39,7 +33,6 @@ import org.xmind.gef.tool.ITool;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.internal.findreplace.AbstractFindReplaceOperationProvider;
-import org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider;
 import org.xmind.ui.internal.tools.LabelEditTool;
 import org.xmind.ui.mindmap.IBoundaryPart;
 import org.xmind.ui.mindmap.IBranchPart;
@@ -63,7 +56,23 @@ public class MindMapFindReplaceOperationProvider extends
 
     private static final int PROP_LABEL = 2;
 
-    private static final int PROP_NOTES = 3;
+//    private static final int PROP_NOTES = 3;
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider#
+     * getContextName()
+     */
+    public String getContextName() {
+        String title = editor.getTitle();
+        IGraphicalEditorPage page = editor.getActivePageInstance();
+        String pageTitle = page == null ? null : page.getPageTitle();
+        if (pageTitle == null || "".equals(pageTitle)) { //$NON-NLS-1$
+            return title;
+        }
+        return NLS.bind("{0} - {1}", title, pageTitle); //$NON-NLS-1$
+    }
 
     private class SearchResult {
 
@@ -88,10 +97,10 @@ public class MindMapFindReplaceOperationProvider extends
         public boolean found() {
             if (part == null)
                 return false;
-            if (part instanceof ITopicPart) {
-                if (propertyId == PROP_NOTES)
-                    return true;
-            }
+//            if (part instanceof ITopicPart) {
+//                if (propertyId == PROP_NOTES)
+//                    return true;
+//            }
             return offset >= 0;
         }
 
@@ -100,8 +109,8 @@ public class MindMapFindReplaceOperationProvider extends
                 return false;
             if (this.part != that.part)
                 return false;
-            if (this.propertyId == PROP_NOTES)
-                return that.propertyId == PROP_NOTES;
+//            if (this.propertyId == PROP_NOTES)
+//                return that.propertyId == PROP_NOTES;
             return this.propertyId == that.propertyId
                     && this.offset == that.offset;
         }
@@ -117,8 +126,7 @@ public class MindMapFindReplaceOperationProvider extends
                 return false;
             SearchResult that = (SearchResult) obj;
             return (this.toFind == that.toFind || (this.toFind != null && this.toFind
-                    .equals(that.toFind)))
-                    && sameLocation(that);
+                    .equals(that.toFind))) && sameLocation(that);
         }
 
     }
@@ -127,7 +135,7 @@ public class MindMapFindReplaceOperationProvider extends
 
     private SearchResult result = null;
 
-    private boolean findingInNotes = false;
+//    private boolean findingInNotes = false;
 
     /**
      * 
@@ -181,12 +189,12 @@ public class MindMapFindReplaceOperationProvider extends
         return !result.isEmpty();
     }
 
-    @Override
-    public boolean find(String toFind) {
-        if (findingInNotes)
-            return false;
-        return super.find(toFind);
-    }
+//    @Override
+//    public boolean find(String toFind) {
+//        if (findingInNotes)
+//            return false;
+//        return super.find(toFind);
+//    }
 
     /**
      * @see cn.brainy.ui.mindmap.dialogs.AbstractFindReplaceOperationProvider#findNext(java.lang.String)
@@ -219,9 +227,9 @@ public class MindMapFindReplaceOperationProvider extends
                 result.part = start.part;
                 result.propertyId = PROP_LABEL;
             } else if (start.propertyId == PROP_LABEL) {
-                result.part = start.part;
-                result.propertyId = PROP_NOTES;
-            } else {
+//                result.part = start.part;
+//                result.propertyId = PROP_NOTES;
+//            } else {
                 result.part = getNextPart(start.part);
                 result.propertyId = PROP_TITLE;
             }
@@ -240,9 +248,9 @@ public class MindMapFindReplaceOperationProvider extends
             if (offset >= 0) {
                 result.part = start.part;
                 result.propertyId = start.propertyId;
-                if (start.propertyId != PROP_NOTES) {
-                    result.offset = offset;
-                }
+//                if (start.propertyId != PROP_NOTES) {
+                result.offset = offset;
+//                }
             }
         }
     }
@@ -262,8 +270,8 @@ public class MindMapFindReplaceOperationProvider extends
                     } else if (result.propertyId == PROP_LABEL) {
                         editAndSelect(result, domain, viewer,
                                 MindMapUI.REQ_EDIT_LABEL);
-                    } else if (result.propertyId == PROP_NOTES) {
-                        return findInNotes(result, page);
+//                    } else if (result.propertyId == PROP_NOTES) {
+//                        return findInNotes(result, page);
                     }
                     return true;
                 }
@@ -272,55 +280,56 @@ public class MindMapFindReplaceOperationProvider extends
         return false;
     }
 
-    private boolean findInNotes(final SearchResult result,
-            IGraphicalEditorPage page) {
-        page.getEditDomain().handleRequest(GEF.REQ_CANCEL, page.getViewer());
-        page.getViewer()
-                .setSelection(
-                        new StructuredSelection(MindMapUtils
-                                .getRealModel(result.part)), true);
-        final IViewPart[] notesView = new IViewPart[1];
-        SafeRunner.run(new SafeRunnable() {
-            public void run() throws Exception {
-                notesView[0] = editor.getSite().getPage().showView(
-                        MindMapUI.VIEW_NOTES);
-            }
-        });
-        if (notesView[0] != null) {
-            ITextViewer textViewer = (ITextViewer) notesView[0]
-                    .getAdapter(ITextViewer.class);
-            if (textViewer != null) {
-                textViewer.setSelectedRange(isForward() ? 0 : textViewer
-                        .getDocument().getLength(), 0);
-            }
-            IFindReplaceOperationProvider frProvider = (IFindReplaceOperationProvider) notesView[0]
-                    .getAdapter(IFindReplaceOperationProvider.class);
-            if (frProvider != null) {
-                findingInNotes = true;
-                try {
-                    return frProvider.find(result.toFind);
-                } finally {
-                    findingInNotes = false;
-                }
-            }
-        }
-        return false;
-    }
+//    private boolean findInNotes(final SearchResult result,
+//            IGraphicalEditorPage page) {
+//        page.getEditDomain().handleRequest(GEF.REQ_CANCEL, page.getViewer());
+//        page.getViewer()
+//                .setSelection(
+//                        new StructuredSelection(MindMapUtils
+//                                .getRealModel(result.part)), true);
+//        final IViewPart[] notesView = new IViewPart[1];
+//        SafeRunner.run(new SafeRunnable() {
+//            public void run() throws Exception {
+//                notesView[0] = editor.getSite().getPage().showView(
+//                        MindMapUI.VIEW_NOTES);
+//            }
+//        });
+//        if (notesView[0] != null) {
+//            ITextViewer textViewer = (ITextViewer) notesView[0]
+//                    .getAdapter(ITextViewer.class);
+//            if (textViewer != null) {
+//                textViewer.setSelectedRange(isForward() ? 0 : textViewer
+//                        .getDocument().getLength(), 0);
+//            }
+//            IFindReplaceOperationProvider frProvider = (IFindReplaceOperationProvider) notesView[0]
+//                    .getAdapter(IFindReplaceOperationProvider.class);
+//            if (frProvider != null) {
+//                findingInNotes = true;
+//                try {
+//                    return frProvider.find(result.toFind);
+//                } finally {
+//                    findingInNotes = false;
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
     private void editAndSelect(final SearchResult result,
             final EditDomain domain, final IGraphicalViewer viewer,
             final String requestType) {
         Display.getCurrent().asyncExec(new Runnable() {
             public void run() {
-                Request request = new Request(requestType).setPrimaryTarget(
-                        result.part).setDomain(domain).setViewer(
-                        getActiveViewer()).setParameter(GEF.PARAM_FOCUS,
-                        Boolean.FALSE)
+                Request request = new Request(requestType)
+                        .setPrimaryTarget(result.part)
+                        .setDomain(domain)
+                        .setViewer(getActiveViewer())
+                        .setParameter(GEF.PARAM_FOCUS, Boolean.FALSE)
                         .setParameter(
                                 GEF.PARAM_TEXT_SELECTION,
                                 new TextSelection(result.offset, result.toFind
                                         .length()));
-                domain.getDefaultTool().handleRequest(request);
+                domain.handleRequest(request);
             }
         });
     }
@@ -337,11 +346,11 @@ public class MindMapFindReplaceOperationProvider extends
         } else if (tool instanceof TitleEditTool) {
             start.propertyId = PROP_TITLE;
             start.offset = getStartingOffset((TitleEditTool) tool);
-        } else if (result != null && result.part == start.part
-                && result.propertyId == PROP_NOTES) {
-            start.part = getNextPart(start.part);
-            start.propertyId = PROP_TITLE;
-            start.offset = getStartingOffset(start);
+//        } else if (result != null && result.part == start.part
+//                && result.propertyId == PROP_NOTES) {
+//            start.part = getNextPart(start.part);
+//            start.propertyId = PROP_TITLE;
+//            start.offset = getStartingOffset(start);
         } else {
             start.propertyId = PROP_TITLE;
             start.offset = getStartingOffset(start);
@@ -364,16 +373,16 @@ public class MindMapFindReplaceOperationProvider extends
     }
 
     private String getPropertyText(IPart part, int propertyId) {
-        if (propertyId == PROP_NOTES) {
-            if (part instanceof ITopicPart) {
-                INotes notes = ((ITopicPart) part).getTopic().getNotes();
-                INotesContent content = notes.getContent(INotes.PLAIN);
-                if (content instanceof IPlainNotesContent) {
-                    return ((IPlainNotesContent) content).getTextContent();
-                }
-            }
-            return null;
-        }
+//        if (propertyId == PROP_NOTES) {
+//            if (part instanceof ITopicPart) {
+//                INotes notes = ((ITopicPart) part).getTopic().getNotes();
+//                INotesContent content = notes.getContent(INotes.PLAIN);
+//                if (content instanceof IPlainNotesContent) {
+//                    return ((IPlainNotesContent) content).getTextContent();
+//                }
+//            }
+//            return null;
+//        }
         if (propertyId == PROP_LABEL) {
             ILabelPart label = ((ITopicPart) part).getOwnerBranch().getLabel();
             return label == null ? null : label.getLabelText();
@@ -407,8 +416,9 @@ public class MindMapFindReplaceOperationProvider extends
                 Boolean ignoreCase = Boolean
                         .valueOf((getParameter() & PARAM_CASE_SENSITIVE) == 0);
                 domain.handleRequest(new Request(MindMapUI.REQ_REPLACE_ALL)
-                        .setParameter(GEF.PARAM_TEXT, toFind).setParameter(
-                                MindMapUI.PARAM_REPLACEMENT, toReplaceWith)
+                        .setParameter(GEF.PARAM_TEXT, toFind)
+                        .setParameter(MindMapUI.PARAM_REPLACEMENT,
+                                toReplaceWith)
                         .setParameter(MindMapUI.PARAM_IGNORE_CASE, ignoreCase)
                         .setDomain(domain).setViewer(getActiveViewer()));
             }
@@ -466,13 +476,15 @@ public class MindMapFindReplaceOperationProvider extends
      */
     protected boolean select(List<IPart> result) {
         if (isEditing(null)) {
-            getEditTool(null).handleRequest(GEF.REQ_FINISH, getActiveViewer());
+            getEditTool(null).handleRequest(
+                    new Request(GEF.REQ_FINISH).setViewer(getActiveViewer()));
         }
-        ITool selectTool = getDefaultTool();
-        if (selectTool == null)
-            return false;
-        selectTool
-                .handleRequest(new Request(GEF.REQ_SELECT).setTargets(result));
+        getActiveViewer().setSelection(new StructuredSelection(result), true);
+//        ITool selectTool = getDefaultTool();
+//        if (selectTool == null)
+//            return false;
+//        selectTool
+//                .handleRequest(new Request(GEF.REQ_SELECT).setTargets(result));
         return true;
     }
 

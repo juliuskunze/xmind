@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -65,39 +65,49 @@ public class CathyPlugin extends AbstractUIPlugin {
     /**
      * Integer value (enumerated):<br>
      * <ul>
-     * <li><code>0</code>({@link #STARTUP_ACTION_BLANK}): opens a blank map on
+     * <li><code>0</code>({@link #STARTUP_ACTION_WIZARD}): opens a 'New
+     * Workbook' wizard dialog on startup</li>
+     * <li><code>1</code>({@link #STARTUP_ACTION_BLANK}): opens a blank map on
      * startup</li>
-     * <li><code>1</code>({@link #STARTUP_ACTION_HOME}): opens the home map on
+     * <li><code>2</code>({@link #STARTUP_ACTION_HOME}): opens the home map on
      * startup</li>
-     * <li><code>2</code>({@link #STARTUP_ACTION_LAST}): opens last session on
+     * <li><code>3</code>({@link #STARTUP_ACTION_LAST}): opens last session on
      * startup</li>
      * </ul>
      */
-    public static final String STARTUP_ACTION = "startupAction"; //$NON-NLS-1$
+    public static final String STARTUP_ACTION = "startupAction2"; //$NON-NLS-1$
 
     /**
-     * Integer preference store value for opening a blank map on startup.
-     * (value=0)
+     * Integer preference store value for opening a 'New Workbook' wizard dialog
+     * on startup. (value=0)
      * 
      * @see #STARTUP_ACTION
      */
-    public static final int STARTUP_ACTION_BLANK = 0;
+    public static final int STARTUP_ACTION_WIZARD = 0;
 
     /**
-     * Integer preference store value for opening the home map on startup.
+     * Integer preference store value for opening a blank map on startup.
      * (value=1)
      * 
      * @see #STARTUP_ACTION
      */
-    public static final int STARTUP_ACTION_HOME = 1;
+    public static final int STARTUP_ACTION_BLANK = 1;
 
     /**
-     * Integer preference store value for opening last session on startup.
+     * Integer preference store value for opening the home map on startup.
      * (value=2)
      * 
      * @see #STARTUP_ACTION
      */
-    public static final int STARTUP_ACTION_LAST = 2;
+    public static final int STARTUP_ACTION_HOME = 2;
+
+    /**
+     * Integer preference store value for opening last session on startup.
+     * (value=3)
+     * 
+     * @see #STARTUP_ACTION
+     */
+    public static final int STARTUP_ACTION_LAST = 3;
 
     /**
      * Boolean value:<br>
@@ -128,6 +138,9 @@ public class CathyPlugin extends AbstractUIPlugin {
 
         // Activate XMind Core
         XmindCore.getDefault();
+
+        // Activate Proxy Plugin
+        org.eclipse.core.internal.net.Activator.getInstance();
     }
 
     /**

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -29,10 +29,14 @@ import org.xmind.ui.style.StyleUtils;
 public class WorkbookFactory {
 
     public static IWorkbook createEmptyWorkbook() {
-        return createEmptyWorkbook(null);
+        return createEmptyWorkbook(null, null);
     }
 
     public static IWorkbook createEmptyWorkbook(String initialPath) {
+        return createEmptyWorkbook(initialPath, null);
+    }
+
+    public static IWorkbook createEmptyWorkbook(String initialPath, IStyle theme) {
         IWorkbook workbook = Core.getWorkbookBuilder().createWorkbook(
                 initialPath);
         ISheet sheet = workbook.getPrimarySheet();
@@ -42,14 +46,21 @@ public class WorkbookFactory {
         rootTopic.setTitleText(MindMapMessages.TitleText_CentralTopic);
         rootTopic.setStructureClass("org.xmind.ui.map.clockwise"); //$NON-NLS-1$
 
-        IStyle theme = MindMapUI.getResourceManager().getDefaultTheme();
+        if (theme == null) {
+            theme = MindMapUI.getResourceManager().getDefaultTheme();
+        }
         StyleUtils.setTheme(sheet, theme);
 
         return workbook;
     }
 
     public static InputStream createEmptyWorkbookStream() {
-        IWorkbook workbook = createEmptyWorkbook();
+        return createEmptyWorkbookStream(null, null);
+    }
+
+    public static InputStream createEmptyWorkbookStream(String initialPath,
+            IStyle theme) {
+        IWorkbook workbook = createEmptyWorkbook(initialPath, theme);
         ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
         try {
             workbook.save(out);

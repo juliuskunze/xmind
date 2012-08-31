@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,6 +19,8 @@ import java.util.List;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.LayoutManager;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.xmind.core.Core;
 import org.xmind.core.ILegend;
 import org.xmind.core.IRelationship;
@@ -50,7 +52,8 @@ import org.xmind.ui.util.MindMapUtils;
  * 
  * @author MANGOSOFT
  */
-public class SheetPart extends MindMapPartBase implements ISheetPart {
+public class SheetPart extends MindMapPartBase implements ISheetPart,
+        ControlListener {
 
     private IBranchPart centralBranch = null;
 
@@ -328,6 +331,49 @@ public class SheetPart extends MindMapPartBase implements ISheetPart {
     public void setModel(Object model) {
         super.setModel(model);
         setAccessible(new SheetAccessible(this));
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.internal.mindmap.MindMapPartBase#onActivated()
+     */
+    @Override
+    protected void onActivated() {
+        super.onActivated();
+        getSite().getViewer().getControl().addControlListener(this);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.internal.mindmap.MindMapPartBase#onDeactivated()
+     */
+    @Override
+    protected void onDeactivated() {
+        getSite().getViewer().getControl().removeControlListener(this);
+        super.onDeactivated();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.swt.events.ControlListener#controlMoved(org.eclipse.swt.events
+     * .ControlEvent)
+     */
+    public void controlMoved(ControlEvent e) {
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.swt.events.ControlListener#controlResized(org.eclipse.swt
+     * .events.ControlEvent)
+     */
+    public void controlResized(ControlEvent e) {
+        getFigure().revalidate();
     }
 
 }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -61,7 +61,7 @@ public class ImagePreviewViewer {
     private final class PreviewSliderContentProvider implements
             ISliderContentProvider {
 
-        public double getPortion(Object input, Object value) {
+        public double getRatio(Object input, Object value) {
             double v = ((Double) value).doubleValue();
             if (v < MID_RATIO) {
                 return (v - getMinRatio()) / (MID_RATIO - getMinRatio()) / 2;
@@ -69,23 +69,22 @@ public class ImagePreviewViewer {
             return (v - MID_RATIO) / (getMaxRatio() - MID_RATIO) / 2 + 0.5d;
         }
 
-        public Object getValue(Object input, double portion) {
+        public Object getValue(Object input, double ratio) {
             double v;
-            if (portion > 0.476 && portion < 0.515) {
+            if (ratio > 0.476 && ratio < 0.515) {
                 v = MID_RATIO;
-            } else if (portion < 0.5) {
-                v = portion * 2 * (MID_RATIO - getMinRatio()) + getMinRatio();
+            } else if (ratio < 0.5) {
+                v = ratio * 2 * (MID_RATIO - getMinRatio()) + getMinRatio();
             } else {
-                v = (portion - 0.5) * 2 * (getMaxRatio() - MID_RATIO)
-                        + MID_RATIO;
+                v = (ratio - 0.5) * 2 * (getMaxRatio() - MID_RATIO) + MID_RATIO;
             }
             return Double.valueOf(v);
         }
 
-        public Object[] getValues(Object input) {
-            return new Double[] { Double.valueOf(getMinRatio()),
-                    Double.valueOf(MID_RATIO), Double.valueOf(getMaxRatio()) };
-        }
+//        public Object[] getValues(Object input) {
+//            return new Double[] { Double.valueOf(getMinRatio()),
+//                    Double.valueOf(MID_RATIO), Double.valueOf(getMaxRatio()) };
+//        }
 
         public void dispose() {
         }

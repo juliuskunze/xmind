@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,8 +13,7 @@
  *******************************************************************************/
 package org.xmind.ui.internal.spellsupport;
 
-import org.eclipse.core.runtime.Platform;
-import org.osgi.framework.Bundle;
+import org.xmind.ui.internal.spelling.JazzySpellingSupport;
 import org.xmind.ui.texteditor.ISpellingSupport;
 
 /**
@@ -39,22 +38,6 @@ public class SpellingSupport {
     }
 
     private static ISpellingSupport createImplementation() {
-        Bundle bundle = Platform.getBundle("org.xmind.ui.spelling"); //$NON-NLS-1$
-        if (bundle != null) {
-            try {
-                Class clazz = bundle
-                        .loadClass("org.xmind.ui.internal.spelling.JazzySpellingSupport"); //$NON-NLS-1$
-                return (ISpellingSupport) clazz.newInstance();
-            } catch (Throwable e) {
-            }
-        }
-        try {
-            return (ISpellingSupport) Class.forName(
-                    "org.xmind.ui.internal.spelling.JazzySpellingSupport") //$NON-NLS-1$
-                    .newInstance();
-        } catch (Throwable ignore) {
-            // we don't rely on that implementation
-        }
-        return null;
+        return new JazzySpellingSupport();
     }
 }

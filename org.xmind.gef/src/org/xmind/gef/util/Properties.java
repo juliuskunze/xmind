@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -58,6 +58,14 @@ public class Properties implements Cloneable {
         return eventSupport;
     }
 
+    public void set(String key, boolean value) {
+        set(key, Boolean.valueOf(value));
+    }
+
+    public void set(String key, int value) {
+        set(key, Integer.valueOf(value));
+    }
+
     public void set(String key, Object value) {
         Object oldValue = contents.get(key);
         if (value != null && !value.equals(oldValue)) {
@@ -97,13 +105,15 @@ public class Properties implements Cloneable {
 
     public boolean getBoolean(String key, boolean defaultValue) {
         Object value = get(key);
-        return value instanceof Boolean ? (Boolean) value : defaultValue;
+        return value instanceof Boolean ? ((Boolean) value).booleanValue()
+                : defaultValue;
 
     }
 
     public int getInteger(String key, int defaultValue) {
         Object value = get(key);
-        return value instanceof Integer ? (Integer) value : defaultValue;
+        return value instanceof Integer ? ((Integer) value).intValue()
+                : defaultValue;
     }
 
     public String getString(String key, String defaultValue) {

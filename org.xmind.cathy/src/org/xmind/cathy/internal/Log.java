@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -40,12 +40,14 @@ public class Log {
 
     private static String lineSeparator = null;
 
-    /**
+    /*
+     * This is a former workaround. No use after SWT has OpenDocument event.
+     * ========================================================================
      * On Mac OS X, we use AppleScript to open .xmind file on double click.
      * AppleScript supports only UTF-16. So we should do writing and reading log
      * files using UTF-16 format on Mac OS X.
      */
-    private static boolean ON_MAC = "macosx".equals(Platform.getOS()); //$NON-NLS-1$
+    // private static boolean ON_MAC = "macosx".equals(Platform.getOS()); //$NON-NLS-1$
 
     private File file;
 
@@ -75,8 +77,7 @@ public class Log {
                 }
             } catch (IOException e) {
                 CathyPlugin
-                        .log(
-                                e,
+                        .log(e,
                                 "Failed to load properties from log file: " + file.getAbsolutePath()); //$NON-NLS-1$
             }
         }
@@ -96,8 +97,7 @@ public class Log {
             }
         } catch (IOException e) {
             CathyPlugin
-                    .log(
-                            e,
+                    .log(e,
                             "Failed to save properties to log file: " + file.getAbsolutePath()); //$NON-NLS-1$
         }
     }
@@ -108,7 +108,7 @@ public class Log {
         List<String> lines = new ArrayList<String>();
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    new FileInputStream(file), ON_MAC ? "UTF-16" : "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
+                    new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -140,8 +140,7 @@ public class Log {
         FileUtils.ensureFileParent(file);
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(file, append),
-                    ON_MAC ? "UTF-16" : "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
+                    new FileOutputStream(file, append), "UTF-8")); //$NON-NLS-1$
             try {
                 for (String line : contents) {
                     writer.write(line);

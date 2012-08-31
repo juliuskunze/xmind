@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -67,6 +67,7 @@ public class ParagraphImpl implements IParagraph {
         SpanImplBase s = (SpanImplBase) span;
         implementation.appendChild(s.getImplementation());
         s.addNotify(owner.getRealizedWorkbook());
+        getOwner().updateModifiedTime();
     }
 
     public List<ISpan> getSpans() {
@@ -77,6 +78,7 @@ public class ParagraphImpl implements IParagraph {
         SpanImplBase s = (SpanImplBase) span;
         s.removeNotify(owner.getRealizedWorkbook());
         implementation.removeChild(s.getImplementation());
+        getOwner().updateModifiedTime();
     }
 
     public Object getAdapter(Class adapter) {
@@ -96,10 +98,20 @@ public class ParagraphImpl implements IParagraph {
         DOMUtils.setAttribute(implementation, DOMConstants.ATTR_STYLE_ID,
                 styleId);
         WorkbookUtilsImpl.increaseStyleRef(workbook, this);
+        getOwner().updateModifiedTime();
     }
 
     public IWorkbook getOwnedWorkbook() {
         return owner.getOwnedWorkbook();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IWorkbookComponent#isOrphan()
+     */
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(implementation);
     }
 
     protected void addNotify(WorkbookImpl workbook) {

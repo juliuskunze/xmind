@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -29,7 +29,6 @@ import org.xmind.core.IImageSpan;
 import org.xmind.core.INotes;
 import org.xmind.core.IParagraph;
 import org.xmind.core.ITextSpan;
-import org.xmind.core.internal.ElementRegistry;
 import org.xmind.core.util.DOMUtils;
 
 public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
@@ -43,7 +42,10 @@ public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
     public void addParagraph(IParagraph paragraph) {
         ParagraphImpl p = (ParagraphImpl) paragraph;
         getImplementation().appendChild(p.getImplementation());
-        p.addNotify(getRealizedWorkbook());
+        if (!isOrphan()) {
+            p.addNotify((WorkbookImpl) getOwnedWorkbook());
+        }
+        updateModifiedTime();
     }
 
     public IImageSpan createImageSpan(String source) {
@@ -51,7 +53,7 @@ public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
                 .createElement(TAG_IMG);
         ImageSpanImpl image = new ImageSpanImpl(e, this);
         image.setSource(source);
-        register(e, image);
+        getAdaptableRegistry().register(image, e);
         return image;
     }
 
@@ -60,7 +62,7 @@ public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
                 .createElement(TAG_A);
         HyperlinkSpanImpl hyperlink = new HyperlinkSpanImpl(e, this);
         hyperlink.setHref(sourceHyper);
-        register(e, hyperlink);
+        getAdaptableRegistry().register(hyperlink, e);
         return hyperlink;
     }
 
@@ -68,7 +70,7 @@ public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
         Element e = ((WorkbookImpl) getOwnedWorkbook()).getImplementation()
                 .createElement(DOMConstants.TAG_P);
         ParagraphImpl paragraph = new ParagraphImpl(e, this);
-        register(e, paragraph);
+        getAdaptableRegistry().register(paragraph, e);
         return paragraph;
     }
 
@@ -76,7 +78,7 @@ public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
         Text t = ((WorkbookImpl) getOwnedWorkbook()).getImplementation()
                 .createTextNode(textContent);
         TextSpanImpl text = new TextSpanImpl(t, this);
-        register(t, text);
+        getAdaptableRegistry().register(text, t);
         return text;
     }
 
@@ -87,21 +89,27 @@ public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
     public void removeParagraph(IParagraph paragraph) {
         ParagraphImpl p = (ParagraphImpl) paragraph;
         if (p.getImplementation().getParentNode() == getImplementation()) {
-            p.removeNotify(getRealizedWorkbook());
+            if (!isOrphan()) {
+                p.removeNotify((WorkbookImpl) getOwnedWorkbook());
+            }
             getImplementation().removeChild(p.getImplementation());
+            updateModifiedTime();
         }
     }
 
-    protected ElementRegistry getElementRegistry() {
-        return ((WorkbookImpl) getOwnedWorkbook()).getElementRegistry();
+//    protected ElementRegistry getElementRegistry() {
+//        return ((WorkbookImpl) getOwnedWorkbook()).getElementRegistry();
+//    }
+
+    protected NodeAdaptableRegistry getAdaptableRegistry() {
+        return ((WorkbookImpl) getOwnedWorkbook()).getAdaptableRegistry();
     }
 
     public IAdaptable getAdaptable(Node node) {
         if (node == null)
             return null;
 
-        IAdaptable element = ((WorkbookImpl) getOwnedWorkbook())
-                .getAdaptable(node);
+        IAdaptable element = getAdaptableRegistry().getAdaptable(node);
         if (element == null) {
             if (node instanceof Element) {
                 Element e = (Element) node;
@@ -124,18 +132,10 @@ public class HtmlNotesContentImpl extends BaseNotesContentImpl implements
                 }
             }
             if (element != null) {
-                register(node, element);
+                getAdaptableRegistry().register(element, node);
             }
         }
         return element;
-    }
-
-    protected void register(Object key, Object element) {
-        getElementRegistry().registerByKey(key, element);
-    }
-
-    protected void unregister(Object key) {
-        getElementRegistry().unregisterByKey(key);
     }
 
     protected void addNotify(WorkbookImpl workbook) {

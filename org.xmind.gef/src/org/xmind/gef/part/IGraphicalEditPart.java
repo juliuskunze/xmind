@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,6 +16,7 @@ package org.xmind.gef.part;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.swt.graphics.Cursor;
+import org.xmind.gef.IViewer.IPartSearchCondition;
 
 /**
  * @author Brian Sun
@@ -23,6 +24,8 @@ import org.eclipse.swt.graphics.Cursor;
 public interface IGraphicalEditPart extends IGraphicalPart {
 
     IPart findAt(Point position);
+
+    IPart findAt(Point position, IPartSearchCondition condition);
 
     IFigure findTooltipAt(Point position);
 

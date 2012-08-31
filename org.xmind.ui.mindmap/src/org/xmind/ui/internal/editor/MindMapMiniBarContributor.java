@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -125,9 +125,9 @@ public class MindMapMiniBarContributor extends MiniBarContributor implements
 
             private double max = 2.0;
 
-            public double getPortion(Object input, Object value) {
+            public double getRatio(Object input, Object value) {
                 if (value instanceof Double) {
-                    return calcPortion((Double) value);
+                    return calcPortion(((Double) value).doubleValue());
                 }
                 return center;
             }
@@ -151,21 +151,21 @@ public class MindMapMiniBarContributor extends MiniBarContributor implements
                 return (v - center) * 0.5 / d + 0.5;
             }
 
-            public Object getValue(Object input, double portion) {
-                return Double.valueOf(calcValue(portion));
+            public Object getValue(Object input, double ratio) {
+                return Double.valueOf(calcValue(ratio));
             }
 
-            private double calcValue(double portion) {
-                if (portion > 0.45 && portion < 0.52)
+            private double calcValue(double ratio) {
+                if (ratio > 0.45 && ratio < 0.52)
                     return center;
-                if (portion < 0.5)
-                    return ((center - min) * portion / 0.5 + min);
-                return ((max - center) * (portion - 0.5) / 0.5 + center);
+                if (ratio < 0.5)
+                    return ((center - min) * ratio / 0.5 + min);
+                return ((max - center) * (ratio - 0.5) / 0.5 + center);
             }
 
-            public Object[] getValues(Object input) {
-                return new Double[] { min, center, max };
-            }
+//            public Object[] getValues(Object input) {
+//                return new Double[] { min, center, max };
+//            }
 
             public void inputChanged(Viewer viewer, Object oldInput,
                     Object newInput) {

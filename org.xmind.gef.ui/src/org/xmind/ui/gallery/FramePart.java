@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -50,8 +50,8 @@ public class FramePart extends GraphicalEditPart {
 
     protected void declareEditPolicies(IRequestHandler reqHandler) {
         super.declareEditPolicies(reqHandler);
-        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE,
+                NullEditPolicy.getInstance());
         reqHandler.installEditPolicy(GEF.ROLE_NAVIGABLE,
                 GalleryViewer.POLICY_NAVIGABLE);
     }
@@ -105,4 +105,11 @@ public class FramePart extends GraphicalEditPart {
         return null;
     }
 
+    @Override
+    protected void updateChildren() {
+        super.updateChildren();
+        for (IPart child : getChildren()) {
+            child.update();
+        }
+    }
 }

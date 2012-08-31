@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -27,24 +27,31 @@ import org.xmind.gef.draw2d.graphics.ScaledGraphics;
 public class FigureImageDescriptor extends ImageDescriptor {
 
     public static ImageDescriptor createFromFigure(IFigure figure) {
-        return createFromFigure(figure, ImageExportUtils
-                .createExportAreaProvider(figure));
+        return new FigureImageDescriptor(new IFigure[] { figure },
+                ImageExportUtils.createExportAreaProvider(ImageExportUtils
+                        .getBounds(figure)));
     }
 
     public static ImageDescriptor createFromFigure(IFigure figure,
             IExportAreaProvider exportAreaProvider) {
-        return new FigureImageDescriptor(figure, exportAreaProvider);
+        return new FigureImageDescriptor(new IFigure[] { figure },
+                exportAreaProvider);
     }
 
-    private final IFigure figure;
+    public static ImageDescriptor createFromFigures(IFigure[] figures,
+            IExportAreaProvider exportAreaProvider) {
+        return new FigureImageDescriptor(figures, exportAreaProvider);
+    }
+
+    private final IFigure[] figures;
 
     private IExportAreaProvider exportAreaProvider;
 
     private ImageData data = null;
 
-    protected FigureImageDescriptor(IFigure figure,
+    protected FigureImageDescriptor(IFigure[] figures,
             IExportAreaProvider exportAreaProvider) {
-        this.figure = figure;
+        this.figures = figures;
         this.exportAreaProvider = exportAreaProvider;
     }
 
@@ -71,7 +78,16 @@ public class FigureImageDescriptor extends ImageDescriptor {
             graphics = scaledGraphics;
         }
         try {
-            figure.paint(graphics);
+            graphics.pushState();
+            try {
+                for (int i = 0; i < figures.length; i++) {
+                    IFigure figure = figures[i];
+                    figure.paint(graphics);
+                    graphics.restoreState();
+                }
+            } finally {
+                graphics.popState();
+            }
         } catch (Throwable t) {
             if (!returnMissingImageOnError) {
                 image.dispose();

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.jface.text.IInputChangedListener;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -36,6 +35,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.accessibility.ACC;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Widget;
@@ -48,6 +48,8 @@ import org.xmind.gef.part.IRootPart;
 import org.xmind.gef.part.PartRegistry;
 import org.xmind.gef.service.IViewerService;
 import org.xmind.gef.service.IViewerService2;
+import org.xmind.gef.util.EventListenerSupport;
+import org.xmind.gef.util.IEventDispatcher;
 import org.xmind.gef.util.Properties;
 
 /**
@@ -57,6 +59,12 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
 
     private static final List<IPart> EMPTY_PART_SELECTION = Collections
             .emptyList();
+
+    private static final String PRE_SELECTION_CHANGED_KEY = "preSelectionChanged"; //$NON-NLS-1$
+
+    private static final String POST_SELECTION_CHANGED_KEY = "postSelectionChanged"; //$NON-NLS-1$
+
+    private static final String FOCUSED_PART_CHANGED_KEY = "focusedPartChanged"; //$NON-NLS-1$
 
     protected class SelectionSupport implements ISelectionSupport {
 
@@ -357,6 +365,7 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
             fireSelectionChanged(new SelectionChangedEvent(AbstractViewer.this,
                     getModelSelection()));
             getControl().getAccessible().selectionChanged();
+            firePostSelectionChanged();
         }
 
         public void refresh() {
@@ -411,8 +420,6 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
 
     private ISelectionSupport selectionSupport = null;
 
-//    private IModelContentProvider modelContentProvider = null;
-
     private Properties properties = null;
 
     private IDndSupport dndSupport = null;
@@ -423,11 +430,13 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
 
     private IPart focused = null;
 
-    private List<ISelectionChangedListener> preSelectionChangedListeners = null;
-
-    private List<IInputChangedListener> inputChangedListeners = null;
+    private EventListenerSupport listenerSupport = new EventListenerSupport();
 
     private Map<Class<? extends IViewerService>, IViewerService> serviceRegistry = null;
+
+    private IPartSearchCondition partSearchCondition = null;
+
+    private boolean postSelectionChangedEventScheduled = false;
 
     protected AbstractViewer() {
     }
@@ -521,8 +530,8 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         return domain;
     }
 
-    public void setEditDomain(EditDomain domain) {
-        this.domain = domain;
+    public void setEditDomain(EditDomain editDomain) {
+        this.domain = editDomain;
     }
 
     public Object getInput() {
@@ -530,11 +539,8 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
     }
 
     public void setInput(Object input) {
-//        Assert.isTrue(getContentProvider() != null,
-//                "Viewer must have a content provider when input is set."); //$NON-NLS-1$
         Object oldInput = this.input;
         this.input = input;
-//        getContentProvider().inputChanged(this, oldInput, input);
         inputChanged(input, oldInput);
     }
 
@@ -544,8 +550,8 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         if (activeServices != null) {
             for (IViewerService service : activeServices) {
                 if (service instanceof IViewerService2) {
-                    preservedDataList.put(service, ((IViewerService2) service)
-                            .preserveData());
+                    preservedDataList.put(service,
+                            ((IViewerService2) service).preserveData());
                 }
                 service.setActive(false);
             }
@@ -570,7 +576,7 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
                 }
             }
         }
-        fireInputChanged(input);
+        fireInputChanged(input, oldInput);
     }
 
     protected IPart createContents(IRootPart root, Object input) {
@@ -585,6 +591,17 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         return getControl().setFocus();
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.IViewer#setCursor(org.eclipse.swt.graphics.Cursor)
+     */
+    public void setCursor(Cursor cursor) {
+        if (getControl() == null || getControl().isDisposed())
+            return;
+        getControl().setCursor(cursor);
+    }
+
     protected void handleDispose(DisposeEvent e) {
         if (serviceRegistry != null) {
             for (IViewerService service : serviceRegistry.values()) {
@@ -592,9 +609,6 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
             }
             serviceRegistry.clear();
             serviceRegistry = null;
-        }
-        if (preSelectionChangedListeners != null) {
-            preSelectionChangedListeners.clear();
         }
         IRootPart rootPart = getRootPart();
         if (rootPart != null) {
@@ -734,6 +748,25 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.xmind.gef.IViewer#setPartSearchCondition(org.xmind.gef.IViewer.
+     * IPartSearchCondition)
+     */
+    public void setPartSearchCondition(IPartSearchCondition condition) {
+        this.partSearchCondition = condition;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.IViewer#getPartSearchCondition()
+     */
+    public IPartSearchCondition getPartSearchCondition() {
+        return this.partSearchCondition;
+    }
+
     public void setPartRegistry(PartRegistry partRegistry) {
         this.partRegistry = partRegistry;
     }
@@ -771,7 +804,12 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
     }
 
     public void setProperties(Properties properties) {
-        this.properties = properties;
+        if (this.properties != null) {
+            this.properties.clear();
+        }
+        if (properties != null) {
+            getProperties().putAll(properties);
+        }
     }
 
     public IDndSupport getDndSupport() {
@@ -782,52 +820,148 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
         this.dndSupport = dndSupport;
     }
 
+    /**
+     * @return the listenerSupport
+     */
+    protected EventListenerSupport getListenerSupport() {
+        return listenerSupport;
+    }
+
     public void addPreSelectionChangedListener(
             ISelectionChangedListener listener) {
-        if (preSelectionChangedListeners == null)
-            preSelectionChangedListeners = new ArrayList<ISelectionChangedListener>();
-        preSelectionChangedListeners.add(listener);
+        getListenerSupport().addListener(PRE_SELECTION_CHANGED_KEY, listener);
     }
 
     public void removePreSelectionChangedListener(
             ISelectionChangedListener listener) {
-        if (preSelectionChangedListeners == null)
-            return;
-        preSelectionChangedListeners.remove(listener);
-        if (preSelectionChangedListeners.isEmpty())
-            preSelectionChangedListeners = null;
+        getListenerSupport()
+                .removeListener(PRE_SELECTION_CHANGED_KEY, listener);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.viewers.IPostSelectionProvider#
+     * addPostSelectionChangedListener
+     * (org.eclipse.jface.viewers.ISelectionChangedListener)
+     */
+    public void addPostSelectionChangedListener(
+            ISelectionChangedListener listener) {
+        getListenerSupport().addListener(POST_SELECTION_CHANGED_KEY, listener);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.viewers.IPostSelectionProvider#
+     * removePostSelectionChangedListener
+     * (org.eclipse.jface.viewers.ISelectionChangedListener)
+     */
+    public void removePostSelectionChangedListener(
+            ISelectionChangedListener listener) {
+        getListenerSupport().removeListener(POST_SELECTION_CHANGED_KEY,
+                listener);
     }
 
     protected void firePreSelectionChanged() {
-        if (preSelectionChangedListeners == null)
-            return;
         ISelection selection = createPreSelection();
-        SelectionChangedEvent event = new SelectionChangedEvent(this, selection);
-        for (Object listener : preSelectionChangedListeners.toArray()) {
-            ((ISelectionChangedListener) listener).selectionChanged(event);
+        final SelectionChangedEvent event = new SelectionChangedEvent(this,
+                selection);
+        getListenerSupport().fireEvent(PRE_SELECTION_CHANGED_KEY,
+                new IEventDispatcher() {
+                    public void dispatch(Object listener) {
+                        ((ISelectionChangedListener) listener)
+                                .selectionChanged(event);
+                    }
+                });
+    }
+
+    protected void firePostSelectionChanged() {
+        if (getControl() == null || getControl().isDisposed())
+            return;
+
+        if (postSelectionChangedEventScheduled)
+            return;
+        postSelectionChangedEventScheduled = true;
+        getControl().getDisplay().asyncExec(new Runnable() {
+            public void run() {
+                if (getControl() == null || getControl().isDisposed())
+                    return;
+
+                ISelection selection = getSelection();
+                final SelectionChangedEvent event = new SelectionChangedEvent(
+                        AbstractViewer.this, selection);
+                getListenerSupport().fireEvent(POST_SELECTION_CHANGED_KEY,
+                        new IEventDispatcher() {
+                            public void dispatch(Object listener) {
+                                ((ISelectionChangedListener) listener)
+                                        .selectionChanged(event);
+                            }
+                        });
+                postSelectionChangedEventScheduled = false;
+            }
+        });
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.IViewer#addFocusedChangedListener(org.eclipse.jface.viewers
+     * .ISelectionChangedListener)
+     */
+    public void addFocusedPartChangedListener(ISelectionChangedListener listener) {
+        getListenerSupport().addListener(FOCUSED_PART_CHANGED_KEY, listener);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.IViewer#removeFocusedChangedListener(org.eclipse.jface.
+     * viewers.ISelectionChangedListener)
+     */
+    public void removeFocusedPartChangedListener(
+            ISelectionChangedListener listener) {
+        getListenerSupport().removeListener(FOCUSED_PART_CHANGED_KEY, listener);
+    }
+
+    protected void fireFocusedPartChanged() {
+        IPart focusedPart = getFocusedPart();
+        ISelection selection;
+        if (focusedPart == null) {
+            selection = StructuredSelection.EMPTY;
+        } else {
+            selection = new StructuredSelection(focusedPart);
         }
+        final SelectionChangedEvent event = new SelectionChangedEvent(this,
+                selection);
+        getListenerSupport().fireEvent(FOCUSED_PART_CHANGED_KEY,
+                new IEventDispatcher() {
+                    public void dispatch(Object listener) {
+                        ((ISelectionChangedListener) listener)
+                                .selectionChanged(event);
+                    }
+                });
     }
 
     public void addInputChangedListener(IInputChangedListener listener) {
-        if (inputChangedListeners == null)
-            inputChangedListeners = new ArrayList<IInputChangedListener>();
-        inputChangedListeners.add(listener);
+        getListenerSupport().addListener(IInputChangedListener.class, listener);
     }
 
     public void removeInputChangedListener(IInputChangedListener listener) {
-        if (inputChangedListeners == null)
-            return;
-        inputChangedListeners.remove(listener);
-        if (inputChangedListeners.isEmpty())
-            inputChangedListeners = null;
+        getListenerSupport().removeListener(IInputChangedListener.class,
+                listener);
     }
 
-    protected void fireInputChanged(Object input) {
-        if (inputChangedListeners == null)
-            return;
-        for (Object listener : inputChangedListeners.toArray()) {
-            ((IInputChangedListener) listener).inputChanged(input);
-        }
+    protected void fireInputChanged(final Object newInput, final Object oldInput) {
+        getListenerSupport().fireEvent(IInputChangedListener.class,
+                new IEventDispatcher() {
+                    public void dispatch(Object listener) {
+                        ((IInputChangedListener) listener).inputChanged(
+                                AbstractViewer.this, newInput, oldInput);
+                    }
+                });
     }
 
     private ISelection createPreSelection() {
@@ -836,11 +970,11 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
     }
 
     public Object getPreselected() {
-        return preSelected;
+        return getPartRegistry().getModelByPart(preSelected);
     }
 
     public IPart getPreselectedPart() {
-        return getSelectionSupport().findSelectablePart(getPreselected());
+        return preSelected;
     }
 
     public void setPreselected(Object element) {
@@ -897,6 +1031,7 @@ public abstract class AbstractViewer extends Viewer implements IViewer {
                 c.getAccessible().setFocus(ACC.CHILDID_SELF);
             }
         }
+        fireFocusedPartChanged();
     }
 
     public IViewerService getService(Class<? extends IViewerService> serviceType) {

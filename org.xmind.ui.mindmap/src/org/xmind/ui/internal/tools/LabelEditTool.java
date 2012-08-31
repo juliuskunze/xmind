@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -84,6 +84,18 @@ public class LabelEditTool extends MindMapEditToolBase {
 
     public ILabelPart getLabelPart() {
         return label;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.tool.EditTool#canEdit(org.xmind.gef.part.IGraphicalEditPart
+     * )
+     */
+    @Override
+    protected boolean canEdit(IGraphicalEditPart target) {
+        return super.canEdit(target) && target instanceof ITopicPart;
     }
 
     public void setSource(IGraphicalEditPart source) {

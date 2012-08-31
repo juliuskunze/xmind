@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -63,5 +63,15 @@ public class ArchiveConstants {
      * 
      */
     public static final String PATH_MARKERS = "markers/"; //$NON-NLS-1$
+
+    /**
+     * 
+     */
+    public static final String PATH_REVISIONS = "Revisions/"; //$NON-NLS-1$
+
+    /**
+     * 
+     */
+    public static final String REVISIONS_XML = "revisions.xml"; //$NON-NLS-1$
 
 }

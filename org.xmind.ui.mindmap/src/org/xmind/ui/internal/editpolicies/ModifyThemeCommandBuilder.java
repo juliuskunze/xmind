@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -63,7 +63,8 @@ public class ModifyThemeCommandBuilder extends CommandBuilder {
     }
 
     private Request createSheetStyleRequest(IStyle appliedTheme) {
-        Request request = new Request(MindMapUI.REQ_MODIFY_STYLE);
+        Request request = new Request(MindMapUI.REQ_MODIFY_STYLE)
+                .setViewer(getViewer());
         request.setParameter(MindMapUI.PARAM_STYLE_PREFIX
                 + Styles.MultiLineColors, getMapStyleValue(appliedTheme,
                 Styles.MultiLineColors));

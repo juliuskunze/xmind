@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -32,7 +32,7 @@ import org.eclipse.swt.widgets.Display;
 
 public class XMindNetAuthenticator implements IXMindNetCommandHandler {
 
-    static final int TOKEN_LIFE_TIME = 3600 * 24 * 7; //two weeks
+    public static final int TOKEN_LIFE_TIME = 3600 * 24 * 7; //two weeks
 
     private List<IAuthenticationListener> callbacks = null;
 
@@ -108,8 +108,9 @@ public class XMindNetAuthenticator implements IXMindNetCommandHandler {
                 && authToken != null && !"".equals(authToken)) { //$NON-NLS-1$
             long expireDate = System.currentTimeMillis() + TOKEN_LIFE_TIME;
             notifyCallbacks(new AccountInfo(user, authToken, expireDate));
-            InternalXMindNet.getInstance().getAccount().signedIn(user,
-                    authToken, expireDate, data.getBoolean(SignInJob.REMEMBER));
+            InternalXMindNet.getInstance().getAccount()
+                    .signedIn(user, authToken, expireDate, true);
+//                    data.getBoolean(SignInJob.REMEMBER));
         } else {
             notifyCallbacks(null);
             InternalXMindNet.getInstance().getAccount().signedOut();

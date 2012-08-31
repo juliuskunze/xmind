@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -54,11 +54,15 @@ public class MindMapMessages extends NLS {
     public static String UndoRedoTipsService_Undo;
     public static String UndoRedoTipsService_Redo;
 
+    public static String UnexpectedWorkbookLoadFailure_error;
+
     public static String StatusLine_MultipleItems;
     public static String StatusLine_MultipleItemPattern;
     public static String StatusLine_OneItemPattern;
     public static String StatusLine_OneItemNoTitlePattern;
 
+    public static String NewWorkbookDialog_text;
+    public static String NewWorkbookDialog_toolTip;
     public static String NewWorkbook_text;
     public static String NewWorkbook_toolTip;
     public static String NewFromTemplate_text;
@@ -76,8 +80,12 @@ public class MindMapMessages extends NLS {
     public static String Command_InsertImage;
     public static String DeleteSheet_text;
     public static String DeleteSheet_toolTip;
+
+    public static String DeleteSingleRevisionCommand_label;
     public static String Delete_OtherSheets_text;
     public static String Delete_OtherSheets_toolTip;
+
+    public static String DeleteMultipleRevisionsCommand_label;
     public static String DrillDown_text;
     public static String DrillDown_toolTip;
     public static String DrillUp_text;
@@ -240,6 +248,10 @@ public class MindMapMessages extends NLS {
 
     public static String AllowOverlaps_toolTip;
 
+    public static String BackgroundWorkbookSaver_SaveWorkbook_taskName;
+
+    public static String BackgroundWorkbookSaver_SavingWorkbook_taskNamePattern;
+
     public static String BreadCrumb_CurrentCentral_text;
 
     public static String BreadCrumb_ViewAsCentral_text;
@@ -270,7 +282,26 @@ public class MindMapMessages extends NLS {
 
     public static String RecentUsed;
 
+    public static String RevertToRevisionCommand_label;
+
+    public static String RevisionsView_DateColumn_text;
+
+    public static String RevisionsView_DeleteRevisionsAction_text;
+
+    public static String RevisionsView_DeleteRevisionsAction_toolTip;
+
+    public static String RevisionsView_PreviewAction_text;
+
+    public static String RevisionsView_PreviewAction_toolTip;
+
+    public static String RevisionsView_RevertToRevisionAction_text;
+
+    public static String RevisionsView_RevertToRevisionAction_toolTip;
+
+    public static String RevisionsView_TimeColumn_text;
+
     public static String DefaultOverviewPage_message;
+    public static String DefaultRevisionsPage_message;
 
     public static String TryPro_text;
     public static String TryPro_toolTip;
@@ -285,6 +316,18 @@ public class MindMapMessages extends NLS {
 
     public static String WorkbookEditorInput_name;
 
+    public static String WorkbookSavedIncorrectly_error;
+
+    public static String WorkbookSaver_CreateRevisions_taskName;
+
+    public static String WorkbookSaver_Finalize_taskName;
+
+    public static String WorkbookSaver_PrepareNewSaveTarget_taskName;
+
+    public static String WorkbookSaver_SavePreviewImage_taskName;
+
+    public static String WorkbookSaver_SaveWorkbookContent_taskName;
+
     public static String EditInNotesView_text;
     public static String EditInNotesView_toolTip;
 
@@ -297,6 +340,12 @@ public class MindMapMessages extends NLS {
 //    public static String NotesView_RedoTyping_toolTip;
 
     public static String ProtocolManager_OpenHyperlink_pattern;
+
+    public static String WordContext_Label_pattern;
+    public static String WordContext_Notes_pattern;
+
+    public static String Notes_FindReplaceContextPattern;
+    public static String EmptyNotes_FindReplaceContextName;
 
     static {
         // initialize resource bundle

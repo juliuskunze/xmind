@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,12 +22,25 @@ import org.xmind.gef.part.IPart;
  */
 public class MouseEvent {
 
+    /**
+     * The current part under the mouse cursor.
+     */
     public IPart target;
 
+    /**
+     * <code>True</code> if the mouse button is left, <code>false</code> if
+     * right.
+     */
     public boolean leftOrRight;
 
+    /**
+     * The current location of the mouse cursor, relative to the contents layer.
+     */
     public Point cursorLocation;
 
+    /**
+     * The triggering SWT mouse event.
+     */
     protected org.eclipse.swt.events.MouseEvent currentSWTEvent;
 
     private boolean consumed = false;

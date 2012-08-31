@@ -11,7 +11,7 @@
 		<resource-mapping src="clock" dest="other-clock" />
 		<resource-mapping src="desktop_new" dest="other-calendar" />
 		<resource-mapping src="help" dest="other-question" />
-		<resource-mapping src="idea" dest="other-light" />
+		<resource-mapping src="idea" dest="other-lightbulb" />
 		<resource-mapping src="kaddressbook" dest="other-phone" />
 		<resource-mapping src="korn" dest="other-email" />
 		<resource-mapping src="mail" dest="other-email" />
@@ -20,5 +20,7 @@
 	
 		<resource-mapping src="ksmiletris" dest="smiley-smile" />
 		<resource-mapping src="flag" dest="flag-red" />
+		<resource-mapping src="yes" dest="other-yes" />
+		<resource-mapping src="no" dest="other-no" />
 	</resource-group>
 </resource-mappings>

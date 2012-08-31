@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -44,26 +44,14 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
+import org.xmind.ui.viewers.ICompositeProvider;
 import org.xmind.ui.viewers.SWTUtils;
+import org.xmind.ui.viewers.SameCompositeProvider;
 
 public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
 
     private static int DEFAULT_STYLE = SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL
             | SWT.H_SCROLL;
-
-    private static class SameCompositeProvider implements ICompositeProvider {
-
-        private Composite composite;
-
-        public SameCompositeProvider(Composite composite) {
-            this.composite = composite;
-        }
-
-        public Composite getParent() {
-            return composite;
-        }
-
-    }
 
     private class TextViewerHooker implements ISelectionChangedListener,
             VerifyKeyListener {

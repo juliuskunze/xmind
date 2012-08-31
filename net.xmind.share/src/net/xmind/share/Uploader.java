@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -12,8 +12,7 @@
 package net.xmind.share;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
 
 import net.xmind.share.dialog.UploaderDialog;
 import net.xmind.share.jobs.UploadJob;
@@ -33,7 +32,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.xmind.core.Core;
-import org.xmind.core.IFileEntry;
 import org.xmind.core.IMeta;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
@@ -42,7 +40,7 @@ import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.GEF;
 import org.xmind.ui.mindmap.IMindMapViewer;
 import org.xmind.ui.mindmap.MindMapExtractor;
-import org.xmind.ui.mindmap.MindMapPreviewBuilder;
+import org.xmind.ui.mindmap.MindMapImageExporter;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.resources.ColorUtils;
 
@@ -94,9 +92,9 @@ public class Uploader extends JobChangeAdapter {
         info.setProperty(Info.TITLE, mapTitle);
         info.setProperty(Info.DESCRIPTION, getDefaultMapDescription());
         info.setProperty(Info.FULL_IMAGE, fullImage);
-        info.setInt(Info.ORIGIN_X, origin.x);
-        info.setInt(Info.ORIGIN_Y, origin.y);
-        info.setProperty(Info.BACKGROUND_COLOR, getBackgroundColor());
+        info.setInt(IMeta.ORIGIN_X, origin.x);
+        info.setInt(IMeta.ORIGIN_Y, origin.y);
+        info.setProperty(IMeta.BACKGROUND_COLOR, getBackgroundColor());
 
         UploaderDialog dialog = createUploadDialog();
         int ret = dialog.open();
@@ -116,20 +114,16 @@ public class Uploader extends JobChangeAdapter {
         meta.setValue(Info.X, String.valueOf(x));
         meta.setValue(Info.Y, String.valueOf(y));
         meta.setValue(Info.SCALE, String.valueOf(scale));
-        meta.setValue(Info.ORIGIN_X, String.valueOf(origin.x));
-        meta.setValue(Info.ORIGIN_Y, String.valueOf(origin.y));
-        meta.setValue(Info.BACKGROUND_COLOR, info
-                .getString(Info.BACKGROUND_COLOR));
-//        if (info.hasProperty(Info.ALLOW_DOWNLOAD)) {
-//            meta.setValue(Info.ALLOW_DOWNLOAD, info.getString(
-//                    Info.ALLOW_DOWNLOAD, Info.Public));
-//        } else {
-//            meta.setValue(Info.ALLOW_DOWNLOAD, Info.Public);
-//        }
-        meta.setValue(Info.PRIVACY, info.getString(Info.PRIVACY,
-                Info.PRIVACY_PUBLIC));
-        meta.setValue(Info.DOWNLOADABLE, info.getString(Info.DOWNLOADABLE,
-                Info.DOWNLOADABLE_YES));
+        meta.setValue(IMeta.ORIGIN_X, String.valueOf(origin.x));
+        meta.setValue(IMeta.ORIGIN_Y, String.valueOf(origin.y));
+        meta.setValue(IMeta.BACKGROUND_COLOR,
+                info.getString(IMeta.BACKGROUND_COLOR));
+        meta.setValue(Info.PRIVACY,
+                info.getString(Info.PRIVACY, Info.PRIVACY_PUBLIC));
+        meta.setValue(Info.DOWNLOADABLE,
+                info.getString(Info.DOWNLOADABLE, Info.DOWNLOADABLE_YES));
+        meta.setValue(Info.LANGUAGE_CHANNEL,
+                info.getString(Info.LANGUAGE_CHANNEL));
 
         if (file == null) {
             String tempFile = Core.getWorkspace()
@@ -137,13 +131,13 @@ public class Uploader extends JobChangeAdapter {
                             "upload/" //$NON-NLS-1$
                                     + Core.getIdFactory().createId()
                                     + MindMapUI.FILE_EXT_XMIND);
-
             file = new File(tempFile);
         }
 
         SafeRunner.run(new SafeRunnable(Messages.failedToGenerateUploadFile) {
             public void run() throws Exception {
                 String path = file.getAbsolutePath();
+                workbook.saveTemp();
                 workbook.save(path);
             }
         });
@@ -192,17 +186,19 @@ public class Uploader extends JobChangeAdapter {
     }
 
     private void generatePreview() {
-        final MindMapPreviewBuilder previewBuilder = new MindMapPreviewBuilder(
-                workbook);
         final Display display = parentShell.getDisplay();
         BusyIndicator.showWhile(display, new Runnable() {
             public void run() {
                 SafeRunner.run(new SafeRunnable(
                         Messages.failedToGenerateThumbnail) {
                     public void run() throws Exception {
-                        previewBuilder.save(parentShell);
-                        origin = previewBuilder.getOrigin();
-                        fullImage = getPreviewImage(workbook, display);
+                        MindMapImageExporter exporter = new MindMapImageExporter(
+                                display);
+                        exporter.setSourceViewer(sourceViewer);
+                        exporter.setTargetWorkbook(workbook);
+                        fullImage = exporter.createImage();
+                        exporter.export(fullImage);
+                        origin = exporter.calcRelativeOrigin();
                     }
                 });
             }
@@ -240,27 +236,24 @@ public class Uploader extends JobChangeAdapter {
     }
 
     private String getDefaultMapDescription() {
-        if (workbook != null)
-            return workbook.getMeta().getValue(IMeta.DESCRIPTION);
-        return null;
-    }
-
-    private Image getPreviewImage(IWorkbook workbook, Display display)
-            throws Exception {
-        IFileEntry entry = workbook.getManifest().getFileEntry(
-                MindMapPreviewBuilder.PATH_THUMBNAIL);
-        if (entry != null) {
-            InputStream in = entry.getInputStream();
-            if (in != null) {
-                try {
-                    return new Image(display, in);
-                } finally {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
+        if (workbook != null) {
+            String desc = workbook.getMeta().getValue(IMeta.DESCRIPTION);
+            if (desc == null || "".equals(desc)) { //$NON-NLS-1$
+                ITopic rootTopic = workbook.getPrimarySheet().getRootTopic();
+                List<ITopic> mainTopics = rootTopic
+                        .getChildren(ITopic.ATTACHED);
+                if (!mainTopics.isEmpty()) {
+                    StringBuffer sb = new StringBuffer(mainTopics.size() * 15);
+                    for (int i = 0; i < mainTopics.size(); i++) {
+                        sb.append(mainTopics.get(i).getTitleText());
+                        if (i < mainTopics.size() - 1) {
+                            sb.append(" / "); //$NON-NLS-1$
+                        }
                     }
+                    desc = sb.toString();
                 }
             }
+            return desc;
         }
         return null;
     }
@@ -284,22 +277,5 @@ public class Uploader extends JobChangeAdapter {
             }
         }
     }
-
-//    public void onError() {
-//        clearTemp();
-//    }
-//
-//    public void onSuccess() {
-//        openMyMaps();
-//        clearTemp();
-//    }
-//
-//    public void onCancle() {
-//        clearTemp();
-//    }
-
-//    private void openMyMaps() {
-//        // TODO open 'My Maps' page
-//    }
 
 }

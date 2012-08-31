@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -65,6 +65,7 @@ import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerGroup;
 import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.gef.EditDomain;
+import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
@@ -146,17 +147,21 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         }
 
         public void run() {
-            EditDomain domain = getEditDomain();
-            if (domain != null) {
-                Request req = new Request(REQ_ADD_MARKER);
-                req.setParameter(MindMapUI.PARAM_MARKER_ID, marker.getId());
-                domain.handleRequest(req);
-                MindMapUI.getResourceManager().getRecentMarkerGroup()
-                        .addMarker(marker);
+            IViewer viewer = getCurrentViewer();
+            if (viewer != null) {
+                EditDomain domain = viewer.getEditDomain();
+                if (domain != null) {
+                    Request req = new Request(REQ_ADD_MARKER).setViewer(viewer)
+                            .setDomain(domain).setParameter(
+                                    MindMapUI.PARAM_MARKER_ID, marker.getId());
+                    domain.handleRequest(req);
+                    MindMapUI.getResourceManager().getRecentMarkerGroup()
+                            .addMarker(marker);
+                }
             }
         }
 
-        private EditDomain getEditDomain() {
+        private IViewer getCurrentViewer() {
             IWorkbenchPage page = getSite().getPage();
             if (page != null) {
                 IEditorPart editor = page.getActiveEditor();
@@ -164,7 +169,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
                     IGraphicalEditor ge = (IGraphicalEditor) editor;
                     IGraphicalEditorPage gp = ge.getActivePageInstance();
                     if (gp != null) {
-                        return gp.getEditDomain();
+                        return gp.getViewer();
                     }
                 }
             }

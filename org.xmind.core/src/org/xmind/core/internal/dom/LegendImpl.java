@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -74,6 +74,11 @@ public class LegendImpl extends Legend implements ICoreEventSource {
 
     public IWorkbook getOwnedWorkbook() {
         return ownedSheet.getOwnedWorkbook();
+    }
+
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(sheetElement)
+                || getImplementation() == null;
     }
 
     public Element getImplementation() {
@@ -298,8 +303,8 @@ public class LegendImpl extends Legend implements ICoreEventSource {
 
     protected void fireTargetValueChange(String type, Object target,
             Object oldValue, Object newValue) {
-        getCoreEventSupport().dispatchTargetValueChange(this, type,
-                target, oldValue, newValue);
+        getCoreEventSupport().dispatchTargetValueChange(this, type, target,
+                oldValue, newValue);
     }
 
     public ICoreEventSupport getCoreEventSupport() {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -67,15 +67,11 @@ public class BranchDecorator extends Decorator {
     public void decorate(IGraphicalPart part, IFigure figure) {
         if (figure instanceof BranchFigure) {
             BranchFigure branchFigure = (BranchFigure) figure;
-            boolean animating = false;
-            if (part instanceof IAnimatablePart) {
-                animating = ((IAnimatablePart) part).isFigureAnimating();
-            }
             if (part instanceof IBranchPart) {
                 IBranchPart branch = (IBranchPart) part;
-
                 branchFigure.setFolded(isBranchFolded(branch));
-
+                boolean animating = branch instanceof IAnimatablePart
+                        && ((IAnimatablePart) branch).isFigureAnimating();
                 IBranchPart parent = branch.getParentBranch();
                 if (parent != null) {
                     IFigure parentFigure = parent.getFigure();
@@ -91,10 +87,9 @@ public class BranchDecorator extends Decorator {
                         }
                     }
                 }
+                decorateBranchDecoration(part, getStyleSelector(part),
+                        branchFigure, animating);
             }
-
-            decorateBranchDecoration(part, getStyleSelector(part),
-                    branchFigure, animating);
         }
     }
 
@@ -143,11 +138,27 @@ public class BranchDecorator extends Decorator {
             BranchFigure branchFigure = (BranchFigure) figure;
             if (part instanceof IBranchPart) {
                 IBranchPart branch = (IBranchPart) part;
+                branchFigure.setFolded(isBranchFolded(branch));
                 boolean animating = branch instanceof IAnimatablePart
                         && ((IAnimatablePart) branch).isFigureAnimating();
+                IBranchPart parent = branch.getParentBranch();
+                if (parent != null) {
+                    IFigure parentFigure = parent.getFigure();
+                    if (parentFigure instanceof BranchFigure) {
+                        BranchFigure parentBranchFigure = (BranchFigure) parentFigure;
+                        branchFigure.setMinimized(parentBranchFigure.isFolded()
+                                || parentBranchFigure.isMinimized()
+                                || isUnusedSummaryBranch(branch));
+                        if (!animating) {
+                            branchFigure.setVisible(!parentBranchFigure
+                                    .isFolded()
+                                    && parentBranchFigure.isVisible());
+                        }
+                    }
+                }
                 IStyleSelector ss = getStyleSelector(part);
-                decorateConnections(branch, ss, branchFigure, branch
-                        .getConnections(), animating);
+                decorateConnections(branch, ss, branchFigure,
+                        branch.getConnections(), animating);
             }
         }
     }
@@ -167,12 +178,14 @@ public class BranchDecorator extends Decorator {
         connections.setSourceAnchor(figure, sourceAnchor);
 
         connections.setAlpha(figure, 0xff);
-        connections.setLineColor(figure, getColor(branch, ss, Styles.LineColor,
-                newConnectionId, Styles.DEF_TOPIC_LINE_COLOR));
-        connections.setLineStyle(figure, getLineStyle(branch, ss,
-                newConnectionId, SWT.LINE_SOLID));
-        connections.setLineWidth(figure, getInteger(branch, ss,
-                Styles.LineWidth, newConnectionId, 1));
+        connections.setLineColor(
+                figure,
+                getColor(branch, ss, Styles.LineColor, newConnectionId,
+                        Styles.DEF_TOPIC_LINE_COLOR));
+        connections.setLineStyle(figure,
+                getLineStyle(branch, ss, newConnectionId, SWT.LINE_SOLID));
+        connections.setLineWidth(figure,
+                getInteger(branch, ss, Styles.LineWidth, newConnectionId, 1));
 
         int sourceOrientation = PositionConstants.NONE;
         IStructure structure = branch.getBranchPolicy().getStructure(branch);
@@ -182,13 +195,13 @@ public class BranchDecorator extends Decorator {
         }
         connections.setSourceOrientation(figure, sourceOrientation);
 
-        connections.setSourceExpansion(figure, getSourceExpansion(branch, ss,
-                sourceOrientation, connections.getLineWidth(), connections
-                        .getId()));
+        int sourceExpansion = getSourceExpansion(branch, ss, sourceOrientation,
+                connections.getLineWidth(), connections.getId());
+        connections.setSourceExpansion(figure, sourceExpansion);
 
         connections.setTapered(figure, isBranchLineTapered(branch, ss));
-        connections.setCornerSize(figure, getInteger(branch, ss,
-                Styles.LineCorner, newConnectionId, 5));
+        connections.setCornerSize(figure,
+                getInteger(branch, ss, Styles.LineCorner, newConnectionId, 5));
 
         List<IBranchPart> subBranches = branch.getSubBranches();
         for (int i = 0; i < subBranches.size(); i++) {
@@ -245,13 +258,17 @@ public class BranchDecorator extends Decorator {
         }
         connection.setTargetOrientation(figure, targetOrientation);
         connection.setTargetExpansion(figure, 0);
-        connection.setLineColor(figure, getBranchConnectionColor(branch, ss,
-                subBranch, subBranchIndex, connections.getLineColor()));
+        connection.setLineColor(
+                figure,
+                getBranchConnectionColor(branch, ss, subBranch, subBranchIndex,
+                        connections.getLineColor()));
 
         if (!ignoreVisibility) {
-            connection.setVisible(figure, connection.getSourceAnchor() != null
-                    && connection.getTargetAnchor() != null
-                    && figure.isVisible() && !figure.isFolded());
+            connection.setVisible(
+                    figure,
+                    connection.getSourceAnchor() != null
+                            && connection.getTargetAnchor() != null
+                            && figure.isVisible() && !figure.isFolded());
         }
     }
 

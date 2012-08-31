@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -37,11 +37,12 @@ import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.ui.IEditorActionBarContributor;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorSite;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
@@ -52,6 +53,10 @@ import org.xmind.gef.command.ICommandStackListener;
 import org.xmind.gef.ui.actions.ActionRegistry;
 import org.xmind.gef.ui.actions.IActionRegistry;
 import org.xmind.gef.ui.actions.ICommandStackAction;
+import org.xmind.gef.util.EventListenerSupport;
+import org.xmind.gef.util.IEventDispatcher;
+import org.xmind.ui.tabfolder.DelegatedSelectionProvider;
+import org.xmind.ui.tabfolder.IDelegatedSelectionProvider;
 import org.xmind.ui.tabfolder.IPageClosedListener;
 
 /**
@@ -60,27 +65,17 @@ import org.xmind.ui.tabfolder.IPageClosedListener;
 public abstract class GraphicalEditor extends EditorPart implements
         IGraphicalEditor, ICommandStackListener {
 
-    protected class PageSelectionProvider implements ISelectionProvider {
+    protected class PageInputSelectionProvider implements ISelectionProvider {
 
-        private int selectedPage = -1;
-
-        private List<ISelectionChangedListener> listeners = new ArrayList<ISelectionChangedListener>();
-
-        public int getSelectedPage() {
-            return selectedPage;
-        }
-
-        public IGraphicalEditorPage getSelectedPageInstance() {
-            return getPage(selectedPage);
-        }
+        private EventListenerSupport listeners = new EventListenerSupport();
 
         public void addSelectionChangedListener(
                 ISelectionChangedListener listener) {
-            listeners.add(listener);
+            listeners.addListener(ISelectionChangedListener.class, listener);
         }
 
         public ISelection getSelection() {
-            IGraphicalEditorPage page = getSelectedPageInstance();
+            IGraphicalEditorPage page = getActivePageInstance();
             if (page != null) {
                 Object pageInput = page.getInput();
                 if (pageInput != null) {
@@ -92,7 +87,7 @@ public abstract class GraphicalEditor extends EditorPart implements
 
         public void removeSelectionChangedListener(
                 ISelectionChangedListener listener) {
-            listeners.remove(listener);
+            listeners.removeListener(ISelectionChangedListener.class, listener);
         }
 
         public void setSelection(ISelection selection) {
@@ -105,41 +100,54 @@ public abstract class GraphicalEditor extends EditorPart implements
             }
         }
 
-        public void setSelectedPage(int index) {
-            if (index == this.selectedPage)
-                return;
-
-            this.selectedPage = index;
-            firePageChanged();
-        }
-
         protected void firePageChanged() {
             fireSelectionChanged(new SelectionChangedEvent(this, getSelection()));
         }
 
         private void fireSelectionChanged(final SelectionChangedEvent event) {
-            for (final Object o : listeners.toArray()) {
-                SafeRunner.run(new SafeRunnable() {
-                    public void run() throws Exception {
-                        ((ISelectionChangedListener) o).selectionChanged(event);
-                    }
-                });
-            }
+            listeners.fireEvent(ISelectionChangedListener.class,
+                    new IEventDispatcher() {
+                        public void dispatch(Object listener) {
+                            ((ISelectionChangedListener) listener)
+                                    .selectionChanged(event);
+                        }
+                    });
         }
 
     }
 
-    private IPageContainerPresentation containerPresentation = null;
-
-    private IPageChangedListener presentationHooker = null;
+    protected class MultiPageSelectionProvider extends
+            DelegatedSelectionProvider {
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.xmind.ui.tabfolder.DelegatedSelectionProvider#setSelection(org
+         * .eclipse.jface.viewers.ISelection)
+         */
+        @Override
+        public void setSelection(ISelection selection) {
+            Object input = findOwnedInput(selection);
+            if (input != null) {
+                ensurePageVisible(input);
+            }
+            super.setSelection(selection);
+        }
+    }
 
     private Composite container = null;
 
+    private IPageContainerPresentation containerPresentation = null;
+
+    private IPageChangedListener presentationHooker = new IPageChangedListener() {
+        public void pageChanged(PageChangedEvent event) {
+            handlePageChange(getActivePage());
+        }
+    };
+
     private List<IGraphicalEditorPage> pages = new ArrayList<IGraphicalEditorPage>();
 
-    private List<IPageChangedListener> pageChangedListeners = null;
-
-    private List<IPageClosedListener> pageClosedListeners = null;
+    private EventListenerSupport listeners = new EventListenerSupport();
 
     private ICommandStack commandStack = null;
 
@@ -151,39 +159,59 @@ public abstract class GraphicalEditor extends EditorPart implements
 
     private int activePageIndex = -1;
 
-    private PageSelectionProvider pageSelectionProvider = null;
+    private PageInputSelectionProvider pageInputSelectionProvider = null;
 
     private MenuManager pagePopupMenu = null;
+
+    private IGlobalActionHandlerService globalActionHandlerService = null;
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.ui.part.EditorPart#init(org.eclipse.ui.IEditorSite,
+     * org.eclipse.ui.IEditorInput)
+     */
+    @Override
+    public void init(IEditorSite site, IEditorInput input)
+            throws PartInitException {
+        setSite(site);
+        setInput(input);
+        site.setSelectionProvider(new MultiPageSelectionProvider());
+        setCommandStack(createCommandStack());
+    }
+
+    protected Object findOwnedInput(ISelection selection) {
+        return null;
+    }
 
     protected Composite getContainer() {
         return container;
     }
+
+//  protected void init() {
+//  getSite().setSelectionProvider(createSelectionProvider());
+//  initCommandStack();
+//  installModelListener();
+//  initEditorActions(getActionRegistry());
+//}
 
     protected IPageContainerPresentation getContainerPresentation() {
         return containerPresentation;
     }
 
     protected void hookContainerPresentation() {
-        if (presentationHooker == null) {
-            presentationHooker = new IPageChangedListener() {
-                public void pageChanged(PageChangedEvent event) {
-                    handlePageChange(getActivePage());
-                }
-            };
-        }
         getContainerPresentation().addPageChangedListener(presentationHooker);
     }
 
     public void createPartControl(Composite parent) {
-        init();
         if (containerPresentation == null) {
             containerPresentation = createContainerPresentation();
             hookContainerPresentation();
         }
-        Composite pageContainer = createPageContainer(parent);
-        this.container = containerPresentation.createContainer(pageContainer);
+        Composite containerParent = createContainerParent(parent);
+        this.container = containerPresentation.createContainer(containerParent);
         createEditorContents();
-        createInitialPages();
+//        createInitialPages();
     }
 
     protected void createEditorContents() {
@@ -191,12 +219,14 @@ public abstract class GraphicalEditor extends EditorPart implements
         createPageContextMenu(getContainer());
     }
 
-    protected void createInitialPages() {
-        createPages();
-        if (getActivePage() == -1 && getPageCount() > 0) {
-            setActivePage(0);
-        }
-    }
+//    protected abstract void createPages();
+
+//    protected void createInitialPages() {
+//        createPages();
+//        if (getPageCount() > 0) {
+//            setActivePage(0);
+//        }
+//    }
 
     protected IPageContainerPresentation createContainerPresentation() {
         return new TabFolderContainerPresentation();
@@ -215,7 +245,7 @@ public abstract class GraphicalEditor extends EditorPart implements
      * @return the parent for this editor's container. Must not be
      *         <code>null</code>.
      */
-    protected Composite createPageContainer(Composite parent) {
+    protected Composite createContainerParent(Composite parent) {
         return parent;
     }
 
@@ -225,63 +255,73 @@ public abstract class GraphicalEditor extends EditorPart implements
         pages.add(page);
     }
 
-    protected EditDomain createEditDomain(IGraphicalEditorPage page) {
-        return new EditDomain();
-    }
-
     private void createPageControl(IGraphicalEditorPage page) {
         page.createPageControl(getContainer());
         Assert.isNotNull(page.getControl());
         Assert.isNotNull(page.getViewer());
         Assert.isNotNull(page.getViewer().getControl());
-        addPage(page.getControl());
+        addPageControl(page.getControl());
         //createContentPopupMenuForPage(page, page.getViewer().getControl());
+    }
+
+    private void addPageControl(Control pageControl) {
+        int index = containerPresentation.getPageCount(getContainer());
+        containerPresentation.addPage(getContainer(), index, pageControl);
+    }
+
+    protected EditDomain createEditDomain(IGraphicalEditorPage page) {
+        return new EditDomain();
+    }
+
+    protected void disposeEditDomain(IGraphicalEditorPage page,
+            EditDomain editDomain) {
+        editDomain.dispose();
     }
 
     protected void createPageContextMenu(final Composite container) {
         if (pagePopupMenu == null) {
             pagePopupMenu = createPagePopupMenu();
             String menuId = getSite().getId() + ".page"; //$NON-NLS-1$
-            initPagePopupMenu(pagePopupMenu);
+            if (isPagePopupMenuDynamic()) {
+                pagePopupMenu.setRemoveAllWhenShown(true);
+                pagePopupMenu.addMenuListener(new IMenuListener() {
+                    public void menuAboutToShow(IMenuManager manager) {
+                        contributeToPagePopupMenu(manager);
+                    }
+                });
+            } else {
+                contributeToPagePopupMenu(pagePopupMenu);
+            }
             registerPagePopupMenu(menuId, pagePopupMenu);
         }
         Menu menu = pagePopupMenu.getMenu();
         if (menu == null || menu.isDisposed()) {
             menu = pagePopupMenu.createContextMenu(container);
-            container.addListener(SWT.MouseDown, new Listener() {
-                public void handleEvent(Event event) {
-                    handleMouseDownOnContainer(container, event.x, event.y);
-                }
-            });
+//            container.addListener(SWT.MouseDown, new Listener() {
+//                public void handleEvent(Event event) {
+//                    handleMouseDownOnContainer(container, event.x, event.y);
+//                }
+//            });
         }
         container.setMenu(menu);
     }
 
-    protected void handleMouseDownOnContainer(Composite container, int x, int y) {
-        if (containerPresentation == null || pageSelectionProvider == null)
-            return;
-
-        int selectedPage = containerPresentation.findPage(container, x, y);
-        if (pageSelectionProvider != null) {
-            pageSelectionProvider.setSelectedPage(selectedPage);
-        }
-    }
+//    protected void handleMouseDownOnContainer(Composite container, int x, int y) {
+//        if (containerPresentation == null || pageInputSelectionProvider == null)
+//            return;
+//
+//        int selectedPage = containerPresentation.findPage(container, x, y);
+//        if (pageInputSelectionProvider != null) {
+//            if (selectedPage != this.activePageIndex) {
+//                pageInputSelectionProvider.firePageChanged();
+//            }
+////            pageSelectionProvider.setSelectedPage(selectedPage);
+//        }
+//    }
 
     protected void registerPagePopupMenu(String menuId, MenuManager menu) {
-        getSite().registerContextMenu(menuId, menu, getPageSelectionProvider());
-    }
-
-    protected void initPagePopupMenu(MenuManager menu) {
-        if (isPagePopupMenuDynamic()) {
-            menu.setRemoveAllWhenShown(true);
-            menu.addMenuListener(new IMenuListener() {
-                public void menuAboutToShow(IMenuManager manager) {
-                    contributeToPagePopupMenu(manager);
-                }
-            });
-        } else {
-            contributeToPagePopupMenu(menu);
-        }
+        getSite().registerContextMenu(menuId, menu,
+                getPageInputSelectionProvider());
     }
 
     protected void contributeToPagePopupMenu(IMenuManager menu) {
@@ -301,11 +341,6 @@ public abstract class GraphicalEditor extends EditorPart implements
         return new MenuManager();
     }
 
-    protected void addPage(Control pageControl) {
-        int index = containerPresentation.getPageCount(getContainer());
-        containerPresentation.addPage(getContainer(), index, pageControl);
-    }
-
     public void removePage(IGraphicalEditorPage page) {
         removePage(findPage(page));
     }
@@ -315,10 +350,10 @@ public abstract class GraphicalEditor extends EditorPart implements
         boolean wasActivePage = pageIndex == getActivePage();
         IGraphicalEditorPage page = getPage(pageIndex);
         containerPresentation.disposePage(getContainer(), pageIndex);
-        pages.remove(page);
         if (page != null) {
             page.dispose();
         }
+        pages.remove(page);
         if (wasActivePage) {
             if (pageIndex == getPageCount())
                 pageIndex--;
@@ -353,35 +388,28 @@ public abstract class GraphicalEditor extends EditorPart implements
         return getCommandStack() != null && getCommandStack().isDirty();
     }
 
-    protected void init() {
-        getSite().setSelectionProvider(createSelectionProvider());
-        initCommandStack();
-        installModelListener();
-        initEditorActions(getActionRegistry());
-    }
+//    /**
+//     * @return
+//     */
+//    protected ISelectionProvider createSelectionProvider() {
+//        return new DelegatedSelectionProvider();
+//    }
+//
+//    protected void initCommandStack() {
+//        setCommandStack(createCommandStack());
+//    }
 
-    /**
-     * @return
-     */
-    protected ISelectionProvider createSelectionProvider() {
-        return new MultiGraphicalPageSelectionProvider();
-    }
-
-    protected void initCommandStack() {
-        setCommandStack(createCommandStack());
-    }
-
-    protected void initEditorActions(IActionRegistry actionRegistry) {
-    }
-
-    protected abstract void createPages();
+//    protected void initEditorActions(IActionRegistry actionRegistry) {
+//    }
+//
+//    protected abstract void createPages();
 
     /**
      * Creates the mini bar on the part control.
      * <p>
      * <b>IMPORTANT:</b> This mini bar contribution relies on the fact that the
      * page container is a CTabFolder, so it may do nothing if the
-     * implementation of this editor changes.
+     * implementation changes.
      * </p>
      * 
      * @see #getContainer()
@@ -443,6 +471,13 @@ public abstract class GraphicalEditor extends EditorPart implements
 
     public void setMiniBarContributor(IMiniBarContributor miniBarContributor) {
         this.miniBarContributor = miniBarContributor;
+    }
+
+    /**
+     * @return commandStack
+     */
+    public ICommandStack getCommandStack() {
+        return commandStack;
     }
 
     protected ICommandStack createCommandStack() {
@@ -509,20 +544,35 @@ public abstract class GraphicalEditor extends EditorPart implements
             return getActionRegistry();
         if (adapter == IMiniBarContributor.class)
             return getMiniBarContributor();
+        if (adapter == IGlobalActionHandlerService.class) {
+            if (globalActionHandlerService == null) {
+                globalActionHandlerService = new GlobalActionHandlerService(
+                        this);
+            }
+            return globalActionHandlerService;
+        }
+        if (adapter == IGlobalActionHandlerUpdater.class) {
+            IEditorActionBarContributor contributor = getEditorSite()
+                    .getActionBarContributor();
+            if (contributor instanceof IGlobalActionHandlerUpdater) {
+                return contributor;
+            }
+            return null;
+        }
         return super.getAdapter(adapter);
     }
 
-    /**
-     * 
-     */
-    protected void installModelListener() {
-    }
-
-    /**
-     * 
-     */
-    protected void uninstallModelListener() {
-    }
+//    /**
+//     * 
+//     */
+//    protected void installModelListener() {
+//    }
+//
+//    /**
+//     * 
+//     */
+//    protected void uninstallModelListener() {
+//    }
 
     public Object getSelectedPage() {
         return getActivePageInstance();
@@ -533,56 +583,30 @@ public abstract class GraphicalEditor extends EditorPart implements
     }
 
     public void addPageChangedListener(IPageChangedListener listener) {
-        if (pageChangedListeners == null)
-            pageChangedListeners = new ArrayList<IPageChangedListener>();
-        pageChangedListeners.add(listener);
+        listeners.addListener(IPageChangedListener.class, listener);
     }
 
     public void removePageChangedListener(IPageChangedListener listener) {
-        if (pageChangedListeners == null)
-            return;
-        pageChangedListeners.remove(listener);
-        if (pageChangedListeners.isEmpty())
-            pageChangedListeners = null;
+        listeners.removeListener(IPageChangedListener.class, listener);
     }
 
-    protected void firePageChanged(Object newPage) {
-        if (pageChangedListeners == null)
-            return;
-        final PageChangedEvent event = new PageChangedEvent(this, newPage);
-        for (final Object l : pageChangedListeners.toArray()) {
-            SafeRunner.run(new SafeRunnable() {
-                public void run() throws Exception {
-                    ((IPageChangedListener) l).pageChanged(event);
+    protected void firePageChanged(Object page) {
+        final PageChangedEvent event = new PageChangedEvent(this, page);
+        listeners.fireEvent(IPageChangedListener.class, new IEventDispatcher() {
+            public void dispatch(Object listener) {
+                ((IPageChangedListener) listener).pageChanged(event);
+            }
+        });
+    }
+
+    protected void firePageClosed(final Object page) {
+        listeners.fireEvent(IPageChangedListener.class, new IEventDispatcher() {
+            public void dispatch(Object listener) {
+                if (listener instanceof IPageClosedListener) {
+                    ((IPageClosedListener) listener).pageClosed(page);
                 }
-            });
-        }
-    }
-
-    public void addPageClosedListener(IPageClosedListener listener) {
-        if (pageClosedListeners == null)
-            pageClosedListeners = new ArrayList<IPageClosedListener>();
-        pageClosedListeners.add(listener);
-    }
-
-    public void removePageClosedListener(IPageClosedListener listener) {
-        if (pageClosedListeners == null)
-            return;
-        pageClosedListeners.remove(listener);
-        if (pageClosedListeners.isEmpty())
-            pageClosedListeners = null;
-    }
-
-    protected void firePageClosed(final Object pageInstance) {
-        if (pageClosedListeners == null)
-            return;
-        for (final Object listener : pageClosedListeners.toArray()) {
-            SafeRunner.run(new SafeRunnable() {
-                public void run() throws Exception {
-                    ((IPageClosedListener) listener).pageClosed(pageInstance);
-                }
-            });
-        }
+            }
+        });
     }
 
     protected void fireDirty() {
@@ -615,12 +639,24 @@ public abstract class GraphicalEditor extends EditorPart implements
         }
 
         ISelectionProvider selectionProvider = getSite().getSelectionProvider();
-        if (selectionProvider instanceof MultiGraphicalPageSelectionProvider) {
-            ((MultiGraphicalPageSelectionProvider) selectionProvider)
-                    .setActivePage(activePage);
+//        if (selectionProvider instanceof MultiGraphicalPageSelectionProvider) {
+//            ((MultiGraphicalPageSelectionProvider) selectionProvider)
+//                    .setActivePage(activePage);
+//        }
+        if (selectionProvider instanceof IDelegatedSelectionProvider) {
+            ((IDelegatedSelectionProvider) selectionProvider)
+                    .setDelegate(activePage == null ? null : activePage
+                            .getSelectionProvider());
         }
         if (getMiniBarContributor() != null) {
             getMiniBarContributor().setActivePage(activePage);
+        }
+        if (pageInputSelectionProvider != null) {
+            Object pageInput = activePage == null ? null : activePage
+                    .getInput();
+            pageInputSelectionProvider
+                    .setSelection(pageInput == null ? StructuredSelection.EMPTY
+                            : new StructuredSelection(pageInput));
         }
         firePageChanged(activePage);
     }
@@ -647,13 +683,14 @@ public abstract class GraphicalEditor extends EditorPart implements
     }
 
     public void movePageTo(int oldIndex, int newIndex) {
+        IGraphicalEditorPage activePage = getActivePageInstance();
         boolean wasActive = oldIndex == getActivePage();
         pages.add(newIndex, pages.remove(oldIndex));
         for (int i = 0; i < pages.size(); i++) {
             IGraphicalEditorPage page = pages.get(i);
             boolean wasFocused = page.isFocused();
-            containerPresentation.setPageControl(getContainer(), i, page
-                    .getControl());
+            containerPresentation.setPageControl(getContainer(), i,
+                    page.getControl());
             if (wasFocused)
                 page.setFocus();
             page.updatePageTitle();
@@ -661,6 +698,10 @@ public abstract class GraphicalEditor extends EditorPart implements
         if (wasActive) {
             pages.get(newIndex).getControl().setVisible(true);
             setActivePage(newIndex);
+        }
+        if (activePage != null) {
+            containerPresentation.setActivePage(getContainer(),
+                    pages.indexOf(activePage));
         }
     }
 
@@ -693,18 +734,11 @@ public abstract class GraphicalEditor extends EditorPart implements
         return pages.toArray(new IGraphicalEditorPage[pages.size()]);
     }
 
-    protected ISelectionProvider getPageSelectionProvider() {
-        if (pageSelectionProvider == null) {
-            pageSelectionProvider = new PageSelectionProvider();
+    protected ISelectionProvider getPageInputSelectionProvider() {
+        if (pageInputSelectionProvider == null) {
+            pageInputSelectionProvider = new PageInputSelectionProvider();
         }
-        return pageSelectionProvider;
-    }
-
-    /**
-     * @return commandStack
-     */
-    public ICommandStack getCommandStack() {
-        return commandStack;
+        return pageInputSelectionProvider;
     }
 
     protected IActionRegistry getActionRegistry() {
@@ -730,7 +764,7 @@ public abstract class GraphicalEditor extends EditorPart implements
             pagePopupMenu = null;
         }
 
-        uninstallModelListener();
+//        uninstallModelListener();
 
         if (commandStack != null && !commandStack.isDisposed()) {
             disposeCommandStack(commandStack);
@@ -748,10 +782,15 @@ public abstract class GraphicalEditor extends EditorPart implements
         if (pages.isEmpty())
             return;
 
-        for (final Object page : pages.toArray()) {
+        for (final Object o : pages.toArray()) {
             SafeRunner.run(new SafeRunnable() {
                 public void run() throws Exception {
-                    ((IGraphicalEditorPage) page).dispose();
+                    IGraphicalEditorPage page = (IGraphicalEditorPage) o;
+                    page.dispose();
+                    EditDomain editDomain = page.getEditDomain();
+                    if (editDomain != null) {
+                        disposeEditDomain(page, editDomain);
+                    }
                 }
             });
         }
@@ -802,4 +841,5 @@ public abstract class GraphicalEditor extends EditorPart implements
             csActions = new ArrayList<ICommandStackAction>();
         csActions.add(action);
     }
+
 }

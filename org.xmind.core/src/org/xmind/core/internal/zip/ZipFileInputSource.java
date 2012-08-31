@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -109,11 +109,9 @@ public class ZipFileInputSource implements IInputSource {
      * @see org.xmind.core.io.IInputSource#getEntrySize(java.lang.String)
      */
     public long getEntrySize(String entryName) {
-        if (zipFile != null) {
-            ZipEntry entry = zipFile.getEntry(entryName);
-            if (entry != null) {
-                return entry.getSize();
-            }
+        ZipEntry entry = zipFile.getEntry(entryName);
+        if (entry != null) {
+            return entry.getSize();
         }
         return -1;
     }
@@ -124,13 +122,36 @@ public class ZipFileInputSource implements IInputSource {
      * @see org.xmind.core.io.IInputSource#getEntryTime(java.lang.String)
      */
     public long getEntryTime(String entryName) {
-        if (zipFile != null) {
-            ZipEntry entry = zipFile.getEntry(entryName);
-            if (entry != null) {
-                return entry.getTime();
-            }
+        ZipEntry entry = zipFile.getEntry(entryName);
+        if (entry != null) {
+            return entry.getTime();
         }
         return -1;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        if (obj == null || !(obj instanceof ZipFileInputSource))
+            return false;
+        ZipFileInputSource that = (ZipFileInputSource) obj;
+        return this.zipFile.equals(that.zipFile);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        return this.zipFile.hashCode();
     }
 
 }

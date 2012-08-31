@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -21,21 +21,11 @@ import org.eclipse.jface.util.Util;
  */
 public class GEF {
 
-//    public static final boolean IS_CARBON;
-//    public static final boolean IS_WIN32;
-//    public static final boolean IS_GTK;
-//
-//    static {
-//        String platform = SWT.getPlatform();
-//        IS_CARBON = "carbon".equals(platform) || "cocoa".equals(platform); //$NON-NLS-1$ //$NON-NLS-2$
-//        IS_WIN32 = "win32".equals(platform); //$NON-NLS-1$
-//        IS_GTK = "gtk".equals(platform); //$NON-NLS-1$
-//    }
-
     /*
      * Request Types:
      */
     public static final String REQ_DEBUG = "debug"; //$NON-NLS-1$
+
     public static final String REQ_SELECT = "select"; //$NON-NLS-1$
     public static final String REQ_SELECT_NONE = "select none"; //$NON-NLS-1$
     public static final String REQ_SELECT_SINGLE = "select single"; //$NON-NLS-1$
@@ -59,8 +49,7 @@ public class GEF {
     public static final String REQ_MODIFY = "modify"; //$NON-NLS-1$
     public static final String REQ_RESIZE = "resize"; //$NON-NLS-1$
     public static final String REQ_EDIT = "edit"; //$NON-NLS-1$
-
-    public static final String REQ_EDIT_LABEL = "edit label"; //$NON-NLS-1$
+    public static final String REQ_OPEN = "open"; //$NON-NLS-1$
 
     public static final String REQ_CANCEL = "cancel"; //$NON-NLS-1$
     public static final String REQ_FINISH = "finish"; //$NON-NLS-1$
@@ -69,7 +58,6 @@ public class GEF {
     public static final String REQ_DELETE = "delete"; //$NON-NLS-1$
     public static final String REQ_MOVETO = "move to"; //$NON-NLS-1$
     public static final String REQ_COPYTO = "copy to"; //$NON-NLS-1$
-    //public static final String REQ_INDEX = "index"; //$NON-NLS-1$
 
     public static final String REQ_MOVE_UP = "move up"; //$NON-NLS-1$
     public static final String REQ_MOVE_DOWN = "move down"; //$NON-NLS-1$
@@ -101,7 +89,6 @@ public class GEF {
     public static final String REQ_HIDE = "hide"; //$NON-NLS-1$
     public static final String REQ_SHOW_ALL = "show all"; //$NON-NLS-1$
     public static final String REQ_HIDE_ALL = "hide all"; //$NON-NLS-1$
-    //public static final String REQ_SHOW_ALL_IMMEDIATELY = "show all immediately"; //Experimental! //$NON-NLS-1$
     public static final String REQ_SHOW_OTHER = "show other"; //$NON-NLS-1$
     public static final String REQ_SHOW_ONLY = "show only"; //$NON-NLS-1$
 
@@ -109,6 +96,8 @@ public class GEF {
     public static final String REQ_SORT = "sort"; //$NON-NLS-1$
 
     public static final String REQ_DROP = "drop"; //$NON-NLS-1$
+
+    public static final String REQ_CONNECT = "connect"; //$NON-NLS-1$
 
     /*
      * Tool Status:
@@ -125,10 +114,6 @@ public class GEF {
     public static final int ST_HIDE_CMENU = 1 << 9;
     public static final int ST_FORCE_CMENU = 1 << 10;
     public static final int ST_NO_DRAGGING = 1 << 11;
-
-    /**
-     */
-    //public static final int ST_NO_FOCUS = 1 << 12;
 
     public static final int ST_MODIFIER_MASK = ST_ALT_PRESSED
             | ST_CONTROL_PRESSED | ST_SHIFT_PRESSED;
@@ -160,6 +145,7 @@ public class GEF {
     public static final String ROLE_SCALABLE = "scalable role"; //$NON-NLS-1$
     public static final String ROLE_EDITABLE = "editable role"; //$NON-NLS-1$
     public static final String ROLE_FILTERABLE = "filterable role"; //$NON-NLS-1$
+    public static final String ROLE_CONNECTABLE = "connectable role"; //$NON-NLS-1$
     public static final String ROLE_DROP_TARGET = "drop target role"; //$NON-NLS-1$
 
     public static final String ROLE_SORTABLE = "sortable role"; //$NON-NLS-1$
@@ -214,7 +200,7 @@ public class GEF {
     public static final Object LAYER_PRESENTATION = "presentation layer"; //$NON-NLS-1$
     public static final Object LAYER_FEEDBACK = "feedback layer"; //$NON-NLS-1$
     public static final Object LAYER_SHADOW = "shadow layer"; //$NON-NLS-1$
-    public static final Object LAYER_TIMER = "timer layer"; //$NON-NLS-1$
+    public static final Object LAYER_HANDLE = "handle layer"; //$NON-NLS-1$
 
     /*
      * Viewer property
@@ -225,19 +211,16 @@ public class GEF {
     public static final int SEL_MULTI = 1 << 2;
     public static final int SEL_DEFAULT = SEL_EMPTY | SEL_SINGLE | SEL_MULTI;
 
-//    /*
-//     * Selection Types:
-//     */
-//    public static final int SEL_NONE = 1;
-//    public static final int SEL_UNKNOWN = 2;
-//    public static final int SEL_TEXT = 3;
-//    /*
-//     * Navigation Directions:
-//     */
-//    public static final int NAVI_UP = 0;
-//    public static final int NAVI_DOWN = 1;
-//    public static final int NAVI_LEFT = 2;
-//    public static final int NAVI_RIGHT = 3;
+    /**
+     * Request parameter: the source part from which the request is sent,
+     * typically used by a dragging tool to request the target part to show
+     * feedback or handle connection command.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>a {@link org.xmind.gef.part.IPart}</dd>
+     * </dl>
+     */
+    public static final String PARAM_SOURCE = "source"; //$NON-NLS-1$
 
     /**
      * Request parameter: the size of a size request.
@@ -274,15 +257,6 @@ public class GEF {
      * </dl>
      */
     public static final String PARAM_POSITION_RELATIVE = "positionRelative"; //$NON-NLS-1$
-
-//    /**
-//     * Request parameter: the starting position of an area request.
-//     * <dl>
-//     * <dt>Values:</dt>
-//     * <dd>a {@link org.eclipse.draw2d.geometry.Point}</dd>
-//     * </dl>
-//     */
-//    public static final String PARAM_START_POSITION = "startingPosition"; //$NON-NLS-1$
 
     /**
      * Request parameter: the text selection.
@@ -405,17 +379,20 @@ public class GEF {
      */
     public static final String RESULT_NAVIGATION = "navigationResult"; //$NON-NLS-1$
 
-//    /*
-//     * Anchor Identifiers:
-//     */
-//    public static final String ANC_SOURCE = "anchor.source"; //$NON-NLS-1$
-//    public static final String ANC_TARGET = "anchor.target"; //$NON-NLS-1$
+    /**
+     * Result key of the navigation request to retrieve the part to be focused.
+     * 
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>an <code>{@link org.xmind.gef.part.IPart}</code></dd>
+     * </dl>
+     */
+    public static final String RESULT_NEW_FOCUS = "newFocus"; //$NON-NLS-1$
 
     /*
      * Graphics Hints:
      */
-    public static final boolean IS_PLATFORM_SUPPORT_GRADIENT = true;//!IS_CARBON;
-//    public static final boolean IS_PLATFORM_SUPPORT_TEXT_PATH = IS_WIN32;
+    public static final boolean IS_PLATFORM_SUPPORT_GRADIENT = true;
 
     private static Boolean textPathSupported = null;
 
@@ -425,22 +402,6 @@ public class GEF {
         }
         return textPathSupported.booleanValue();
     }
-
-//    /*
-//     * Figure event type:
-//     */
-//    public static final String FIG_VISIBLE = "FIG_VISIBLE"; //$NON-NLS-1$
-//    public static final String FIG_ENABLED = "FIG_ENABLED"; //$NON-NLS-1$
-
-//    /*
-//     * Background Patterns:
-//     */
-//    public static final int BACKGROUND_TRANSPARENT = 0;
-//    public static final int BACKGROUND_TILE = 1;
-//    public static final int BACKGROUND_CENTER = 2;
-//    public static final int BACKGROUND_EXTEND = 3;
-//    public static final int BACKGROUND_COLOR = 4;
-//    public static final int BACKGROUND_TEXTURE = 5;
 
     private GEF() {
     }

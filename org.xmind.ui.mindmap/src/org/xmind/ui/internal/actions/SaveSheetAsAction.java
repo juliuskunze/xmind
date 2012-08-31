@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -26,6 +26,8 @@ import org.xmind.core.ICloneData;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.event.ICoreEventListener;
+import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.editor.MME;
@@ -67,8 +69,9 @@ public class SaveSheetAsAction extends Action {
         ICloneData clone = newWorkbook.clone(Arrays.asList(sheet));
         ISheet newSheet = (ISheet) clone.get(sheet);
         initSheet(newSheet);
-        ITopic newCentralTopic = newWorkbook.findTopic((String) clone
-                .get(mindmap.getCentralTopic().getId()));
+        ITopic newCentralTopic = newWorkbook.findTopic(clone.getString(
+                ICloneData.WORKBOOK_COMPONENTS, mindmap.getCentralTopic()
+                        .getId()));
         if (newCentralTopic == null)
             //TODO should we log this?
             return;
@@ -80,10 +83,17 @@ public class SaveSheetAsAction extends Action {
         SafeRunner.run(new SafeRunnable() {
             public void run() throws Exception {
                 IEditorPart newEditor = page.getParentEditor().getSite()
-                        .getPage().openEditor(
-                                MME.createLoadedEditorInput(newWorkbook),
-                                //new WorkbookEditorInput(newWorkbook, null, true),
+                        .getPage()
+                        .openEditor(MME.createLoadedEditorInput(newWorkbook),
+                        //new WorkbookEditorInput(newWorkbook, null, true),
                                 MindMapUI.MINDMAP_EDITOR_ID, true);
+                // Forcely make editor saveable:
+                if (newWorkbook instanceof ICoreEventSource2) {
+                    ((ICoreEventSource2) newWorkbook)
+                            .registerOnceCoreEventListener(
+                                    Core.WorkbookPreSaveOnce,
+                                    ICoreEventListener.NULL);
+                }
                 if (newEditor != null && newEditor instanceof ISaveablePart) {
                     ((ISaveablePart) newEditor).doSaveAs();
                 }

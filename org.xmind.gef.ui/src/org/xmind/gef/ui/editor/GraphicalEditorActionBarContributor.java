@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -30,13 +30,15 @@ import org.xmind.gef.ui.actions.ActionRegistry;
 import org.xmind.gef.ui.actions.IActionRegistry;
 
 public abstract class GraphicalEditorActionBarContributor extends
-        EditorActionBarContributor {
+        EditorActionBarContributor implements IGlobalActionHandlerUpdater {
 
     private IActionRegistry actionRegistry = new ActionRegistry();
 
     private List<RetargetAction> retargetActions = new ArrayList<RetargetAction>();
 
     private List<String> globalActionIds = new ArrayList<String>();
+
+    private IEditorPart activeEditor = null;
 
     public void init(IActionBars bars) {
         makeActions();
@@ -68,25 +70,26 @@ public abstract class GraphicalEditorActionBarContributor extends
     }
 
     public void setActiveEditor(IEditorPart targetEditor) {
+        this.activeEditor = targetEditor;
         IGraphicalEditorPage activePage = null;
         if (targetEditor instanceof IGraphicalEditor) {
             activePage = ((IGraphicalEditor) targetEditor)
                     .getActivePageInstance();
         }
         activePageChanged(activePage);
-        updateActionBars(targetEditor, activePage);
+        updateGlobalActions(getActionBars(), targetEditor, activePage);
     }
 
-    private void updateActionBars(IEditorPart editor, IGraphicalEditorPage page) {
+    private void updateGlobalActions(IActionBars actionBars,
+            IEditorPart editor, IGraphicalEditorPage page) {
         IActionRegistry editorActions = getActionRegistry(editor);
         IActionRegistry pageActions = getActionRegistry(page);
 
-        IActionBars bars = getActionBars();
         for (String actionId : globalActionIds) {
             IAction handler = findHandler(actionId, pageActions, editorActions);
-            bars.setGlobalActionHandler(actionId, handler);
+            actionBars.setGlobalActionHandler(actionId, handler);
         }
-        bars.updateActionBars();
+        actionBars.updateActionBars();
     }
 
     private static IActionRegistry getActionRegistry(IAdaptable adaptable) {
@@ -116,7 +119,7 @@ public abstract class GraphicalEditorActionBarContributor extends
     public void setActivePage(IGraphicalEditorPage page) {
         activePageChanged(page);
         IEditorPart editor = page == null ? null : page.getParentEditor();
-        updateActionBars(editor, page);
+        updateGlobalActions(getActionBars(), editor, page);
     }
 
     protected abstract void activePageChanged(IGraphicalEditorPage page);
@@ -160,5 +163,20 @@ public abstract class GraphicalEditorActionBarContributor extends
             actionRegistry = null;
         }
         super.dispose();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.ui.editor.IActionBarsUpdater#updateActionBars(org.eclipse
+     * .ui.IActionBars)
+     */
+    public void updateGlobalActionHandlers(IActionBars actionBars) {
+        if (activeEditor != null && activeEditor instanceof IGraphicalEditor) {
+            IGraphicalEditorPage page = ((IGraphicalEditor) activeEditor)
+                    .getActivePageInstance();
+            updateGlobalActions(actionBars, activeEditor, page);
+        }
     }
 }

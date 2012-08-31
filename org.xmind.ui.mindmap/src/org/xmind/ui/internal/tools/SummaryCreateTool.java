@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -27,14 +27,18 @@ public class SummaryCreateTool extends TopicAreaSelectTool {
     public void finish() {
         super.finish();
         if (request != null) {
-            internalHandleRequest(request);
+            getDomain().handleRequest(request);
             request = null;
         }
     }
 
     protected void applySelection() {
         super.applySelection();
-        request = createRequest();
+        if (getMergedSelection().isEmpty()) {
+            request = null;
+        } else {
+            request = createRequest();
+        }
     }
 
     protected Request createRequest() {

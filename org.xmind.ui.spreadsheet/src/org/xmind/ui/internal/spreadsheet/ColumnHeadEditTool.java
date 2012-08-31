@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -89,7 +89,8 @@ public class ColumnHeadEditTool extends MindMapEditToolBase {
             return null;
 
         if (isColumnEmpty()) {
-            Request request = new Request(MindMapUI.REQ_CREATE_CHILD);
+            Request request = new Request(MindMapUI.REQ_CREATE_CHILD)
+                    .setViewer(getTargetViewer());
             request.setParameter(MindMapUI.PARAM_PROPERTY_PREFIX + Core.Labels,
                     document.get());
             for (Cell cell : column.getCells()) {

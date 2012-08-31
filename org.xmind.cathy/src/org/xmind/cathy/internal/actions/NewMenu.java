@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -38,10 +38,18 @@ import org.xmind.ui.internal.actions.NewFromMoreTemplateAction;
 import org.xmind.ui.internal.actions.NewFromTemplateFileAction;
 import org.xmind.ui.internal.actions.NewFromTemplateURLAction;
 import org.xmind.ui.internal.actions.NewWorkbookAction;
+import org.xmind.ui.internal.wizards.NewFromTemplateWizard;
+import org.xmind.ui.internal.wizards.NewWorkbookWizard;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.ResourceFinder;
 
+/**
+ * 
+ * @author frankshaka
+ * @deprecated Use {@link NewFromTemplateWizard} and {@link NewWorkbookWizard}
+ */
 @SuppressWarnings("unchecked")
+@Deprecated
 public class NewMenu extends BaseNewWizardMenu {
 
     private static final String TEMPLATES_PATH = "templates"; //$NON-NLS-1$

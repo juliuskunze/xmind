@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -106,6 +106,14 @@ public abstract class GraphicalEditorPage extends Disposable implements
         if (input != null) {
             installModelListeners(input);
         }
+
+        IActionRegistry parentActionRegistry = (IActionRegistry) parent
+                .getAdapter(IActionRegistry.class);
+        if (parentActionRegistry != null) {
+            this.actionRegistry = new ActionRegistry(parentActionRegistry);
+        } else {
+            this.actionRegistry = new ActionRegistry();
+        }
         initPageActions(getActionRegistry());
     }
 
@@ -152,13 +160,16 @@ public abstract class GraphicalEditorPage extends Disposable implements
     }
 
     public void setEditDomain(EditDomain domain) {
-        if (this.domain != null && getViewer() != null) {
-            this.domain.setViewer(null);
-        }
+//        if (this.domain != null && getViewer() != null) {
+//            this.domain.setViewer(null);
+//        }
         this.domain = domain;
-        if (domain != null && getViewer() != null) {
-            domain.setViewer(getViewer());
+        if (getViewer() != null) {
+            getViewer().setEditDomain(getEditDomain());
         }
+//        if (domain != null && getViewer() != null) {
+//            domain.setViewer(getViewer());
+//        }
     }
 
     /**
@@ -194,7 +205,6 @@ public abstract class GraphicalEditorPage extends Disposable implements
         hookViewer(viewer);
         configureViewer(viewer);
         updateSelectionActions(viewer.getSelection());
-
         if (panelContributor != null) {
             panelContributor.setViewer(viewer);
         }
@@ -273,9 +283,10 @@ public abstract class GraphicalEditorPage extends Disposable implements
     }
 
     protected void initViewer(IGraphicalViewer viewer) {
-        if (domain != null) {
-            domain.setViewer(viewer);
+        if (getEditDomain() != null) {
+            viewer.setEditDomain(getEditDomain());
         }
+        viewer.getProperties().set(VIEWER_EDITOR_PAGE, this);
     }
 
     protected void configureViewer(IGraphicalViewer viewer) {
@@ -363,7 +374,7 @@ public abstract class GraphicalEditorPage extends Disposable implements
     }
 
     /**
-     * @see org.xmind.util.Disposable#dispose()
+     * @see org.xmind.util.Disposable#clear()
      */
     @Override
     public void dispose() {
@@ -389,12 +400,15 @@ public abstract class GraphicalEditorPage extends Disposable implements
         }
         if (viewer != null) {
             unhookViewer(viewer);
-            if (domain != null) {
-                domain.setViewer(null);
-                domain.dispose();
+//            if (domain != null) {
+//                domain.setViewer(null);
+//                domain.dispose();
+//            }
+            if (viewer.getControl() != null
+                    && !viewer.getControl().isDisposed()) {
+                viewer.getControl().dispose();
             }
-            viewer.getControl().dispose();
-            viewer = null;
+//            viewer = null;
         }
         super.dispose();
     }

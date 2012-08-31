@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -25,6 +25,8 @@ public class InternalXMindNet {
     private XMindNetNavigator navigator = null;
 
     private XMindNetCommandSupport commandSupport = null;
+
+    private XMindLicenseAgent licenseAgent = null;
 
     private InternalXMindNet() {
     }
@@ -52,6 +54,13 @@ public class InternalXMindNet {
         if (commandSupport == null)
             commandSupport = new XMindNetCommandSupport();
         return commandSupport;
+    }
+
+    public XMindLicenseAgent getLicenseAgent() {
+        if (licenseAgent == null) {
+            licenseAgent = new XMindLicenseAgent();
+        }
+        return licenseAgent;
     }
 
     public static InternalXMindNet getInstance() {

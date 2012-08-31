@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -151,6 +151,18 @@ public class MarkerPart extends MindMapPartBase implements IMarkerPart {
         return imgDesc;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.part.GraphicalEditPart#containsPoint(org.eclipse.draw2d
+     * .geometry.Point)
+     */
+    @Override
+    public boolean containsPoint(Point position) {
+        return super.containsPoint(position);
+    }
+
     @Override
     protected void updateView() {
         updateToolTip();
@@ -169,8 +181,8 @@ public class MarkerPart extends MindMapPartBase implements IMarkerPart {
 
     protected void declareEditPolicies(IRequestHandler reqHandler) {
         super.declareEditPolicies(reqHandler);
-        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE,
+                NullEditPolicy.getInstance());
         reqHandler.installEditPolicy(GEF.ROLE_DELETABLE,
                 MindMapUI.POLICY_DELETABLE);
         reqHandler.installEditPolicy(GEF.ROLE_MOVABLE,

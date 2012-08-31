@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -474,8 +474,8 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
         });
         notesViewer.getImplementation().addSelectionChangedListener(this);
         notesViewer.getImplementation().getDocument().addDocumentListener(this);
-        notesViewer.getImplementation().getDocument().addRichDocumentListener(
-                this);
+        notesViewer.getImplementation().getDocument()
+                .addRichDocumentListener(this);
         new PopupKeyboardListener().hook(notesViewer.getImplementation()
                 .getFocusControl());
         update();
@@ -513,8 +513,8 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
 
     private Point calcInitialLocation(IGraphicalViewer viewer, Rectangle bounds) {
         ZoomManager zoom = viewer.getZoomManager();
-        bounds = bounds.scale(zoom.getScale()).expand(1, 1).translate(
-                viewer.getScrollPosition().getNegated());
+        bounds = bounds.scale(zoom.getScale()).expand(1, 1)
+                .translate(viewer.getScrollPosition().getNegated());
         return viewer.getControl()
                 .toDisplay(bounds.x, bounds.y + bounds.height);
     }
@@ -567,8 +567,8 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
             TriggerSequence key = registerCommand(CMD_GOTO_NOTES_VIEW);
             if (key != null) {
                 setInfoText(NLS.bind(
-                        DialogMessages.NotesPopup_GotoNotesView_text, key
-                                .format()));
+                        DialogMessages.NotesPopup_GotoNotesView_text,
+                        key.format()));
             }
         }
         registerCommand(CMD_COMMIT_NOTES);
@@ -604,8 +604,12 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
             }
             return true;
         } else if (CMD_COMMIT_NOTES.equals(commandId)) {
-            setReturnCode(OK);
-            close();
+            Display.getCurrent().asyncExec(new Runnable() {
+                public void run() {
+                    setReturnCode(OK);
+                    close();
+                }
+            });
             return true;
         } else if (IWorkbenchCommandConstants.FILE_SAVE.equals(commandId)) {
             saveNotes();
@@ -638,6 +642,11 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
                 || !notesViewer.hasModified())
             return;
 
+        doSaveNotes();
+        notesViewer.resetModified();
+    }
+
+    private void doSaveNotes() {
         INotesContent html = notesAdapter.makeNewHtmlContent();
         INotesContent plain = notesAdapter.makeNewPlainContent();
         ITopic topic = topicPart.getTopic();

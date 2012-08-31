@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -16,6 +16,7 @@ import net.xmind.share.Info;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
+import org.xmind.core.IMeta;
 import org.xmind.ui.viewers.ImagePreviewViewer;
 
 public class CutPreviewViewer extends ImagePreviewViewer {
@@ -30,10 +31,10 @@ public class CutPreviewViewer extends ImagePreviewViewer {
         this.info = info;
         Image img = (Image) info.getProperty(Info.FULL_IMAGE);
         if (img != null) {
-            if (info.hasProperty(Info.ORIGIN_X)
-                    && info.hasProperty(Info.ORIGIN_Y)) {
-                setImage(img, info.getInt(Info.ORIGIN_X, 0), info.getInt(
-                        Info.ORIGIN_Y, 0));
+            if (info.hasProperty(IMeta.ORIGIN_X)
+                    && info.hasProperty(IMeta.ORIGIN_Y)) {
+                setImage(img, info.getInt(IMeta.ORIGIN_X, 0),
+                        info.getInt(IMeta.ORIGIN_Y, 0));
             } else {
                 setImage(img);
             }

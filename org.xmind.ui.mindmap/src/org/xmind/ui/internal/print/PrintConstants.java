@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -69,6 +69,8 @@ public class PrintConstants {
     public static final String DEFAULT_HEADER_TEXT = ""; //$NON-NLS-1$
 
     public static final String DEFAULT_FOOTER_TEXT = ""; //$NON-NLS-1$
+
+    public static final String ORIENTATION = "orientation"; //$NON-NLS-1$
 
     public static int toDraw2DAlignment(String alignValue, int defaultAlignment) {
         if (LEFT.equals(alignValue))

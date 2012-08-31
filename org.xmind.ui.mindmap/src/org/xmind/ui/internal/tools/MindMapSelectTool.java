@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -29,12 +29,17 @@ import static org.xmind.ui.mindmap.MindMapUI.TOOL_CREATE_SUMMARY;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.draw2d.FreeformFigure;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.PositionConstants;
+import org.eclipse.draw2d.Viewport;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.util.SafeRunnable;
@@ -44,11 +49,16 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
+import org.xmind.core.IImage;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
+import org.xmind.core.IWorkbook;
+import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.GEF;
+import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
 import org.xmind.gef.draw2d.IOriginBased;
@@ -63,6 +73,9 @@ import org.xmind.gef.part.IPart;
 import org.xmind.gef.service.IBendPointsFeedback;
 import org.xmind.gef.service.IFeedback;
 import org.xmind.gef.service.IRevealService;
+import org.xmind.gef.service.IRevealServiceListener;
+import org.xmind.gef.service.RevealEvent;
+import org.xmind.gef.service.ZoomingAndPanningRevealService;
 import org.xmind.gef.tool.AbstractTool;
 import org.xmind.gef.tool.IDragDropHandler;
 import org.xmind.gef.tool.ISourceTool;
@@ -72,7 +85,8 @@ import org.xmind.ui.branch.IBranchDoubleClickSupport;
 import org.xmind.ui.branch.IBranchMoveSupport;
 import org.xmind.ui.internal.actions.GroupMarkers;
 import org.xmind.ui.internal.mindmap.IconTipPart;
-import org.xmind.ui.internal.mindmap.MindMapRevealService;
+import org.xmind.ui.internal.protocols.FilePathParser;
+import org.xmind.ui.internal.protocols.FileProtocol;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.IBranchRangePart;
 import org.xmind.ui.mindmap.IDrillDownTraceService;
@@ -133,7 +147,7 @@ public class MindMapSelectTool extends SelectTool {
         request.setViewer(getTargetViewer());
         request.setPrimaryTarget(branch);
         request.setParameter(MindMapUI.PARAM_WITH_ANIMATION, Boolean.TRUE);
-        handleRequest(request);
+        getDomain().handleRequest(request);
     }
 
     public boolean handleMouseUp(final MouseEvent me) {
@@ -145,6 +159,7 @@ public class MindMapSelectTool extends SelectTool {
         } else if (me.target instanceof IMarkerPart) {
             if (me.leftOrRight) {
                 showMarkerMenu((IMarkerPart) me.target);
+                return true;
             }
         }
         return super.handleMouseUp(me);
@@ -157,14 +172,16 @@ public class MindMapSelectTool extends SelectTool {
         selectSingle(iconTip.getTopicPart());
         final IAction action = iconTip.getAction();
         if (action != null) {
-            SafeRunner.run(new SafeRunnable() {
-                public void run() throws Exception {
-                    action.run();
-                    me.consume();
+            setToSelectOnMouseUp(null);
+            Display.getCurrent().asyncExec(new Runnable() {
+                public void run() {
+                    SafeRunner.run(new SafeRunnable() {
+                        public void run() throws Exception {
+                            action.run();
+                        }
+                    });
                 }
             });
-            if (me.isConsumed())
-                setToSelectOnMouseUp(null);
         }
     }
 
@@ -240,7 +257,19 @@ public class MindMapSelectTool extends SelectTool {
         if (!handled) {
             int keyCode = ke.keyCode;
             int stateMask = ke.getState();
+            Request navScrollRequest = createNavScrollRequest(stateMask,
+                    keyCode);
+            if (navScrollRequest != null) {
+                return handleNavScroll(navScrollRequest);
+            }
+
             IPart p = getTargetViewer().getFocusedPart();
+            if (p != null && SWTUtils.matchKey(stateMask, keyCode, 0, ' ')
+                    && handleQuickOpen(p))
+                return true;
+            if (SWTUtils.matchKey(stateMask, keyCode, 0, SWT.ESC)
+                    && hideQuickOpen())
+                return true;
             if (p != null && p.hasRole(GEF.ROLE_EDITABLE)) {
                 if (MindMapUtils.isTopicTextChar(ke.character)
                         || keyCode == 229) {
@@ -262,6 +291,102 @@ public class MindMapSelectTool extends SelectTool {
             }
         }
         return handled;
+    }
+
+    protected boolean hideQuickOpen() {
+        if (QuickOpenHelper.getInstance().isOpen()) {
+            QuickOpenHelper.getInstance().hide();
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean handleQuickOpen(IPart part) {
+        if (QuickOpenHelper.getInstance().canShow()) {
+            if (QuickOpenHelper.getInstance().isOpen()) {
+                QuickOpenHelper.getInstance().hide();
+                return true;
+            } else {
+                String filepath = getQuickOpenFilePaths(part);
+                if (filepath != null) {
+                    QuickOpenHelper.getInstance().show(filepath);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param p
+     * @return
+     */
+    private String getQuickOpenFilePaths(IPart p) {
+        if (p instanceof ITopicPart) {
+            ITopic topic = ((ITopicPart) p).getTopic();
+            String uri = topic.getHyperlink();
+            if (uri != null) {
+                String path = uriToFilePath(topic, uri);
+                if (path != null)
+                    return path;
+            }
+        } else if (p instanceof IImagePart) {
+            ITopic topic = ((IImagePart) p).getTopic();
+            String imagePath = getImagePath(topic);
+            if (imagePath != null)
+                return imagePath;
+        }
+        return null;
+    }
+
+    protected String uriToFilePath(ITopic topic, String uri) {
+        if (HyperlinkUtils.isInternalURL(uri))
+            return null;
+
+        if (HyperlinkUtils.isAttachmentURL(uri))
+            return getAttachmentAbsolutePath(topic, uri);
+
+        String path = FilePathParser.toPath(uri);
+        if (path == null)
+            return null;
+        return FileProtocol.getAbsolutePath(topic, path);
+    }
+
+    /**
+     * @param topic
+     * @return
+     */
+    private String getImagePath(ITopic topic) {
+        IImage image = topic.getImage();
+        if (image == null)
+            return null;
+
+        String uri = image.getSource();
+        if (uri == null)
+            return null;
+        return uriToFilePath(topic, uri);
+    }
+
+    protected String getAttachmentAbsolutePath(ITopic topic, String uri) {
+        String path = HyperlinkUtils.toAttachmentPath(uri);
+        if (path == null)
+            return null;
+        IWorkbook workbook = topic.getOwnedWorkbook();
+        if (workbook == null)
+            return null;
+        String hiberLoc = workbook.getTempLocation();
+        if (hiberLoc == null)
+            return null;
+
+        File hiberDir = new File(hiberLoc);
+        if (!hiberDir.isDirectory())
+            return null;
+
+        File attFile = new File(hiberDir, path);
+        if (!attFile.exists())
+            return null;
+
+        return attFile.getAbsolutePath();
     }
 
     protected boolean handleMouseDrag(MouseDragEvent me) {
@@ -424,10 +549,7 @@ public class MindMapSelectTool extends SelectTool {
      */
     private void handleCreateFloatingTopic(Request request, IViewer viewer) {
         changeActiveTool(MindMapUI.TOOL_CREATE_FLOAT);
-        ITool activeTool = getDomain().getActiveTool();
-        if (activeTool != null && activeTool != this) {
-            activeTool.handleRequest(request);
-        }
+        getDomain().handleRequest(request);
     }
 
     private void handleSelectCentral(Request request) {
@@ -440,12 +562,76 @@ public class MindMapSelectTool extends SelectTool {
         if (centralTopic == null)
             return;
 
-        IRevealService service = (IRevealService) viewer
-                .getService(IRevealService.class);
-        if (service instanceof MindMapRevealService) {
-            ((MindMapRevealService) service).startCenteredReveal();
-        }
         select(Arrays.asList(centralTopic), centralTopic);
+        new CenteredRevealHelper(viewer).start(centralTopic);
+    }
+
+    private class CenteredRevealHelper implements IRevealServiceListener {
+
+        private ZoomingAndPanningRevealService service;
+
+        private boolean oldCentered;
+
+        /**
+         * 
+         */
+        public CenteredRevealHelper(IViewer viewer) {
+            Object service = viewer.getService(IRevealService.class);
+            if (service != null
+                    && service instanceof ZoomingAndPanningRevealService) {
+                this.service = (ZoomingAndPanningRevealService) service;
+                this.oldCentered = this.service.isCentered();
+            } else {
+                this.service = null;
+                this.oldCentered = false;
+            }
+        }
+
+        public void start(IGraphicalPart part) {
+            if (this.service != null) {
+                this.service.setCentered(true);
+                this.service.reveal(new StructuredSelection(part));
+                this.service.addRevealServiceListener(this);
+            }
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.xmind.gef.service.IRevealServiceListener#revealingStarted(org
+         * .xmind.gef.service.RevealEvent)
+         */
+        public void revealingStarted(RevealEvent event) {
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.xmind.gef.service.IRevealServiceListener#revealingCanceled(org
+         * .xmind.gef.service.RevealEvent)
+         */
+        public void revealingCanceled(RevealEvent event) {
+            restore();
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.xmind.gef.service.IRevealServiceListener#revealingFinished(org
+         * .xmind.gef.service.RevealEvent)
+         */
+        public void revealingFinished(RevealEvent event) {
+            restore();
+        }
+
+        void restore() {
+            this.service.removeRevealServiceListener(this);
+            this.service.setCentered(this.oldCentered);
+        }
+
     }
 
     private void handleSelectBrothers(Request request) {
@@ -509,6 +695,10 @@ public class MindMapSelectTool extends SelectTool {
 
     protected void handleTargetedRequest(Request request) {
         String requestType = request.getType();
+        if (MindMapUI.REQ_EDIT_LABEL.equals(requestType)) {
+            handleEditRequest(request);
+            return;
+        }
         if (REQ_DRILLDOWN.equals(requestType)) {
             handleDrillDown(request.getTargetViewer(), request.getTargets());
             return;
@@ -524,7 +714,8 @@ public class MindMapSelectTool extends SelectTool {
         super.handleTargetedRequest(request);
     }
 
-    protected void navigateTo(List<IPart> toSelect, boolean sequential) {
+    protected void navigateTo(List<IPart> toSelect, IPart toFocus,
+            boolean sequential) {
         List<IBranchPart> branchesToExpand = findBranchesNeedsExpand(toSelect);
         if (branchesToExpand != null && !branchesToExpand.isEmpty()) {
             expand(branchesToExpand);
@@ -533,7 +724,7 @@ public class MindMapSelectTool extends SelectTool {
         if (!canNavigateTo(toSelect))
             return;
 
-        super.navigateTo(toSelect, sequential);
+        super.navigateTo(toSelect, toFocus, sequential);
     }
 
     protected boolean canNavigateTo(List<IPart> toSelect) {
@@ -574,7 +765,9 @@ public class MindMapSelectTool extends SelectTool {
     }
 
     protected void expand(List<IBranchPart> branches) {
-        handleSingleRequest(new Request(GEF.REQ_EXTEND).setTargets(branches));
+        getDomain().handleRequest(
+                new Request(GEF.REQ_EXTEND).setViewer(getTargetViewer())
+                        .setTargets(branches));
     }
 
     protected Request createAddAttachmentRequest(Request request, IViewer viewer) {
@@ -683,7 +876,7 @@ public class MindMapSelectTool extends SelectTool {
         request.setPrimaryTarget(sheet);
         request.setParameter(GEF.PARAM_POSITION, position);
         request.setParameter(MindMapUI.PARAM_WITH_ANIMATION, Boolean.TRUE);
-        handleRequest(request);
+        getDomain().handleRequest(request);
     }
 
     protected boolean isSelectableOnSelectAll(IPart child) {
@@ -824,8 +1017,8 @@ public class MindMapSelectTool extends SelectTool {
         } else if (source instanceof ILegendItemPart) {
             ILegendItemPart item = (ILegendItemPart) source;
             return new Request(MindMapUI.REQ_EDIT_LEGEND_ITEM)
-                    .setPrimaryTarget(item).setDomain(getDomain()).setViewer(
-                            getTargetViewer());
+                    .setPrimaryTarget(item).setDomain(getDomain())
+                    .setViewer(getTargetViewer());
         }
         return super.createEditRequestOnDoubleClick(source, me);
     }
@@ -876,6 +1069,97 @@ public class MindMapSelectTool extends SelectTool {
                 menu.setVisible(true);
             }
         });
+    }
+
+    protected Request createNavScrollRequest(int state, int key) {
+        if (state != (SWT.MOD1 | SWT.MOD3))
+            return null;
+        Request request;
+        if (key == SWT.ARROW_UP) {
+            request = new Request(GEF.REQ_NAV_UP);
+        } else if (key == SWT.ARROW_DOWN) {
+            request = new Request(GEF.REQ_NAV_DOWN);
+        } else if (key == SWT.ARROW_LEFT) {
+            request = new Request(GEF.REQ_NAV_LEFT);
+        } else if (key == SWT.ARROW_RIGHT) {
+            request = new Request(GEF.REQ_NAV_RIGHT);
+        } else {
+            return null;
+        }
+        request.setViewer(getTargetViewer());
+        request.setDomain(getDomain());
+        return request;
+    }
+
+    @Override
+    protected boolean handleNavRequest(Request request, boolean sequential) {
+        IViewer viewer = request.getTargetViewer();
+        ISelection oldSelection = viewer == null ? null : viewer.getSelection();
+        boolean handled = super.handleNavRequest(request, sequential);
+        ISelection newSelection = viewer == null ? null : viewer.getSelection();
+        if (!sequential
+                && (!handled || isSelectionEqual(oldSelection, newSelection))) {
+            return handleNavScroll(request);
+        }
+        return handled;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isSelectionEqual(ISelection oldSelection,
+            ISelection newSelection) {
+        if (oldSelection instanceof IStructuredSelection
+                && newSelection instanceof IStructuredSelection) {
+            Set<Object> oldElements = new HashSet<Object>(
+                    ((IStructuredSelection) oldSelection).toList());
+            Set<Object> newElements = new HashSet<Object>(
+                    ((IStructuredSelection) newSelection).toList());
+            return oldElements.equals(newElements);
+        }
+        return oldSelection == newSelection
+                || (oldSelection != null && oldSelection.equals(newSelection));
+    }
+
+    private boolean handleNavScroll(Request request) {
+        String type = request.getType();
+        IViewer viewer = request.getTargetViewer();
+        if (viewer == null)
+            return false;
+
+        Viewport viewport = (Viewport) viewer.getAdapter(Viewport.class);
+        if (viewport == null)
+            return false;
+
+        IFigure contents = viewport.getContents();
+        Rectangle contentsBounds = contents instanceof FreeformFigure ? ((FreeformFigure) contents)
+                .getFreeformExtent() : contents.getBounds();
+        contentsBounds = contentsBounds.getExpanded(60, 60).intersect(
+                contents.getBounds());
+        Rectangle clientArea = viewport.getClientArea();
+        Point center = ((IGraphicalViewer) viewer).getCenterPoint().getCopy();
+        int d;
+        if (GEF.REQ_NAV_LEFT.equals(type)) {
+            d = Math.min(MindMapUI.NAV_SCROLL_STEP,
+                    Math.abs(contentsBounds.x - clientArea.x));
+            center.translate(-d, 0);
+        } else if (GEF.REQ_NAV_UP.equals(type)) {
+            d = Math.min(MindMapUI.NAV_SCROLL_STEP,
+                    Math.abs(contentsBounds.y - clientArea.y));
+            center.translate(0, -d);
+        } else if (GEF.REQ_NAV_RIGHT.equals(type)) {
+            d = Math.min(MindMapUI.NAV_SCROLL_STEP,
+                    Math.abs(contentsBounds.right() - clientArea.right()));
+            center.translate(d, 0);
+        } else if (GEF.REQ_NAV_DOWN.equals(type)) {
+            d = Math.min(MindMapUI.NAV_SCROLL_STEP,
+                    Math.abs(contentsBounds.bottom() - clientArea.bottom()));
+            center.translate(0, d);
+        } else {
+            return false;
+        }
+        if (d == 0)
+            return false;
+        ((IGraphicalViewer) viewer).center(center);
+        return true;
     }
 
 }

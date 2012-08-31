@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,8 +20,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.xmind.core.IBoundary;
@@ -129,7 +129,7 @@ public class SortTopicCommandBuilder extends DeleteCommandBuilder {
         for (Entry<ITopicRange, Range> entry : cacheRanges.entrySet()) {
             ITopicRange topicRange = entry.getKey();
             List<ITopic> enTopics = topicRange.getEnclosingTopics();
-            if (enTopics.size() == 1)
+            if (enTopics.isEmpty() || enTopics.size() == 1)
                 continue;
             List<Integer> newIndexList = null;
             for (ITopic topic : enTopics) {
@@ -265,9 +265,13 @@ public class SortTopicCommandBuilder extends DeleteCommandBuilder {
             Iterator<IBoundary> itera = boundaries.iterator();
             while (itera.hasNext()) {
                 IBoundary next = itera.next();
-                int startIndex = next.getStartIndex();
-                int endIndex = next.getEndIndex();
-                cacheRanges.put(next, new Range(startIndex, endIndex));
+                if (!next.isMasterBoundary()) {
+                    int startIndex = next.getStartIndex();
+                    int endIndex = next.getEndIndex();
+                    if (startIndex >= 0 && endIndex >= 0) {
+                        cacheRanges.put(next, new Range(startIndex, endIndex));
+                    }
+                }
             }
         }
         Set<ISummary> summaries = parent.getSummaries();
@@ -277,7 +281,9 @@ public class SortTopicCommandBuilder extends DeleteCommandBuilder {
                 ISummary next = itera.next();
                 int startIndex = next.getStartIndex();
                 int endIndex = next.getEndIndex();
-                cacheRanges.put(next, new Range(startIndex, endIndex));
+                if (startIndex >= 0 && endIndex >= 0) {
+                    cacheRanges.put(next, new Range(startIndex, endIndex));
+                }
             }
         }
     }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -21,6 +21,10 @@ import org.xmind.ui.decorations.AbstractRelationshipDecoration;
 public class CurvedRelationshipDecoration extends
         AbstractRelationshipDecoration {
 
+    private static final double f1 = 0.125;
+
+    private static final double f2 = 3 * 0.125;
+
     public CurvedRelationshipDecoration() {
     }
 
@@ -40,11 +44,10 @@ public class CurvedRelationshipDecoration extends
     protected void calcTitlePosition(IFigure figure, PrecisionPoint titlePos,
             PrecisionPoint sourcePos, PrecisionPoint targetPos,
             PrecisionPoint sourceCP, PrecisionPoint targetCP) {
-
-        double x = 0.125 * (sourcePos.x) + 3 * 0.125 * (sourceCP.x) + 3 * 0.125
-                * (targetCP.x) + 0.125 * (targetPos.x);
-        double y = 0.125 * (sourcePos.y) + 3 * 0.125 * (sourceCP.y) + 3 * 0.125
-                * (targetCP.y) + 0.125 * (targetPos.y);
+        double x = f1 * sourcePos.x + f2 * sourceCP.x + f2 * targetCP.x + f1
+                * targetPos.x;
+        double y = f1 * sourcePos.y + f2 * sourceCP.y + f2 * targetCP.y + f1
+                * targetPos.y;
         titlePos.setLocation(x, y);
     }
 

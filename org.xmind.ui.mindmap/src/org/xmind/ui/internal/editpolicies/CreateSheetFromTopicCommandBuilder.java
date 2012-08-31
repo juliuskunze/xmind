@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -63,11 +63,11 @@ public class CreateSheetFromTopicCommandBuilder extends CommandBuilder {
         ITopic newCentralTopic = newSheet.getRootTopic();
         String newHyperlink = newCentralTopic.getHyperlink();
         if (newHyperlink == null) {
-            add(new ModifyTopicHyperlinkCommand(newCentralTopic, HyperlinkUtils
-                    .toInternalURL(sourceTopic)), false);
+            add(new ModifyTopicHyperlinkCommand(newCentralTopic,
+                    HyperlinkUtils.toInternalURL(sourceTopic)), false);
         }
-        add(new ModifyTopicHyperlinkCommand(sourceTopic, HyperlinkUtils
-                .toInternalURL(newCentralTopic)), false);
+        add(new ModifyTopicHyperlinkCommand(sourceTopic,
+                HyperlinkUtils.toInternalURL(newCentralTopic)), false);
 
         ISheet sourceSheet = sourceTopic.getOwnedSheet();
         if (sourceSheet != null) {
@@ -107,10 +107,10 @@ public class CreateSheetFromTopicCommandBuilder extends CommandBuilder {
             ICloneData cloneData, IRelationship sourceRelationship) {
         String source1Id = sourceRelationship.getEnd1Id();
         String source2Id = sourceRelationship.getEnd2Id();
-        String target1Id = source1Id == null ? null : (String) cloneData
-                .get(source1Id);
-        String target2Id = source2Id == null ? null : (String) cloneData
-                .get(source2Id);
+        String target1Id = source1Id == null ? null : cloneData.getString(
+                ICloneData.WORKBOOK_COMPONENTS, source1Id);
+        String target2Id = source2Id == null ? null : cloneData.getString(
+                ICloneData.WORKBOOK_COMPONENTS, source2Id);
         if (target1Id == null || target2Id == null)
             return;
 
@@ -118,8 +118,8 @@ public class CreateSheetFromTopicCommandBuilder extends CommandBuilder {
         Object target2 = workbook.getElementById(target2Id);
         if (target1 instanceof IRelationshipEnd
                 && target2 instanceof IRelationshipEnd) {
-            ICloneData cloned = WorkbookUtilsImpl.clone(workbook, Arrays
-                    .asList(sourceRelationship), cloneData);
+            ICloneData cloned = WorkbookUtilsImpl.clone(workbook,
+                    Arrays.asList(sourceRelationship), cloneData);
             IRelationship newRelationship = (IRelationship) cloned
                     .get(sourceRelationship);
             if (newRelationship != null) {

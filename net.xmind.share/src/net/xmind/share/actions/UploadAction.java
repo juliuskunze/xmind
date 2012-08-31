@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,7 +15,9 @@ package net.xmind.share.actions;
 
 import net.xmind.share.Uploader;
 
+import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IEditorActionDelegate;
@@ -24,7 +26,6 @@ import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.mindmap.IMindMapViewer;
-
 
 /**
  * @author briansun
@@ -66,61 +67,16 @@ public class UploadAction implements IEditorActionDelegate {
         if (currentViewer == null)
             return;
 
-        Control control = currentViewer.getControl();
+        final Control control = currentViewer.getControl();
         if (control == null || control.isDisposed())
             return;
 
-        new Uploader(control.getShell(), currentViewer).upload();
-
-//        MindMapExtractor extractor = new MindMapExtractor(currentViewer);
-//        IWorkbook workbook = extractor.extract();
-//        MindMapPreviewBuilder previewBuilder = new MindMapPreviewBuilder(
-//                workbook);
-//        Shell shell = currentViewer.getControl().getShell();
-//        try {
-//            previewBuilder.save(shell);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        Point origin = previewBuilder.getOrigin();
-//        Image fullImage = getPreviewImage(workbook, shell.getDisplay());
-//        if (fullImage != null) {
-//            savePreviewData(workbook, fullImage, origin, shell);
-//            fullImage.dispose();
-//        }
-
+        SafeRunner.run(new SafeRunnable() {
+            public void run() throws Exception {
+                new Uploader(control.getShell(), currentViewer).upload();
+            }
+        });
     }
-
-//    private void savePreviewData(IWorkbook workbook, Image fullImage,
-//            Point origin, Shell shell) {
-//        UploadDialog dialog = new UploadDialog(shell);
-//        dialog.setFullImage(fullImage, origin.x, origin.y);
-//        dialog.open();
-//
-//    }
-//
-//    private Image getPreviewImage(IWorkbook workbook, Display display) {
-//        IFileEntry entry = workbook.getManifest().getFileEntry(
-//                MindMapPreviewBuilder.PATH_THUMBNAIL);
-//        if (entry != null) {
-//            InputStream in = entry.getInputStream();
-//            if (in != null) {
-//                try {
-//                    return new Image(display, in);
-//                } catch (Throwable e) {
-//                    e.printStackTrace();
-//                } finally {
-//                    try {
-//                        in.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        }
-//        return null;
-//    }
 
     /**
      * @see org.eclipse.ui.IActionDelegate#selectionChanged(org.eclipse.jface.action.IAction,

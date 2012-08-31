@@ -19,28 +19,53 @@
 </div>
 
 <div id='body_content' class='content'><div class='wrapf'>
-<p>In XMind Pro, we can add more detailed information to a topic in Taskinfo view. This can 
-help us to have the good performance in Task Management. We can add People who is responsible for this task, start date, end date, task's priority, and 
-the task Progress. Here's how:</p>
+<div class="help">
+<p>In XMind Pro, we can add more detailed information to a task in Taskinfo view. This can help us to have the good 
+performance in Task Management. We can add People who is responsible for this task, start/end date, duration, task's priority, 
+Predecessors and the task Progress. Here's how:</p>
 <ol>
 	<li>Select a topic.</li>
 	<li>Open <a title="Open View" href="view.html">TaskInfo View</a>.</li>
 	<li>You can see and change following information in the view:
 		<ul>
-			<li>Task: this is the content of selected Task;</li>
+			<li>Task: This is the content of selected Task;</li>
 			<li>Assigned to: Select or input the people who are responsible for this task;</li>
-			<li>StartDate and EndDate: select the proper date for this task. You can even set the exactly time;</li>
-			<li>Progress: move the slide to change task progress;</li>
-			<li>Priority: select proper priority level for this task in the drop-down list;</li>
-			<li>Check Point: enable this check box will now show Progress information in the Gantt Chart View.</li>
+			<li>StartDate/EndDate: Select the proper date for this task. You can even set an exactly time if required;</li>
+			<li>Duration: This shows how many days you can finish this task. You can set it directly too.</li>
+			<li>Progress: Move the slide to change task progress;</li>
+			<li>Priority: Select proper priority level for this task in the drop-down list;</li>
+			<li>Predecessors: Click the plus button to add a predecessor to selected task.</li>
+			<li>Check Point: Enable this check box will now show Progress information in the Gantt Chart View.</li>
 		</ul>
 	</li>
 </ol>
-<p><img height="444" width="352" alt="TaskInfo View" src="images/taskinfo-xmind.jpg"></p>
-<p><b>Note:</b> All topic's taskinfo will be shown in Gantt View too.</p>
+<p><img height="559" width="371" alt="TaskInfo View" src="images/taskinfo.png"></p>
+
+<p>Task Dependency</p>
+<p>In a project, you always meet the requirement to insert a dependency relation to two tasks. Now, you can achieve this in
+XMind with few simple steps.</p>
+<ol>
+	<li>Select task A</li>
+	<li>Open TaskInfo View from menu(View --- Show TaskInfo)</li>
+	<li>Scroll down to Predecessors field, and click Plus button</br>
+	<p><img height="134" width="335" alt="TaskInfo View" src="images/taskinfo_predecessors.png"></p></li>
+	<li>Choose the task B in the coming Task Dependency dialog</li>
+	<li>Confirm the Dependency type,
+		<ul>
+			<li><b>Finish to Start</b>, Task A can't be started until Task B is finished.</li>
+			<li><b>Start to Finsih</b>, Task A can't be finished until Task B is started.</li>
+			<li><b>Start to Start</b>, Task A can't be started until Task B is started.</li>
+			<li><b>Finish to Finish</b>, Task A can't be finished until Task B is finished.</li>
+		</ul>	
+	</li>
+	<li>Click ok to finish</li>
+</ol>
+<p>Task Dependency Dialog </br><img height="534" width="525" alt="TaskInfo View" src="images/task_dependency.png"></p>
+
+<p><b>Note:</b> All information added in taskinfo view will be shown in Gantt View.</p>
 <p>&nbsp;</p>
-<p>You may also be interested in...</p>
-<ul class="interested">
+<p class="related-features">You may also be interested at...</p>
+<ul>
     <li><a href="topic.html">Topic</a></li>
     <li><a href="boundary.html">Boundary</a></li>
     <li><a href="relationship.html">Relationship</a></li>
@@ -50,13 +75,14 @@ the task Progress. Here's how:</p>
 </ul>
 
 <p align="right"><a href="index.html">Help Center</a></p>
+</div>
 
 
 </div></div>
 
 <div id="footer"><div class='wrapf'>
     <div class="footer-left">
-        <p>Copyright © 2006-2010, XMind Ltd., All rights reserved.</p>
+        <p>Copyright © 2006-2012, XMind Ltd., All rights reserved.</p>
     </div>
 </div></div>
 

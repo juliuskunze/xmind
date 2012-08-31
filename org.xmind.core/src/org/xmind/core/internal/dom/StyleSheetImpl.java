@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -208,7 +208,7 @@ public class StyleSheetImpl extends StyleSheet implements
     protected NodeAdaptableProvider getNodeAdaptableProvider() {
         if (nodeAdaptableProvider == null)
             nodeAdaptableProvider = new NodeAdaptableProvider(
-                    getElementRegistry(), this);
+                    getElementRegistry(), this, implementation);
         return nodeAdaptableProvider;
     }
 

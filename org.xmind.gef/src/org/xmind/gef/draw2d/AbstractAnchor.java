@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,20 +13,29 @@
  *******************************************************************************/
 package org.xmind.gef.draw2d;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.draw2d.FigureListener;
+import org.eclipse.draw2d.FreeformFigure;
+import org.eclipse.draw2d.FreeformListener;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.PositionConstants;
-import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.xmind.gef.draw2d.geometry.PrecisionPoint;
 
-public abstract class AbstractAnchor implements IAnchor, FigureListener {
+public abstract class AbstractAnchor implements IAnchor, FigureListener,
+        FreeformListener, PropertyChangeListener {
 
     private List<IAnchorListener> listeners = null;
 
     private IFigure owner;
+
+    private Set<String> propertiesToMove = null;
 
     protected AbstractAnchor() {
     }
@@ -40,11 +49,35 @@ public abstract class AbstractAnchor implements IAnchor, FigureListener {
             return;
 
         if (getOwner() != null && hasAnchorListener()) {
-            getOwner().removeFigureListener(this);
+            unhookOwner(getOwner());
         }
         this.owner = owner;
         if (getOwner() != null && hasAnchorListener()) {
-            getOwner().addFigureListener(this);
+            hookOwner(getOwner());
+        }
+    }
+
+    protected void hookOwner(IFigure owner) {
+        owner.addFigureListener(this);
+        if (owner instanceof FreeformFigure) {
+            ((FreeformFigure) owner).addFreeformListener(this);
+        }
+        if (propertiesToMove != null) {
+            for (String property : propertiesToMove) {
+                owner.addPropertyChangeListener(property, this);
+            }
+        }
+    }
+
+    protected void unhookOwner(IFigure owner) {
+        owner.removeFigureListener(this);
+        if (owner instanceof FreeformFigure) {
+            ((FreeformFigure) owner).removeFreeformListener(this);
+        }
+        if (propertiesToMove != null) {
+            for (String property : propertiesToMove) {
+                owner.removePropertyChangeListener(property, this);
+            }
         }
     }
 
@@ -90,7 +123,7 @@ public abstract class AbstractAnchor implements IAnchor, FigureListener {
             listeners = new ArrayList<IAnchorListener>();
         listeners.add(listener);
         if (!hadListener && hasAnchorListener() && getOwner() != null) {
-            getOwner().addFigureListener(this);
+            hookOwner(getOwner());
         }
     }
 
@@ -105,9 +138,8 @@ public abstract class AbstractAnchor implements IAnchor, FigureListener {
             return new PrecisionPoint(((IReferencedFigure) getOwner())
                     .getReference());
         }
-        Point ref = getOwner().getBounds().getCenter();
-        getOwner().translateToAbsolute(ref);
-        return new PrecisionPoint(ref);
+        Rectangle r = getOwner().getBounds();
+        return new PrecisionPoint(r.x + r.width * 0.5, r.y + r.height * 0.5);
     }
 
     public void removeAnchorListener(IAnchorListener listener) {
@@ -116,11 +148,15 @@ public abstract class AbstractAnchor implements IAnchor, FigureListener {
         boolean hadListener = hasAnchorListener();
         listeners.remove(listener);
         if (hadListener && !hasAnchorListener() && getOwner() != null) {
-            getOwner().removeFigureListener(this);
+            unhookOwner(getOwner());
         }
     }
 
     public void figureMoved(IFigure source) {
+        fireAnchorMoved();
+    }
+
+    public void notifyFreeformExtentChanged() {
         fireAnchorMoved();
     }
 
@@ -136,4 +172,54 @@ public abstract class AbstractAnchor implements IAnchor, FigureListener {
         return listeners != null && !listeners.isEmpty();
     }
 
+    public void addAnchorMoveProperty(String... properties) {
+        for (String property : properties) {
+            addMoveProperty(property);
+        }
+        fireAnchorMoved();
+    }
+
+    /**
+     * @param property
+     */
+    private void addMoveProperty(String property) {
+        if (propertiesToMove == null) {
+            propertiesToMove = new HashSet<String>();
+        }
+        if (!propertiesToMove.contains(property)) {
+            if (getOwner() != null && hasAnchorListener()) {
+                getOwner().addPropertyChangeListener(property, this);
+            }
+            propertiesToMove.add(property);
+        }
+    }
+
+    public void removeAnchorMoveProperty(String... properties) {
+        if (propertiesToMove == null)
+            return;
+        for (String property : properties) {
+            removeMoveProperty(property);
+        }
+        fireAnchorMoved();
+    }
+
+    /**
+     * @param property
+     */
+    private void removeMoveProperty(String property) {
+        if (getOwner() != null) {
+            getOwner().removePropertyChangeListener(property, this);
+        }
+        propertiesToMove.remove(property);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @seejava.beans.PropertyChangeListener#propertyChange(java.beans.
+     * PropertyChangeEvent)
+     */
+    public void propertyChange(PropertyChangeEvent evt) {
+        fireAnchorMoved();
+    }
 }

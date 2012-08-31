@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -166,6 +166,18 @@ public class WizardMessages extends NLS {
     public static String FreeMindPage_filterName;
     public static String FreeMindWizard_windowTitle;
     public static String FreeMindWizard_formatName;
+
+    public static String ImageTooLarge_Error;
+
+    public static String ChooseTemplateWizardPage_title;
+    public static String ChooseTemplateWizardPage_description;
+    public static String ChooseTemplateWizardPage_AddTemplate_text;
+    public static String ChooseTemplateWizardPage_DeleteTemplate_text;
+    public static String ChooseTemplateWizardPage_TemplatesGroup_text;
+    public static String ChooseTemplateWizardPage_ThemesGroup_text;
+    public static String ChooseTemplateWizardPage_BlankMap_title;
+    public static String ChooseLocationWizardPage_title;
+    public static String ChooseLocationWizardPage_DecideLocationLater_text;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, WizardMessages.class);

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -101,25 +101,26 @@ public class BrowserSupportImpl implements IBrowserSupport {
 
     private boolean isInternal(int style) {
         return (style & AS_INTERNAL) != 0
-                || (style == AS_DEFAULT && BrowserPref.getBrowserChoice() == BrowserPref.INTERNAL);
+                || ((style & IMPL_TYPES) == 0 && BrowserPref.getBrowserChoice() == BrowserPref.INTERNAL);
     }
 
     private boolean isExternal(int style) {
         return style == AS_EXTERNAL
-                || (style == AS_DEFAULT && BrowserPref.getBrowserChoice() == BrowserPref.EXTERNAL);
+                || ((style & IMPL_TYPES) == 0 && BrowserPref.getBrowserChoice() == BrowserPref.EXTERNAL);
     }
 
     private IBrowser doCreateBrowser(int style, String browserClientId,
             String name, String tooltip) {
         if (isInternal(style))
-            return new InternalBrowser(this, browserClientId, asEditor(style));
+            return new InternalBrowser(this, browserClientId, asEditor(style),
+                    style & INTERNAL_STYLES);
         if (isExternal(style))
             return new ExternalBrowser(browserClientId);
         return new DefaultBrowser(this, browserClientId);
     }
 
     private boolean asEditor(int style) {
-        return style != AS_DEFAULT && (style & AS_VIEW) == 0;
+        return (style & IMPL_TYPES) == 0 || (style & AS_VIEW) == 0;
     }
 
     private void registerBrowser(IBrowser browser) {

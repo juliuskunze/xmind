@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,12 +13,36 @@
  *******************************************************************************/
 package org.xmind.core.internal;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import org.xmind.core.IFileEntry;
 
 public abstract class FileEntry implements IFileEntry {
 
+    protected static final List<IFileEntry> NO_SUB_FILE_ENTRIES = Collections
+            .emptyList();
+
     public Object getAdapter(Class adapter) {
         return null;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IFileEntry#getSubEntries()
+     */
+    public List<IFileEntry> getSubEntries() {
+        if (!isDirectory())
+            return NO_SUB_FILE_ENTRIES;
+        List<IFileEntry> list = new ArrayList<IFileEntry>();
+        Iterator<IFileEntry> it = iterSubEntries();
+        while (it.hasNext()) {
+            list.add(it.next());
+        }
+        return list;
     }
 
 }

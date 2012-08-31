@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -61,6 +61,43 @@ import org.eclipse.swt.widgets.Scale;
 import org.xmind.ui.internal.ToolkitImages;
 
 /**
+ * A slider viewer displays linear values in a native
+ * {@link org.eclipse.swt.widgets.Scale} widget (on Mac OS X) or a custom
+ * {@link org.eclipse.draw2d.FigureCanvas} (for other platforms). The custom
+ * canvas draws a draggable handle along and above a straight slot to mimic the
+ * look and feel of the native Mac scale widget.
+ * 
+ * <p>
+ * A {@link ISliderContentProvider} is used to provide major tick values
+ * including the minimum and maximum values and the algorithm to convert between
+ * widget selections and selectable values. The default content provider is an
+ * implementation that simply converts between double values and their
+ * <code>Double</code> object representation.
+ * </p>
+ * 
+ * <p>
+ * A {@link ILabelProvider} is used to provide the tool-tip text for the
+ * selected value.
+ * </p>
+ * 
+ * <p>
+ * A {@link StructionSelection} is used as the viewer's selection, which always
+ * contains the selected value as its only element.
+ * </p>
+ * 
+ * <p>
+ * The user interaction is guaranteed to behave the same for either native Scale
+ * widget or custom canvas:
+ * <ul>
+ * <li>Press the left mouse button down on anywhere along the slot to trigger a
+ * <i>selection</i> event;</li>
+ * <li>Drag the mouse while pressing down the left button along the slot to
+ * trigger <i>selection</i> events sequentially;</li>
+ * <li>Release the mouse button to trigger a <i>post selection</i> event;</li>
+ * <li>Double click on the slot to trigger an <i>open</i> event.</li>
+ * </ul>
+ * </p>
+ * 
  * <dl>
  * <dt><b>Styles:</b></dt>
  * <dd>HORIZONTAL, VERTICAL</dd>
@@ -172,16 +209,12 @@ public class SliderViewer extends ContentViewer implements
     private static class DefaultSliderContentProvider implements
             ISliderContentProvider {
 
-        public double getPortion(Object input, Object value) {
+        public double getRatio(Object input, Object value) {
             return ((Double) value).doubleValue();
         }
 
-        public Object getValue(Object input, double portion) {
-            return Double.valueOf(portion);
-        }
-
-        public Object[] getValues(Object input) {
-            return new Object[] { Double.valueOf(0), Double.valueOf(1) };
+        public Object getValue(Object input, double ratio) {
+            return Double.valueOf(ratio);
         }
 
         public void dispose() {
@@ -198,7 +231,7 @@ public class SliderViewer extends ContentViewer implements
 
     private IFigure blockFigure;
 
-    private double selectionPortion = 0;
+    private double selectionRatio = 0;
 
     private Object selectionValue = null;
 
@@ -451,7 +484,7 @@ public class SliderViewer extends ContentViewer implements
         Rectangle b = new Rectangle(r.x + size.width / 2, r.y
                 + (r.height - SLOT_HEIGHT) / 2, r.width - size.width,
                 SLOT_HEIGHT);
-        int x = (int) (b.x + b.width * selectionPortion);
+        int x = (int) (b.x + b.width * selectionRatio);
         int y = b.y + b.height - b.height / 2;
         Rectangle b2 = new Rectangle(x - size.width / 2, y - size.height / 2,
                 size.width, size.height);
@@ -477,7 +510,7 @@ public class SliderViewer extends ContentViewer implements
     }
 
     protected double getSelectionPortion() {
-        return selectionPortion;
+        return selectionRatio;
     }
 
     public Control getControl() {
@@ -485,18 +518,24 @@ public class SliderViewer extends ContentViewer implements
     }
 
     public Object getSelectionValue() {
+        if (selectionValue == null) {
+            if (getContentProvider() instanceof ISliderContentProvider) {
+                selectionValue = ((ISliderContentProvider) getContentProvider())
+                        .getValue(getInput(), 0);
+            }
+            if (selectionValue == null) {
+                selectionValue = Double.valueOf(0);
+            }
+        }
         return selectionValue;
     }
 
     public ISelection getSelection() {
-        if (selectionValue != null) {
-            return new StructuredSelection(selectionValue);
-        }
-        return StructuredSelection.EMPTY;
+        return new StructuredSelection(getSelectionValue());
     }
 
     public void refresh() {
-        selectionPortion = calcSelectionPortion();
+        selectionRatio = calcSelectionRatio();
         if (control instanceof Scale) {
             refreshScale((Scale) control);
         } else if (control instanceof FigureCanvas) {
@@ -504,15 +543,10 @@ public class SliderViewer extends ContentViewer implements
         }
     }
 
-    protected void inputChanged(Object input, Object oldInput) {
-        super.inputChanged(input, oldInput);
-        // TODO refresh values
-    }
-
     protected void refreshScale(Scale scale) {
         int min = scale.getMinimum();
-        int sel = (int) Math.round((scale.getMaximum() - min)
-                * selectionPortion + min);
+        int sel = (int) Math.round((scale.getMaximum() - min) * selectionRatio
+                + min);
         scale.setSelection(sel);
         scale.setToolTipText(getSelectionText());
     }
@@ -539,14 +573,15 @@ public class SliderViewer extends ContentViewer implements
 
     }
 
-    protected double calcSelectionPortion() {
-        if (selectionValue != null) {
+    protected double calcSelectionRatio() {
+        Object value = getSelectionValue();
+        if (value != null) {
             if (getContentProvider() instanceof ISliderContentProvider) {
                 return ((ISliderContentProvider) getContentProvider())
-                        .getPortion(getInput(), selectionValue);
+                        .getRatio(getInput(), value);
             }
-            if (selectionValue instanceof Double)
-                return ((Double) selectionValue).doubleValue();
+            if (value instanceof Double)
+                return ((Double) value).doubleValue();
         }
         return 0;
     }

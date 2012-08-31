@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: XMind Spelling Support Chinese (Simplified) Language Support
 Bundle-SymbolicName: org.xmind.ui.spelling.nl_zh_CN;singleton:=true
-Bundle-Version: 3.2.1.qualifier
+Bundle-Version: 3.3.0.qualifier
 Bundle-Vendor: XMind Ltd.
 Fragment-Host: org.xmind.ui.spelling
 Bundle-RequiredExecutionEnvironment: J2SE-1.5

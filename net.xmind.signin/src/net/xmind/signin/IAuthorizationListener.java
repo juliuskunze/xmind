@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,10 +15,13 @@ package net.xmind.signin;
 
 import org.eclipse.core.runtime.IStatus;
 
+@Deprecated
 public interface IAuthorizationListener {
 
+    @Deprecated
     int UNAUTHENTICATED = 1;
 
+    @Deprecated
     int ERROR_OCCURRED = 2;
 
     /**
@@ -29,6 +32,7 @@ public interface IAuthorizationListener {
      * @param accountInfo
      *            the account info
      */
+    @Deprecated
     void authorized(IAccountInfo accountInfo);
 
     /**
@@ -51,6 +55,7 @@ public interface IAuthorizationListener {
      * @see #UNAUTHENTICATED
      * @see #ERROR_OCCURRED
      */
+    @Deprecated
     void unauthorized(IStatus result, IAccountInfo accountInfo);
 
 }

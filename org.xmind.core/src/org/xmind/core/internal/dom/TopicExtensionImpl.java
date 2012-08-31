@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -97,6 +97,10 @@ public class TopicExtensionImpl extends TopicExtension implements
         return topic.getOwnedWorkbook();
     }
 
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(implementation);
+    }
+
     public Object getAdapter(Class adapter) {
         if (adapter == Node.class || adapter == Element.class)
             return implementation;
@@ -114,7 +118,9 @@ public class TopicExtensionImpl extends TopicExtension implements
                 TAG_RESOURCE_REFS);
         Node n = refsEle.appendChild(refEle);
         if (n != null) {
-            ((ResourceRefImpl) ref).addNotify(topic.getRealizedWorkbook());
+            if (!isOrphan()) {
+                ((ResourceRefImpl) ref).addNotify(topic.getRealizedWorkbook());
+            }
             //TODO fire resource ref added
             topic.updateModifiedTime();
         }
@@ -125,7 +131,7 @@ public class TopicExtensionImpl extends TopicExtension implements
         if (refsEle != null)
             return DOMUtils.getChildList(refsEle,
                     DOMConstants.TAG_RESOURCE_REF, ((WorkbookImpl) topic
-                            .getOwnedWorkbook()).getAdaptableProvider());
+                            .getOwnedWorkbook()).getAdaptableRegistry());
         return EMPTY_REFS;
     }
 

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,6 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.text.ITextInputListener;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.jface.text.hyperlink.DefaultHyperlinkPresenter;
 import org.eclipse.jface.text.hyperlink.IHyperlinkDetector;
@@ -27,12 +31,17 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.xmind.ui.richtext.Hyperlink;
 import org.xmind.ui.richtext.IRichDocument;
+import org.xmind.ui.richtext.IRichDocumentListener;
 import org.xmind.ui.richtext.IRichTextActionBarContributor;
 import org.xmind.ui.richtext.IRichTextEditViewer;
+import org.xmind.ui.richtext.ImagePlaceHolder;
+import org.xmind.ui.richtext.LineStyle;
 import org.xmind.ui.richtext.RichTextEditViewer;
 
 public class NotesViewer implements IInputSelectionProvider {
@@ -89,6 +98,84 @@ public class NotesViewer implements IInputSelectionProvider {
 
     }
 
+    private class ModificationListener implements IDocumentListener,
+            IRichDocumentListener, ITextInputListener {
+
+        private boolean modified = false;
+
+        public void textStyleChanged(IRichDocument document,
+                StyleRange[] oldTextStyles, StyleRange[] newTextStyles) {
+            modified = true;
+        }
+
+        public void lineStyleChanged(IRichDocument document,
+                LineStyle[] oldLineStyles, LineStyle[] newLineStyles) {
+            modified = true;
+        }
+
+        public void imageChanged(IRichDocument document,
+                ImagePlaceHolder[] oldImages, ImagePlaceHolder[] newImages) {
+            modified = true;
+        }
+
+        public void hyperlinkChanged(IRichDocument document,
+                Hyperlink[] oldHyperlinks, Hyperlink[] newHyperlinks) {
+            modified = true;
+        }
+
+        public void documentAboutToBeChanged(DocumentEvent event) {
+        }
+
+        public void documentChanged(DocumentEvent event) {
+            modified = true;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.jface.text.ITextInputListener#inputDocumentAboutToBeChanged
+         * (org.eclipse.jface.text.IDocument, org.eclipse.jface.text.IDocument)
+         */
+        public void inputDocumentAboutToBeChanged(IDocument oldInput,
+                IDocument newInput) {
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.jface.text.ITextInputListener#inputDocumentChanged(org
+         * .eclipse.jface.text.IDocument, org.eclipse.jface.text.IDocument)
+         */
+        public void inputDocumentChanged(IDocument oldInput, IDocument newInput) {
+            if (oldInput != null) {
+                oldInput.removeDocumentListener(this);
+                if (oldInput instanceof IRichDocument) {
+                    ((IRichDocument) oldInput).removeRichDocumentListener(this);
+                }
+            }
+            if (newInput != null) {
+                newInput.addDocumentListener(this);
+                if (newInput instanceof IRichDocument) {
+                    ((IRichDocument) newInput).addRichDocumentListener(this);
+                }
+            }
+        }
+
+        /**
+         * @return the modified
+         */
+        public boolean isModified() {
+            return modified;
+        }
+
+        public void reset() {
+            modified = false;
+        }
+
+    }
+
     private IRichTextEditViewer implementation;
 
     private Object input;
@@ -96,6 +183,8 @@ public class NotesViewer implements IInputSelectionProvider {
     private SelectionSynchronizer selectionProvider;
 
     private IRichTextActionBarContributor contributor;
+
+    private ModificationListener modificationListener;
 
     public NotesViewer() {
     }
@@ -117,6 +206,9 @@ public class NotesViewer implements IInputSelectionProvider {
         viewer.setHyperlinkDetectors(
                 new IHyperlinkDetector[] { new NotesHyperlinkDetector() },
                 SWT.MOD1);
+
+        modificationListener = new ModificationListener();
+        viewer.addTextInputListener(modificationListener);
 
         IRichDocument document = getDocument();
         implementation.setInput(document);
@@ -178,10 +270,14 @@ public class NotesViewer implements IInputSelectionProvider {
     }
 
     public boolean hasModified() {
-        if (implementation != null) {
-            return implementation.getTextViewer().getUndoManager().undoable();
+        return modificationListener == null
+                || modificationListener.isModified();
+    }
+
+    public void resetModified() {
+        if (modificationListener != null) {
+            modificationListener.reset();
         }
-        return false;
     }
 
 }

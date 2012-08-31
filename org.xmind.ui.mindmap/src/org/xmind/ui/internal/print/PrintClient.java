@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,12 +13,11 @@
  *******************************************************************************/
 package org.xmind.ui.internal.print;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
-import org.eclipse.draw2d.Layer;
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.SWTGraphics;
 import org.eclipse.draw2d.geometry.Dimension;
@@ -36,18 +35,62 @@ import org.eclipse.swt.printing.PrinterData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.xmind.gef.GEF;
+import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.draw2d.RotatableWrapLabel;
 import org.xmind.gef.draw2d.graphics.Rotate90Graphics;
 import org.xmind.gef.draw2d.graphics.ScaledGraphics;
+import org.xmind.gef.image.FigureRenderer;
+import org.xmind.gef.image.IExportAreaProvider;
+import org.xmind.gef.image.IExportSourceProvider;
+import org.xmind.gef.image.ImageExportUtils;
 import org.xmind.gef.image.ResizeConstants;
+import org.xmind.gef.util.Properties;
+import org.xmind.ui.mindmap.GhostShellProvider;
 import org.xmind.ui.mindmap.IMindMap;
 import org.xmind.ui.mindmap.IMindMapViewer;
-import org.xmind.ui.mindmap.MindMapExportContentProvider;
+import org.xmind.ui.mindmap.MindMapExportViewer;
+import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.mindmap.MindMapViewerExportSourceProvider;
 import org.xmind.ui.resources.FontUtils;
 import org.xmind.ui.util.Logger;
 import org.xmind.ui.util.UnitConvertor;
 
-public class PrintClient {
+public class PrintClient extends FigureRenderer {
+
+    private class MindMapViewerPrintSourceProvider extends
+            MindMapViewerExportSourceProvider {
+
+        /**
+         * @param viewer
+         */
+        public MindMapViewerPrintSourceProvider(IGraphicalViewer viewer) {
+            super(viewer);
+        }
+
+        /**
+         * 
+         */
+        public MindMapViewerPrintSourceProvider(IGraphicalViewer viewer,
+                int margins) {
+            super(viewer, margins);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.xmind.ui.mindmap.MindMapViewerExportSourceProvider#collectContents
+         * (java.util.List)
+         */
+        @Override
+        protected void collectContents(List<IFigure> figures) {
+            if (!settings.getBoolean(PrintConstants.NO_BACKGROUND)) {
+                figures.add(getViewer().getLayer(GEF.LAYER_BACKGROUND));
+            }
+            figures.add(getViewer().getLayer(GEF.LAYER_CONTENTS));
+            figures.add(getViewer().getLayer(MindMapUI.LAYER_TITLE));
+        }
+    }
 
     private static final int VIEWER_MARGIN = 15;
 
@@ -61,21 +104,27 @@ public class PrintClient {
 
     private Shell parentShell;
 
-    private Printer printer;
+    private Printer printer = null;
 
-    private Rectangle pageBounds;
+    private Rectangle pageBounds = null;
 
-    private Rectangle pageClientArea;
+    private Rectangle pageClientArea = null;
 
-    private Insets pageMargins;
+    private Insets pageMargins = null;
 
-    private Point dpi;
+    private Point dpi = null;
 
     private boolean needRotate = false;
 
     private boolean jobStarted = false;
 
-    private List<MindMapExportContentProvider> providers = null;
+//    private List<MindMapExportContentProvider> providers = null;
+
+    private IExportSourceProvider source = null;
+
+    private IExportAreaProvider area = null;
+
+    private GhostShellProvider shell = null;
 
     public PrintClient(String jobName, Shell parentShell,
             PrinterData printerData, IDialogSettings settings) {
@@ -85,21 +134,93 @@ public class PrintClient {
         this.settings = settings;
     }
 
-    public PrintClient print(IMindMap source) {
+    public void print(IMindMap sourceMap) {
+        if (!start())
+            return;
+        printMap(sourceMap);
+    }
+
+    protected void printMap(IMindMap sourceMap) {
+        if (shell == null) {
+            shell = new GhostShellProvider(parentShell.getDisplay());
+        }
+        Properties properties = new Properties();
+        properties.set(IMindMapViewer.VIEWER_MARGIN,
+                Math.max(pageBounds.width, pageBounds.height));
+        int margin = VIEWER_MARGIN * dpi.x / UnitConvertor.getScreenDpi().x;
+//        properties.set(IMindMapViewer.VIEWER_MARGIN, margin);
+        properties.set(IMindMapViewer.VIEWER_GRADIENT, Boolean.FALSE);
+        IGraphicalViewer exportViewer = new MindMapExportViewer(shell,
+                sourceMap, properties);
+        this.source = new MindMapViewerPrintSourceProvider(exportViewer, margin);
+        render();
+    }
+
+    public void print(IGraphicalViewer sourceViewer) {
+        if (!start())
+            return;
+
+//        IMindMap map = (IMindMap) sourceViewer.getAdapter(IMindMap.class);
+//        if (map == null
+//                || map.getCentralTopic() == map.getSheet().getRootTopic()) {
+        int margin = VIEWER_MARGIN * dpi.x / UnitConvertor.getScreenDpi().x;
+        this.source = new MindMapViewerPrintSourceProvider(sourceViewer, margin);
+        render();
+//        } else {
+//            printMap(new MindMap(map.getSheet()));
+//        }
+    }
+
+    private boolean start() {
+        if (printer == null) {
+            printer = new Printer(printerData);
+        }
+
+        receivePrinterInfo();
+
         if (!jobStarted) {
-            if (!getPrinter().startJob(jobName))
-                return this;
+            if (!printer.startJob(jobName))
+                return false;
             jobStarted = true;
         }
-        if (!getPrinter().startPage())
-            return this;
+        return printer.startPage();
+    }
 
-        GC gc = new GC(getPrinter());
-        gc.setClipping(pageClientArea.x, pageClientArea.y - 1,
-                pageClientArea.width, pageClientArea.height + 1);
-        drawSourceContent(gc, source);
+    /**
+     * 
+     */
+    private void render() {
+        this.area = ImageExportUtils.createExportAreaProvider(
+                source.getSourceArea(), ResizeConstants.RESIZE_STRETCH,
+                needRotate ? pageClientArea.height : pageClientArea.width,
+                needRotate ? pageClientArea.width : pageClientArea.height,
+                source.getMargins());
+        init(source, area);
+        GC gc = new GC(printer);
+        try {
+            render(gc);
+        } finally {
+            gc.dispose();
+        }
 
-        gc.setClipping((org.eclipse.swt.graphics.Rectangle) null);
+        printer.endPage();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.image.FigureRenderer#render(org.eclipse.swt.graphics.GC)
+     */
+    @Override
+    public void render(GC gc) {
+        gc.setClipping(pageClientArea.x, pageClientArea.y,
+                pageClientArea.width, pageClientArea.height);
+
+        drawSourceContent(gc);
+
+        gc.setClipping(pageClientArea.x, pageClientArea.y,
+                pageClientArea.width, pageClientArea.height);
 
         if (!settings.getBoolean(PrintConstants.NO_BORDER)) {
             drawBorder(gc);
@@ -114,17 +235,49 @@ public class PrintClient {
         if (footerText != null && !"".equals(footerText)) { //$NON-NLS-1$
             drawFooter(gc, footerText);
         }
+    }
 
-        gc.dispose();
-        getPrinter().endPage();
-        return this;
+    public void drawSourceContent(GC gc) {
+        super.render(gc);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.image.FigureRenderer#createGraphics(org.eclipse.draw2d.
+     * Graphics, java.util.Stack)
+     */
+    @Override
+    protected void createGraphics(Graphics graphics, Stack<Graphics> stack) {
+        Rectangle bounds = getBounds();
+        graphics.translate(pageClientArea.x
+                - (needRotate ? (-bounds.y - bounds.height) : bounds.x),
+                pageClientArea.y - (needRotate ? bounds.x : bounds.y));
+
+        if (getScale() > 0) {
+            ScaledGraphics scaledGraphics = new ScaledGraphics(graphics);
+            scaledGraphics.scale(getScale());
+            stack.push(scaledGraphics);
+            graphics = scaledGraphics;
+        }
+
+        if (needRotate) {
+            Rotate90Graphics rotatedGraphics = new Rotate90Graphics(graphics);
+            stack.push(rotatedGraphics);
+            graphics = rotatedGraphics;
+        }
     }
 
     private void drawHeader(GC gc, String text) {
         Font font = getFont(PrintConstants.HEADER_FONT);
         try {
-            drawText(gc, text, font, getAlign(PrintConstants.HEADER_ALIGN,
-                    PositionConstants.CENTER), true);
+            drawText(
+                    gc,
+                    text,
+                    font,
+                    getAlign(PrintConstants.HEADER_ALIGN,
+                            PositionConstants.CENTER), true);
         } finally {
             font.dispose();
         }
@@ -133,8 +286,12 @@ public class PrintClient {
     private void drawFooter(GC gc, String text) {
         Font font = getFont(PrintConstants.FOOTER_FONT);
         try {
-            drawText(gc, text, font, getAlign(PrintConstants.FOOTER_ALIGN,
-                    PositionConstants.RIGHT), false);
+            drawText(
+                    gc,
+                    text,
+                    font,
+                    getAlign(PrintConstants.FOOTER_ALIGN,
+                            PositionConstants.RIGHT), false);
         } finally {
             font.dispose();
         }
@@ -163,8 +320,8 @@ public class PrintClient {
                     .getDefaultFontDescriptor().getFontData();
             int defaultHeight = defaultFontData[0].getHeight();
             font = new Font(Display.getCurrent(), FontUtils.newHeight(
-                    defaultFontData, defaultHeight * dpi.y
-                            / UnitConvertor.getScreenDpi().y));
+                    defaultFontData,
+                    defaultHeight * dpi.y / UnitConvertor.getScreenDpi().y));
         }
         return font;
     }
@@ -223,92 +380,88 @@ public class PrintClient {
         gc.setLineWidth(1);
         gc.setLineStyle(SWT.LINE_SOLID);
         gc.drawRectangle(pageClientArea.x, pageClientArea.y,
-                pageClientArea.width, pageClientArea.height);
+                pageClientArea.width - 1, pageClientArea.height - 1);
     }
 
-    private void drawSourceContent(GC gc, IMindMap source) {
-        MindMapExportContentProvider provider = new MindMapExportContentProvider(
-                parentShell, source);
-        if (providers == null) {
-            providers = new ArrayList<MindMapExportContentProvider>();
-        }
-        providers.add(provider);
-        provider.setProperty(IMindMapViewer.VIEWER_MARGIN, Math.max(
-                pageBounds.width, pageBounds.height));
-        provider.setMargin(VIEWER_MARGIN * dpi.x
-                / UnitConvertor.getScreenDpi().x);
-        provider.setProperty(IMindMapViewer.VIEWER_GRADIENT, Boolean.FALSE);
-        provider.setResizeStrategy(ResizeConstants.RESIZE_STRETCH,
-                needRotate ? pageClientArea.height : pageClientArea.width,
-                needRotate ? pageClientArea.width : pageClientArea.height);
-        try {
-            Rectangle exportArea = provider.getExportArea();
-            double scale = provider.getScale();
-            IFigure contents = provider.getContents();
-            if (settings.getBoolean(PrintConstants.NO_BACKGROUND)) {
-                Layer layer = provider.getViewer().getLayer(
-                        GEF.LAYER_BACKGROUND);
-                if (layer != null) {
-                    layer.setOpaque(false);
-                }
-            }
+//    private void drawSourceContent(GC gc, IMindMap source) {
+//        MindMapImageExporter exporter = new MindMapImageExporter(
+//                parentShell.getDisplay());
+//        exporter.setSource(source, properties, null);
+//
+//        MindMapExportContentProvider provider = new MindMapExportContentProvider(
+//                parentShell, source);
+//        if (providers == null) {
+//            providers = new ArrayList<MindMapExportContentProvider>();
+//        }
+//        providers.add(provider);
+//        provider.setProperty(IMindMapViewer.VIEWER_MARGIN,
+//                Math.max(pageBounds.width, pageBounds.height));
+//        provider.setMargin(VIEWER_MARGIN * dpi.x
+//                / UnitConvertor.getScreenDpi().x);
+//        provider.setProperty(IMindMapViewer.VIEWER_GRADIENT, Boolean.FALSE);
+//        provider.setResizeStrategy(ResizeConstants.RESIZE_STRETCH,
+//                needRotate ? pageClientArea.height : pageClientArea.width,
+//                needRotate ? pageClientArea.width : pageClientArea.height);
+//        try {
+//            Rectangle exportArea = provider.getExportArea();
+//            double scale = provider.getScale();
+//            IFigure contents = provider.getContents();
+//            if (settings.getBoolean(PrintConstants.NO_BACKGROUND)) {
+//                Layer layer = provider.getViewer().getLayer(
+//                        GEF.LAYER_BACKGROUND);
+//                if (layer != null) {
+//                    layer.setOpaque(false);
+//                }
+//            }
+//
+//            SWTGraphics baseGraphcis = new SWTGraphics(gc);
+//            baseGraphcis.translate(pageClientArea.x
+//                    - (needRotate ? (-exportArea.y - exportArea.height)
+//                            : exportArea.x), pageClientArea.y
+//                    - (needRotate ? exportArea.x : exportArea.y));
+//            Graphics graphics = baseGraphcis;
+//            ScaledGraphics scaledGraphics = null;
+//            Rotate90Graphics rotatedGraphics = null;
+//            if (scale > 0) {
+//                scaledGraphics = new ScaledGraphics(graphics);
+//                scaledGraphics.scale(scale);
+//                graphics = scaledGraphics;
+//            }
+//            if (needRotate) {
+//                rotatedGraphics = new Rotate90Graphics(graphics);
+//                graphics = rotatedGraphics;
+//            }
+//            try {
+//                contents.paint(graphics);
+//            } catch (Throwable e) {
+//                Logger.log(e, "Error occurred while painting mind map: " //$NON-NLS-1$
+//                        + source.getCentralTopic().getTitleText());
+//            } finally {
+//                if (rotatedGraphics != null) {
+//                    rotatedGraphics.dispose();
+//                }
+//                if (scaledGraphics != null) {
+//                    scaledGraphics.dispose();
+//                }
+//                baseGraphcis.dispose();
+//            }
+//        } catch (Throwable e) {
+//            Logger.log(e, "Error occurred while painting mind map: " //$NON-NLS-1$
+//                    + source.getCentralTopic().getTitleText());
+//        }
+//    }
 
-            SWTGraphics baseGraphcis = new SWTGraphics(gc);
-            baseGraphcis.translate(pageClientArea.x
-                    - (needRotate ? (-exportArea.y - exportArea.height)
-                            : exportArea.x), pageClientArea.y
-                    - (needRotate ? exportArea.x : exportArea.y));
-            Graphics graphics = baseGraphcis;
-            ScaledGraphics scaledGraphics = null;
-            Rotate90Graphics rotatedGraphics = null;
-            if (scale > 0) {
-                scaledGraphics = new ScaledGraphics(graphics);
-                scaledGraphics.scale(scale);
-                graphics = scaledGraphics;
-            }
-            if (needRotate) {
-                rotatedGraphics = new Rotate90Graphics(graphics);
-                graphics = rotatedGraphics;
-            }
-            try {
-                contents.paint(graphics);
-            } catch (Throwable e) {
-                Logger.log(e, "Error occurred while painting mind map: " //$NON-NLS-1$
-                        + source.getCentralTopic().getTitleText());
-            } finally {
-                if (rotatedGraphics != null) {
-                    rotatedGraphics.dispose();
-                }
-                if (scaledGraphics != null) {
-                    scaledGraphics.dispose();
-                }
-                baseGraphcis.dispose();
-            }
-        } catch (Throwable e) {
-            Logger.log(e, "Error occurred while painting mind map: " //$NON-NLS-1$
-                    + source.getCentralTopic().getTitleText());
-        }
-    }
-
-    protected Printer getPrinter() {
-        if (printer == null) {
-            printer = createPrinter();
-            getPrinterInfos();
-        }
-        return printer;
-    }
-
-    private void getPrinterInfos() {
+    private void receivePrinterInfo() {
         dpi = new Point(printer.getDPI());
         pageBounds = new Rectangle(printer.getBounds());
         Rectangle trim = new Rectangle(printer.computeTrim(0, 0, 0, 0));
         pageMargins = new Insets(-trim.y, -trim.x, trim.right(), trim.bottom());
 
         pageClientArea = new Rectangle(printer.getClientArea());
-        pageClientArea.x = pageBounds.x
-                + (pageBounds.width - pageClientArea.width) / 2;
-        pageClientArea.y = pageBounds.y
-                + (pageBounds.height - pageClientArea.height) / 2;
+//        pageClientArea.x = pageBounds.x
+//                + (pageBounds.width - pageClientArea.width) / 2;
+//        pageClientArea.y = pageBounds.y
+//                + (pageBounds.height - pageClientArea.height) / 2;
         int leftMargin = getUserMargin(PrintConstants.LEFT_MARGIN);
         int rightMargin = getUserMargin(PrintConstants.RIGHT_MARGIN);
         int topMargin = getUserMargin(PrintConstants.TOP_MARGIN);
@@ -319,7 +472,8 @@ public class PrintClient {
         pageClientArea.width -= leftMargin + rightMargin;
         pageClientArea.height -= topMargin + bottomMargin;
 
-        needRotate = pageBounds.height > pageBounds.width;
+//        needRotate = pageBounds.height > pageBounds.width;
+        needRotate = false;
     }
 
     private int getUserMargin(String key) {
@@ -339,11 +493,11 @@ public class PrintClient {
         return (int) (margin * dpi);
     }
 
-    private Printer createPrinter() {
-        return new Printer(printerData);
-    }
-
     public void dispose() {
+        if (shell != null) {
+            shell.dispose();
+            shell = null;
+        }
         if (printer != null) {
             if (!printer.isDisposed()) {
                 printer.endJob();
@@ -352,11 +506,12 @@ public class PrintClient {
             printer = null;
         }
         jobStarted = false;
-        if (providers != null) {
-            for (Object o : providers.toArray()) {
-                ((MindMapExportContentProvider) o).dispose();
-            }
-            providers = null;
-        }
+
+//        if (providers != null) {
+//            for (Object o : providers.toArray()) {
+//                ((MindMapExportContentProvider) o).dispose();
+//            }
+//            providers = null;
+//        }
     }
 }

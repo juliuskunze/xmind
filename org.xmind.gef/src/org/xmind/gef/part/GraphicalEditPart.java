@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,6 +22,7 @@ import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Display;
 import org.xmind.gef.IDecorator;
 import org.xmind.gef.IViewer;
+import org.xmind.gef.IViewer.IPartSearchCondition;
 import org.xmind.gef.NullDecorator;
 import org.xmind.gef.draw2d.IUseTransparency;
 
@@ -33,7 +34,7 @@ public abstract class GraphicalEditPart extends EditPart implements
 
     private IFigure figure = null;
 
-    private boolean decoratorActivated = false;
+    private boolean figureInitiated = false;
 
     private IDecorator decorator = null;
 
@@ -50,6 +51,20 @@ public abstract class GraphicalEditPart extends EditPart implements
 
     public IFigure getContentPane() {
         return getFigure();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.part.EditPart#onActivated()
+     */
+    @Override
+    protected void onActivated() {
+        super.onActivated();
+        if (!figureInitiated) {
+            initFigure(getFigure());
+            figureInitiated = true;
+        }
     }
 
     protected void initFigure(IFigure figure) {
@@ -86,18 +101,18 @@ public abstract class GraphicalEditPart extends EditPart implements
     @Override
     protected void onDeactivated() {
         super.onDeactivated();
-        if (figure != null && decoratorActivated) {
+        if (figure != null && figureInitiated) {
             getDecorator().deactivate(this, figure);
-            decoratorActivated = false;
+            figureInitiated = false;
         }
     }
 
     protected void updateView() {
         super.updateView();
         if (getFigure() != null) {
-            if (!decoratorActivated) {
+            if (!figureInitiated) {
                 initFigure(getFigure());
-                decoratorActivated = true;
+                figureInitiated = true;
             }
             getDecorator().decorate(this, getFigure());
         }
@@ -106,9 +121,9 @@ public abstract class GraphicalEditPart extends EditPart implements
     protected void updateChildren() {
         super.updateChildren();
         if (getFigure() != null) {
-            if (!decoratorActivated) {
+            if (!figureInitiated) {
                 initFigure(getFigure());
-                decoratorActivated = true;
+                figureInitiated = true;
             }
             getDecorator().decorateChildren(this, getFigure());
         }
@@ -136,11 +151,23 @@ public abstract class GraphicalEditPart extends EditPart implements
      * @see org.xmind.gef.part.IGraphicalEditPart#findAt(org.eclipse.draw2d.geometry.Point)
      */
     public IPart findAt(Point position) {
+        return findAt(position, null);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.part.IGraphicalEditPart#findAt(org.eclipse.draw2d.geometry
+     * .Point, org.xmind.gef.IViewer.IPartSearchCondition)
+     */
+    public IPart findAt(Point position, IPartSearchCondition condition) {
         IPart ret;
         ret = findChildAt(position);
         if (ret != null)
             return ret;
-        if (containsPoint(position)) {
+        if (containsPoint(position)
+                && (condition == null || condition.evaluate(this))) {
             return this;
         }
         return null;

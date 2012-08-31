@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -16,20 +16,28 @@ import java.beans.PropertyChangeListener;
 
 import net.xmind.share.Info;
 import net.xmind.share.Messages;
+import net.xmind.share.XmindSharePlugin;
 
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.events.IHyperlinkListener;
 import org.eclipse.ui.forms.widgets.FormText;
 
 public class GeneralUploaderPage extends UploaderPage implements
         PropertyChangeListener {
+
+    private static final String LANGUAGE_CHANNEL = "net.xmind.share.dialog.defaultLanguageChannel"; //$NON-NLS-1$
 
     private InfoField titleField;
 
@@ -71,6 +79,7 @@ public class GeneralUploaderPage extends UploaderPage implements
                     }
                 });
 
+        createLanguageSection(composite);
         createPrivacySection(composite);
 
         setControl(composite);
@@ -101,6 +110,56 @@ public class GeneralUploaderPage extends UploaderPage implements
         updatePrivacyLabel();
     }
 
+    private void createLanguageSection(Composite parent) {
+        Composite composite = new Composite(parent, SWT.NONE);
+        composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        GridLayout gridLayout = new GridLayout(2, false);
+        gridLayout.marginWidth = 0;
+        gridLayout.marginHeight = 0;
+        gridLayout.verticalSpacing = 5;
+        gridLayout.horizontalSpacing = 5;
+        composite.setLayout(gridLayout);
+
+        Label label = new Label(composite, SWT.NONE);
+        label.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, true));
+        label.setText(Messages.UploaderDialog_LanguageChannel_label);
+
+        final Combo combo = new Combo(composite, SWT.DROP_DOWN | SWT.READ_ONLY);
+        combo.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, true));
+        ((GridData) combo.getLayoutData()).widthHint = 280;
+        combo.setItems(new String[] { //
+        "English", //$NON-NLS-1$
+                "Chinese - \u4e2d\u6587", //$NON-NLS-1$
+                "French - fran\u00e7ais", //$NON-NLS-1$
+                "German - Deutsch", //$NON-NLS-1$
+                "Japanese - \u65e5\u672c\u8a9e", //$NON-NLS-1$
+                "Spanish - espa\u00f1ol", //$NON-NLS-1$
+                "Worldwide" //$NON-NLS-1$
+        });
+        final IPreferenceStore prefStore = XmindSharePlugin.getDefault()
+                .getPreferenceStore();
+        String lang = prefStore.getString(LANGUAGE_CHANNEL);
+        if (lang == null || "".equals(lang)) { //$NON-NLS-1$
+            lang = Info.getDefaultLanguageCode();
+        }
+
+        int index = Info.LANGUAGE_CODES.indexOf(lang);
+        if (index < 0) {
+            // Default is Worldwide:
+            index = Info.LANGUAGE_CODES.size() - 1;
+        }
+        combo.select(index);
+        combo.addListener(SWT.Selection, new Listener() {
+            public void handleEvent(Event event) {
+                int index = Math.min(combo.getSelectionIndex(),
+                        Info.LANGUAGE_CODES.size() - 1);
+                String lang = Info.LANGUAGE_CODES.get(index);
+                prefStore.setValue(LANGUAGE_CHANNEL, lang);
+                getInfo().setProperty(Info.LANGUAGE_CHANNEL, lang);
+            }
+        });
+    }
+
     public void setFocus() {
         if (descriptionField != null && !descriptionField.isDisposed()) {
             descriptionField.setFocus();
@@ -124,8 +183,9 @@ public class GeneralUploaderPage extends UploaderPage implements
     private void updatePrivacyLabel() {
         if (privacyText == null || privacyText.isDisposed())
             return;
-        privacyText.setText(NLS.bind(Messages.UploaderDialog_Privacy_prompt,
-                new String[] { getAccessibilityText(), getDownloadableText(),
+        privacyText.setText(
+                NLS.bind(Messages.UploaderDialog_Privacy_prompt, new String[] {
+                        getAccessibilityText(), getDownloadableText(),
                         "privacy" }), true, false); //$NON-NLS-1$
     }
 

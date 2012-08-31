@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -66,6 +66,14 @@ public interface ITool {
 
     void mouseWheelScrolled(MouseWheelEvent me, IViewer viewer);
 
+    /**
+     * 
+     * @param requestType
+     * @param targetViewer
+     * @deprecated use
+     *             {@link org.xmind.gef.EditDomain#handleRequest(String, IViewer)}
+     *             instead
+     */
     void handleRequest(String requestType, IViewer targetViewer);
 
     void handleRequest(Request request);

@@ -20,9 +20,10 @@
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XstartOnFirstThread -Xms128m -Xmx512m -Dorg.eclipse.swt.internal.carbon.smallFonts"/>
 <stringAttribute key="pde.version" value="3.3"/>
 <stringAttribute key="product" value="org.xmind.cathy.product"/>
-<stringAttribute key="selected_workspace_plugins" value="org.xmind.ui@default:default,org.xmind.ui.mindmap@default:default,org.xmind.ui.imports@default:default,net.xmind.share@default:default,org.xmind.neuquant@default:default,org.xmind.gef.ui@default:default,net.xmind.signin@default:default,org.xmind.ui.fishbone@default:default,org.xmind.ui.toolkit@default:default,org.xmind.ui.spreadsheet@default:default,org.xmind.core.runtime@default:default,org.xmind.ui.browser@default:default,org.json@default:default,org.xmind.cathy@default:default,org.xmind.core.io@default:default,org.xmind.core@default:default,org.xmind.ui.resources@default:false,org.xmind.ui.help@default:default,org.xmind.gef@default:default"/>
+<stringAttribute key="selected_workspace_plugins" value="net.xmind.share@default:default,net.xmind.signin@default:default,org.json@default:default,org.xmind.cathy@default:default,org.xmind.core.io@default:default,org.xmind.core.runtime@default:default,org.xmind.core@default:default,org.xmind.gef.ui@default:default,org.xmind.gef@default:default,org.xmind.neuquant@default:default,org.xmind.ui.browser@default:default,org.xmind.ui.fishbone@default:default,org.xmind.ui.help@default:default,org.xmind.ui.imports@default:default,org.xmind.ui.mindmap@default:default,org.xmind.ui.resources@default:false,org.xmind.ui.spreadsheet@default:default,org.xmind.ui.toolkit@default:default,org.xmind.ui@default:default"/>
 <booleanAttribute key="show_selected_only" value="false"/>
 <booleanAttribute key="tracing" value="false"/>
+<booleanAttribute key="useCustomFeatures" value="false"/>
 <booleanAttribute key="useDefaultConfig" value="true"/>
 <booleanAttribute key="useDefaultConfigArea" value="true"/>
 <booleanAttribute key="useProduct" value="true"/>

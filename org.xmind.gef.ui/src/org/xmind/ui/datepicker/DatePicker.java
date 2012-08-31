@@ -129,8 +129,10 @@ public class DatePicker extends Viewer {
             if (event.type == SWT.MouseUp) {
                 dayPressed = false;
                 if (target != null) {
+                    final BaseFigure eventTarget = target;
                     target.setPressed(false);
                     target = null;
+                    selected(eventTarget);
                 }
             } else if (event.type == SWT.MouseWheel) {
                 if (event.count == 0)
@@ -227,7 +229,6 @@ public class DatePicker extends Viewer {
                 dayPressed = true;
             } else {
                 target = source;
-                selected(target);
             }
         }
 
@@ -606,6 +607,14 @@ public class DatePicker extends Viewer {
         }
     }
 
+    /**
+     * Shows the drop-down menu if this date picker is created with
+     * <code>SWT.DROP_DOWN</code> style bit.
+     */
+    public void open() {
+        showDropdown();
+    }
+
     private void createDropdownDatePicker() {
         if (dropdownDatePicker != null)
             return;
@@ -773,8 +782,6 @@ public class DatePicker extends Viewer {
 
     private BaseFigure createTodayFigure(IFigure parent) {
         BaseFigure figure = new BaseFigure();
-        figure.setText(NLS.bind(Messages.TodayPattern, String.format(
-                "%1$tb %1$te, %1$tY", today))); //$NON-NLS-1$
         figure.setFont(FontUtils.getRelativeHeight(DEFAULT_FONT, -2));
         figure.setForegroundColor(ColorUtils.getColor(TODAY));
         GridData constraint = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -838,9 +845,12 @@ public class DatePicker extends Viewer {
     }
 
     private void updateCalendar() {
+        today = Calendar.getInstance();
         updateDayFigures(datePanel.getChildren(), currentYear, currentMonth);
         monthFigure.setMonth(currentMonth);
         yearFigure.setYear(currentYear);
+        todayFigure.setText(NLS.bind(Messages.TodayPattern,
+                String.format("%1$tb %1$te, %1$tY", today))); //$NON-NLS-1$
     }
 
     private void updateDayFigures(List dayFigures, int year, int month) {
@@ -954,7 +964,7 @@ public class DatePicker extends Viewer {
         return start + (end - start) * current / total;
     }
 
-    protected void selected(BaseFigure target) {
+    protected void selected(final BaseFigure target) {
         if (target instanceof MonthFigure) {
             target.setSelected(true);
             showMonthPopup();
@@ -984,8 +994,8 @@ public class DatePicker extends Viewer {
         }
         Rectangle b = monthFigure.getBounds();
         Point loc = control.toDisplay(b.x, b.y + b.height);
-        Menu menu = monthMenu.createContextMenu(control);
-        menu.setLocation(loc.x, loc.y + 1);
+        final Menu menu = monthMenu.createContextMenu(control);
+        menu.setLocation(loc.x + 10, loc.y + 1);
         menu.setVisible(true);
     }
 

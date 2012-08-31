@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: NeuQuant Image Quantization  Language Support
+Bundle-SymbolicName: org.xmind.neuquant.nl_sl;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: Anthony Dekker
+Fragment-Host: org.xmind.neuquant
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,10 +13,14 @@
  *******************************************************************************/
 package org.xmind.core.internal.dom;
 
+import static org.xmind.core.internal.dom.DOMConstants.ATTR_ID;
+import static org.xmind.core.internal.dom.DOMConstants.TAG_SHEET;
 import static org.xmind.core.internal.zip.ArchiveConstants.CONTENT_XML;
 import static org.xmind.core.internal.zip.ArchiveConstants.MANIFEST_XML;
 import static org.xmind.core.internal.zip.ArchiveConstants.META_XML;
 import static org.xmind.core.internal.zip.ArchiveConstants.PATH_MARKER_SHEET;
+import static org.xmind.core.internal.zip.ArchiveConstants.PATH_REVISIONS;
+import static org.xmind.core.internal.zip.ArchiveConstants.REVISIONS_XML;
 import static org.xmind.core.internal.zip.ArchiveConstants.STYLES_XML;
 
 import java.io.File;
@@ -26,9 +30,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
 
+import org.w3c.dom.Element;
 import org.xmind.core.Core;
 import org.xmind.core.CoreException;
 import org.xmind.core.IAdaptable;
@@ -36,6 +42,8 @@ import org.xmind.core.IChecksumStream;
 import org.xmind.core.IEncryptionData;
 import org.xmind.core.IFileEntry;
 import org.xmind.core.IManifest;
+import org.xmind.core.IRevision;
+import org.xmind.core.IRevisionManager;
 import org.xmind.core.internal.security.Crypto;
 import org.xmind.core.internal.zip.ArchiveConstants;
 import org.xmind.core.internal.zip.ZipStreamOutputTarget;
@@ -75,6 +83,11 @@ public class WorkbookSaver {
     private Set<String> savedEntries;
 
     /**
+     * Whether to skip revisions when saving.
+     */
+    private boolean skipRevisions = false;
+
+    /**
      * @param workbook
      * @param file
      */
@@ -93,6 +106,18 @@ public class WorkbookSaver {
 
     public void setFile(String file) {
         this.file = file;
+    }
+
+    /**
+     * @param skipRevisions
+     *            the skipRevisions to set
+     */
+    public void setSkipRevisions(boolean skipRevisions) {
+        this.skipRevisions = skipRevisions;
+    }
+
+    public boolean isSkipRevisions() {
+        return skipRevisions;
     }
 
     /**
@@ -187,6 +212,9 @@ public class WorkbookSaver {
         saveContent();
         saveMarkerSheet();
         saveStyleSheet();
+        if (!skipRevisions) {
+            saveRevisions();
+        }
 
         copyOtherStaff();
 
@@ -211,6 +239,19 @@ public class WorkbookSaver {
         }
     }
 
+    private void saveRevisions() throws IOException, CoreException {
+        Iterator<Element> it = DOMUtils.childElementIterByTag(
+                workbook.getWorkbookElement(), TAG_SHEET);
+        while (it.hasNext()) {
+            Element sheetEle = it.next();
+            String sheetId = sheetEle.getAttribute(ATTR_ID);
+            IRevisionManager manager = workbook.getRevisionRepository()
+                    .getRevisionManager(sheetId, IRevision.SHEET);
+            String path = PATH_REVISIONS + sheetId + "/" + REVISIONS_XML; //$NON-NLS-1$
+            saveDOM(manager, target, path);
+        }
+    }
+
     private void saveContent() throws IOException, CoreException {
         saveDOM(workbook, target, CONTENT_XML);
     }
@@ -229,15 +270,21 @@ public class WorkbookSaver {
         for (IFileEntry entry : manifest.getFileEntries()) {
             if (!entry.isDirectory()) {
                 String entryPath = entry.getPath();
-                if (entryPath != null
-                        && !"".equals(entryPath) //$NON-NLS-1$
-                        && !ArchiveConstants.MANIFEST_XML.equals(entryPath)
-                        && !hasBeenSaved(entryPath)) {
+                if (shouldSaveEntry(entryPath)) {
                     copyEntry(source, target, entryPath);
                     markSaved(entryPath);
                 }
             }
         }
+    }
+
+    private boolean shouldSaveEntry(String entryPath) {
+        return entryPath != null
+                && !"".equals(entryPath) //$NON-NLS-1$
+                && !ArchiveConstants.MANIFEST_XML.equals(entryPath)
+                && !hasBeenSaved(entryPath)
+                && (!skipRevisions || !entryPath
+                        .startsWith(ArchiveConstants.PATH_REVISIONS));
     }
 
     private void copyEntry(IInputSource source, IOutputTarget target,

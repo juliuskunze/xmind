@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -22,6 +22,7 @@ import org.xmind.core.IEncryptionHandler;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventSource2;
+import org.xmind.core.internal.dom.WorkbookImpl;
 import org.xmind.core.io.IStorage;
 
 /**
@@ -38,13 +39,16 @@ public class TempWorkbookLoader implements IWorkbookLoader {
 
     private String filePath;
 
+    private boolean skipRevisions;
+
     public TempWorkbookLoader(WorkbookRef ref, String tempLocation,
-            String filePath) {
+            String filePath, boolean skipRevisions) {
         super();
         this.ref = ref;
         this.oldLoader = ref.getWorkbookLoader();
         this.tempLocation = tempLocation;
         this.filePath = filePath;
+        this.skipRevisions = skipRevisions;
     }
 
     public IWorkbook loadWorkbook(IStorage storage,
@@ -56,6 +60,7 @@ public class TempWorkbookLoader implements IWorkbookLoader {
                     .loadFromTempLocation(tempLocation);
             workbook.setTempLocation(tempLocation);
             workbook.setFile(filePath);
+            ((WorkbookImpl) workbook).setSkipRevisionsWhenSaving(skipRevisions);
             if (workbook instanceof ICoreEventSource2) {
                 ((ICoreEventSource2) workbook).registerOnceCoreEventListener(
                         Core.WorkbookPreSaveOnce, ICoreEventListener.NULL);

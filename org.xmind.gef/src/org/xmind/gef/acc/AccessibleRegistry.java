@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -25,12 +25,16 @@ public class AccessibleRegistry {
 
     private List<IAccessible> accessibles = new ArrayList<IAccessible>();
 
+    private int lastId = 0;
+
     public void register(IAccessible acc) {
         if (acc == null)
             return;
         Integer id;
         if (acc instanceof AccessibleBase) {
-            id = createId(0);
+//            id = createId(0);
+            lastId = createId(lastId);
+            id = lastId++;
             ((AccessibleBase) acc).setAccessibleId(id);
         } else {
             id = acc.getAccessibleId();

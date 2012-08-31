@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -79,7 +79,7 @@ public class GalleryViewer extends GraphicalViewer {
     public static final String ImageConstrained = "constrained"; //$NON-NLS-1$
 
     /**
-     * Values: Dimension
+     * Values: {@link org.eclipse.draw2d.geometry.Dimension}
      */
     public static final String FrameContentSize = "org.xmind.ui.gallery.frameContentSize"; //$NON-NLS-1$
 

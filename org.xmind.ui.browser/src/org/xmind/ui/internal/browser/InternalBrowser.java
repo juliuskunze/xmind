@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -36,6 +36,10 @@ public class InternalBrowser implements IBrowser {
 
     private Object windowKey = null;
 
+    private boolean asEditor;
+
+    private int browserStyle;
+
     private String name;
 
     private String tooltip;
@@ -46,13 +50,12 @@ public class InternalBrowser implements IBrowser {
 
     private IWebBrowser workbenchBrowser;
 
-    private boolean asEditor;
-
     public InternalBrowser(BrowserSupportImpl support, String clientId,
-            boolean asEditor) {
+            boolean asEditor, int style) {
         this.support = support;
         this.clientId = clientId;
         this.asEditor = asEditor;
+        this.browserStyle = style;
     }
 
     public IWorkbenchPart getPart() {
@@ -89,9 +92,7 @@ public class InternalBrowser implements IBrowser {
                 part = page.openEditor(createEditorInput(url),
                         InternalBrowserEditor.BROWSER_EDITOR_ID);
             } else {
-                part = page.showView(InternalBrowserView.BROWSER_VIEW_ID
-                //,clientId, IWorkbenchPage.VIEW_ACTIVATE
-                        );
+                part = page.showView(InternalBrowserView.BROWSER_VIEW_ID);
                 if (part instanceof InternalBrowserView) {
                     ((InternalBrowserView) part).setClientId(clientId);
                     ((InternalBrowserView) part).openURL(url);
@@ -106,7 +107,8 @@ public class InternalBrowser implements IBrowser {
      * @return
      */
     private BrowserEditorInput createEditorInput(String url) {
-        BrowserEditorInput input = new BrowserEditorInput(url, clientId);
+        BrowserEditorInput input = new BrowserEditorInput(url, clientId,
+                browserStyle);
         input.setName(this.name);
         input.setToolTipText(this.tooltip);
         return input;
@@ -156,11 +158,14 @@ public class InternalBrowser implements IBrowser {
     }
 
     protected IWebBrowser createWorkbenchBrowser() throws PartInitException {
-        return PlatformUI.getWorkbench().getBrowserSupport().createBrowser(
-                IWorkbenchBrowserSupport.AS_EDITOR
-                        | IWorkbenchBrowserSupport.LOCATION_BAR
-                        | IWorkbenchBrowserSupport.NAVIGATION_BAR,
-                getClientId(), name, tooltip);
+        return PlatformUI
+                .getWorkbench()
+                .getBrowserSupport()
+                .createBrowser(
+                        IWorkbenchBrowserSupport.AS_EDITOR
+                                | IWorkbenchBrowserSupport.LOCATION_BAR
+                                | IWorkbenchBrowserSupport.NAVIGATION_BAR,
+                        getClientId(), name, tooltip);
     }
 
     public void setName(String name) {

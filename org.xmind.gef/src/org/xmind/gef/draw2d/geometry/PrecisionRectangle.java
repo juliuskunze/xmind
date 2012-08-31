@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -83,6 +83,18 @@ public class PrecisionRectangle {
     public boolean contains(double x, double y) {
         return y >= this.y && y < this.y + this.height && x >= this.x
                 && x < this.x + this.width;
+    }
+
+    public PrecisionRectangle intersect(PrecisionRectangle rect) {
+        double x1 = Math.max(x, rect.x);
+        double x2 = Math.min(x + width, rect.x + rect.width);
+        double y1 = Math.max(y, rect.y);
+        double y2 = Math.min(y + height, rect.y + rect.height);
+        if (((x2 - x1) < 0) || ((y2 - y1) < 0))
+            return setBounds(0, 0, 0, 0); // no intersection
+        else {
+            return setBounds(x1, y1, x2 - x1, y2 - y1);
+        }
     }
 
     public boolean intersects(Rectangle rect) {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -36,7 +36,7 @@ import org.xmind.gef.part.IPart;
 /**
  * @author Brian Sun
  */
-public abstract class SelectTool extends GraphicalTool {
+public class SelectTool extends GraphicalTool {
 
     private static final List<IPart> EMPTY_PARTS = Collections.emptyList();
 
@@ -69,8 +69,8 @@ public abstract class SelectTool extends GraphicalTool {
     }
 
     protected Request createEditRequestOnDoubleClick(IPart source, MouseEvent me) {
-        return new Request(GEF.REQ_EDIT).setPrimaryTarget(me.target).setDomain(
-                getDomain()).setViewer(getTargetViewer());
+        return new Request(GEF.REQ_EDIT).setPrimaryTarget(me.target)
+                .setDomain(getDomain()).setViewer(getTargetViewer());
     }
 
     public void mouseDown(MouseEvent me, IViewer viewer) {
@@ -185,7 +185,7 @@ public abstract class SelectTool extends GraphicalTool {
 
     protected boolean handleMouseEntered(MouseEvent me) {
         IPart target = me.target;
-        if (target.hasRole(GEF.ROLE_SELECTABLE)) {
+        if (target != null && target.hasRole(GEF.ROLE_SELECTABLE)) {
             setPreSelected(target);
         } else {
             setPreSelected(null);
@@ -290,12 +290,11 @@ public abstract class SelectTool extends GraphicalTool {
         String type = getNavigationRequestType(key);
         if (type != null) {
             Request request = createTargetedRequest(type, viewer, false);
+            request.setPrimaryTarget(viewer.getFocusedPart());
             if (request.hasTargets()) {
                 boolean sequential = isSequentialNavigation(state);
                 if (sequential) {
-                    request
-                            .setParameter(GEF.PARAM_NAV_SEQUENTIAL,
-                                    Boolean.TRUE);
+                    request.setParameter(GEF.PARAM_NAV_SEQUENTIAL, Boolean.TRUE);
                     if (getSequenceStart() == null) {
                         IPart newStart = request.getPrimaryTarget();
                         setSequenceStart(newStart);
@@ -303,28 +302,36 @@ public abstract class SelectTool extends GraphicalTool {
                     request.setParameter(GEF.PARAM_NAV_SEQUENCE_START,
                             getSequenceStart());
                 }
-                handleNavRequest(request, sequential);
+                return handleNavRequest(request, sequential);
             }
         }
         return true;
     }
 
-    protected void handleNavRequest(Request request, boolean sequential) {
-        handleRequest(request);
+    protected boolean handleNavRequest(Request request, boolean sequential) {
+        getDomain().handleRequest(request);
         Object result = request.getResult(GEF.RESULT_NAVIGATION);
-        if (result != null) {
-            if (result instanceof IPart[]) {
-                IPart[] parts = (IPart[]) result;
-                navigateTo(Arrays.asList(parts), sequential);
-            }
+        if (result != null && result instanceof IPart[]) {
+            IPart[] toSelect = (IPart[]) result;
+            IPart toFocus = (IPart) request.getResult(GEF.RESULT_NEW_FOCUS);
+            navigateTo(Arrays.asList(toSelect), toFocus, sequential);
+            return true;
         }
+        return false;
     }
 
     protected void navigateTo(List<IPart> toSelect, boolean sequential) {
+        navigateTo(toSelect, null, sequential);
+    }
+
+    protected void navigateTo(List<IPart> toSelect, IPart toFocus,
+            boolean sequential) {
         if (sequential) {
             ignoreResetSeqStart = true;
         }
-        select(toSelect, toSelect.isEmpty() ? null : toSelect.get(0));
+        select(toSelect,
+                toFocus == null || !toSelect.contains(toFocus) ? (toSelect
+                        .isEmpty() ? null : toSelect.get(0)) : toFocus);
         if (sequential)
             ignoreResetSeqStart = false;
     }
@@ -400,11 +407,11 @@ public abstract class SelectTool extends GraphicalTool {
             select(request.getTargets(), request.getPrimaryTarget());
         } else if (GEF.REQ_SELECT_SINGLE.equals(requestType)) {
             selectSingle(request.getPrimaryTarget());
-        } else if (GEF.REQ_EDIT.equals(requestType)
-                || GEF.REQ_EDIT_LABEL.equals(requestType)) {
+        } else if (GEF.REQ_EDIT.equals(requestType)) {
             handleEditRequest(request);
-        } else
+        } else {
             super.handleTargetedRequest(request);
+        }
     }
 
     protected void handleSelectAll(IViewer viewer) {
@@ -531,9 +538,9 @@ public abstract class SelectTool extends GraphicalTool {
 
     protected boolean handleZoomByScroll(MouseWheelEvent me) {
         if (me.upOrDown) {
-            handleRequest(GEF.REQ_ZOOMIN, getTargetViewer());
+            getDomain().handleRequest(GEF.REQ_ZOOMIN, getTargetViewer());
         } else {
-            handleRequest(GEF.REQ_ZOOMOUT, getTargetViewer());
+            getDomain().handleRequest(GEF.REQ_ZOOMOUT, getTargetViewer());
         }
         me.doIt = false;
         return true;

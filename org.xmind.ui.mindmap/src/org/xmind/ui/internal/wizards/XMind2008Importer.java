@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -267,10 +267,16 @@ public class XMind2008Importer extends MindMapImporter implements ErrorHandler {
         if (newElement != null) {
             String id = DOMUtils.getAttribute(oldElement, ATTR_ID);
             if (id != null) {
-                workbook.getElementRegistry().unregisterByKey(id);
+//                workbook.getElementRegistry().unregisterByKey(id);
+                Document doc = newElement.getOwnerDocument();
+                workbook.getAdaptableRegistry()
+                        .unregisterById(elementAdaptable,
+                                newElement.getAttribute(ATTR_ID), doc);
                 DOMUtils.replaceId(newElement, id);
-                workbook.getElementRegistry().registerByKey(id,
-                        elementAdaptable);
+                workbook.getAdaptableRegistry().registerById(elementAdaptable,
+                        id, doc);
+//                workbook.getElementRegistry().registerByKey(id,
+//                        elementAdaptable);
             }
         }
     }
@@ -580,23 +586,24 @@ public class XMind2008Importer extends MindMapImporter implements ErrorHandler {
             if (group == null) {
                 group = markerSheet.createMarkerGroup(false);
                 markerSheet.getElementRegistry().unregister(group);
-                DOMUtils.replaceId(((MarkerGroupImpl) group)
-                        .getImplementation(), markerGroupId);
+                DOMUtils.replaceId(
+                        ((MarkerGroupImpl) group).getImplementation(),
+                        markerGroupId);
                 markerSheet.getElementRegistry().register(group);
                 markerSheet.addMarkerGroup(group);
             }
             IMarker marker = group.getMarker(markerId);
             if (marker == null) {
-                IFileEntry markerEntry = findAttachmentEntry(markerId, workbook
-                        .getManifest());
+                IFileEntry markerEntry = findAttachmentEntry(markerId,
+                        workbook.getManifest());
                 if (markerEntry != null) {
                     String path = markerEntry.getPath();
                     if (!path.startsWith("/")) //$NON-NLS-1$
                         path = "/" + path; //$NON-NLS-1$
                     marker = markerSheet.createMarker(path);
                     markerSheet.getElementRegistry().unregister(marker);
-                    DOMUtils.replaceId(((MarkerImpl) marker)
-                            .getImplementation(), markerId);
+                    DOMUtils.replaceId(
+                            ((MarkerImpl) marker).getImplementation(), markerId);
                     markerSheet.getElementRegistry().register(marker);
                 }
             }
@@ -793,10 +800,9 @@ public class XMind2008Importer extends MindMapImporter implements ErrorHandler {
         if (builder == null) {
             DocumentBuilderFactory factory = DocumentBuilderFactory
                     .newInstance();
-            factory
-                    .setAttribute(
-                            "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                            true);
+            factory.setAttribute(
+                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+                    true);
             try {
                 builder = factory.newDocumentBuilder();
             } catch (ParserConfigurationException e) {

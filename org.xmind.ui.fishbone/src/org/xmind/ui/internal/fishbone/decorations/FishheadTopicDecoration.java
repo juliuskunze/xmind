@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -21,8 +21,8 @@ import org.xmind.gef.draw2d.geometry.Geometry;
 import org.xmind.gef.draw2d.geometry.IPrecisionTransformer;
 import org.xmind.gef.draw2d.geometry.PrecisionHorizontalFlipper;
 import org.xmind.gef.draw2d.geometry.PrecisionLine;
-import org.xmind.gef.draw2d.geometry.PrecisionPoint;
 import org.xmind.gef.draw2d.geometry.PrecisionLine.LineType;
+import org.xmind.gef.draw2d.geometry.PrecisionPoint;
 import org.xmind.gef.draw2d.graphics.Path;
 import org.xmind.ui.decorations.AbstractTopicDecoration;
 
@@ -48,7 +48,7 @@ public class FishheadTopicDecoration extends AbstractTopicDecoration {
 
     protected void sketch(IFigure figure, Path shape, Rectangle box, int purpose) {
         Insets ins = figure.getInsets();
-        Rectangle clientArea = box.getCropped(ins);
+        Rectangle clientArea = box.getShrinked(ins);
         f.setOrigin(box.x + box.width * 0.5, box.y + box.height * 0.5);
         int right = box.right();
         int bottom = box.bottom();
@@ -71,15 +71,15 @@ public class FishheadTopicDecoration extends AbstractTopicDecoration {
         Insets ins = figure.getInsets();
         Rectangle box = figure.getBounds();
         f.setOrigin(box.x + box.width * 0.5, box.y + box.height * 0.5);
-        Rectangle clientArea = box.getCropped(ins);
+        Rectangle clientArea = box.getShrinked(ins);
         int right = box.right();
         int bottom = box.bottom();
         float cx = box.x + clientArea.width
                 * FishheadTopicDecoration.headConScale;
         float ey = box.y + box.height * 0.5f;
         Point center = box.getCenter();
-        PrecisionLine line = new PrecisionLine(f.tp(center.x, center.y, p1), f
-                .tp(refX, refY, p2), LineType.Ray);
+        PrecisionLine line = new PrecisionLine(f.tp(center.x, center.y, p1),
+                f.tp(refX, refY, p2), LineType.Ray);
         PrecisionLine rightBorder = new PrecisionLine(right, box.y, right,
                 bottom, LineType.LineSegment);
         PrecisionPoint p = line.intersect(rightBorder);

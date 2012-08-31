@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,12 +13,21 @@
  *******************************************************************************/
 package org.xmind.core.internal;
 
+import java.util.List;
+
 import org.xmind.core.ITopicExtensionElement;
 
 public abstract class TopicExtensionElement implements ITopicExtensionElement {
 
     public Object getAdapter(Class adapter) {
         return null;
+    }
+
+    public ITopicExtensionElement getCreatedChild(String elementName) {
+        List<ITopicExtensionElement> children = getChildren(elementName);
+        if (!children.isEmpty())
+            return children.get(0);
+        return createChild(elementName);
     }
 
 }

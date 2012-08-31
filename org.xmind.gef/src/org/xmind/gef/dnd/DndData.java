@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,9 +19,9 @@ public class DndData {
 
     public final String clientId;
 
-    public final Object parsedData;
-
     public final TransferData dataType;
+
+    public Object parsedData;
 
     public DndData(String clientId, Object parsedData, TransferData dataType) {
         this.clientId = clientId;

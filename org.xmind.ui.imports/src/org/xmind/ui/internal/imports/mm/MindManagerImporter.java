@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -11,7 +11,9 @@
  */
 package org.xmind.ui.internal.imports.mm;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -20,12 +22,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.Map.Entry;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -38,6 +39,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmind.core.Core;
+import org.xmind.core.CoreException;
 import org.xmind.core.IBoundary;
 import org.xmind.core.IFileEntry;
 import org.xmind.core.IHtmlNotesContent;
@@ -59,6 +61,9 @@ import org.xmind.core.ITopicExtensionElement;
 import org.xmind.core.ITopicRange;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.dom.NumberUtils;
+import org.xmind.core.io.DirectoryStorage;
+import org.xmind.core.io.IInputSource;
+import org.xmind.core.io.IStorage;
 import org.xmind.core.io.ResourceMappingManager;
 import org.xmind.core.io.mindmanager.MMConstants;
 import org.xmind.core.io.mindmanager.MMResourceMappingManager;
@@ -265,8 +270,8 @@ public class MindManagerImporter extends MindMapImporter implements
             } else if ("font-size".equalsIgnoreCase(key)) { //$NON-NLS-1$
                 int fontSize = NumberUtils.safeParseInt(value, -1);
                 if (fontSize > 0) {
-                    style.setProperty(Styles.FontSize, StyleUtils
-                            .addUnitPoint(fontSize));
+                    style.setProperty(Styles.FontSize,
+                            StyleUtils.addUnitPoint(fontSize));
                 }
             }
         }
@@ -298,7 +303,10 @@ public class MindManagerImporter extends MindMapImporter implements
 
     private static ResourceMappingManager mappings = null;
 
-    private ZipFile sourceFile;
+//    private ZipFile sourceFile;
+    private IStorage tempStorage;
+
+    private IInputSource tempSource;
 
     private ISheet targetSheet;
 
@@ -326,27 +334,14 @@ public class MindManagerImporter extends MindMapImporter implements
         try {
             getMonitor().subTask(
                     ImportMessages.MindManagerImporter_ReadingContent);
-            sourceFile = new ZipFile(getSourcePath());
 
-            ZipEntry docEntry = sourceFile.getEntry(DOCUMENT_XML);
-            if (docEntry == null)
-                throw new InvocationTargetException(new IOException(
-                        "No content entry")); //$NON-NLS-1$
+            tempStorage = createTemporaryStorage();
+            extractSourceFileToTemporaryStorage();
+            tempSource = tempStorage.getInputSource();
+//            sourceFile = new ZipFile(getSourcePath());
+//            ZipEntry docEntry = sourceFile.getEntry(DOCUMENT_XML);
 
-            DocumentBuilder builder = getDocumentBuilder();
-            builder.setErrorHandler(this);
-            InputStream in = sourceFile.getInputStream(docEntry);
-            in = new MonitoredInputStream(in, getMonitor());
-            Document doc;
-            try {
-                doc = builder.parse(in);
-            } finally {
-                builder.setErrorHandler(null);
-                try {
-                    in.close();
-                } catch (Exception e) {
-                }
-            }
+            Document doc = readContents();
 
             getMonitor().worked(45);
             checkInterrupted();
@@ -372,8 +367,59 @@ public class MindManagerImporter extends MindMapImporter implements
         } catch (Exception e) {
             throw new InvocationTargetException(e);
         } finally {
-            closeFile();
+            clearTempStorage();
         }
+    }
+
+    private Document readContents() throws Exception {
+        InputStream docEntryStream = tempSource.getEntryStream(DOCUMENT_XML);
+        if (docEntryStream == null)
+            throw new IOException("No content entry"); //$NON-NLS-1$
+
+        DocumentBuilder builder = getDocumentBuilder();
+        builder.setErrorHandler(this);
+//            InputStream in = sourceFile.getInputStream(docEntryStream);
+//            in = new MonitoredInputStream(in, getMonitor());
+        InputStream in = new MonitoredInputStream(docEntryStream, getMonitor());
+        Document doc;
+        try {
+            doc = builder.parse(in);
+        } finally {
+            builder.setErrorHandler(null);
+            try {
+                in.close();
+            } catch (Exception e) {
+            }
+        }
+        return doc;
+    }
+
+    /**
+     * @return
+     */
+    private IStorage createTemporaryStorage() throws IOException {
+        String id = String.format("%1$tY%1$tm%1$td%1$tH%1$tM%1$tS", //$NON-NLS-1$ 
+                System.currentTimeMillis());
+        File tempDir = FileUtils.ensureDirectory(new File(Core.getWorkspace()
+                .getTempDir("import/mindmanager"), id)); //$NON-NLS-1$
+        return new DirectoryStorage(tempDir);
+    }
+
+    private void extractSourceFileToTemporaryStorage() throws IOException,
+            CoreException {
+        FileInputStream fin = new FileInputStream(getSourcePath());
+        try {
+            ZipInputStream zin = new ZipInputStream(new MonitoredInputStream(
+                    new BufferedInputStream(fin), getMonitor()));
+            try {
+                FileUtils.extractZipFile(zin, tempStorage.getOutputTarget());
+            } finally {
+                zin.close();
+            }
+        } finally {
+            fin.close();
+        }
+
     }
 
     private void checkInterrupted() throws InterruptedException {
@@ -381,14 +427,18 @@ public class MindManagerImporter extends MindMapImporter implements
             throw new InterruptedException();
     }
 
-    private void closeFile() {
-        if (sourceFile != null) {
-            try {
-                sourceFile.close();
-            } catch (IOException e) {
-            }
+    private void clearTempStorage() {
+        if (tempStorage != null) {
+            tempStorage.clear();
+            tempStorage = null;
         }
-        sourceFile = null;
+//        if (sourceFile != null) {
+//            try {
+//                sourceFile.close();
+//            } catch (IOException e) {
+//            }
+//        }
+//        sourceFile = null;
     }
 
     private void loadSheet(Element docEle) throws InterruptedException {
@@ -549,15 +599,15 @@ public class MindManagerImporter extends MindMapImporter implements
             if (uri != null) {
                 IFileEntry entry = loadAttachment(null, uri, "*.png"); //$NON-NLS-1$
                 if (entry != null) {
-                    registerStyle(sheet, Styles.Background, HyperlinkUtils
-                            .toAttachmentURL(entry.getPath()));
+                    registerStyle(sheet, Styles.Background,
+                            HyperlinkUtils.toAttachmentURL(entry.getPath()));
 
-                    int transparency = NumberUtils.safeParseInt(att(bgImgEle,
-                            "Transparency"), -1); //$NON-NLS-1$
+                    int transparency = NumberUtils.safeParseInt(
+                            att(bgImgEle, "Transparency"), -1); //$NON-NLS-1$
                     if (transparency >= 0) {
                         double opacity = (100 - transparency) * 1.0 / 100;
-                        registerStyle(sheet, Styles.Opacity, String.format(
-                                "%.2f", opacity)); //$NON-NLS-1$
+                        registerStyle(sheet, Styles.Opacity,
+                                String.format("%.2f", opacity)); //$NON-NLS-1$
                     }
                 }
             }
@@ -780,17 +830,17 @@ public class MindManagerImporter extends MindMapImporter implements
         registerTheme(type, styleFamily, Styles.FontSize, size);
 
         String bold = att(fontEle, "Bold"); //$NON-NLS-1$
-        registerTheme(type, styleFamily, Styles.FontWeight, Boolean
-                .parseBoolean(bold) ? Styles.FONT_WEIGHT_BOLD : null);
+        registerTheme(type, styleFamily, Styles.FontWeight,
+                Boolean.parseBoolean(bold) ? Styles.FONT_WEIGHT_BOLD : null);
 
         String italic = att(fontEle, "Italic"); //$NON-NLS-1$
-        registerTheme(type, styleFamily, Styles.FontStyle, Boolean
-                .parseBoolean(italic) ? Styles.FONT_STYLE_ITALIC : null);
+        registerTheme(type, styleFamily, Styles.FontStyle,
+                Boolean.parseBoolean(italic) ? Styles.FONT_STYLE_ITALIC : null);
 
         boolean underline = Boolean.parseBoolean(att(fontEle, "Underline")); //$NON-NLS-1$
         boolean strikeout = Boolean.parseBoolean(att(fontEle, "Strikethrough")); //$NON-NLS-1$
-        registerTheme(type, styleFamily, Styles.TextDecoration, StyleUtils
-                .toTextDecoration(underline, strikeout));
+        registerTheme(type, styleFamily, Styles.TextDecoration,
+                StyleUtils.toTextDecoration(underline, strikeout));
     }
 
     private void registerTheme(String type, String styleFamily,
@@ -1308,11 +1358,16 @@ public class MindManagerImporter extends MindMapImporter implements
                     recordTopicLink(OId, topic);
                 }
                 return;
-            } else if (url.startsWith("\"") && url.endsWith("\"")) { //$NON-NLS-1$ //$NON-NLS-2$
-                String path = url.substring(1, url.length() - 1);
+            } else if (!url.startsWith("http://") && !url.startsWith("https://")) { //$NON-NLS-1$ //$NON-NLS-2$
+                String path;
+                if (url.startsWith("\"") && url.endsWith("\"")) { //$NON-NLS-1$ //$NON-NLS-2$
+                    path = url.substring(1, url.length() - 1);
+                } else {
+                    path = url;
+                }
                 String absolute = att(hyperlinkEle, "Absolute"); //$NON-NLS-1$
-                url = FilePathParser.toURI(path, absolute != null
-                        && !Boolean.parseBoolean(absolute));
+                url = FilePathParser.toURI(path,
+                        absolute != null && !Boolean.parseBoolean(absolute));
             }
             topic.setHyperlink(url);
         }
@@ -1371,9 +1426,9 @@ public class MindManagerImporter extends MindMapImporter implements
             String height = att(sizeEle, "Height"); //$NON-NLS-1$
             Float w = parseFloat(width);
             Float h = parseFloat(height);
-            image.setSize(w == null ? IImage.UNSPECIFIED : mm2Dots(w
-                    .floatValue()), h == null ? IImage.UNSPECIFIED : mm2Dots(h
-                    .floatValue()));
+            image.setSize(
+                    w == null ? IImage.UNSPECIFIED : mm2Dots(w.floatValue()),
+                    h == null ? IImage.UNSPECIFIED : mm2Dots(h.floatValue()));
         }
 
         String position = null;
@@ -1401,35 +1456,38 @@ public class MindManagerImporter extends MindMapImporter implements
         String path = null;
         if (uri.startsWith(MMARCH)) {
             String mmEntryPath = uri.substring(MMARCH.length());
-            ZipEntry mmEntry = sourceFile.getEntry(mmEntryPath);
-            if (mmEntry != null) {
+//            ZipEntry mmEntry = sourceFile.getEntry(mmEntryPath);
+//            if (mmEntry != null) {
+            InputStream mmEntryStream = tempSource.getEntryStream(mmEntryPath);
+            if (mmEntryStream == null) {
+//                log(new FileNotFoundException(),
+//                        "No such entry: " + mmEntryPath); //$NON-NLS-1$
+                return null;
+            }
+//                try {
+//                    InputStream in = sourceFile.getInputStream(mmEntry);
+//                    in = new MonitoredInputStream(in, getMonitor());
+            if (proposalName != null) {
+                if (proposalName.startsWith("*.")) { //$NON-NLS-1$
+                    String ext = proposalName.substring(1);
+                    String oldName = new File(mmEntryPath).getName();
+                    proposalName = FileUtils.getNoExtensionFileName(oldName)
+                            + ext;
+                }
+            }
+            InputStream in = new MonitoredInputStream(mmEntryStream,
+                    getMonitor());
+            try {
+                IFileEntry entry = getTargetWorkbook().getManifest()
+                        .createAttachmentFromStream(in, proposalName);
+                path = entry.getPath();
+            } catch (IOException e) {
+                log(e, "Failed to create attachment from: " //$NON-NLS-1$
+                        + mmEntryPath);
+            } finally {
                 try {
-                    InputStream in = sourceFile.getInputStream(mmEntry);
-                    in = new MonitoredInputStream(in, getMonitor());
-                    if (proposalName != null) {
-                        if (proposalName.startsWith("*.")) { //$NON-NLS-1$
-                            String ext = proposalName.substring(1);
-                            String oldName = new File(mmEntryPath).getName();
-                            proposalName = FileUtils
-                                    .getNoExtensionFileName(oldName)
-                                    + ext;
-                        }
-                    }
-                    try {
-                        IFileEntry entry = getTargetWorkbook().getManifest()
-                                .createAttachmentFromStream(in, proposalName);
-                        path = entry.getPath();
-                    } catch (IOException e) {
-                        log(e, "Failed to create attachment from: " //$NON-NLS-1$
-                                + mmEntryPath);
-                    } finally {
-                        try {
-                            in.close();
-                        } catch (IOException e) {
-                        }
-                    }
+                    in.close();
                 } catch (IOException e) {
-                    log(e, "No such entry: " + mmEntryPath); //$NON-NLS-1$
                 }
             }
         }
@@ -1614,18 +1672,18 @@ public class MindManagerImporter extends MindMapImporter implements
     private void loadFont(Element fontEle, IStyled styleOwner)
             throws InterruptedException {
         checkInterrupted();
-        registerStyle(styleOwner, Styles.TextColor, parseColor(att(fontEle,
-                "Color"))); //$NON-NLS-1$
+        registerStyle(styleOwner, Styles.TextColor,
+                parseColor(att(fontEle, "Color"))); //$NON-NLS-1$
         registerStyle(styleOwner, Styles.FontFamily, att(fontEle, "Name")); //$NON-NLS-1$
-        registerStyle(styleOwner, Styles.FontSize, parseFontSize(att(fontEle,
-                "Size"))); //$NON-NLS-1$
+        registerStyle(styleOwner, Styles.FontSize,
+                parseFontSize(att(fontEle, "Size"))); //$NON-NLS-1$
         registerStyle(styleOwner, Styles.FontWeight, Boolean.parseBoolean(att(
                 fontEle, "Bold")) ? Styles.FONT_WEIGHT_BOLD : null); //$NON-NLS-1$
         registerStyle(styleOwner, Styles.FontStyle, Boolean.parseBoolean(att(
                 fontEle, "Italic")) ? Styles.FONT_STYLE_ITALIC : null); //$NON-NLS-1$
-        String textDecoration = StyleUtils.toTextDecoration(Boolean
-                .parseBoolean(att(fontEle, "Underline")), Boolean //$NON-NLS-1$
-                .parseBoolean(att(fontEle, "Strikethrough"))); //$NON-NLS-1$
+        String textDecoration = StyleUtils.toTextDecoration(
+                Boolean.parseBoolean(att(fontEle, "Underline")), Boolean //$NON-NLS-1$
+                        .parseBoolean(att(fontEle, "Strikethrough"))); //$NON-NLS-1$
         registerStyle(styleOwner, Styles.TextDecoration, textDecoration);
     }
 
@@ -1829,10 +1887,9 @@ public class MindManagerImporter extends MindMapImporter implements
         if (documentBuilder == null) {
             DocumentBuilderFactory factory = DocumentBuilderFactory
                     .newInstance();
-            factory
-                    .setAttribute(
-                            "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                            true);
+            factory.setAttribute(
+                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+                    true);
             documentBuilder = factory.newDocumentBuilder();
         }
         return documentBuilder;

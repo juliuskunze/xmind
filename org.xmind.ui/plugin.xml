@@ -25,6 +25,15 @@
             icon="icons/xmind.16.gif"
             id="org.xmind.ui.MindMapEditor"
             name="%editor.mindMapEditor.name">
+         <contentTypeBinding
+               contentTypeId="org.xmind.contenttypes.xmind">
+         </contentTypeBinding>
+         <contentTypeBinding
+               contentTypeId="org.xmind.contenttypes.xmap">
+         </contentTypeBinding>
+         <contentTypeBinding
+               contentTypeId="org.xmind.contenttypes.xmt">
+         </contentTypeBinding>
       </editor>
    </extension>
    <extension
@@ -418,6 +427,12 @@
             id="org.xmind.ui.command.text.outdent"
             name="%command.text.outdent.name">
       </command>
+      <command
+            categoryId="org.xmind.ui.category.mindmap"
+            description="%command.newWorkbookDialog.description"
+            id="org.xmind.ui.command.newWorkbookWizard"
+            name="%command.newWorkbookDialog.name">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.contexts">
@@ -456,6 +471,12 @@
             id="org.xmind.ui.context.notes.edit"
             name="%context.inNotesView.name"
             parentId="org.eclipse.ui.contexts.window">
+      </context>
+      <context
+            description="%context.inBackCover.description"
+            id="org.xmind.ui.context.backcover"
+            name="%context.inBackCover.name"
+            parentId="org.xmind.ui.context.mindmap">
       </context>
    </extension>
    <extension
@@ -873,14 +894,14 @@
             name="%dndClient.element.name">
       </dndClient>
       <dndClient
-            class="org.xmind.ui.internal.dnd.URLDndClient"
-            id="org.xmind.ui.dnd.url"
-            name="%dndClient.url.name">
-      </dndClient>
-      <dndClient
             class="org.xmind.ui.internal.dnd.FileDndClient"
             id="org.xmind.ui.dnd.file"
             name="%dndClient.file.name">
+      </dndClient>
+      <dndClient
+            class="org.xmind.ui.internal.dnd.URLDndClient"
+            id="org.xmind.ui.dnd.url"
+            name="%dndClient.url.name">
       </dndClient>
       <dndClient
             class="org.xmind.ui.internal.dnd.TextDndClient"
@@ -1627,7 +1648,7 @@
             category="org.xmind.ui.views.mindmap"
             class="org.xmind.ui.internal.views.OverviewView"
             icon="icons/e/overview.gif"
-            id="org.xmind.ui.OverviewBiew"
+            id="org.xmind.ui.OverviewView"
             name="%view.overview.name">
       </view>
       <view
@@ -1650,6 +1671,14 @@
             id="org.xmind.ui.views.mindmap"
             name="%viewCategory.mindmap.name">
       </category>
+      <view
+            category="org.xmind.ui.views.mindmap"
+            class="org.xmind.ui.internal.views.RevisionsView"
+            icon="icons/e/revisions.gif"
+            id="org.xmind.ui.RevisionsView"
+            name="%view.revisions.name"
+            restorable="true">
+      </view>
    </extension>
    <extension
          point="org.eclipse.ui.newWizards">
@@ -1661,7 +1690,6 @@
             canFinishEarly="true"
             category="org.xmind.ui.wizards.mindmapping"
             class="org.xmind.ui.internal.wizards.NewUntitledWorkbookWizard"
-            finalPerspective="org.xmind.ui.perspective.mindmapping"
             hasPages="false"
             icon="icons/xmind.16.gif"
             id="org.xmind.ui.NewUntitledMindMapWizard"
@@ -1671,7 +1699,6 @@
             canFinishEarly="true"
             category="org.xmind.ui.wizards.mindmapping"
             class="org.xmind.ui.internal.wizards.NewFromTemplateWizard"
-            finalPerspective="org.xmind.ui.perspective.mindmapping"
             hasPages="false"
             icon="icons/xmind.16.gif"
             id="org.xmind.ui.NewFromTemplateWizard"
@@ -1680,7 +1707,6 @@
       <wizard
             category="org.xmind.ui.wizards.mindmapping"
             class="org.xmind.ui.internal.wizards.NewWorkbookWizard"
-            finalPerspective="org.xmind.ui.perspective.mindmapping"
             icon="icons/xmind.16.gif"
             id="org.xmind.ui.NewTitledMindMapWizard"
             name="%newWizard.mindMapWorkbook.name">
@@ -2545,5 +2571,47 @@
             class="org.xmind.ui.internal.editor.XMindFileBrowserContribution"
             id="org.xmind.ui.browserContribution.xmindFileListener">
       </contribution>
+   </extension>
+   <extension
+         point="org.eclipse.core.contenttype.contentTypes">
+      <content-type
+            file-extensions="xmind"
+            id="org.xmind.contenttypes.xmind"
+            name="%contentType.defaultWorkbook.name"
+            priority="normal">
+      </content-type>
+      <content-type
+            file-extensions="xmap"
+            id="org.xmind.contenttypes.xmap"
+            name="%contentType.legacyWorkbook.name"
+            priority="normal">
+      </content-type>
+      <content-type
+            file-extensions="xmt"
+            id="org.xmind.contenttypes.xmt"
+            name="%contentType.templateFile.name"
+            priority="normal">
+      </content-type>
+      <content-type
+            file-extensions="xmp"
+            id="org.xmind.contenttypes.xmp"
+            name="%contentType.markerPackageFile.name"
+            priority="normal">
+      </content-type>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editorActions">
+      <editorContribution
+            id="org.xmind.ui.RevisionsContribution"
+            targetID="org.xmind.ui.MindMapEditor">
+         <action
+               class="org.xmind.ui.internal.actions.ShowRevisionsActionDelegate"
+               icon="icons/e/revisions.gif"
+               id="org.xmind.ui.viewRevisions"
+               label="%editorAction.revisions.label"
+               menubarPath="file/save.ext"
+               style="push">
+         </action>
+      </editorContribution>
    </extension>
 </plugin>

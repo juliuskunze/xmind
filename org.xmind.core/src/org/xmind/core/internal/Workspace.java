@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -21,6 +21,8 @@ import org.xmind.core.util.FileUtils;
 
 public class Workspace implements IWorkspace {
 
+    private static final String P_WORKSPACE = "org.xmind.core.workspace"; //$NON-NLS-1$
+
     private String workingDirectory = null;
 
     public String getAbsolutePath(String subPath) {
@@ -34,6 +36,7 @@ public class Workspace implements IWorkspace {
     public String getWorkingDirectory() {
         if (workingDirectory == null) {
             workingDirectory = getDefaultWorkingDirectory();
+            System.setProperty(P_WORKSPACE, workingDirectory);
         }
         return workingDirectory;
     }
@@ -41,13 +44,14 @@ public class Workspace implements IWorkspace {
     private String getDefaultWorkingDirectory() {
         String homeDir = System.getProperty("user.home"); //$NON-NLS-1$
         if (homeDir != null) {
-            return homeDir + "/Library/xmind"; //$NON-NLS-1$
+            return homeDir + "/Library/XMind/workspace-cathy/.xmind"; //$NON-NLS-1$
         }
-        return "/"; //$NON-NLS-1$
+        return ""; //$NON-NLS-1$
     }
 
     public void setWorkingDirectory(String path) {
         this.workingDirectory = path;
+        System.setProperty(P_WORKSPACE, path);
     }
 
     public String getTempDir() {

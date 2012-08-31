@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -27,7 +27,17 @@ public interface IBrowserSupport {
 
     int AS_EDITOR = 1 << 2;
 
+    int NO_LOCATION_BAR = 1 << 10;
+
+    int NO_EXTRA_CONTRIBUTIONS = 1 << 11;
+
+    int NO_TOOLBAR = 1 << 12;
+
     int AS_INTERNAL = AS_VIEW | AS_EDITOR;
+
+    int IMPL_TYPES = AS_EXTERNAL | AS_INTERNAL;
+
+    int INTERNAL_STYLES = NO_LOCATION_BAR | NO_EXTRA_CONTRIBUTIONS | NO_TOOLBAR;
 
     IBrowser createBrowser(int style, String browserClientId, String name,
             String tooltip);

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,9 +13,11 @@
  *******************************************************************************/
 package org.xmind.gef.draw2d.geometry;
 
+import java.io.Serializable;
+
 import org.eclipse.draw2d.geometry.Dimension;
 
-public class PrecisionDimension {
+public class PrecisionDimension implements Serializable {
 
     /**
      * 
@@ -85,8 +87,8 @@ public class PrecisionDimension {
     }
 
     public Dimension toDraw2DDimension() {
-        return new Dimension((int) Math.floor(width + 0.000000001), (int) Math
-                .floor(height + 0.000000001));
+        return new Dimension((int) Math.floor(width + 0.000000001),
+                (int) Math.floor(height + 0.000000001));
     }
 
     public Dimension toBiggerDraw2DDimension() {

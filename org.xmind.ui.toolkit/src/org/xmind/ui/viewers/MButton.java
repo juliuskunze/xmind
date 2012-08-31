@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -126,8 +126,8 @@ public class MButton extends Viewer {
      * @see #NO_ARROWS
      */
     public MButton(Composite parent, int style) {
-        this.style = checkStyle(style, NORMAL, NORMAL, NO_TEXT, NO_IMAGE,
-                NO_ARROWS);
+        this.style = checkStyle(style, NORMAL, NORMAL, NO_TEXT, NO_IMAGE)
+                | checkStyle(style, SWT.NONE, NO_ARROWS);
         this.control = new Canvas(parent, SWT.DOUBLE_BUFFERED) {
             public Point computeSize(int wHint, int hHint, boolean changed) {
                 checkWidget();

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,12 +14,8 @@
 package org.xmind.core.internal.dom;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -32,10 +28,9 @@ import org.xmind.core.CoreException;
 import org.xmind.core.IEncryptionHandler;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.AbstractWorkbookBuilder;
-import org.xmind.core.internal.zip.ZipFileInputSource;
+import org.xmind.core.io.ByteArrayStorage;
 import org.xmind.core.io.DirectoryStorage;
 import org.xmind.core.io.IInputSource;
-import org.xmind.core.io.IOutputTarget;
 import org.xmind.core.io.IStorage;
 import org.xmind.core.util.FileUtils;
 import org.xml.sax.ErrorHandler;
@@ -44,61 +39,6 @@ import org.xml.sax.SAXParseException;
 
 public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
         ErrorHandler {
-
-//    private class WorkbookXMLLoader extends XMLLoader {
-//
-//        protected Document doLoadXMLFile(IInputSource source, String entryName)
-//                throws CoreException, IOException {
-//            InputStream stream = source.getEntryStream(entryName);
-//
-//            if (stream == null) {
-//                throw new CoreException(Core.ERROR_NO_SUCH_ENTRY);
-//            }
-//            try {
-//                DocumentBuilder loader = getDocumentLoader();
-//                Document doc = loader.parse(stream);
-//
-//                if (stream instanceof IChecksumStream) {
-//                    String checksum = ((IChecksumStream) stream).getChecksum();
-//                    if (checksum != null) {
-//                        Map<String, EncryptionData> map = ((DecryptedInputSource) source)
-//                                .getEncryptionDataMap();
-//                        EncryptionData encData = map.get(entryName);
-//                        String check = encData.getChecksum();
-//                        if (!check.equals(checksum))
-//                            throw new CoreException(Core.ERROR_WRONG_PASSWORD);
-//                    }
-//                }
-//
-//                return doc;
-//            } catch (Throwable e) {
-//                CoreException coreException = new CoreException(
-//                        Core.ERROR_FAIL_PARSING_XML, e);
-//
-//                if (stream instanceof IChecksumStream) {
-////                        || stream instanceof BlockCipherInputStream) {
-//                    String checksum = ((IChecksumStream) stream).getChecksum();
-//                    if (checksum != null) {
-//                        Map<String, EncryptionData> map = ((DecryptedInputSource) source)
-//                                .getEncryptionDataMap();
-//                        EncryptionData encData = map.get(entryName);
-//                        String check = encData.getChecksum();
-//                        if (!check.equals(checksum))
-//                            coreException = new CoreException(
-//                                    Core.ERROR_WRONG_PASSWORD, e);
-//                    }
-//                }
-//                throw coreException;
-//            } finally {
-//                source.releaseStream(stream);
-//            }
-//        }
-//
-//        public Document createDocument() {
-//            return WorkbookBuilderImpl.this.createDocument();
-//        }
-//
-//    }
 
     private DocumentBuilder documentCreator = null;
 
@@ -138,10 +78,9 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
         if (documentLoader == null) {
             DocumentBuilderFactory factory = DocumentBuilderFactory
                     .newInstance();
-            factory
-                    .setAttribute(
-                            "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                            Boolean.TRUE);
+            factory.setAttribute(
+                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+                    Boolean.TRUE);
             factory.setNamespaceAware(true);
             try {
                 documentLoader = factory.newDocumentBuilder();
@@ -206,26 +145,6 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
      * (non-Javadoc)
      * 
      * @see
-     * org.xmind.core.internal.AbstractWorkbookBuilder#doLoadFromFile(java.io
-     * .File, org.xmind.core.io.IStorage, org.xmind.core.IEncryptionHandler)
-     */
-    @Override
-    protected IWorkbook doLoadFromFile(File file, IStorage storage,
-            IEncryptionHandler encryptionHandler) throws IOException,
-            CoreException, FileNotFoundException {
-        ZipFile zipFile = new ZipFile(file);
-        try {
-            return loadFromInputSource(new ZipFileInputSource(zipFile),
-                    storage, encryptionHandler);
-        } finally {
-            zipFile.close();
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
      * org.xmind.core.internal.AbstractWorkbookBuilder#doLoadFromSteam(java.
      * io.InputStream, org.xmind.core.io.IStorage,
      * org.xmind.core.IEncryptionHandler)
@@ -233,50 +152,23 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
     protected IWorkbook doLoadFromSteam(InputStream in, IStorage storage,
             IEncryptionHandler encryptionHandler) throws IOException,
             CoreException {
-        File tempDir = createTempDir();
+        // ZipInputStream has some stability issues, so we have to extract
+        // contents into a transient folder first.
+        File tempDir = new File(Core.getWorkspace().getTempDir(
+                "transient/" + Core.getIdFactory().createId())); //$NON-NLS-1$
+        FileUtils.ensureDirectory(tempDir);
         IStorage tempStorage = new DirectoryStorage(tempDir);
         try {
-            IOutputTarget tempTarget = tempStorage.getOutputTarget();
             ZipInputStream zin = new ZipInputStream(in);
             try {
-                copyAll(zin, tempTarget);
+                FileUtils.extractZipFile(zin, tempStorage.getOutputTarget());
             } finally {
                 zin.close();
             }
-
             return loadFromInputSource(tempStorage.getInputSource(), storage,
                     encryptionHandler);
         } finally {
-            FileUtils.delete(tempDir);
-        }
-    }
-
-    private File createTempDir() {
-        File tempDir = new File(Core.getWorkspace().getTempDir(
-                Core.getIdFactory().createId()));
-        return tempDir;
-    }
-
-    private void copyAll(ZipInputStream zin, IOutputTarget target)
-            throws IOException {
-        ZipEntry entry;
-        while ((entry = zin.getNextEntry()) != null) {
-            String entryPath = entry.getName();
-            if (!entry.isDirectory()) {
-                if (target.isEntryAvaialble(entryPath)) {
-                    OutputStream out = target.getEntryStream(entryPath);
-                    if (out != null) {
-                        try {
-                            FileUtils.transfer(zin, out, false);
-                        } finally {
-                            try {
-                                out.close();
-                            } catch (IOException ignore) {
-                            }
-                        }
-                    }
-                }
-            }
+            tempStorage.clear();
         }
     }
 
@@ -291,254 +183,15 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
     public IWorkbook loadFromInputSource(IInputSource source, IStorage storage,
             IEncryptionHandler encryptionHandler) throws IOException,
             CoreException {
+        if (storage == null) {
+            storage = new ByteArrayStorage();
+        }
         if (encryptionHandler == null) {
             encryptionHandler = this.defaultEncryptionHandler;
         }
         return new WorkbookLoader(this, source, storage, encryptionHandler)
                 .load();
     }
-
-//    public IWorkbook loadFromFile(File file,
-//            IEncryptionHandler encryptionHandler) throws IOException,
-//            CoreException {
-//
-//        if (file == null)
-//            throw new IllegalArgumentException();
-//        if (!file.exists())
-//            throw new FileNotFoundException();
-//
-//        if (file.isDirectory()) {
-//            // load from temp directory
-//            return loadWorkbook(new DirectoryInputSource(file), null,
-//                    encryptionHandler);
-//        }
-//
-//        // load from zip file
-//        return loadWorkbook(new ZipFileInputSource(file), null,
-//                encryptionHandler);
-//    }
-//
-//    public IWorkbook loadFromTempLocation(String tempLocation)
-//            throws IOException, CoreException {
-//        if (tempLocation == null)
-//            throw new IllegalArgumentException("Temp location is null"); //$NON-NLS-1$
-//
-//        File file = new File(tempLocation);
-//        if (file.isDirectory())
-//            throw new IllegalArgumentException(
-//                    "Temp location is not a directory"); //$NON-NLS-1$
-//
-//        return loadFromStorage(new DirectoryStorage(file));
-//
-////        IWorkbook workbook = loadFromInputSource(new DirectoryInputSource(
-////                tempLocation), null, null);
-////
-////        workbook.setTempLocation(tempLocation);
-////        return workbook;
-//    }
-//
-//    public IWorkbook loadFromStream(InputStream in, String tempLocation,
-//            IEncryptionHandler encryptionHandler) throws IOException,
-//            CoreException {
-//        if (in == null)
-//            throw new IllegalArgumentException("Input stream is null"); //$NON-NLS-1$
-//
-//        if (tempLocation != null) {
-//            File file = new File(tempLocation);
-//            if (!file.isDirectory()) {
-//                return loadFromStream(in, new DirectoryStorage(file),
-//                        encryptionHandler);
-//            }
-//        }
-//        return loadFromStream(in, (IStorage) null, encryptionHandler);
-//    }
-//
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see org.xmind.core.IWorkbookBuilder#loadFromStream(java.io.InputStream,
-//     * org.xmind.core.io.IArchive, org.xmind.core.IEncryptionHandler)
-//     */
-//    public IWorkbook loadFromStream(InputStream in, IStorage storage,
-//            IEncryptionHandler encryptionHandler) throws IOException,
-//            CoreException {
-//        if (in == null)
-//            throw new IllegalArgumentException("Input stream is null"); //$NON-NLS-1$
-//
-//        if (storage == null) {
-//            storage = new ByteArrayStorage();
-//        }
-//
-//        File tempDir = createTempDir();
-//        IStorage tempStorage = new DirectoryStorage(tempDir);
-//        try {
-//            IOutputTarget tempTarget = tempStorage.getOutputTarget();
-//            if (tempTarget.open()) {
-//                ZipInputStream zin = new ZipInputStream(in);
-//                try {
-//                    copyAll(zin, tempTarget);
-//                } finally {
-//                    zin.close();
-//                    tempTarget.close();
-//                }
-//            }
-//
-//            return loadWorkbook(tempStorage.getInputSource(), storage,
-//                    encryptionHandler);
-//        } finally {
-//            FileUtils.delete(tempDir);
-//        }
-//
-////        IWorkbook workbook = loadFromInputSource(new DirectoryInputSource(
-////                tempLocation), null, encryptionHandler);
-////
-////        workbook.setTempLocation(tempLocation);
-////        return workbook;
-//    }
-//
-//
-//
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see
-//     * org.xmind.core.IWorkbookBuilder#loadFromStorage(org.xmind.core.io.IStorage
-//     * )
-//     */
-//    public IWorkbook loadFromStorage(IStorage storage) throws IOException,
-//            CoreException {
-//        return loadFromStorage(storage, null);
-//    }
-//
-//    public IWorkbook loadFromStorage(IStorage storage,
-//            IEncryptionHandler encryptionHandler) throws IOException,
-//            CoreException {
-//        return loadWorkbook(null, storage, encryptionHandler);
-//    }
-//
-//    private IWorkbook loadWorkbook(IInputSource source, IStorage storage,
-//            IEncryptionHandler encryptionHandler) throws IOException,
-//            CoreException {
-//        return new WorkbookLoader(this, source, storage, encryptionHandler)
-//                .load();
-//    }
-//
-//    /**
-//     * @param source
-//     * @param encryptionHandler
-//     * @return
-//     */
-//    private IWorkbook doLoad(IInputSource source, IStorage storage,
-//            IEncryptionHandler encryptionHandler) throws IOException,
-//            CoreException {
-//        WorkbookXMLLoader xmlLoader = new WorkbookXMLLoader();
-//
-//        // load manifest
-//        Document mfImpl = xmlLoader.loadXMLFile(source, MANIFEST_XML);
-//
-//        DecryptedInputSource decryptedSource = new DecryptedInputSource(source,
-//                encryptionHandler == null ? this.encryptionHandler
-//                        : encryptionHandler, mfImpl);
-//        source = decryptedSource;
-//
-//        IWorkbook compatible = Compatibility.loadCompatibleWorkbook(source,
-//                xmlLoader);
-//        if (compatible != null) {
-//            if (storage != null) {
-//                compatible.setStorage(storage);
-//            }
-//            return compatible;
-//        }
-//        // load workbook contents
-//
-//        Document wbImpl = xmlLoader.loadXMLFile(source, CONTENT_XML);
-//
-//        Element wbEle = wbImpl.getDocumentElement();
-//        if (wbEle == null)
-//            throw new CoreException(Core.ERROR_NO_WORKBOOK_CONTENT, CONTENT_XML);
-//
-//        WorkbookImpl workbook = new WorkbookImpl(wbImpl);
-//
-//        ManifestImpl mf = new ManifestImpl(mfImpl);
-//        mf.setWorkbook(workbook);
-//        initManifest(mf);
-//        workbook.setManifest(mf);
-//
-//        if (source.hasEntry(STYLES_XML)) {
-//            Document styDoc = xmlLoader.loadXMLFile(source, STYLES_XML);
-//            if (styDoc != null) {
-//                StyleSheetImpl sheet = new StyleSheetImpl(styDoc);
-//                initStyle(sheet);
-//                workbook.setStyleSheet(sheet);
-//                sheet.setManifest(workbook.getManifest());
-//            }
-//        }
-//
-//        InputStream msStream = source.getEntryStream(PATH_MARKER_SHEET);
-//        if (msStream != null) {
-//            try {
-//                WorkbookMarkerResourceProvider resourceProvider = new WorkbookMarkerResourceProvider(
-//                        workbook);
-//                IMarkerSheet ms = Core.getMarkerSheetBuilder().loadFromStream(
-//                        msStream, resourceProvider);
-//                if (ms != null) {
-//                    workbook.setMarkerSheet((MarkerSheetImpl) ms);
-//                }
-//            } catch (IOException e) {
-//            } catch (CoreException e) {
-//            } finally {
-//                source.releaseStream(msStream);
-//            }
-//        }
-//        try {
-//            Document metaDocument = xmlLoader.loadXMLFile(source, META_XML);
-//            if (metaDocument != null) {
-//                MetaImpl meta = new MetaImpl(metaDocument);
-//                workbook.setMeta(meta);
-//            }
-//        } catch (IOException e) {
-//        } catch (CoreException e) {
-//        }
-//
-//        // initialize workbook contents
-//        initWorkbookContents(workbook);
-//        workbook.setPassword(decryptedSource.getPassword());
-//        IArchivedWorkbook archived = workbook.getArchivedWorkbook();
-//        if (archived instanceof ArchivedWorkbook) {
-//            ((ArchivedWorkbook) archived).setEncryptionDataMap(decryptedSource
-//                    .getEncryptionDataMap());
-//        }
-//        return workbook;
-//    }
-//
-//    /**
-//     * @param sheet
-//     */
-//    private void initStyle(StyleSheetImpl sheet) {
-//        for (IStyle style : sheet.getAllStyles()) {
-//            init(style);
-//        }
-//    }
-//
-//    /**
-//     * @param style
-//     */
-//    private void init(IStyle style) {
-//    }
-//
-//    private void initManifest(ManifestImpl mf) {
-//        mf.getFileEntries();
-//    }
-//
-//    private void initWorkbookContents(IWorkbook workbook) {
-//        for (ISheet s : workbook.getSheets()) {
-//            initSheet(s, workbook);
-//        }
-//    }
-//
-//    private void initSheet(ISheet s, IWorkbook wb) {
-//        ((SheetImpl) s).addNotify((WorkbookImpl) wb);
-//    }
 
     public void error(SAXParseException exception) throws SAXException {
         Core.getLogger().log(exception, "Error while loading workbook"); //$NON-NLS-1$

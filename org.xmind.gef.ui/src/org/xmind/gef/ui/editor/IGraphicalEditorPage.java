@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -27,6 +27,12 @@ import org.xmind.gef.IGraphicalViewer;
  */
 public interface IGraphicalEditorPage extends IDisposable2, IAdaptable,
         IInputProvider {
+
+    /**
+     * A viewer property to set/get this editor page instance to/from its nested
+     * viewer via {@link org.xmind.gef.IViewer#getProperties()}.
+     */
+    String VIEWER_EDITOR_PAGE = "editorPage"; //$NON-NLS-1$
 
     String getPageTitle();
 

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -24,21 +24,26 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IEditorPart;
 import org.xmind.core.Core;
 import org.xmind.core.CoreException;
 import org.xmind.core.IEncryptionHandler;
+import org.xmind.core.IRevision;
+import org.xmind.core.IRevisionManager;
+import org.xmind.core.IRevisionRepository;
+import org.xmind.core.ISheet;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegistration;
 import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.core.event.ICoreEventSupport;
+import org.xmind.core.internal.dom.WorkbookImpl;
 import org.xmind.core.io.DirectoryStorage;
 import org.xmind.core.io.IStorage;
 import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.gef.command.ICommandStack;
+import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.mindmap.IWorkbookRef;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -73,7 +78,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
 
     private ICoreEventRegistration forceDirtyReg;
 
-//    private Set<IWorkbenchPage> hookedPages;
+    private boolean previewOutdated = false;
 
     public WorkbookRef() {
         MindMapUIPlugin.getDefault().getPreferenceStore()
@@ -92,18 +97,24 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         return workbookSaver;
     }
 
-    public WorkbookRef setWorkbookLoader(IWorkbookLoader workbookLoader) {
+    public void setWorkbookLoader(IWorkbookLoader workbookLoader) {
         this.workbookLoader = workbookLoader;
-        return this;
     }
 
-    public WorkbookRef setWorkbookSaver(IWorkbookSaver workbookSaver) {
+    public void setWorkbookSaver(IWorkbookSaver workbookSaver) {
         this.workbookSaver = workbookSaver;
-        return this;
     }
 
     public boolean isReady() {
         return workbook != null || workbookLoader != null;
+    }
+
+    public void setPreviewOutdated(boolean previewOutdated) {
+        this.previewOutdated = previewOutdated;
+    }
+
+    public boolean isPreviewOutdated() {
+        return previewOutdated;
     }
 
     public void setWorkbook(IWorkbook workbook) {
@@ -150,32 +161,13 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         return workbook;
     }
 
-    public void setSelection(ISelection selection, boolean reveal,
-            boolean forceFocus) {
-        IWorkbookReferrer referrer = getPrimaryReferrer();
-        if (referrer != null) {
-            referrer.setSelection(selection, reveal, forceFocus);
-        }
-//        if (referrers != null && !referrers.isEmpty()) {
-//            IEditorPart editor = referrers.get(0);
-//            if (editor != null) {
-//                ISelectionProvider selectionProvider = editor.getSite()
-//                        .getSelectionProvider();
-//                if (selectionProvider != null) {
-//                    selectionProvider.setSelection(selection);
-//                }
-//                if (forceFocus) {
-//                    editor.getSite().getPage().activate(editor);
-//                    Shell shell = editor.getSite().getShell();
-//                    if (shell != null && !shell.isDisposed()) {
-//                        shell.setActive();
-//                    }
-//                } else if (reveal) {
-//                    editor.getSite().getPage().bringToTop(editor);
-//                }
-//            }
+//    public void setSelection(ISelection selection, boolean reveal,
+//            boolean forceFocus) {
+//        IWorkbookReferrer referrer = getPrimaryReferrer();
+//        if (referrer != null) {
+//            referrer.setSelection(selection, reveal, forceFocus);
 //        }
-    }
+//    }
 
     /*
      * (non-Javadoc)
@@ -231,19 +223,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         if (referrers == null)
             referrers = new ArrayList<IWorkbookReferrer>(2);
         referrers.add(0, referrer);
-//        addPartListener(referrer);
     }
-
-//    private void addPartListener(IEditorPart editor) {
-//        IWorkbenchPage page = editor.getSite().getPage();
-//        if (hookedPages == null) {
-//            hookedPages = new HashSet<IWorkbenchPage>(2);
-//        }
-//        if (!hookedPages.contains(page)) {
-//            hookedPages.add(page);
-//            page.addPartListener(this);
-//        }
-//    }
 
     public List<IWorkbookReferrer> getReferrers() {
         return referrers == null ? EMPTY_LIST : referrers;
@@ -266,27 +246,31 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         if (referrers == null)
             return;
         referrers.remove(referrer);
-//        removePartListener(referrer);
         if (referrers.isEmpty())
             referrers = null;
     }
 
-//    private void removePartListener(IEditorPart editor) {
-//        if (hookedPages == null)
-//            return;
-//        IWorkbenchPage page = editor.getSite().getPage();
-//        if (hookedPages.remove(page)) {
-//            page.removePartListener(this);
-//        }
-//        if (hookedPages.isEmpty()) {
-//            hookedPages = null;
-//        }
-//    }
+    public boolean isContentDirty() {
+        if (workbook == null)
+            return false;
+        if (getCommandStack() != null && getCommandStack().isDirty())
+            return true;
+        return workbook instanceof ICoreEventSource2
+                && ((ICoreEventSource2) workbook)
+                        .hasOnceListeners(Core.WorkbookPreSaveOnce);
+    }
 
+    public boolean isDirty() {
+        return isContentDirty() || isPreviewOutdated();
+    }
+
+    /**
+     * @deprecated
+     */
     public List<IEditorPart> getOpenedEditors() {
         if (referrers != null && !referrers.isEmpty()) {
-            List<IEditorPart> editors = new ArrayList<IEditorPart>(referrers
-                    .size());
+            List<IEditorPart> editors = new ArrayList<IEditorPart>(
+                    referrers.size());
             for (IWorkbookReferrer r : referrers) {
                 if (r instanceof IEditorPart) {
                     editors.add((IEditorPart) r);
@@ -295,11 +279,11 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
             return editors;
         }
         return EMPTY_EDITORS;
-//        if (referrers == null)
-//            return EMPTY_LIST;
-//        return referrers;
     }
 
+    /**
+     * @deprecated
+     */
     public void forceDirty() {
         if (forceDirtyReg == null || !forceDirtyReg.isValid()) {
             if (workbook instanceof ICoreEventSource2) {
@@ -313,6 +297,9 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public boolean isForceDirty() {
         return forceDirtyReg != null && forceDirtyReg.isValid();
     }
@@ -339,7 +326,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
                 monitor));
     }
 
-    IStorage createStorage() {
+    static IStorage createStorage() {
         String tempFile = Core.getIdFactory().createId()
                 + MindMapUI.FILE_EXT_XMIND_TEMP;
         String tempLocation = Core.getWorkspace().getTempDir(
@@ -353,8 +340,16 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         return workbook != null && workbookSaver != null;
     }
 
-    public void saveWorkbook(IProgressMonitor monitor) throws IOException,
-            CoreException, org.eclipse.core.runtime.CoreException {
+    public boolean canSaveToTarget() {
+        return workbook != null && workbookSaver != null
+                && workbookSaver.canSaveToTarget();
+    }
+
+    public void saveWorkbook(IProgressMonitor monitor,
+            IWorkbookReferrer previewSaver, boolean skipNewRevisions)
+            throws IOException, CoreException,
+            org.eclipse.core.runtime.CoreException {
+        monitor.beginTask(null, 100);
         if (workbook == null)
             throw new org.eclipse.core.runtime.CoreException(new Status(
                     IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
@@ -363,21 +358,49 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
             throw new org.eclipse.core.runtime.CoreException(new Status(
                     IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
                     "No workbook saver has been set.")); //$NON-NLS-1$
-        savePreview(monitor);
+
+        // Leave 1 tick for finalizing work:
+        int mainWorkTicks = 99;
+
+        if (!skipNewRevisions) {
+            monitor.subTask(MindMapMessages.WorkbookSaver_CreateRevisions_taskName);
+            saveRevisions(monitor);
+        }
+        monitor.worked(10);
+        mainWorkTicks -= 10;
+
+        if (previewSaver != null) {
+            monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
+            savePreview(monitor);
+        } else {
+            setPreviewOutdated(true);
+        }
+        monitor.worked(10);
+        mainWorkTicks -= 10;
+
+        monitor.subTask(MindMapMessages.WorkbookSaver_SaveWorkbookContent_taskName);
         workbookSaver.save(monitor, workbook);
-        for (IWorkbookReferrer referrer : referrers) {
+        monitor.worked(mainWorkTicks);
+
+        monitor.subTask(MindMapMessages.WorkbookSaver_Finalize_taskName);
+        for (IWorkbookReferrer referrer : getReferrers()) {
             referrer.postSave(monitor);
         }
+
+        monitor.done();
     }
 
-    public void saveWorkbookAs(Object newKey, IProgressMonitor monitor)
+    public void saveWorkbookAs(Object newKey, IProgressMonitor monitor,
+            IWorkbookReferrer previewSaver, boolean skipNewRevisions)
             throws IOException, CoreException,
             org.eclipse.core.runtime.CoreException {
+        monitor.beginTask(null, 100);
         if (workbook == null)
             throw new org.eclipse.core.runtime.CoreException(new Status(
                     IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
                     "No workbook to save.")); //$NON-NLS-1$
 
+        monitor.subTask(MindMapMessages.WorkbookSaver_PrepareNewSaveTarget_taskName);
         Object oldKey = getKey();
         setKey(newKey);
         setWorkbookLoader(null);
@@ -389,12 +412,51 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
                     IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
                     "No workbook saver has been set.")); //$NON-NLS-1$
 
-        WorkbookRefManager.getInstance().changeKey(this, oldKey, newKey);
+        // Leave 1 tick for finalizing work:
+        int mainWorkTicks = 99;
 
+        WorkbookRefManager.getInstance().changeKey(this, oldKey, newKey);
+        monitor.worked(10);
+        mainWorkTicks -= 10;
+
+        if (!skipNewRevisions) {
+            monitor.subTask(MindMapMessages.WorkbookSaver_CreateRevisions_taskName);
+            saveRevisions(monitor);
+        }
+        monitor.worked(10);
+        mainWorkTicks -= 10;
+
+        monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
         savePreview(monitor);
+        monitor.worked(10);
+        mainWorkTicks -= 10;
+
+        monitor.subTask(MindMapMessages.WorkbookSaver_SaveWorkbookContent_taskName);
         workbookSaver.save(monitor, workbook);
-        for (IWorkbookReferrer referrer : referrers) {
+        monitor.worked(mainWorkTicks);
+
+        monitor.subTask(MindMapMessages.WorkbookSaver_Finalize_taskName);
+        for (IWorkbookReferrer referrer : getReferrers()) {
             referrer.postSaveAs(newKey, monitor);
+        }
+        monitor.done();
+    }
+
+    private void saveRevisions(IProgressMonitor monitor) throws IOException,
+            CoreException {
+        if (!isContentDirty()
+                || ((WorkbookImpl) workbook).isSkipRevisionsWhenSaving())
+            return;
+
+        IRevisionRepository repo = workbook.getRevisionRepository();
+        for (ISheet sheet : workbook.getSheets()) {
+            IRevisionManager manager = repo.getRevisionManager(sheet.getId(),
+                    IRevision.SHEET);
+            IRevision latestRevision = manager.getLatestRevision();
+            if (latestRevision == null || sheet.getModifiedTime() == 0
+                    || sheet.getModifiedTime() > latestRevision.getTimestamp()) {
+                manager.addRevision(sheet);
+            }
         }
     }
 
@@ -403,6 +465,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         if (referrer != null) {
             try {
                 referrer.savePreivew(workbook, monitor);
+                setPreviewOutdated(false);
             } catch (Throwable e) {
                 Logger.log(e, "Failed to save preview picture."); //$NON-NLS-1$
             }
@@ -412,8 +475,8 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
     public void propertyChange(PropertyChangeEvent event) {
         if (commandStack != null) {
             if (PrefConstants.UNDO_LIMIT.equals(event.getProperty())) {
-                commandStack.setUndoLimit(Math.max((Integer) event
-                        .getNewValue(), 1));
+                commandStack.setUndoLimit(Math.max(
+                        (Integer) event.getNewValue(), 1));
             }
         }
     }
@@ -424,25 +487,4 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         }
     }
 
-//    public void partActivated(IWorkbenchPart part) {
-//        if (referrers != null && referrers.remove(part)) {
-//            referrers.add(0, (IEditorPart) part);
-//        }
-//    }
-//
-//    public void partBroughtToTop(IWorkbenchPart part) {
-//        // do nothing
-//    }
-//
-//    public void partClosed(IWorkbenchPart part) {
-//        // do nothing
-//    }
-//
-//    public void partDeactivated(IWorkbenchPart part) {
-//        // do nothing
-//    }
-//
-//    public void partOpened(IWorkbenchPart part) {
-//        // do nothing
-//    }
 }

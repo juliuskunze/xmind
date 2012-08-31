@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -21,10 +21,12 @@ import java.nio.channels.FileLock;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IProduct;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.BundleContext;
 import org.xmind.core.Core;
 import org.xmind.core.internal.security.BouncyCastleSecurityProvider;
@@ -96,7 +98,11 @@ public class XmindCore extends Plugin {
     }
 
     private String findInstancePath() {
-        URL url = Platform.getInstanceLocation().getURL();
+        Location instanceLocation = Platform.getInstanceLocation();
+        if (instanceLocation == null) {
+            return getDefaultInstancePath();
+        }
+        URL url = instanceLocation.getURL();
         try {
             url = FileLocator.toFileURL(url);
         } catch (IOException e) {
@@ -108,9 +114,41 @@ public class XmindCore extends Plugin {
         return url.toExternalForm();
     }
 
+    protected String getDefaultInstancePath() {
+        String homeDir = System.getProperty("user.home"); //$NON-NLS-1$
+        String os = Platform.getOS();
+        if (Platform.OS_WIN32.equals(os)) {
+            return new File(new File(new File(homeDir, "Application Data"), //$NON-NLS-1$
+                    "XMind"), //$NON-NLS-1$
+                    "workspace-cathy").getAbsolutePath(); //$NON-NLS-1$
+        } else if (Platform.OS_MACOSX.equals(os)) {
+            return new File(new File(new File(homeDir, "Library"), //$NON-NLS-1$
+                    "XMind"), //$NON-NLS-1$
+                    "workspace-cathy").getAbsolutePath(); //$NON-NLS-1$
+        } else {
+            return new File(new File(homeDir, ".xmind"), //$NON-NLS-1$
+                    "workspace-cathy").getAbsolutePath(); //$NON-NLS-1$
+        }
+    }
+
     private String makeWorkspacePath() {
         String workspacePath = findInstancePath();
-        return new File(workspacePath, ".xmind").getAbsolutePath(); //$NON-NLS-1$
+        File oldWorkspaceDir = new File(workspacePath, ".xmind"); //$NON-NLS-1$
+        if (oldWorkspaceDir.isDirectory()) {
+            return ensureDir(oldWorkspaceDir);
+        }
+        IProduct product = Platform.getProduct();
+        if (product == null)
+            return ensureDir(oldWorkspaceDir);
+        if ("org.xmind.cathy.application".equals(product.getApplication())) { //$NON-NLS-1$
+            return workspacePath;
+        }
+        return ensureDir(oldWorkspaceDir);
+    }
+
+    private String ensureDir(File dir) {
+        dir.mkdirs();
+        return dir.getAbsolutePath();
     }
 
     /**

@@ -16,5 +16,35 @@
             class="org.xmind.ui.internal.spelling.SpellingPrefInitilizer">
       </initializer>
    </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            category="org.eclipse.ui"
+            class="org.xmind.ui.internal.spelling.SpellingCheckView"
+            icon="icons/spell-check.gif"
+            id="org.xmind.ui.SpellingCheckView"
+            name="%view.spellingCheck.name"
+            restorable="true">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.actionSets">
+      <actionSet
+            description="%actionSet.spellingCheck.description"
+            id="org.xmind.ui.actionSet.spelling"
+            label="%actionSet.spellingCheck.label"
+            visible="true">
+         <action
+               class="org.xmind.ui.internal.spelling.CheckSpellingAction"
+               disabledIcon="icons/spell-check-disabled.gif"
+               icon="icons/spell-check.gif"
+               id="org.xmind.ui.action.CheckSpelling"
+               label="%checkSpelling.text"
+               menubarPath="edit/additions"
+               style="push"
+               tooltip="%checkSpelling.toolTip">
+         </action>
+      </actionSet>
+   </extension>
 
 </plugin>

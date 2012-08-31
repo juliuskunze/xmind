@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -244,9 +244,11 @@ public abstract class FloatingTextEditTool extends EditTool {
         focusOnStart = !request.hasParameter(GEF.PARAM_FOCUS)
                 || request.isParameter(GEF.PARAM_FOCUS);
         super.handleEditRequest(request);
-        Object param = request.getParameter(GEF.PARAM_TEXT_SELECTION);
-        if (param instanceof ITextSelection) {
-            setTextSelection((ITextSelection) param);
+        if (getDomain().getActiveTool() == this) {
+            Object param = request.getParameter(GEF.PARAM_TEXT_SELECTION);
+            if (param instanceof ITextSelection) {
+                setTextSelection((ITextSelection) param);
+            }
         }
     }
 
@@ -391,8 +393,7 @@ public abstract class FloatingTextEditTool extends EditTool {
 
     protected void unhookEditor(FloatingTextEditor editor) {
         if (editorSelectionChangedListener != null)
-            editor
-                    .removeSelectionChangedListener(editorSelectionChangedListener);
+            editor.removeSelectionChangedListener(editorSelectionChangedListener);
         editor.removeFloatingTextEditorListener(getEditorListener());
     }
 

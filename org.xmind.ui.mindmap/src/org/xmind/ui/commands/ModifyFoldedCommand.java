@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -36,7 +36,7 @@ public class ModifyFoldedCommand extends ModifyCommand {
 
     protected Object getValue(Object source) {
         if (source instanceof ITopic) {
-            return ((ITopic) source).isFolded();
+            return Boolean.valueOf(((ITopic) source).isFolded());
         }
         return null;
     }

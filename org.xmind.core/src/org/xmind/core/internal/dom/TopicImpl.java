@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -317,8 +317,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
     }
 
     private List<ITopic> getChildren(Element ts) {
-        return DOMUtils.getChildList(ts, TAG_TOPIC, ownedWorkbook
-                .getAdaptableProvider());
+        return DOMUtils.getChildList(ts, TAG_TOPIC,
+                ownedWorkbook.getAdaptableRegistry());
     }
 
     public Set<String> getChildrenTypes() {
@@ -355,8 +355,10 @@ public class TopicImpl extends Topic implements ICoreEventSource {
             n = ts.appendChild(t);
         }
         if (n != null) {
-            ((TopicImpl) child).addNotify(getRealizedWorkbook(),
-                    getRealizedSheet(), this);
+            if (!isOrphan()) {
+                ((TopicImpl) child).addNotify(getRealizedWorkbook(),
+                        getRealizedSheet(), this);
+            }
             fireIndexedTargetChange(Core.TopicAdd, child, child.getIndex(),
                     type);
             updateModifiedTime();
@@ -412,7 +414,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
             if (DOMUtils.isElementByTag(p, TAG_CHILDREN)) {
                 p = p.getParentNode();
                 if (DOMUtils.isElementByTag(p, TAG_TOPIC)) {
-                    return (ITopic) ownedWorkbook.getAdaptable(p);
+                    return (ITopic) ownedWorkbook.getAdaptableRegistry()
+                            .getAdaptable(p);
                 }
             }
         }
@@ -434,7 +437,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
     public ISheet getOwnedSheet() {
         Node s = implementation.getParentNode();
         if (DOMUtils.isElementByTag(s, TAG_SHEET)) {
-            return (ISheet) ownedWorkbook.getAdaptable(s);
+            return (ISheet) ownedWorkbook.getAdaptableRegistry()
+                    .getAdaptable(s);
         }
         return super.getOwnedSheet();
     }
@@ -445,6 +449,10 @@ public class TopicImpl extends Topic implements ICoreEventSource {
     @Override
     public IWorkbook getOwnedWorkbook() {
         return ownedWorkbook;
+    }
+
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(implementation);
     }
 
     /**
@@ -480,7 +488,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
         WorkbookImpl workbook = getRealizedWorkbook();
         InternalHyperlinkUtils.deactivateHyperlink(workbook, oldValue, this);
         DOMUtils.setAttribute(implementation, ATTR_HREF, hyperlink);
-        InternalHyperlinkUtils.activateHyperlink(workbook, getHyperlink(), this);
+        InternalHyperlinkUtils
+                .activateHyperlink(workbook, getHyperlink(), this);
         String newValue = getHyperlink();
         fireValueChange(Core.TopicHyperlink, oldValue, newValue);
         updateModifiedTime();
@@ -570,7 +579,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
 
         Element m = getMarkerRefElement(markerId);
         if (m != null)
-            return (IMarkerRef) ownedWorkbook.getAdaptable(m);
+            return (IMarkerRef) ownedWorkbook.getAdaptableRegistry()
+                    .getAdaptable(m);
         return null;
     }
 
@@ -578,8 +588,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
         Element ms = getMarkerRefsElement();
         if (ms == null)
             return NO_MARKER_REFS;
-        return DOMUtils.getChildSet(ms, TAG_MARKER_REF, ownedWorkbook
-                .getAdaptableProvider());
+        return DOMUtils.getChildSet(ms, TAG_MARKER_REF,
+                ownedWorkbook.getAdaptableRegistry());
     }
 
     private Element getMarkerRefsElement() {
@@ -611,7 +621,10 @@ public class TopicImpl extends Topic implements ICoreEventSource {
                 .ensureChildElement(implementation, TAG_BOUNDARIES);
         Node n = bs.appendChild(b);
         if (n != null) {
-            ((BoundaryImpl) boundary).addNotify(getRealizedWorkbook(), this);
+            if (!isOrphan()) {
+                ((BoundaryImpl) boundary)
+                        .addNotify(getRealizedWorkbook(), this);
+            }
             fireTargetChange(Core.BoundaryAdd, boundary);
             updateModifiedTime();
         }
@@ -641,8 +654,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
                 TAG_BOUNDARIES);
         if (bs == null)
             return NO_BOUNDARIES;
-        return DOMUtils.getChildSet(bs, TAG_BOUNDARY, ownedWorkbook
-                .getAdaptableProvider());
+        return DOMUtils.getChildSet(bs, TAG_BOUNDARY,
+                ownedWorkbook.getAdaptableRegistry());
     }
 
     public void addSummary(ISummary summary) {
@@ -650,7 +663,9 @@ public class TopicImpl extends Topic implements ICoreEventSource {
         Element ss = DOMUtils.ensureChildElement(implementation, TAG_SUMMARIES);
         Node n = ss.appendChild(s);
         if (n != null) {
-            ((SummaryImpl) summary).addNotify(getRealizedWorkbook(), this);
+            if (!isOrphan()) {
+                ((SummaryImpl) summary).addNotify(getRealizedWorkbook(), this);
+            }
             fireTargetChange(Core.SummaryAdd, summary);
             updateModifiedTime();
         }
@@ -680,8 +695,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
                 TAG_SUMMARIES);
         if (ss == null)
             return NO_SUMMARIES;
-        return DOMUtils.getChildSet(ss, TAG_SUMMARY, ownedWorkbook
-                .getAdaptableProvider());
+        return DOMUtils.getChildSet(ss, TAG_SUMMARY,
+                ownedWorkbook.getAdaptableRegistry());
     }
 
     public String getStructureClass() {
@@ -838,8 +853,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
     public int getTitleWidth() {
         Element t = DOMUtils.getFirstChildElementByTag(implementation,
                 TAG_TITLE);
-        return t == null ? UNSPECIFIED : NumberUtils.safeParseInt(DOMUtils
-                .getAttribute(t, ATTR_WIDTH), UNSPECIFIED);
+        return t == null ? UNSPECIFIED : NumberUtils.safeParseInt(
+                DOMUtils.getAttribute(t, ATTR_WIDTH), UNSPECIFIED);
     }
 
     public void setTitleWidth(int width) {
@@ -869,37 +884,95 @@ public class TopicImpl extends Topic implements ICoreEventSource {
         return null;
     }
 
-    private TopicExtensionImpl getExtension(String providerName, Element extImpl) {
-        TopicExtensionImpl ext = extensions.get(providerName);
-        if (ext == null) {
-            ext = new TopicExtensionImpl(extImpl, this);
-            extensions.put(providerName, ext);
-            ext.addNotify(getRealizedWorkbook());
-        }
-        return ext;
+    private Iterator<TopicExtensionImpl> iterExtensions() {
+        return iterExtensions(!isOrphan());
     }
 
-    public ITopicExtension getExtension(String providerName) {
+    private Iterator<TopicExtensionImpl> iterExtensions(final boolean realized) {
         Element es = DOMUtils.getFirstChildElementByTag(implementation,
                 TAG_EXTENSIONS);
-        if (es != null) {
-            Element e = findExtensionElement(es, providerName);
-            if (e != null)
-                return getExtension(providerName, e);
+        final Iterator<Element> it = es == null ? null : DOMUtils
+                .childElementIterByTag(es, TAG_EXTENSION);
+        return new Iterator<TopicExtensionImpl>() {
+
+            TopicExtensionImpl next = findNext();
+
+            public void remove() {
+            }
+
+            private TopicExtensionImpl findNext() {
+                if (it == null)
+                    return null;
+                while (it.hasNext()) {
+                    Element ele = it.next();
+                    String providerName = ele.getAttribute(ATTR_PROVIDER);
+                    if (providerName != null && !"".equals(providerName)) { //$NON-NLS-1$
+                        TopicExtensionImpl ext = extensions.get(providerName);
+                        if (ext == null) {
+                            ext = new TopicExtensionImpl(ele, TopicImpl.this);
+                            extensions.put(providerName, ext);
+                            if (realized) {
+                                ext.addNotify(ownedWorkbook);
+                            }
+                        }
+                        return ext;
+                    }
+                }
+                return null;
+            }
+
+            public TopicExtensionImpl next() {
+                TopicExtensionImpl n = next;
+                next = findNext();
+                return n;
+            }
+
+            public boolean hasNext() {
+                return next != null;
+            }
+        };
+    }
+
+//    private TopicExtensionImpl getExtension(String providerName, Element extImpl) {
+//        TopicExtensionImpl ext = extensions.get(providerName);
+//        if (ext == null) {
+//            ext = new TopicExtensionImpl(extImpl, this);
+//            extensions.put(providerName, ext);
+//            ext.addNotify(getRealizedWorkbook());
+//        }
+//        return ext;
+//    }
+
+    public ITopicExtension getExtension(String providerName) {
+        Iterator<TopicExtensionImpl> it = iterExtensions();
+        while (it.hasNext()) {
+            TopicExtensionImpl ext = it.next();
+            if (providerName.equals(ext.getProviderName())) {
+                return ext;
+            }
         }
         return null;
     }
 
     public ITopicExtension createExtension(String providerName) {
-        Element es = DOMUtils
-                .ensureChildElement(implementation, TAG_EXTENSIONS);
-        Element e = findExtensionElement(es, providerName);
-        if (e == null) {
-            e = DOMUtils.createElement(es, TAG_EXTENSION);
+        ITopicExtension ext = getExtension(providerName);
+        if (ext == null) {
+            Element es = DOMUtils.ensureChildElement(implementation,
+                    TAG_EXTENSIONS);
+            Element e = DOMUtils.createElement(es, TAG_EXTENSION);
             e.setAttribute(ATTR_PROVIDER, providerName);
+            ext = new TopicExtensionImpl(e, this);
+            extensions.put(providerName, (TopicExtensionImpl) ext);
+            if (!isOrphan()) {
+                ((TopicExtensionImpl) ext).addNotify(ownedWorkbook);
+            }
             updateModifiedTime();
         }
-        return getExtension(providerName, e);
+        return ext;
+//        Element e = findExtensionElement(es, providerName);
+//        if (e == null) {
+//        }
+//        return getExtension(providerName, e);
     }
 
     private Element findExtensionElement(Element es, String providerName) {
@@ -984,6 +1057,9 @@ public class TopicImpl extends Topic implements ICoreEventSource {
 
     protected void addNotify(WorkbookImpl workbook, SheetImpl sheet,
             TopicImpl parent) {
+        getImplementation().setIdAttribute(DOMConstants.ATTR_ID, true);
+        workbook.getAdaptableRegistry().registerById(this, getId(),
+                getImplementation().getOwnerDocument());
         setCoreEventSupport(parent != null ? parent.getCoreEventSupport()
                 : sheet.getCoreEventSupport());
         increaseLabelRefs(sheet);
@@ -1021,44 +1097,53 @@ public class TopicImpl extends Topic implements ICoreEventSource {
         decreaseMarkerRefs(workbook, sheet);
         decreaseLabelRefs(sheet);
         setCoreEventSupport(null);
+        workbook.getAdaptableRegistry().unregisterById(this, getId(),
+                getImplementation().getOwnerDocument());
+        getImplementation().setIdAttribute(DOMConstants.ATTR_ID, false);
     }
 
     private void extensionsAddNotify(WorkbookImpl workbook) {
-        Element es = DOMUtils.getFirstChildElementByTag(implementation,
-                TAG_EXTENSIONS);
-        if (es != null) {
-            Iterator<Element> it = DOMUtils.childElementIterByTag(es,
-                    TAG_EXTENSION);
-            while (it.hasNext()) {
-                Element e = it.next();
-                String providerName = DOMUtils.getAttribute(e, ATTR_PROVIDER);
-                if (providerName != null) {
-                    TopicExtensionImpl ext = extensions.get(providerName);
-                    if (ext == null) {
-                        ext = new TopicExtensionImpl(e, this);
-                        extensions.put(providerName, ext);
-                    }
-                    ext.addNotify(workbook);
-                }
-            }
+        Iterator<TopicExtensionImpl> it = iterExtensions(false);
+        while (it.hasNext()) {
+            it.next().addNotify(workbook);
         }
+//        Element es = getFirstChildElementByTag(implementation, TAG_EXTENSIONS);
+//        if (es != null) {
+//            Iterator<Element> it = childElementIterByTag(es, TAG_EXTENSION);
+//            while (it.hasNext()) {
+//                Element e = it.next();
+//                String providerName = getAttribute(e, ATTR_PROVIDER);
+//                if (providerName != null) {
+//                    TopicExtensionImpl ext = extensions.get(providerName);
+//                    if (ext == null) {
+//                        ext = new TopicExtensionImpl(e, this);
+//                        extensions.put(providerName, ext);
+//                    }
+//                    ext.addNotify(workbook);
+//                }
+//            }
+//        }
     }
 
     private void extensionsRemoveNotify(WorkbookImpl workbook) {
-        Element es = DOMUtils.getFirstChildElementByTag(implementation,
-                TAG_EXTENSIONS);
-        if (es != null) {
-            Iterator<Element> it = DOMUtils.childElementIterByTag(es,
-                    TAG_EXTENSION);
-            while (it.hasNext()) {
-                Element e = it.next();
-                String providerName = DOMUtils.getAttribute(e, ATTR_PROVIDER);
-                if (providerName != null) {
-                    TopicExtensionImpl ext = getExtension(providerName, e);
-                    ext.removeNotify(workbook);
-                }
-            }
+        Iterator<TopicExtensionImpl> it = iterExtensions(true);
+        while (it.hasNext()) {
+            it.next().removeNotify(workbook);
         }
+//        Element es = DOMUtils.getFirstChildElementByTag(implementation,
+//                TAG_EXTENSIONS);
+//        if (es != null) {
+//            Iterator<Element> it = DOMUtils.childElementIterByTag(es,
+//                    TAG_EXTENSION);
+//            while (it.hasNext()) {
+//                Element e = it.next();
+//                String providerName = DOMUtils.getAttribute(e, ATTR_PROVIDER);
+//                if (providerName != null) {
+//                    TopicExtensionImpl ext = getExtension(providerName, e);
+//                    ext.removeNotify(workbook);
+//                }
+//            }
+//        }
     }
 
     protected void increaseStyleRef(WorkbookImpl workbook) {
@@ -1161,13 +1246,15 @@ public class TopicImpl extends Topic implements ICoreEventSource {
     }
 
     protected void activateHyperlinks(WorkbookImpl workbook) {
-        InternalHyperlinkUtils.activateHyperlink(workbook, getHyperlink(), this);
+        InternalHyperlinkUtils
+                .activateHyperlink(workbook, getHyperlink(), this);
         ((ImageImpl) getImage()).activateHyperlink(workbook);
     }
 
     protected void deactivateHyperlinks(WorkbookImpl workbook) {
         ((ImageImpl) getImage()).deactivateHyperlink(workbook);
-        InternalHyperlinkUtils.deactivateHyperlink(workbook, getHyperlink(), this);
+        InternalHyperlinkUtils.deactivateHyperlink(workbook, getHyperlink(),
+                this);
     }
 
     public long getModifiedTime() {
@@ -1178,13 +1265,17 @@ public class TopicImpl extends Topic implements ICoreEventSource {
 
     public void updateModifiedTime() {
         setModifiedTime(System.currentTimeMillis());
+        ISheet sheet = getOwnedSheet();
+        if (sheet != null) {
+            ((SheetImpl) sheet).updateModifiedTime();
+        }
     }
 
     public void setModifiedTime(long time) {
 //        updatingTimestamp = true;
         long oldTime = getModifiedTime();
-        DOMUtils.setAttribute(implementation, DOMConstants.ATTR_TIMESTAMP, Long
-                .toString(time));
+        DOMUtils.setAttribute(implementation, DOMConstants.ATTR_TIMESTAMP,
+                Long.toString(time));
         long newTime = getModifiedTime();
 //        updatingTimestamp = false;
         fireValueChange(Core.ModifyTime, oldTime, newTime);

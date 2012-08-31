@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -864,6 +864,36 @@ public class Core {
      * Core event for the topic was modified.
      */
     public static final String ModifyTime = "modifyTime"; //$NON-NLS-1$
+
+    /**
+     * Core event type for adding a revision to the revision manager (value is
+     * 'revisionAdd').
+     * 
+     * <dl>
+     * <dt>Source:</dt>
+     * <dd>the parent {@link org.xmind.core.IRevisionManager}</dd>
+     * <dt>Target:</dt>
+     * <dd>the child {@link org.xmind.core.IRevision}</dd>
+     * <dt>Data:</dt>
+     * <dd>Corresponding sheet ID</dd>
+     * </dl>
+     */
+    public static final String RevisionAdd = "revisionAdd"; //$NON-NLS-1$
+
+    /**
+     * Core event type for removing a revision from the revision manager (value
+     * is 'revisionRemove').
+     * 
+     * <dl>
+     * <dt>Source:</dt>
+     * <dd>the parent {@link org.xmind.core.IRevisionManager}</dd>
+     * <dt>Target:</dt>
+     * <dd>the child {@link org.xmind.core.IRevision}</dd>
+     * <dt>Data:</dt>
+     * <dd>Corresponding sheet ID</dd>
+     * </dl>
+     */
+    public static final String RevisionRemove = "revisionRemove"; //$NON-NLS-1$
 
 //    /**
 //     * Core event type for adding one or more labels (value is 'labelAdd').

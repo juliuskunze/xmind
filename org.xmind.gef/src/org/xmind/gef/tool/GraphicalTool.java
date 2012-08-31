@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,7 +19,6 @@ import org.eclipse.swt.graphics.Cursor;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.event.DragDropEvent;
 import org.xmind.gef.event.MouseEvent;
-import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IPart;
 
 /**
@@ -66,11 +65,11 @@ public abstract class GraphicalTool extends AbstractTool implements
     }
 
     public IFigure getToolTip(IPart source, Point position) {
-        if (source instanceof IGraphicalEditPart
-                && source.getStatus().isActive()) {
-            IGraphicalEditPart gp = (IGraphicalEditPart) source;
-            return gp.findTooltipAt(position);
-        }
+//        if (source instanceof IGraphicalEditPart
+//                && source.getStatus().isActive()) {
+//            IGraphicalEditPart gp = (IGraphicalEditPart) source;
+//            return gp.findTooltipAt(position);
+//        }
         return null;
     }
 

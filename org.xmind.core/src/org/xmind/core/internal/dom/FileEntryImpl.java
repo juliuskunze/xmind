@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,15 +17,10 @@ import static org.xmind.core.internal.dom.DOMConstants.ATTR_FULL_PATH;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_MEDIA_TYPE;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_ENCRYPTION_DATA;
 import static org.xmind.core.internal.dom.InternalDOMUtils.getParentPath;
-import static org.xmind.core.internal.dom.InternalDOMUtils.isParentPath;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -33,18 +28,15 @@ import org.xmind.core.Core;
 import org.xmind.core.CoreException;
 import org.xmind.core.IEncryptionData;
 import org.xmind.core.IFileEntry;
+import org.xmind.core.IFileEntryFilter;
 import org.xmind.core.IManifest;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.FileEntry;
 import org.xmind.core.internal.security.Crypto;
-import org.xmind.core.io.IInputSource;
 import org.xmind.core.io.IStorage;
 import org.xmind.core.util.DOMUtils;
 
 public class FileEntryImpl extends FileEntry {
-
-    private static final List<IFileEntry> NO_SUB_FILE_ENTRIES = Collections
-            .emptyList();
 
     private Element implementation;
 
@@ -160,21 +152,15 @@ public class FileEntryImpl extends FileEntry {
         if (isDirectory())
             return null;
         IStorage storage = getStorage();
-        //storag is nothing
         if (storage != null) {
             try {
-                IInputSource inputSource = storage.getInputSource();
                 String path = getPath();
-                return inputSource.getEntryStream(path);
+                return storage.getInputSource().getEntryStream(path);
             } catch (CoreException e) {
                 Core.getLogger().log(e);
             }
         }
         return null;
-//        IArchivedWorkbook aw = getArchivedWorkbook();
-//        if (aw != null)
-//            return aw.getEntryInputStream(getPath());
-//        return null;
     }
 
     public OutputStream getOutputStream() {
@@ -188,9 +174,6 @@ public class FileEntryImpl extends FileEntry {
                 Core.getLogger().log(e);
             }
         }
-//        IArchivedWorkbook aw = getArchivedWorkbook();
-//        if (aw != null)
-//            return aw.getEntryOutputStream(getPath());
         return null;
     }
 
@@ -202,9 +185,6 @@ public class FileEntryImpl extends FileEntry {
             } catch (CoreException e) {
                 Core.getLogger().log(e);
             }
-//        IArchivedWorkbook aw = getArchivedWorkbook();
-//        if (aw != null)
-//            return aw.getTime(getPath());
         return -1;
     }
 
@@ -217,31 +197,44 @@ public class FileEntryImpl extends FileEntry {
                 Core.getLogger().log(e);
             }
         }
-//        IArchivedWorkbook aw = getArchivedWorkbook();
-//        if (aw != null)
-//            aw.setTime(getPath(), time);
     }
 
-    public List<IFileEntry> getSubEntries() {
-        if (!isDirectory())
-            return NO_SUB_FILE_ENTRIES;
-        String path = getPath();
+//    public List<IFileEntry> getSubEntries() {
+//        if (!isDirectory())
+//            return NO_SUB_FILE_ENTRIES;
+//        String path = getPath();
+//
+//        Collection<IFileEntry> all = ownedManifest.getAllRegisteredEntries();
+//        ArrayList<IFileEntry> ret = new ArrayList<IFileEntry>(all);
+//        Iterator<IFileEntry> it = ret.iterator();
+//        while (it.hasNext()) {
+//            IFileEntry e = it.next();
+//            if (e == this) {
+//                it.remove();
+//            } else {
+//                String p = e.getPath();
+//                if (!isParentPath(p, path)) {
+//                    it.remove();
+//                }
+//            }
+//        }
+//        return ret;
+//    }
 
-        Collection<IFileEntry> all = ownedManifest.getAllRegisteredEntries();
-        ArrayList<IFileEntry> ret = new ArrayList<IFileEntry>(all);
-        Iterator<IFileEntry> it = ret.iterator();
-        while (it.hasNext()) {
-            IFileEntry e = it.next();
-            if (e == this) {
-                it.remove();
-            } else {
-                String p = e.getPath();
-                if (!isParentPath(p, path)) {
-                    it.remove();
-                }
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IFileEntry#iterSubEntries()
+     */
+    public Iterator<IFileEntry> iterSubEntries() {
+        final String parentPath = getPath();
+        return ownedManifest.iterFileEntries(new IFileEntryFilter() {
+            public boolean select(String path, String mediaType,
+                    boolean isDirectory) {
+                return path.length() > parentPath.length()
+                        && path.startsWith(parentPath);
             }
-        }
-        return ret;
+        });
     }
 
     public boolean isDirectory() {
@@ -329,6 +322,14 @@ public class FileEntryImpl extends FileEntry {
      */
     public boolean isIgnoreEncryption() {
         return ignoreEncryption;
+    }
+
+    public IWorkbook getOwnedWorkbook() {
+        return ownedManifest.getOwnedWorkbook();
+    }
+
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(getImplementation());
     }
 
 }

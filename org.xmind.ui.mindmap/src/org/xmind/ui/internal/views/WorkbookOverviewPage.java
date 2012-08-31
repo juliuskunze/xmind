@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,101 +13,83 @@
  *******************************************************************************/
 package org.xmind.ui.internal.views;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.eclipse.jface.dialogs.IPageChangedListener;
-import org.eclipse.jface.dialogs.PageChangedEvent;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.Page;
-import org.eclipse.ui.part.PageBook;
+import org.xmind.gef.ui.actions.IActionRegistry;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
-import org.xmind.ui.tabfolder.IPageClosedListener;
+import org.xmind.ui.tabfolder.PageBookPage;
 
-public class WorkbookOverviewPage extends Page implements IPageChangedListener,
-        IPageClosedListener {
+public class WorkbookOverviewPage extends PageBookPage {
 
-    private IGraphicalEditor editor;
-
-    private PageBook pageBook;
-
-    private Map<IGraphicalEditorPage, Page> pageMap = new HashMap<IGraphicalEditorPage, Page>();
-
+    /**
+     * 
+     */
     public WorkbookOverviewPage(IGraphicalEditor editor) {
-        this.editor = editor;
+        super(editor);
     }
 
+    public IGraphicalEditor getEditor() {
+        return (IGraphicalEditor) super.getSourcePageProvider();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.ui.tabfolder.PageBookPage#createDefaultPage(org.eclipse.swt
+     * .widgets.Composite)
+     */
     @Override
-    public void createControl(Composite parent) {
-        pageBook = new PageBook(parent, SWT.NONE);
-        editor.addPageChangedListener(this);
-        editor.addPageClosedListener(this);
-
-        IGraphicalEditorPage page = editor.getActivePageInstance();
-        if (page != null) {
-            setActivePage(page);
-        }
+    protected Control createDefaultPage(Composite parent) {
+        return new Composite(parent, SWT.NONE);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.ui.tabfolder.PageBookPage#doCreateNestedPage(java.lang.Object)
+     */
     @Override
-    public Control getControl() {
-        return pageBook;
+    protected Page doCreateNestedPage(Object sourcePage) {
+        return new SheetOverviewPage((IGraphicalEditorPage) sourcePage);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.tabfolder.PageBookPage#refreshGlobalActionHandlers()
+     */
     @Override
-    public void setFocus() {
-        pageBook.setFocus();
-    }
+    protected void refreshGlobalActionHandlers() {
+        super.refreshGlobalActionHandlers();
 
-    @Override
-    public void dispose() {
-        editor.removePageClosedListener(this);
-        editor.removePageChangedListener(this);
-        super.dispose();
-    }
-
-    public void pageChanged(PageChangedEvent event) {
-        Object page = event.getSelectedPage();
-        if (page instanceof IGraphicalEditorPage) {
-            setActivePage((IGraphicalEditorPage) page);
+        // Set new actions from editor.
+        IActionRegistry registry = (IActionRegistry) getEditor().getAdapter(
+                IActionRegistry.class);
+        if (registry != null) {
+            initGlobalActionHandlers(getSite().getActionBars(), registry);
         }
     }
 
-    private void setActivePage(IGraphicalEditorPage sheetPage) {
-        Page overviewPage = pageMap.get(sheetPage);
-        if (overviewPage == null) {
-            overviewPage = createPage(sheetPage);
-            pageMap.put(sheetPage, overviewPage);
-        }
-        if (pageBook != null && !pageBook.isDisposed()) {
-            Control pageControl = overviewPage.getControl();
-            if (pageControl != null && !pageControl.isDisposed()) {
-                pageBook.showPage(pageControl);
-            }
-        }
+    protected void initGlobalActionHandlers(IActionBars bars,
+            IActionRegistry registry) {
+        setGlobalActionHandler(bars, registry, ActionFactory.UNDO.getId());
+        setGlobalActionHandler(bars, registry, ActionFactory.REDO.getId());
     }
 
-    private Page createPage(IGraphicalEditorPage sheetPage) {
-        Page page = new SheetOverviewPage(sheetPage);
-        page.init(getSite());
-        if (pageBook != null && !pageBook.isDisposed()) {
-            page.createControl(pageBook);
+    protected void setGlobalActionHandler(IActionBars bars,
+            IActionRegistry registry, String actionId) {
+        IAction action = registry.getAction(actionId);
+        if (action != null) {
+            getSite().getActionBars().setGlobalActionHandler(actionId, action);
         }
-        return page;
-    }
-
-    public void pageClosed(Object sheetPage) {
-        Page overviewPage = pageMap.remove(sheetPage);
-        if (overviewPage == null)
-            return;
-        Control control = overviewPage.getControl();
-        if (control != null && !control.isDisposed()) {
-            control.dispose();
-        }
-        overviewPage.dispose();
     }
 
 }

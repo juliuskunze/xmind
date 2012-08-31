@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -94,7 +94,6 @@ public class NullCoreEventSupport implements ICoreEventSupport {
      * .ICoreEventSource, java.lang.String)
      */
     public boolean hasListeners(ICoreEventSource source, String eventType) {
-        // TODO
         return false;
     }
 
@@ -106,7 +105,6 @@ public class NullCoreEventSupport implements ICoreEventSupport {
      * .event.ICoreEventSource, java.lang.String)
      */
     public boolean hasOnceListeners(ICoreEventSource source, String eventType) {
-        // TODO
         return false;
     }
 

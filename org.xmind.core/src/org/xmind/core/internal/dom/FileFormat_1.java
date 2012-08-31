@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -61,7 +61,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CancellationException;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -147,16 +146,20 @@ public class FileFormat_1 extends FileFormat {
         super(source, loader, storage);
     }
 
-    public boolean identifies() {
+    public boolean identifies() throws CoreException {
         if (source.hasEntry(CONTENT_XML)) {
             try {
                 contentDocument = loader.loadXMLFile(source, CONTENT_XML);
                 Element ele = contentDocument.getDocumentElement();
                 String version = DOMUtils.getAttribute(ele, ATTR_VERSION);
                 return version == null || VERSION.equals(version);
+            } catch (CoreException e) {
+                if (e.getType() == Core.ERROR_WRONG_PASSWORD
+                        || e.getType() == Core.ERROR_CANCELLATION) {
+                    throw e;
+                }
             } catch (Exception e) {
-                if (e instanceof CancellationException)
-                    throw (CancellationException) e;
+                // ignore
             }
         }
         return false;
@@ -332,10 +335,16 @@ public class FileFormat_1 extends FileFormat {
         if (newElement != null) {
             String id = DOMUtils.getAttribute(oldElement, ATTR_ID);
             if (id != null) {
-                workbook.getElementRegistry().unregisterByKey(id);
+//                workbook.getElementRegistry().unregisterByKey(id);
+                Document doc = newElement.getOwnerDocument();
+                workbook.getAdaptableRegistry()
+                        .unregisterById(elementAdaptable,
+                                newElement.getAttribute(ATTR_ID), doc);
                 DOMUtils.replaceId(newElement, id);
-                workbook.getElementRegistry().registerByKey(id,
-                        elementAdaptable);
+//                workbook.getElementRegistry().registerByKey(id,
+//                        elementAdaptable);
+                workbook.getAdaptableRegistry().registerById(elementAdaptable,
+                        id, doc);
             }
         }
     }
@@ -403,8 +412,8 @@ public class FileFormat_1 extends FileFormat {
             if (attId.startsWith("#")) { //$NON-NLS-1$
                 attId = attId.substring(1, attId.length());
             }
-            IFileEntry entry = findAttachmentEntry(attId, workbook
-                    .getManifest());
+            IFileEntry entry = findAttachmentEntry(attId,
+                    workbook.getManifest());
             if (entry != null) {
                 InputStream is = entry.getInputStream();
                 String path = entry.getPath();
@@ -682,23 +691,24 @@ public class FileFormat_1 extends FileFormat {
             if (group == null) {
                 group = markerSheet.createMarkerGroup(false);
                 markerSheet.getElementRegistry().unregister(group);
-                DOMUtils.replaceId(((MarkerGroupImpl) group)
-                        .getImplementation(), markerGroupId);
+                DOMUtils.replaceId(
+                        ((MarkerGroupImpl) group).getImplementation(),
+                        markerGroupId);
                 markerSheet.getElementRegistry().register(group);
                 markerSheet.addMarkerGroup(group);
             }
             IMarker marker = group.getMarker(markerId);
             if (marker == null) {
-                IFileEntry markerEntry = findAttachmentEntry(markerId, workbook
-                        .getManifest());
+                IFileEntry markerEntry = findAttachmentEntry(markerId,
+                        workbook.getManifest());
                 if (markerEntry != null) {
                     String path = markerEntry.getPath();
                     if (!path.startsWith("/")) //$NON-NLS-1$
                         path = "/" + path; //$NON-NLS-1$
                     marker = markerSheet.createMarker(path);
                     markerSheet.getElementRegistry().unregister(marker);
-                    DOMUtils.replaceId(((MarkerImpl) marker)
-                            .getImplementation(), markerId);
+                    DOMUtils.replaceId(
+                            ((MarkerImpl) marker).getImplementation(), markerId);
                     markerSheet.getElementRegistry().register(marker);
                 }
             }
@@ -758,8 +768,8 @@ public class FileFormat_1 extends FileFormat {
             if (attId.startsWith("#")) { //$NON-NLS-1$
                 attId = attId.substring(1, attId.length());
             }
-            IFileEntry entry = findAttachmentEntry(attId, workbook
-                    .getManifest());
+            IFileEntry entry = findAttachmentEntry(attId,
+                    workbook.getManifest());
             if (entry != null) {
                 url = HyperlinkUtils.toAttachmentURL(entry.getPath());
             }

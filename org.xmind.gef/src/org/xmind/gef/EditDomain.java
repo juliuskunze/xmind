@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,9 +15,13 @@ package org.xmind.gef;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
+import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.jface.util.SafeRunnable;
 import org.xmind.gef.command.ICommandStack;
 import org.xmind.gef.part.PartRoles;
 import org.xmind.gef.policy.IEditPolicy;
@@ -29,7 +33,7 @@ import org.xmind.gef.tool.ITool;
  */
 public class EditDomain extends Disposable {
 
-    private IViewer viewer = null;
+    private IViewer targetViewer = null;
 
     private ITool activeTool = null;
 
@@ -44,6 +48,10 @@ public class EditDomain extends Disposable {
     private ICommandStack commandStack = null;
 
     private List<IEditDomainListener> listeners = null;
+
+    private Queue<Request> requestQueue = new LinkedList<Request>();
+
+    private boolean handlingRequests = false;
 
     @Override
     public void dispose() {
@@ -100,18 +108,42 @@ public class EditDomain extends Disposable {
         this.commandStack = commandStack;
     }
 
+    /**
+     * 
+     * @return the viewer
+     * @deprecated use {@link #getTargetViewer()} instead
+     */
     public IViewer getViewer() {
-        return viewer;
+        return this.targetViewer;
     }
 
+    /**
+     * 
+     * @param viewer
+     *            the viewer to set
+     * @deprecated use {@link IViewer#setEditDomain(EditDomain)} instead
+     */
     public void setViewer(IViewer viewer) {
-        if (this.viewer != null) {
-            this.viewer.setEditDomain(null);
-        }
-        this.viewer = viewer;
-        if (viewer != null) {
-            viewer.setEditDomain(this);
-        }
+        viewer.setEditDomain(this);
+//        if (this.targetViewer != null) {
+//            this.targetViewer.setEditDomain(null);
+//        }
+//        this.targetViewer = viewer;
+//        if (viewer != null) {
+//            viewer.setEditDomain(this);
+//        }
+    }
+
+    public IViewer getTargetViewer() {
+        return this.targetViewer;
+    }
+
+    /**
+     * @param targetViewer
+     *            the targetViewer to set
+     */
+    public void setTargetViewer(IViewer targetViewer) {
+        this.targetViewer = targetViewer;
     }
 
 //    public List<IViewer> getViewers() {
@@ -238,17 +270,47 @@ public class EditDomain extends Disposable {
         }
     }
 
+    public void handleRequest(String requestType, IViewer targetViewer) {
+        handleRequest(new Request(requestType).setViewer(targetViewer));
+    }
+
     public void handleRequest(Request request) {
+        pushRequestInQueue(request);
+        ensureRequestHandling();
+    }
+
+    /**
+     * @param request
+     */
+    private void pushRequestInQueue(Request request) {
+        requestQueue.add(request);
+    }
+
+    /**
+     * 
+     */
+    private void ensureRequestHandling() {
+        if (handlingRequests)
+            return;
+
+        handlingRequests = true;
+        while (!requestQueue.isEmpty()) {
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    internalHandleRequest(requestQueue.poll());
+                }
+            });
+        }
+        handlingRequests = false;
+    }
+
+    /**
+     * @param poll
+     */
+    protected void internalHandleRequest(Request request) {
         ITool tool = getActiveTool();
         if (tool != null) {
             tool.handleRequest(request);
-        }
-    }
-
-    public void handleRequest(String requestType, IViewer targetViewer) {
-        ITool tool = getActiveTool();
-        if (tool != null) {
-            tool.handleRequest(requestType, targetViewer);
         }
     }
 

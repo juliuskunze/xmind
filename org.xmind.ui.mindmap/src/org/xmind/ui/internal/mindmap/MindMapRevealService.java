@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,95 +13,79 @@
  *******************************************************************************/
 package org.xmind.ui.internal.mindmap;
 
-import java.util.List;
-
-import org.eclipse.draw2d.geometry.Rectangle;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
+import org.xmind.gef.GraphicalViewer;
 import org.xmind.gef.IGraphicalViewer;
-import org.xmind.gef.draw2d.geometry.PrecisionPoint;
 import org.xmind.gef.part.IGraphicalPart;
+import org.xmind.gef.service.ZoomingAndPanningRevealService;
+import org.xmind.ui.mindmap.ISheetPart;
+import org.xmind.ui.mindmap.ITopicPart;
+import org.xmind.ui.mindmap.MindMapUI;
 
-public class MindMapRevealService extends CenteredRevealService {
-
-    private boolean centered = false;
+public class MindMapRevealService extends ZoomingAndPanningRevealService {
 
     public MindMapRevealService(IGraphicalViewer viewer) {
-        super(viewer, false);
-    }
-
-    public void startCenteredReveal() {
-        this.centered = true;
-    }
-
-    /**
-     * @return the centered
-     */
-    public boolean isCentered() {
-        return centered;
+        super(viewer);
+        setShouldRevealOnIntersection(false);
     }
 
     /*
      * (non-Javadoc)
      * 
      * @see
-     * org.xmind.gef.service.ZoomingAndPanningRevealService#revealJobCanceled
-     * (java.util.List)
+     * org.xmind.gef.service.ZoomingAndPanningRevealService#exclude(org.xmind
+     * .gef.part.IGraphicalPart)
      */
     @Override
-    protected void revealJobCanceled(List<IGraphicalPart> toReveal) {
-        super.revealJobCanceled(toReveal);
-        this.centered = false;
+    protected boolean exclude(IGraphicalPart part) {
+        return part instanceof ISheetPart;
+    }
+
+    protected boolean isAnimationEnabled() {
+        return MindMapUI.isAnimationEnabled();
     }
 
     /*
      * (non-Javadoc)
      * 
      * @see
-     * org.xmind.gef.service.ZoomingAndPanningRevealService#revealJobFinished
-     * (java.util.List)
+     * org.xmind.gef.service.AbstractViewerService#inputChanged(java.lang.Object
+     * , java.lang.Object)
      */
     @Override
-    protected void revealJobFinished(List<IGraphicalPart> toReveal) {
-        super.revealJobFinished(toReveal);
-        this.centered = false;
+    public void inputChanged(Object oldInput, Object newInput) {
+        super.inputChanged(oldInput, newInput);
+        centerOnCentralTopic();
     }
 
-    protected double calcTargetScale(List<IGraphicalPart> toReveal,
-            Rectangle revealBounds) {
-        return -1;
+    public void centerOnCentralTopic() {
+        final ITopicPart centralTopic = (ITopicPart) getViewer().getAdapter(
+                ITopicPart.class);
+        if (centralTopic == null)
+            return;
+        centerOnCentralTopic(centralTopic);
+        ((GraphicalViewer) getViewer()).getLightweightSystem()
+                .getUpdateManager().runWithUpdate(new Runnable() {
+                    public void run() {
+                        centerOnCentralTopic(centralTopic);
+                        final Canvas canvas = getViewer().getCanvas();
+                        canvas.addListener(SWT.Paint, new Listener() {
+                            public void handleEvent(Event event) {
+                                canvas.removeListener(SWT.Paint, this);
+                                centerOnCentralTopic(centralTopic);
+                            }
+                        });
+                    }
+                });
     }
 
-    protected PrecisionPoint calcTargetCenter(List<IGraphicalPart> toReveal,
-            Rectangle revealBounds, double targetScale) {
-        if (isCentered())
-            return super.calcTargetCenter(toReveal, revealBounds, targetScale);
-
-        revealBounds.expand(20, 20);
-        Rectangle clientArea = getViewerClientArea();
-        if (!clientArea.contains(revealBounds)
-                && !revealBounds.contains(clientArea)) {
-            int dx = 0;
-            int dy = 0;
-            int margin = 20;
-            if (revealBounds.width > clientArea.width)
-                dx = revealBounds.getCenter().x - clientArea.getCenter().x;
-            else if (revealBounds.x < clientArea.x)
-                dx = revealBounds.x - clientArea.x - margin;
-            else if (revealBounds.right() > clientArea.right())
-                dx = revealBounds.right() - clientArea.right() + margin;
-            if (revealBounds.height > clientArea.height)
-                dy = revealBounds.getCenter().y - clientArea.getCenter().y;
-            else if (revealBounds.y < clientArea.y)
-                dy = revealBounds.y - clientArea.y - margin;
-            else if (revealBounds.bottom() > clientArea.bottom())
-                dy = revealBounds.bottom() - clientArea.bottom() + margin;
-            return getViewerCenterPoint(getViewerScale()).translate(dx, dy);
-        }
-        return null;
-    }
-
-    protected Rectangle getViewerClientArea() {
-        Rectangle clientArea = getViewer().getClientArea();
-        return getViewer().getZoomManager().getAntiScaled(clientArea);
+    private void centerOnCentralTopic(ITopicPart centralTopic) {
+        getViewer().setSelection(new StructuredSelection(centralTopic), false);
+        getViewer().center(centralTopic.getFigure().getBounds());
     }
 
 }

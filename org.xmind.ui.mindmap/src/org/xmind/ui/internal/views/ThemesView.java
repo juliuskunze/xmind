@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -299,9 +299,9 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         if (domain == null)
             return;
 
-        domain.handleRequest(new Request(MindMapUI.REQ_MODIFY_THEME)
-                .setPrimaryTarget(sheetPart).setParameter(
-                        MindMapUI.PARAM_RESOURCE, theme));
+        domain.handleRequest(new Request(MindMapUI.REQ_MODIFY_THEME).setViewer(
+                viewer).setPrimaryTarget(sheetPart).setParameter(
+                MindMapUI.PARAM_RESOURCE, theme));
         updateSelection();
     }
 

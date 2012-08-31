@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -45,6 +45,7 @@ import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogMessages;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.prefs.PrefConstants;
+import org.xmind.ui.util.NumberUtils;
 
 public class GeneralPrefPage extends FieldEditorPreferencePage implements
         IWorkbenchPreferencePage, Listener {
@@ -143,9 +144,11 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
 
     }
 
-    private IntegerFieldEditor autoSaveIntervalsField;
+//    private IntegerFieldEditor autoSaveIntervalsField;
+//
+//    private Composite autoSaveIntervalsParent;
 
-    private Composite autoSaveIntervalsParent;
+    private Text autoSaveIntervalsInput;
 
     private IntegerFieldEditor recentFilesField;
 
@@ -200,6 +203,7 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
         startupActionCombo = new Combo(parent, SWT.DROP_DOWN | SWT.READ_ONLY);
         startupActionCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                 true));
+        startupActionCombo.add(WorkbenchMessages.StartupAction_OpenDialog);
         startupActionCombo.add(WorkbenchMessages.StartupAction_BlankMap);
         startupActionCombo.add(WorkbenchMessages.StartupAction_HomeMap);
         startupActionCombo.add(WorkbenchMessages.StartupAction_LastSession);
@@ -252,33 +256,96 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
 //    }
 
     private void addAutoSaveGroup() {
+        String message = WorkbenchMessages.AutoSave_label2;
+        int index = message.indexOf("{0}"); //$NON-NLS-1$
+        int cols = 3;
+        String label1, label2;
+        if (index >= 0) {
+            label1 = message.substring(0, index);
+            label2 = message.substring(index + 3);
+            if ("".equals(label2)) { //$NON-NLS-1$
+                label2 = null;
+                cols--;
+            }
+        } else {
+            label1 = message;
+            label2 = null;
+            cols--;
+            if ("".equals(label1)) {//$NON-NLS-1$
+                label1 = null;
+                cols--;
+            }
+        }
+
         Composite parent = getFieldEditorParent();
-        GridLayout gridLayout = new GridLayout(3, false);
+        GridLayout gridLayout = new GridLayout(cols, false);
         gridLayout.marginWidth = 0;
         gridLayout.marginHeight = 0;
         gridLayout.verticalSpacing = 0;
         gridLayout.horizontalSpacing = 0;
         parent.setLayout(gridLayout);
+//        parent.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, true));
+//                ((GridData) composite.getLayoutData()).horizontalIndent = 10;
 
-        addField(new BooleanFieldEditor(CathyPlugin.AUTO_SAVE_ENABLED,
-                WorkbenchMessages.AutoSave_label, createFieldContainer(parent,
-                        false)));
+        Composite booleanParent = new Composite(parent, SWT.NONE);
+        booleanParent.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false,
+                true));
+        addField(new BooleanFieldEditor(CathyPlugin.AUTO_SAVE_ENABLED, label1,
+                booleanParent));
 
-        autoSaveIntervalsParent = createFieldContainer(parent, true);
+        autoSaveIntervalsInput = new Text(parent, SWT.SINGLE | SWT.BORDER
+                | SWT.CENTER);
+        autoSaveIntervalsInput.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+                false, true));
+        ((GridData) autoSaveIntervalsInput.getLayoutData()).widthHint = 40;
+        autoSaveIntervalsInput.setEnabled(getPreferenceStore().getBoolean(
+                CathyPlugin.AUTO_SAVE_ENABLED));
 
-        addField(autoSaveIntervalsField = new IntegerFieldEditor(
-                CathyPlugin.AUTO_SAVE_INTERVALS, "", //$NON-NLS-1$
-                autoSaveIntervalsParent));
-
-        autoSaveIntervalsField.setEnabled(getPreferenceStore().getBoolean(
-                CathyPlugin.AUTO_SAVE_ENABLED), autoSaveIntervalsParent);
-
-        Label label = new Label(parent, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
-                false));
-        label.setText(WorkbenchMessages.AutoSave_Minutes);
-
+        if (label2 != null) {
+            Label label = new Label(parent, SWT.NONE);
+            label.setText(label2);
+            label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, true));
+        }
     }
+
+//    private void addAutoSaveGroup() {
+//        Composite parent = getFieldEditorParent();
+//        GridLayout gridLayout = new GridLayout(2, false);
+//        gridLayout.marginWidth = 0;
+//        gridLayout.marginHeight = 0;
+//        gridLayout.verticalSpacing = 0;
+//        gridLayout.horizontalSpacing = 0;
+//        parent.setLayout(gridLayout);
+//
+////        PreferenceLinkArea link = new PreferenceLinkArea(parent,
+////                SWT.NONE,
+////                "org.xmind.ui.BackupPrefPage", //$NON-NLS-1$
+////                "See <a>''{0}''</a> for auto saving and backup options.",
+////                (IWorkbenchPreferenceContainer) getContainer(), null);
+////        link.getControl().setLayoutData(
+////                new GridData(SWT.FILL, SWT.FILL, true, false));
+//
+//
+//        addField(new BooleanFieldEditor(CathyPlugin.AUTO_SAVE_ENABLED,
+//                WorkbenchMessages.AutoSave_label, createFieldContainer(parent,
+//                        false)));
+//
+//        autoSaveIntervalsParent = createFieldContainer(parent, true);
+//
+//        addField(autoSaveIntervalsField = new IntegerFieldEditor(
+//                CathyPlugin.AUTO_SAVE_INTERVALS, "", //$NON-NLS-1$
+//                autoSaveIntervalsParent));
+//
+//        autoSaveIntervalsField.setEnabled(
+//                getPreferenceStore().getBoolean(CathyPlugin.AUTO_SAVE_ENABLED),
+//                autoSaveIntervalsParent);
+//
+//        Label label = new Label(parent, SWT.NONE);
+//        label.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
+//                false));
+//        label.setText(WorkbenchMessages.AutoSave_Minutes);
+//
+//    }
 
     private Composite createFieldContainer(Composite parent,
             boolean grabHorizontal) {
@@ -320,6 +387,9 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
         recentFilesField.setPreferenceStore(WorkbenchPlugin.getDefault()
                 .getPreferenceStore());
         recentFilesField.load();
+
+        autoSaveIntervalsInput.setText(String.valueOf(getPreferenceStore()
+                .getInt(CathyPlugin.AUTO_SAVE_INTERVALS)));
     }
 
     public void init(IWorkbench workbench) {
@@ -333,6 +403,11 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
         int startupAction = startupActionCombo.getSelectionIndex();
         getPreferenceStore()
                 .setValue(CathyPlugin.STARTUP_ACTION, startupAction);
+
+        int autoSaveIntervals = NumberUtils.safeParseInt(
+                autoSaveIntervalsInput.getText(), 0);
+        getPreferenceStore().setValue(CathyPlugin.AUTO_SAVE_INTERVALS,
+                autoSaveIntervals);
         return true;
     }
 
@@ -343,8 +418,11 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
             if (event.getProperty().equals(FieldEditor.VALUE)) {
                 String prefName = fe.getPreferenceName();
                 if (CathyPlugin.AUTO_SAVE_ENABLED.equals(prefName)) {
-                    autoSaveIntervalsField.setEnabled((Boolean) event
-                            .getNewValue(), autoSaveIntervalsParent);
+                    autoSaveIntervalsInput.setEnabled(((Boolean) event
+                            .getNewValue()).booleanValue());
+//                    autoSaveIntervalsField.setEnabled(
+//                            (Boolean) event.getNewValue(),
+//                            autoSaveIntervalsParent);
                 }
             }
         }
@@ -355,6 +433,7 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
             int startupAction = startupActionCombo.getSelectionIndex();
             homeMapField
                     .setEmptyStringAllowed(startupAction != CathyPlugin.STARTUP_ACTION_HOME);
+            checkState();
         }
     }
 }

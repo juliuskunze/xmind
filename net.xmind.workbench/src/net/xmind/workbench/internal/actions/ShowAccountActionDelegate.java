@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -26,7 +26,7 @@ import org.eclipse.ui.IActionDelegate2;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
-public class ShowAccountActionDelegate extends XMindNetActionDelegate implements
+public class ShowAccountActionDelegate implements
         IWorkbenchWindowActionDelegate, IActionDelegate2,
         IAuthenticationListener {
 
@@ -107,9 +107,8 @@ public class ShowAccountActionDelegate extends XMindNetActionDelegate implements
         if (window == null || XMindNet.getAccountInfo() == null)
             return;
 
-        setURL(String.format("http://www.xmind.net/xmind/account/%s/%s/", //$NON-NLS-1$ 
-                getUserID(), getToken()));
-        gotoURL();
+        XMindNet.gotoURL("http://www.xmind.net/xmind/account/%s/%s/", //$NON-NLS-1$ 
+                getUserID(), getToken());
     }
 
     /*

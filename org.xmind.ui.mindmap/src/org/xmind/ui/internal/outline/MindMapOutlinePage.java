@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -172,7 +172,7 @@ public class MindMapOutlinePage extends GraphicalOutlinePage {
 
     protected void configureTreeViewer(ITreeViewer viewer) {
         super.configureTreeViewer(viewer);
-        domain.setViewer(viewer);
+        viewer.setEditDomain(domain);
         viewer.setPartFactory(MindMapUI.getMindMapTreePartFactory());
         viewer.setRootPart(new TreeRootPart());
     }
@@ -289,7 +289,7 @@ public class MindMapOutlinePage extends GraphicalOutlinePage {
         editor.grabHorizontal = true;
         editor.minimumWidth = 50;
 
-        final Text text = new Text(tree, SWT.BORDER);
+        final Text text = new Text(tree, SWT.SINGLE | SWT.BORDER);
         text.setCursor(Display.getCurrent().getSystemCursor(SWT.CURSOR_IBEAM));
         editor.setEditor(text, item);
 
@@ -352,9 +352,11 @@ public class MindMapOutlinePage extends GraphicalOutlinePage {
         Object o = item.getData();
         if (o instanceof IPart) {
             IPart part = (IPart) o;
-            part.handleRequest(new Request(GEF.REQ_MODIFY).setParameter(
-                    GEF.PARAM_TEXT, item.getText()).setPrimaryTarget(part),
-                    GEF.ROLE_MODIFIABLE);
+            part
+                    .handleRequest(new Request(GEF.REQ_MODIFY).setViewer(
+                            part.getSite().getViewer()).setParameter(
+                            GEF.PARAM_TEXT, item.getText()).setPrimaryTarget(
+                            part), GEF.ROLE_MODIFIABLE);
         }
     }
 

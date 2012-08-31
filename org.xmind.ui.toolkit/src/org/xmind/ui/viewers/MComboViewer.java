@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -26,7 +26,9 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IColorProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
@@ -108,6 +110,18 @@ public class MComboViewer extends StructuredViewer {
     private Object emptySelectionImitation = null;
 
     private Object separatorImitation = null;
+
+    private ILabelProvider handleLabelProvider = null;
+
+    private ILabelProviderListener handleLabelProviderListener = new ILabelProviderListener() {
+
+        public void labelProviderChanged(LabelProviderChangedEvent event) {
+            if (getControl() == null || getControl().isDisposed())
+                return;
+
+            MComboViewer.this.handleLabelProviderChanged(event);
+        }
+    };
 
     /**
      * Constructs a new instance of this class given its parent and a style
@@ -348,8 +362,9 @@ public class MComboViewer extends StructuredViewer {
 //        Point textSize = null;
         Point imageSize = null;
         Object currentSelection = getCurrentSelection();
-        if (getLabelProvider() instanceof ILabelProvider) {
-            ILabelProvider labelProvider = (ILabelProvider) getLabelProvider();
+
+        ILabelProvider labelProvider = (ILabelProvider) getWorkingHandleLabelProvider(ILabelProvider.class);
+        if (labelProvider != null) {
             if (currentSelection == null)
                 currentSelection = emptySelectionImitation;
             if (currentSelection != null) {
@@ -368,14 +383,14 @@ public class MComboViewer extends StructuredViewer {
             }
         }
         if (currentSelection != null) {
-            if (getLabelProvider() instanceof IColorProvider) {
-                IColorProvider colorProvider = (IColorProvider) getLabelProvider();
+            IColorProvider colorProvider = (IColorProvider) getWorkingHandleLabelProvider(IColorProvider.class);
+            if (colorProvider != null) {
                 textFg = colorProvider.getForeground(currentSelection);
                 textBg = colorProvider.getBackground(currentSelection);
             }
-            if (getLabelProvider() instanceof IToolTipProvider) {
-                String tooltip = ((IToolTipProvider) getLabelProvider())
-                        .getToolTip(currentSelection);
+            IToolTipProvider toolTipProvider = (IToolTipProvider) getWorkingHandleLabelProvider(IToolTipProvider.class);
+            if (toolTipProvider != null) {
+                String tooltip = toolTipProvider.getToolTip(currentSelection);
                 dropDownHandle.getControl().setToolTipText(tooltip);
             }
         }
@@ -384,6 +399,14 @@ public class MComboViewer extends StructuredViewer {
         dropDownHandle.setImageSize(imageSize);
         dropDownHandle.setTextForeground(textFg);
         dropDownHandle.setTextBackground(textBg);
+    }
+
+    private Object getWorkingHandleLabelProvider(Class<?> type) {
+        if (handleLabelProvider != null && type.isInstance(handleLabelProvider))
+            return handleLabelProvider;
+        if (getLabelProvider() != null && type.isInstance(getLabelProvider()))
+            return getLabelProvider();
+        return null;
     }
 
     public void reveal(Object element) {
@@ -572,6 +595,11 @@ public class MComboViewer extends StructuredViewer {
     }
 
     protected void handleDispose(DisposeEvent event) {
+        if (handleLabelProvider != null) {
+            handleLabelProvider.removeListener(handleLabelProviderListener);
+            handleLabelProvider.dispose();
+            handleLabelProvider = null;
+        }
         super.handleDispose(event);
         closePopup();
         popupList = null;
@@ -641,6 +669,40 @@ public class MComboViewer extends StructuredViewer {
 
     public boolean isEnabled() {
         return dropDownHandle.isEnabled();
+    }
+
+    public boolean isDropDownVisible() {
+        if (filtered) {
+            return popupList != null && popupList.getShell() != null
+                    && !popupList.getShell().isDisposed()
+                    && popupList.getShell().isVisible();
+        }
+        return popupMenu != null && popupMenu.getMenu() != null
+                && !popupMenu.getMenu().isDisposed()
+                && popupMenu.getMenu().isVisible();
+    }
+
+    public ILabelProvider getHandleLabelProvider() {
+        return handleLabelProvider;
+    }
+
+    public void setHandleLabelProvider(ILabelProvider labelProvider) {
+        ILabelProvider oldLabelProvider = this.handleLabelProvider;
+        if (oldLabelProvider == labelProvider)
+            return;
+
+        if (oldLabelProvider != null) {
+            oldLabelProvider.removeListener(handleLabelProviderListener);
+        }
+        this.handleLabelProvider = labelProvider;
+        if (labelProvider != null) {
+            labelProvider.addListener(handleLabelProviderListener);
+        }
+        refresh();
+
+        if (oldLabelProvider != null) {
+            oldLabelProvider.dispose();
+        }
     }
 
 }

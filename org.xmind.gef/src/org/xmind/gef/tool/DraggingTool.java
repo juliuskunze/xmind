@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -124,8 +124,8 @@ public abstract class DraggingTool extends GraphicalTool implements
                 getTargetViewer().scrollDelta(deltaX, deltaY);
                 setCursorPosition(currentPos.getTranslated(deltaX, deltaY));
                 scrolling = true;
-                getTargetViewer().getControl().getDisplay().timerExec(200,
-                        new Runnable() {
+                getTargetViewer().getControl().getDisplay()
+                        .timerExec(200, new Runnable() {
                             public void run() {
                                 if (scrolling)
                                     onDragging(getCursorPosition(), me);
@@ -189,10 +189,10 @@ public abstract class DraggingTool extends GraphicalTool implements
         changeActiveTool(GEF.TOOL_DEFAULT);
     }
 
-    protected void handleSingleRequest(Request request) {
+    protected void internalHandleRequest(Request request) {
         if (request.getTargetViewer() == null
                 || request.getTargetViewer() != getTargetViewer()) {
-            super.handleSingleRequest(request);
+            super.internalHandleRequest(request);
             return;
         }
         String requestType = request.getType();
@@ -202,15 +202,16 @@ public abstract class DraggingTool extends GraphicalTool implements
             cancel();
         } else {
             cancel();
-            ITool tool = getDomain().getActiveTool();
-            if (tool != this) {
-                tool.handleRequest(request);
+            if (!getStatus().isStatus(GEF.ST_ACTIVE)) {
+                getDomain().handleRequest(request);
+            } else {
+                getDomain().getDefaultTool().handleRequest(request);
             }
         }
     }
 
-    protected void internalHandleRequest(Request request) {
-        super.handleSingleRequest(request);
-    }
+//    protected void internalHandleRequest(Request request) {
+//        super.handleSingleRequest(request);
+//    }
 
 }

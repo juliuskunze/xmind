@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,9 +20,8 @@ import java.util.List;
 
 import org.eclipse.draw2d.FigureCanvas;
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.draw2d.RangeModel;
-import org.eclipse.draw2d.SWTEventDispatcher;
-import org.eclipse.draw2d.UpdateManager;
 import org.eclipse.draw2d.Viewport;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
@@ -34,6 +33,7 @@ import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.DropTargetListener;
+import org.eclipse.swt.dnd.TransferData;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusEvent;
@@ -44,6 +44,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
+import org.xmind.gef.GraphicalViewer;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.acc.IAccessible;
 import org.xmind.gef.dnd.DndData;
@@ -60,7 +61,7 @@ import org.xmind.gef.tool.ITool;
 /**
  * @author Brian Sun
  */
-public class PartsEventDispatcher extends SWTEventDispatcher implements
+public class PartsEventDispatcher extends ViewerEventDispatcher implements
         DropTargetListener {
 
     protected class PartAccessibilityDispatcher extends AccessibilityDispatcher {
@@ -74,12 +75,12 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
                     if (acc != null)
                         return acc;
                 }
-                IPart contents = viewer.getRootPart().getContents();
+                IPart contents = getViewer().getRootPart().getContents();
                 if (contents == null)
                     return null;
                 return (IAccessible) contents.getAdapter(IAccessible.class);
             }
-            return viewer.getAccessibleRegistry().getAccessible(childID);
+            return getViewer().getAccessibleRegistry().getAccessible(childID);
         }
 
         public void getChildAtPoint(AccessibleControlEvent e) {
@@ -93,11 +94,12 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         }
 
         public void getChildCount(AccessibleControlEvent e) {
-            e.detail = viewer.getAccessibleRegistry().getNumAccessibles();
+            e.detail = getViewer().getAccessibleRegistry().getNumAccessibles();
         }
 
         public void getChildren(AccessibleControlEvent e) {
-            e.children = viewer.getAccessibleRegistry().getAllAccessibleIDs();
+            e.children = getViewer().getAccessibleRegistry()
+                    .getAllAccessibleIDs();
         }
 
         public void getDefaultAction(AccessibleControlEvent e) {
@@ -127,8 +129,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         }
 
         private IPart getFocusedPart() {
-            Object focused = viewer.getFocused();
-            return focused == null ? null : viewer.getSelectionSupport()
+            Object focused = getViewer().getFocused();
+            return focused == null ? null : getViewer().getSelectionSupport()
                     .findSelectablePart(focused);
         }
 
@@ -158,10 +160,10 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         }
 
         public void getSelection(AccessibleControlEvent e) {
-            List<IPart> selectedParts = viewer.getSelectionSupport()
+            List<IPart> selectedParts = getViewer().getSelectionSupport()
                     .getPartSelection();
             if (selectedParts.isEmpty()) {
-                if (viewer.getControl().isFocusControl()) {
+                if (getViewer().getControl().isFocusControl()) {
                     e.childID = ACC.CHILDID_SELF;
                 } else {
                     e.childID = ACC.CHILDID_NONE;
@@ -169,8 +171,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
                 return;
             }
 
-            List<Integer> childIds = new ArrayList<Integer>(selectedParts
-                    .size());
+            List<Integer> childIds = new ArrayList<Integer>(
+                    selectedParts.size());
             for (IPart p : selectedParts) {
                 IAccessible acc = (IAccessible) p.getAdapter(IAccessible.class);
                 if (acc != null) {
@@ -248,15 +250,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
 
     private static int LONG_PRESSING_ACTIVATION_TIME = 500;
 
-    private final IGraphicalViewer viewer;
-
     private Shell shell = null;
 
     private DropTarget dropTarget = null;
-
-    private UpdateManager updateManager = null;
-
-    private boolean active = false;
 
     private boolean ignoreDoubleClicking = false;
 
@@ -264,13 +260,11 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
 
     private boolean ignoreDragging = false;
 
-//    private boolean scaleLocation = true;
+    private boolean ignoreNextMouseUp = false;
 
     private MouseDragEvent lastDragEvent = null;
 
     private MouseEvent currentMouseEvent = null;
-
-    private IDndSupport dndSupport = null;
 
     private DragDropEvent currentDropEvent = null;
 
@@ -292,42 +286,19 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
      * @param domain
      */
     public PartsEventDispatcher(IGraphicalViewer viewer) {
-        this.viewer = viewer;
-    }
-
-    public IGraphicalViewer getViewer() {
-        return viewer;
+        super(viewer);
     }
 
     public EditDomain getDomain() {
-        return viewer.getEditDomain();
+        return getViewer().getEditDomain();
     }
 
-//    /**
-//     * @return the scaleLocation
-//     */
-//    public boolean isScaleLocation() {
-//        return scaleLocation;
-//    }
-//
-//    /**
-//     * @param scaleLocation
-//     *            the scaleLocation to set
-//     */
-//    public void setScaleLocation(boolean scaleLocation) {
-//        this.scaleLocation = scaleLocation;
-//    }
-
-    public void activate() {
-        this.active = true;
+    protected void onActivated() {
+        super.onActivated();
         setIgnoreDoubleClicking(false);
     }
 
-    public void deactivate() {
-        if (!isActive())
-            return;
-
-        this.active = false;
+    protected void onDeactivated() {
         hideToolTip();
         cancelLongPressing();
 
@@ -337,10 +308,6 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         dropHandler = null;
 
         setIgnoreDoubleClicking(true);
-    }
-
-    public boolean isActive() {
-        return active;
     }
 
     @Override
@@ -355,9 +322,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             dropTarget = null;
         }
 
-        if (dndSupport != null) {
-            dropTarget = new DropTarget(c, dndSupport.getStyle());
-            dropTarget.setTransfer(dndSupport.getTransfers());
+        if (getDndSupport() != null) {
+            dropTarget = new DropTarget(c, getDndSupport().getStyle());
+            dropTarget.setTransfer(getDndSupport().getTransfers());
             dropTarget.addDropListener(this);
             c.addDisposeListener(new DisposeListener() {
                 public void widgetDisposed(DisposeEvent e) {
@@ -367,15 +334,17 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         }
     }
 
-    public IDndSupport getDndSupport() {
-        return dndSupport;
-    }
-
-    public void setDndSupport(IDndSupport dndSupport) {
-        if (dndSupport == this.dndSupport)
-            return;
-
-        this.dndSupport = dndSupport;
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.event.ViewerEventDispatcher#dndSupportChanged(org.xmind
+     * .gef.dnd.IDndSupport, org.xmind.gef.dnd.IDndSupport)
+     */
+    @Override
+    protected void dndSupportChanged(IDndSupport oldDndSupport,
+            IDndSupport newDndSupport) {
+        super.dndSupportChanged(oldDndSupport, newDndSupport);
         if (control != null && !control.isDisposed()) {
             createDropTarget(control);
         }
@@ -402,11 +371,12 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
      */
     protected Point convertPoint(int controlX, int controlY) {
         Point p = new Point(controlX, controlY);
-        if (viewer.getControl() != null && !viewer.getControl().isDisposed()) {
+        if (getViewer().getControl() != null
+                && !getViewer().getControl().isDisposed()) {
 //            if (isScaleLocation()) {
-            p = viewer.computeToLayer(p, true);
+            p = getViewer().computeToLayer(p, true);
 //            } else {
-//                p.translate(viewer.getScrollPosition());
+//                p.translate(getViewer().getScrollPosition());
 //            }
         }
         return p;
@@ -433,8 +403,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
      */
     protected MouseDragEvent convertDrag(org.eclipse.swt.events.MouseEvent me) {
         Point pos = convertPoint(me.x, me.y);
-        return MouseDragEvent.createEvent(me, lastDragEvent, pos, findPart(
-                me.x, me.y));
+        return MouseDragEvent.createEvent(me, lastDragEvent, pos,
+                findPart(me.x, me.y));
     }
 
     protected MouseDragEvent convertDrag(org.eclipse.swt.events.MouseEvent me,
@@ -483,14 +453,15 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     }
 
     protected IPart findPart(int controlX, int controlY) {
-        return viewer.findPart(controlX, controlY);
+        IPart part = getViewer().findPart(controlX, controlY);
+        return part == null ? getViewer().getRootPart() : part;
     }
 
 //    /**
 //     * @param position
 //     */
 //    protected IPart findPart(Point position) {
-//        return findPart(viewer.getRootPart(), position);
+//        return findPart(getViewer().getRootPart(), position);
 //    }
 //
 //    protected IPart findPart(IPart parent, Point position) {
@@ -518,7 +489,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             if (control != null & !control.isDisposed()) {
                 shell = control.getShell();
             } else {
-                Control viewerControl = viewer.getControl();
+                Control viewerControl = getViewer().getControl();
                 if (viewerControl != null && !viewerControl.isDisposed())
                     shell = viewerControl.getShell();
             }
@@ -533,6 +504,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchFocusGained(FocusEvent e) {
         if (!isActive())
             return;
+//        super.dispatchFocusGained(e);
         ITool tool = getActiveTool();
         if (tool != null) {
             tool.focusGained(getViewer());
@@ -554,6 +526,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         cancelLongPressing();
         if (!isActive())
             return;
+//        super.dispatchFocusLost(e);
         ITool tool = getActiveTool();
         if (tool != null) {
             tool.focusLost(getViewer());
@@ -573,6 +546,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchKeyPressed(org.eclipse.swt.events.KeyEvent e) {
         if (!isActive())
             return;
+//        super.dispatchKeyPressed(e);
         ITool tool = getActiveTool();
         if (tool != null) {
             KeyEvent ke = convertKey(e);
@@ -582,8 +556,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             if (me != null && isValidGraphicalPart(me.target)) {
                 updateCursor(me.cursorLocation, me.target);
             }
-        } else
+        } else {
             super.dispatchKeyPressed(e);
+        }
         if ((e.keyCode & SWT.ESC) != 0) {
             lastDragEvent = null;
         }
@@ -597,6 +572,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchKeyReleased(org.eclipse.swt.events.KeyEvent e) {
         if (!isActive())
             return;
+//        super.dispatchKeyReleased(e);
         ITool tool = getActiveTool();
         if (tool != null) {
             KeyEvent ke = convertKey(e);
@@ -606,8 +582,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             if (me != null && isValidGraphicalPart(me.target)) {
                 updateCursor(me.cursorLocation, me.target);
             }
-        } else
+        } else {
             super.dispatchKeyReleased(e);
+        }
         updateFocus();
     }
 
@@ -618,6 +595,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchKeyTraversed(TraverseEvent e) {
         if (!isActive())
             return;
+//        super.dispatchKeyTraversed(e);
         ITool tool = getActiveTool();
         if (tool != null) {
             KeyEvent ke = convertKey(e);
@@ -628,8 +606,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             if (me != null && isValidGraphicalPart(me.target)) {
                 updateCursor(me.cursorLocation, me.target);
             }
-        } else
+        } else {
             super.dispatchKeyTraversed(e);
+        }
         updateFocus();
     }
 
@@ -640,6 +619,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchMouseDoubleClicked(org.eclipse.swt.events.MouseEvent me) {
         if (!isActive())
             return;
+
+//        super.dispatchMouseDoubleClicked(me);
 
         cancelToolTipShowing();
 
@@ -670,6 +651,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchMouseEntered(org.eclipse.swt.events.MouseEvent me) {
         if (!isActive())
             return;
+//        super.dispatchMouseEntered(me);
         mouseHovering = false;
         hookScrollBars();
         cancelToolTipShowing();
@@ -682,8 +664,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             }
             tool.mouseEntered(e, getViewer());
             updateCursor(e.cursorLocation, e.target);
-        } else
+        } else {
             super.dispatchMouseEntered(me);
+        }
         updateFocus();
     }
 
@@ -695,6 +678,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         unhookScrollBars();
         if (!isActive())
             return;
+//        super.dispatchMouseExited(me);
         mouseHovering = false;
         cancelToolTipShowing();
         hideToolTip();
@@ -714,7 +698,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     }
 
     private void hookScrollBars() {
-        Viewport viewport = viewer.getCanvas().getViewport();
+        Viewport viewport = getViewer().getCanvas().getViewport();
         horizontalRangeModel = viewport.getHorizontalRangeModel();
         horizontalRangeModel
                 .addPropertyChangeListener(getViewportScrollListener());
@@ -788,6 +772,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         if (!isActive())
             return;
 
+//        super.dispatchMouseHover(me);
         mouseHovering = true;
         cancelToolTipShowing();
         receive(me);
@@ -818,40 +803,47 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             return;
         hideToolTip();
         if (mouseHovering && currentMouseEvent != null) {
-            updateToolTip(currentMouseEvent);
+            updateToolTip(currentMouseEvent, false);
         }
+    }
+
+    protected void updateToolTip(MouseEvent me, boolean useEventTarget) {
+        Point cp = null;
+        org.eclipse.swt.events.MouseEvent e = me.getCurrentSWTEvent();
+        if (e != null) {
+            cp = new Point(e.x, e.y);
+        } else {
+            cp = getViewer().computeToControl(me.cursorLocation, true);
+        }
+
+        IPart target = useEventTarget ? me.target : findPart(cp.x, cp.y);
+        if (target != null && target instanceof IGraphicalPart) {
+            ITool tool = getActiveTool();
+            IFigure tooltip = null;
+            if (tool instanceof IGraphicalTool) {
+                tooltip = ((IGraphicalTool) tool).getToolTip(target,
+                        me.cursorLocation);
+            }
+            if (tooltip == null && target instanceof IGraphicalEditPart) {
+                tooltip = ((IGraphicalEditPart) target)
+                        .findTooltipAt(me.cursorLocation);
+            }
+            if (tooltip != null) {
+                Point absolute = new Point(control.toDisplay(cp.x, cp.y));
+                getToolTipHelper().displayToolTipNear(
+                        ((IGraphicalPart) target).getFigure(), tooltip,
+                        absolute.x, absolute.y);
+                return;
+            }
+        }
+        hideToolTip();
     }
 
     /**
      * @param me
      */
     protected void updateToolTip(MouseEvent me) {
-        ITool tool = getActiveTool();
-        if (tool instanceof IGraphicalTool) {
-            IGraphicalTool gt = (IGraphicalTool) tool;
-            IPart host = null;
-            Point loc = me.cursorLocation;
-            if (loc != null) {
-                host = findPart(me.getCurrentSWTEvent().x, me
-                        .getCurrentSWTEvent().y);
-                IFigure tip = gt.getToolTip(host, loc);
-                if (tip == null) {
-                    hideToolTip();
-                } else {
-                    org.eclipse.swt.events.MouseEvent e = me.currentSWTEvent;
-                    if (e != null) {
-                        Point absolute = new Point(control.toDisplay(e.x, e.y));
-                        getToolTipHelper().displayToolTipNear(
-                                ((IGraphicalPart) host).getFigure(), tip,
-                                absolute.x, absolute.y);
-                    } else {
-                        hideToolTip();
-                    }
-                }
-            } else {
-                hideToolTip();
-            }
-        }
+        updateToolTip(me, true);
     }
 
     protected boolean isValidGraphicalPart(IPart host) {
@@ -861,7 +853,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
 
     protected void updateFocus() {
         IFigure focusableFigure = null;
-        IPart focusedPart = viewer.getFocusedPart();
+        IPart focusedPart = getViewer().getFocusedPart();
         if (focusedPart instanceof IGraphicalPart) {
             IFigure fig = ((IGraphicalPart) focusedPart).getFigure();
             if (fig.isRequestFocusEnabled()) {
@@ -888,6 +880,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         }
         /* IMPORTANT: end IF. */
 
+//        super.dispatchMouseMoved(me);
+
         mouseHovering = false;
         cancelToolTipShowing();
 
@@ -909,8 +903,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             updateCursor(e.cursorLocation, e.target);
             if (getToolTipHelper().isShowing())
                 updateToolTip(e);
-        } else
+        } else {
             super.dispatchMouseMoved(me);
+        }
         updateFocus();
     }
 
@@ -953,7 +948,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
      * 
      */
     public void hideToolTip() {
-        getToolTipHelper().updateToolTip(null, null, 0, 0);
+        if (control != null && !control.isDisposed()) {
+            getToolTipHelper().updateToolTip(null, null, 0, 0);
+        }
     }
 
     /**
@@ -989,6 +986,8 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         pressedMouseButton = me.button;
         if (!isActive())
             return;
+
+//        super.dispatchMousePressed(me);
         cancelToolTipShowing();
         lastDragEvent = createDragEvent(me);
         receive(me);
@@ -999,6 +998,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
                 ((IGraphicalTool) tool).setCursorPosition(e.cursorLocation);
             }
             tool.mouseDown(e, getViewer());
+            if (e.isConsumed()) {
+                ignoreNextMouseUp = true;
+            }
             updateCursor(e.cursorLocation, e.target);
             if (getToolTipHelper().isShowing())
                 updateToolTip(e);
@@ -1071,10 +1073,15 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
      */
     @Override
     public void dispatchMouseReleased(org.eclipse.swt.events.MouseEvent me) {
+        if (ignoreNextMouseUp) {
+            ignoreNextMouseUp = false;
+            return;
+        }
         pressedMouseButton = 0;
         ignoreDragging = false;
         if (!isActive())
             return;
+//        super.dispatchMouseReleased(me);
         cancelToolTipShowing();
         lastDragEvent = null;
         receive(me);
@@ -1086,8 +1093,9 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
             }
             tool.mouseUp(e, getViewer());
             updateCursor(e.cursorLocation, e.target);
-        } else
+        } else {
             super.dispatchMouseReleased(me);
+        }
         updateFocus();
     }
 
@@ -1098,6 +1106,7 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
     public void dispatchMouseWheelScrolled(org.eclipse.swt.widgets.Event event) {
         if (!isActive())
             return;
+//        super.dispatchMouseWheelScrolled(event);
         cancelToolTipShowing();
         ITool tool = getActiveTool();
         if (tool != null) {
@@ -1111,12 +1120,19 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
                 updateCursor(e.cursorLocation, e.target);
             }
             event.doit = mwe.doIt;
-        } else
+        } else {
             super.dispatchMouseWheelScrolled(event);
+        }
     }
 
     protected DragDropEvent createDropEvent(DropTargetEvent e, boolean drop) {
-        DndData dndData = dndSupport.parseData(e.dataTypes, getDropTarget(),
+        TransferData[] dataTypes;
+        if (drop && e.currentDataType != null) {
+            dataTypes = new TransferData[] { e.currentDataType };
+        } else {
+            dataTypes = e.dataTypes;
+        }
+        DndData dndData = getDndSupport().parseData(dataTypes, getDropTarget(),
                 !drop);
         if (dndData == null)
             return null;
@@ -1133,22 +1149,25 @@ public class PartsEventDispatcher extends SWTEventDispatcher implements
         swtEvent.detail = de.detail;
         //swtEvent.operations = de.operations;
         swtEvent.currentDataType = de.dndData.dataType;
-        UpdateManager um = getUpdateManager();
-        if (um != null)
-            um.performUpdate();
+        updateControl();
     }
 
-    protected UpdateManager getUpdateManager() {
-        if (updateManager == null) {
-            if (control instanceof FigureCanvas) {
-                updateManager = ((FigureCanvas) control).getLightweightSystem()
-                        .getUpdateManager();
-            } else {
-                updateManager = viewer.getCanvas().getLightweightSystem()
-                        .getUpdateManager();
-            }
+    /**
+     * 
+     */
+    private void updateControl() {
+        LightweightSystem lws;
+        if (control instanceof FigureCanvas) {
+            lws = ((FigureCanvas) control).getLightweightSystem();
+        } else if (getViewer() instanceof GraphicalViewer) {
+            lws = ((GraphicalViewer) getViewer()).getLightweightSystem();
+        } else if (getViewer().getCanvas() != null
+                && !getViewer().getCanvas().isDisposed()) {
+            lws = getViewer().getCanvas().getLightweightSystem();
+        } else {
+            return;
         }
-        return updateManager;
+        lws.getUpdateManager().performUpdate();
     }
 
     protected IDragDropHandler getDragDropHandler() {

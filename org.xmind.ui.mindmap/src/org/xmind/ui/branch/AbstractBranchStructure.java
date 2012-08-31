@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -168,8 +168,8 @@ public abstract class AbstractBranchStructure implements IBranchStructure,
         fillBoundaries(branch, boundaries, subBranches, info);
 
         List<ISummaryPart> summaries = branch.getSummaries();
-        List<IBranchPart> summaryBranches = new ArrayList<IBranchPart>(branch
-                .getSummaryBranches());
+        List<IBranchPart> summaryBranches = new ArrayList<IBranchPart>(
+                branch.getSummaryBranches());
         fillSummaries(branch, summaries, summaryBranches, subBranches, info);
         fillUnhandledSummaryBranches(branch, summaryBranches, info);
 
@@ -349,8 +349,8 @@ public abstract class AbstractBranchStructure implements IBranchStructure,
         }
         Rectangle area = null;
         for (IBranchPart subBranch : d.getSubBranches()) {
-            Insets ins = helper.getInnerInsets(helper
-                    .getSubBranchData(subBranch), d);
+            Insets ins = helper.getInnerInsets(
+                    helper.getSubBranchData(subBranch), d);
             Rectangle r2 = info.get(subBranch.getFigure());
             area = Geometry.union(area, r2.getExpanded(ins));
         }
@@ -422,8 +422,8 @@ public abstract class AbstractBranchStructure implements IBranchStructure,
                     x = area.right() + ins.left;
                     y = area.y + area.height / 2;
                 }
-                info.put(conclusionBranch.getFigure(), Geometry.getExpanded(x,
-                        y, ins));
+                info.put(conclusionBranch.getFigure(),
+                        Geometry.getExpanded(x, y, ins));
             }
         }
     }
@@ -586,8 +586,9 @@ public abstract class AbstractBranchStructure implements IBranchStructure,
     }
 
     protected int getMinorSpacing(IBranchPart branch) {
-        return getInteger(branch, branch.getBranchPolicy().getStyleSelector(
-                branch), Styles.MinorSpacing, 5);
+        return getInteger(branch,
+                branch.getBranchPolicy().getStyleSelector(branch),
+                Styles.MinorSpacing, 5);
     }
 
     protected int getMajorSpacing(IBranchPart branch) {
@@ -692,8 +693,8 @@ public abstract class AbstractBranchStructure implements IBranchStructure,
     public void calcSequentialNavigation(IBranchPart branch,
             IBranchPart startChild, IBranchPart endChild,
             List<IBranchPart> results) {
-        addSubBranches(branch, startChild.getBranchIndex(), endChild
-                .getBranchIndex(), results);
+        addSubBranches(branch, startChild.getBranchIndex(),
+                endChild.getBranchIndex(), results);
     }
 
     public void calcTraversableBranches(IBranchPart branch,
@@ -716,7 +717,7 @@ public abstract class AbstractBranchStructure implements IBranchStructure,
 
     protected void addSubBranches(IBranchPart branch, int fromIndex,
             int toIndex, List<IBranchPart> results) {
-        boolean decreasing = fromIndex > toIndex;
+        boolean decreasing = toIndex < fromIndex;
         for (int i = fromIndex; decreasing ? i >= toIndex : i <= toIndex;) {
             addSubBranch(branch, i, results);
             if (decreasing) {

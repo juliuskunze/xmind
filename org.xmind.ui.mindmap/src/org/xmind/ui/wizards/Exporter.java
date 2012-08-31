@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -30,9 +30,12 @@ import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.style.IStyle;
+import org.xmind.gef.util.Properties;
 import org.xmind.ui.internal.wizards.WizardMessages;
+import org.xmind.ui.mindmap.GhostShellProvider;
 import org.xmind.ui.mindmap.IMindMapViewer;
-import org.xmind.ui.mindmap.MindMapPreviewBuilder;
+import org.xmind.ui.mindmap.MindMap;
+import org.xmind.ui.mindmap.MindMapImageExporter;
 
 public abstract class Exporter implements IExporter {
 
@@ -67,6 +70,8 @@ public abstract class Exporter implements IExporter {
     private IDialogSettings dialogSettings = null;
 
     private List<Map.Entry<Throwable, String>> errors = null;
+
+    private GhostShellProvider overviewExportShellProvider = null;
 
     public Exporter(ISheet sheet, ITopic centralTopic) {
         this.sheet = sheet;
@@ -163,6 +168,14 @@ public abstract class Exporter implements IExporter {
     public void end() throws InvocationTargetException {
         next = null;
         partIter = null;
+        if (overviewExportShellProvider != null) {
+            display.syncExec(new Runnable() {
+                public void run() {
+                    overviewExportShellProvider.dispose();
+                }
+            });
+            overviewExportShellProvider = null;
+        }
     }
 
     /*
@@ -185,18 +198,32 @@ public abstract class Exporter implements IExporter {
         return relationships;
     }
 
-    public MindMapPreviewBuilder createOverviewBuilder(ITopic topic) {
+//    public MindMapPreviewBuilder createOverviewBuilder(ITopic topic) {
+//        if (!hasOverview(topic))
+//            return null;
+//
+//        MindMapPreviewBuilder builder = new MindMapPreviewBuilder(topic
+//                .getOwnedSheet(), topic);
+//
+//        if (getBoolean(ExportContants.SEPARATE_OVERVIEW)) {
+//            builder.setProperty(IMindMapViewer.VIEWER_MAX_TOPIC_LEVEL, 1);
+//        }
+//
+//        return builder;
+//    }
+
+    public MindMapImageExporter createOverviewExporter(ITopic topic) {
         if (!hasOverview(topic))
             return null;
-
-        MindMapPreviewBuilder builder = new MindMapPreviewBuilder(topic
-                .getOwnedSheet(), topic);
-
-        if (getBoolean(ExportContants.SEPARATE_OVERVIEW)) {
-            builder.setProperty(IMindMapViewer.VIEWER_MAX_TOPIC_LEVEL, 1);
+        if (overviewExportShellProvider == null) {
+            overviewExportShellProvider = new GhostShellProvider(getDisplay());
         }
-
-        return builder;
+        Properties properties = new Properties();
+        properties.set(IMindMapViewer.VIEWER_MAX_TOPIC_LEVEL, 1);
+        MindMapImageExporter exporter = new MindMapImageExporter(getDisplay());
+        exporter.setSource(new MindMap(topic.getOwnedSheet(), topic),
+                overviewExportShellProvider, properties, null);
+        return exporter;
     }
 
     public boolean hasOverview(ITopic topic) {
@@ -293,15 +320,15 @@ public abstract class Exporter implements IExporter {
     public IMarker getMarker(String markerId) {
         if (markerId == null)
             return null;
-        return getSheet().getOwnedWorkbook().getMarkerSheet().findMarker(
-                markerId);
+        return getSheet().getOwnedWorkbook().getMarkerSheet()
+                .findMarker(markerId);
     }
 
     public IFileEntry getFileEntry(String entryPath) {
         if (entryPath == null)
             return null;
-        return getSheet().getOwnedWorkbook().getManifest().getFileEntry(
-                entryPath);
+        return getSheet().getOwnedWorkbook().getManifest()
+                .getFileEntry(entryPath);
     }
 
 }

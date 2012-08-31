@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -104,6 +104,15 @@ public class NumberingImpl extends Numbering implements ICoreEventSource {
 
     public IWorkbook getOwnedWorkbook() {
         return ownedTopic.getOwnedWorkbook();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IWorkbookComponent#isOrphan()
+     */
+    public boolean isOrphan() {
+        return ownedTopic.isOrphan();
     }
 
     private void setAttribute(String key, String value) {

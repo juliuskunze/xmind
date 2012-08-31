@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -226,7 +226,7 @@ public class MarkerSheetImpl extends MarkerSheet implements
     protected NodeAdaptableProvider getElementAdapterProvider() {
         if (elementAdaptableProvider == null)
             elementAdaptableProvider = new NodeAdaptableProvider(
-                    getElementRegistry(), this);
+                    getElementRegistry(), this, implementation);
         return elementAdaptableProvider;
     }
 
@@ -352,8 +352,8 @@ public class MarkerSheetImpl extends MarkerSheet implements
         if (is == null)
             throw new FileNotFoundException();
         Document document = DOMUtils.loadDocument(is);
-        Iterator<Element> listIt = DOMUtils.childElementIterByTag(document
-                .getDocumentElement(), OLD_TAG_MARKER_LIST);
+        Iterator<Element> listIt = DOMUtils.childElementIterByTag(
+                document.getDocumentElement(), OLD_TAG_MARKER_LIST);
         while (listIt.hasNext()) {
             Element listEle = listIt.next();
             String listId = listEle.getAttribute(OLD_ATT_ID);

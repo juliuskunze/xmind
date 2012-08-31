@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -23,19 +23,17 @@ import org.xmind.ui.prefs.PrefConstants;
 
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
-    private static final String DEFAULT_DND_CLIENT_ID_ORDER = "org.xmind.ui.dnd.workbookComponent org.xmind.ui.dnd.image org.xmind.ui.dnd.url org.xmind.ui.dnd.file org.xmind.ui.dnd.text"; //$NON-NLS-1$
+    private static final String DEFAULT_DND_CLIENT_ID_ORDER = "org.xmind.ui.dnd.workbookComponent org.xmind.ui.dnd.image org.xmind.ui.dnd.file org.xmind.ui.dnd.url org.xmind.ui.dnd.text"; //$NON-NLS-1$
 
     public void initializeDefaultPreferences() {
-        IScopeContext context = new DefaultScope();
+        IScopeContext context = DefaultScope.INSTANCE;
         IEclipsePreferences node = context.getNode(MindMapUIPlugin.getDefault()
                 .getBundle().getSymbolicName());
         node.putBoolean(PrefConstants.ANIMATION_ENABLED, false);
         node.putBoolean(PrefConstants.SHADOW_ENABLED, false);
         node.putBoolean(PrefConstants.OVERLAPS_ALLOWED, false);
         node.putBoolean(PrefConstants.FREE_POSITION_ALLOWED, true);
-        node
-                .put(PrefConstants.DND_CLIENT_ID_ORDER,
-                        DEFAULT_DND_CLIENT_ID_ORDER);
+        node.put(PrefConstants.DND_CLIENT_ID_ORDER, DEFAULT_DND_CLIENT_ID_ORDER);
         node.putInt(PrefConstants.UNDO_LIMIT, 100);
 
         node.putBoolean(PrefConstants.GRADIENT_COLOR, true);

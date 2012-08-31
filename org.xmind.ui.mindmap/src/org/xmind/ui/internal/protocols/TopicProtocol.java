@@ -63,21 +63,9 @@ public class TopicProtocol implements IProtocol {
     private ImageDescriptor getIcon(Object element) {
         if (element instanceof ITopic) {
             ITopic topic = (ITopic) element;
-//            if (analyzingTopics.contains(topic)) {
             return MindMapUI.getImages().getTopicIcon(topic, true);
-//            }
-//            analyzingTopics.add(topic);
         }
         return null;
-//        try {
-//            return MindMapUI.getImages().getElementIcon(element, true);
-//        } catch (Throwable e) {
-//            return null;
-//        } finally {
-//            if (element instanceof ITopic) {
-//                analyzingTopics.remove(element);
-//            }
-//        }
     }
 
     /**
@@ -116,22 +104,6 @@ public class TopicProtocol implements IProtocol {
                 return;
             }
         }
-//        IWorkbookRef workbookRef = MindMapUI.getWorkbookRefManager().findRef(
-//                workbook);
-//        List<IEditorPart> editors = workbookRef.getOpenedEditors();
-//        if (editors.isEmpty())
-//            return;
-//
-//        IEditorPart activeEditor = PlatformUI.getWorkbench()
-//                .getActiveWorkbenchWindow().getActivePage().getActiveEditor();
-//        if (editors.contains(activeEditor)) {
-//            ISelectionProvider selectionProvider = activeEditor.getSite()
-//                    .getSelectionProvider();
-//            if (selectionProvider != null) {
-//                selectionProvider
-//                        .setSelection(new StructuredSelection(element));
-//            }
-//        }
     }
 
     public boolean isHyperlinkModifiable(Object source, String uri) {

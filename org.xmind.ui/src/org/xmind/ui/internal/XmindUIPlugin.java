@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -31,7 +31,9 @@ public class XmindUIPlugin extends AbstractUIPlugin {
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext)
+     * @see
+     * org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext
+     * )
      */
     public void start(BundleContext context) throws Exception {
         super.start(context);
@@ -41,7 +43,9 @@ public class XmindUIPlugin extends AbstractUIPlugin {
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.ui.plugin.AbstractUIPlugin#stop(org.osgi.framework.BundleContext)
+     * @see
+     * org.eclipse.ui.plugin.AbstractUIPlugin#stop(org.osgi.framework.BundleContext
+     * )
      */
     public void stop(BundleContext context) throws Exception {
         plugin = null;

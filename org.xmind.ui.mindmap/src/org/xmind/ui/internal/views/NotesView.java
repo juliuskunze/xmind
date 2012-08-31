@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -242,8 +242,7 @@ public class NotesView extends ViewPart implements IPartListener,
 
                     } catch (BadLocationException e) {
                         String message = String
-                                .format(
-                                        "Unexpected hyperlink range: start=%d, length=%d", //$NON-NLS-1$
+                                .format("Unexpected hyperlink range: start=%d, length=%d", //$NON-NLS-1$
                                         link.start, link.length);
                         Logger.log(e, message);
                     }
@@ -653,6 +652,7 @@ public class NotesView extends ViewPart implements IPartListener,
         } else {
             forceSaveNotes(topic);
         }
+        viewer.resetModified();
         savingNotes = false;
 
         deactivateJob();
@@ -668,10 +668,10 @@ public class NotesView extends ViewPart implements IPartListener,
     }
 
     private void doSaveNotes(ITopic topic, ICommandStack cs) {
-        ModifyNotesCommand modifyHtml = new ModifyNotesCommand(topic, adapter
-                .makeNewHtmlContent(), INotes.HTML);
-        ModifyNotesCommand modifyPlain = new ModifyNotesCommand(topic, adapter
-                .makeNewPlainContent(), INotes.PLAIN);
+        ModifyNotesCommand modifyHtml = new ModifyNotesCommand(topic,
+                adapter.makeNewHtmlContent(), INotes.HTML);
+        ModifyNotesCommand modifyPlain = new ModifyNotesCommand(topic,
+                adapter.makeNewPlainContent(), INotes.PLAIN);
         CompoundCommand cmd = new CompoundCommand(modifyHtml, modifyPlain);
         cmd.setLabel(CommandMessages.Command_ModifyNotes);
         cs.execute(cmd);
@@ -719,6 +719,11 @@ public class NotesView extends ViewPart implements IPartListener,
             if (viewer != null) {
                 return viewer.getImplementation();
             }
+        } else if (adapter == ITopicPart.class) {
+            return currentTopicPart;
+        } else if (adapter == ITopic.class) {
+            return currentTopicPart == null ? null : currentTopicPart
+                    .getTopic();
         }
         return super.getAdapter(adapter);
     }

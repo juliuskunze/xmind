@@ -7,6 +7,7 @@
 			<accessrule kind="accessible" pattern="org/eclipse/ui/internal/**"/>
 			<accessrule kind="accessible" pattern="org/xmind/core/internal/**"/>
 			<accessrule kind="accessible" pattern="net/xmind/signin/internal/**"/>
+			<accessrule kind="accessible" pattern="org/eclipse/core/internal/**"/>
 		</accessrules>
 	</classpathentry>
 	<classpathentry excluding="**/.svn" kind="src" path="src"/>

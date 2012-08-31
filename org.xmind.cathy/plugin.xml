@@ -18,10 +18,10 @@
             name="%productName">
          <property
                name="windowImages"
-               value="icons/xmind.16.gif,icons/xmind.16.png,icons/xmind.32.png,icons/xmind.48.png,icons/xmind.128.png"/>
+               value="icons/xmind.16.gif,icons/xmind.32.png,icons/xmind.48.png,icons/xmind.48.png,icons/xmind.128.png"/>
          <property
                name="appName"
-               value="XMind">
+               value="%productName">
          </property>
          <property
                name="preferenceCustomization"
@@ -35,7 +35,7 @@
           		value="product:icons/introimage.png"/>
           <property
           		name="introBrandingImageText"
-          		value="XMind 3.0"/>
+          		value="XMind 3.3"/>
 		  <property
 				name="introDescription-overview"
 				value=""/>
@@ -45,11 +45,12 @@
 		  <property
 				name="introDescription-samples"
 				value=""/>
-            <property
-                  name="aboutImage"
-                  value="icons/about.png">
-            </property>
-          <property name="aboutText" value="%productBlurb"/> 
+          <property
+                name="aboutImage"
+                value="icons/about.png">
+	      </property>
+          <property name="aboutText" value="%productBlurb">
+          </property> 
       </product>
    </extension>
    <extension
@@ -90,6 +91,16 @@
             contextId="org.eclipse.ui.contexts.window"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="M1+M2+L">
+      </key>
+      <key
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+N">
+      </key>
+      <key
+            commandId="org.xmind.ui.command.newWorkbookWizard"
+            contextId="org.eclipse.ui.contexts.dialogAndWindow"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+N">
       </key>
    </extension>
    <extension

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -91,6 +91,15 @@ public class MetaImpl extends Meta {
 
     public IWorkbook getOwnedWorkbook() {
         return ownedWorkbook;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IWorkbookComponent#isOrphan()
+     */
+    public boolean isOrphan() {
+        return ownedWorkbook != null;
     }
 
     private String[] getKeys(String keyPath) {

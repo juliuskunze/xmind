@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -44,6 +44,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.printing.PrinterData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -61,8 +62,6 @@ import org.xmind.gef.GEF;
 import org.xmind.gef.draw2d.ITextFigure;
 import org.xmind.gef.draw2d.RotatableWrapLabel;
 import org.xmind.gef.part.IGraphicalPart;
-import org.xmind.gef.ui.editor.IGraphicalEditor;
-import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.gef.util.Properties;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogMessages;
@@ -82,6 +81,10 @@ public class PageSetupDialog extends TitleAreaDialog {
     private static final int VIEWER_WIDTH = 480;
 
     private static final int VIEWER_HEIGHT = 360;
+
+    private static final int PORTRAIT_VIEWER_WIDTH = 270;
+
+    private static final int PORTRAIT_VIEWER_HEIGHT = 360;
 
     private class AlignAction extends Action {
 
@@ -171,17 +174,21 @@ public class PageSetupDialog extends TitleAreaDialog {
 
     }
 
-    private IGraphicalEditor sourceEditor;
+//    private IGraphicalEditor sourceEditor;
 
-    private IGraphicalEditorPage sourcePge;
+//    private IGraphicalEditorPage sourcePge;
 
-    private IMindMapViewer sourceViewer;
+//    private IMindMapViewer sourceViewer;
 
     private IMindMap sourceMindMap;
 
     private Button backgroundCheck;
 
     private Button borderCheck;
+
+    private Button landscapeRadio;
+
+    private Button portraitRadio;
 
     private Map<String, Text> inputControls;
 
@@ -215,13 +222,20 @@ public class PageSetupDialog extends TitleAreaDialog {
         }
     };
 
-    public PageSetupDialog(Shell parentShell, IGraphicalEditor sourceEditor,
-            IGraphicalEditorPage sourcePge, IMindMapViewer sourceViewer,
-            IMindMap sourceMindMap) {
+//    public PageSetupDialog(Shell parentShell, IGraphicalEditor sourceEditor,
+//            IGraphicalEditorPage sourcePge, IMindMapViewer sourceViewer,
+//            IMindMap sourceMindMap) {
+//        super(parentShell);
+//        this.sourceEditor = sourceEditor;
+//        this.sourcePge = sourcePge;
+//        this.sourceViewer = sourceViewer;
+//        this.sourceMindMap = sourceMindMap;
+//        this.settings = MindMapUIPlugin.getDefault().getDialogSettings(
+//                SECTION_ID);
+//    }
+
+    public PageSetupDialog(Shell parentShell, IMindMap sourceMindMap) {
         super(parentShell);
-        this.sourceEditor = sourceEditor;
-        this.sourcePge = sourcePge;
-        this.sourceViewer = sourceViewer;
         this.sourceMindMap = sourceMindMap;
         this.settings = MindMapUIPlugin.getDefault().getDialogSettings(
                 SECTION_ID);
@@ -248,21 +262,21 @@ public class PageSetupDialog extends TitleAreaDialog {
         return DIALOG_PERSISTLOCATION;
     }
 
-    public IGraphicalEditor getSourceEditor() {
-        return sourceEditor;
-    }
+//    public IGraphicalEditor getSourceEditor() {
+//        return sourceEditor;
+//    }
 
     public IMindMap getSourceMindMap() {
         return sourceMindMap;
     }
 
-    public IGraphicalEditorPage getSourcePge() {
-        return sourcePge;
-    }
+//    public IGraphicalEditorPage getSourcePge() {
+//        return sourcePge;
+//    }
 
-    public IMindMapViewer getSourceViewer() {
-        return sourceViewer;
-    }
+//    public IMindMapViewer getSourceViewer() {
+//        return sourceViewer;
+//    }
 
     public IDialogSettings getSettings() {
         return settings;
@@ -302,6 +316,7 @@ public class PageSetupDialog extends TitleAreaDialog {
         composite.setLayout(layout);
 
         createPageSetupSection(composite);
+        createOrientationSection(composite);
         createMarginsSection(composite);
         createHeaderFooterSection(composite);
     }
@@ -321,6 +336,31 @@ public class PageSetupDialog extends TitleAreaDialog {
         borderCheck
                 .setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         hookWidget(borderCheck, SWT.Selection);
+    }
+
+    private void createOrientationSection(Composite parent) {
+        Composite section = createSection(parent,
+                DialogMessages.PageSetupDialog_Orientation);
+        Composite container = new Composite(section, SWT.NONE);
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        container.setLayout(layout);
+        container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        landscapeRadio = new Button(container, SWT.RADIO);
+        landscapeRadio.setData(Integer.valueOf(PrinterData.LANDSCAPE));
+        landscapeRadio.setText(DialogMessages.PageSetupDialog_Landscape);
+        landscapeRadio.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false));
+        hookWidget(landscapeRadio, SWT.Selection);
+
+        portraitRadio = new Button(container, SWT.RADIO);
+        portraitRadio.setData(Integer.valueOf(PrinterData.PORTRAIT));
+        portraitRadio.setText(DialogMessages.PageSetupDialog_Portrait);
+        portraitRadio.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false));
+        hookWidget(portraitRadio, SWT.Selection);
     }
 
     private void createMarginsSection(Composite parent) {
@@ -495,6 +535,8 @@ public class PageSetupDialog extends TitleAreaDialog {
         GridLayout layout = new GridLayout(1, false);
         layout.marginHeight = 0;
         layout.marginWidth = 0;
+        layout.horizontalSpacing = 0;
+        layout.verticalSpacing = 0;
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
@@ -503,8 +545,8 @@ public class PageSetupDialog extends TitleAreaDialog {
         Composite container = new Composite(composite, SWT.NONE);
         GridLayout layout2 = new GridLayout(1, false);
         layout2.marginWidth = 0;
+        layout2.marginHeight = 5;
         layout2.marginLeft = 5;
-        layout2.marginBottom = 10;
         container.setLayout(layout2);
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
@@ -546,6 +588,12 @@ public class PageSetupDialog extends TitleAreaDialog {
 
         previewViewer.getCanvas().setScrollBarVisibility(FigureCanvas.NEVER);
         previewViewer.setInput(sourceMindMap);
+
+//        CenterPresercationService centerPresercationService = new CenterPresercationService(
+//                previewViewer);
+//        previewViewer.installService(CenterPresercationService.class,
+//                centerPresercationService);
+//        centerPresercationService.setActive(true);
 
         Layer feedback = previewViewer.getLayer(GEF.LAYER_FEEDBACK);
         if (feedback != null) {
@@ -598,7 +646,7 @@ public class PageSetupDialog extends TitleAreaDialog {
         pageLayout.marginWidth = 0;
         pageLayout.marginHeight = 0;
         previewPage.setLayout(pageLayout);
-        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, false, false);
+        GridData layoutData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
         layoutData.widthHint = VIEWER_WIDTH;
         layoutData.heightHint = VIEWER_HEIGHT;
         previewPage.setLayoutData(layoutData);
@@ -644,6 +692,11 @@ public class PageSetupDialog extends TitleAreaDialog {
         update(key);
     }
 
+    protected void setProperty(String key, int value) {
+        getSettings().put(key, value);
+        update(key);
+    }
+
     protected void setProperty(String key, double value) {
         getSettings().put(key, value);
         update(key);
@@ -677,6 +730,8 @@ public class PageSetupDialog extends TitleAreaDialog {
                 || PrintConstants.FOOTER_ALIGN.equals(key)
                 || PrintConstants.FOOTER_FONT.equals(key)
                 || PrintConstants.FOOTER_TEXT.equals(key);
+        boolean orientationChanged = key == null
+                || PrintConstants.ORIENTATION.equals(key);
 
         updating = true;
 
@@ -742,6 +797,10 @@ public class PageSetupDialog extends TitleAreaDialog {
                     footerFigure);
         }
 
+        if (orientationChanged) {
+            updateOrientation();
+        }
+
         updating = false;
     }
 
@@ -783,7 +842,7 @@ public class PageSetupDialog extends TitleAreaDialog {
     }
 
     private void updateMargins(String... keys) {
-        if (inputControls != null) {
+        if (!modifyingText && inputControls != null) {
             for (String key : keys) {
                 Text text = inputControls.get(key);
                 if (text != null && !text.isDisposed()) {
@@ -807,6 +866,25 @@ public class PageSetupDialog extends TitleAreaDialog {
             }
             previewPage.layout();
         }
+    }
+
+    private void updateOrientation() {
+        int orientation = getInteger(PrintConstants.ORIENTATION,
+                PrinterData.LANDSCAPE);
+        boolean landscape = orientation != PrinterData.PORTRAIT;
+        landscapeRadio.setSelection(landscape);
+        portraitRadio.setSelection(!landscape);
+
+        GridData layoutData = (GridData) previewPage.getLayoutData();
+        if (orientation == PrinterData.LANDSCAPE) {
+            layoutData.widthHint = VIEWER_WIDTH;
+            layoutData.heightHint = VIEWER_HEIGHT;
+        } else {
+            layoutData.widthHint = PORTRAIT_VIEWER_WIDTH;
+            layoutData.heightHint = PORTRAIT_VIEWER_HEIGHT;
+        }
+        previewPage.getParent().layout();
+//        System.out.println("Landscape: " + landscape);
     }
 
     private int getControlMargin(String key) {
@@ -846,18 +924,30 @@ public class PageSetupDialog extends TitleAreaDialog {
         return defaultValue;
     }
 
+    private int getInteger(String key, int defaultValue) {
+        try {
+            return getSettings().getInt(key);
+        } catch (NumberFormatException e) {
+        }
+        return defaultValue;
+    }
+
     private void handleWidgetEvent(Event event) {
         if (event.widget == backgroundCheck) {
-            setProperty(PrintConstants.NO_BACKGROUND, !backgroundCheck
-                    .getSelection());
+            setProperty(PrintConstants.NO_BACKGROUND,
+                    !backgroundCheck.getSelection());
         } else if (event.widget == borderCheck) {
             setProperty(PrintConstants.NO_BORDER, !borderCheck.getSelection());
         } else if (event.widget == unitChooser) {
             int index = unitChooser.getSelectionIndex();
             if (index < 0 || index >= PrintConstants.UNITS.size())
                 index = 0;
-            setProperty(PrintConstants.MARGIN_UNIT, PrintConstants.UNITS
-                    .get(index));
+            setProperty(PrintConstants.MARGIN_UNIT,
+                    PrintConstants.UNITS.get(index));
+        } else if (event.widget == landscapeRadio
+                || event.widget == portraitRadio) {
+            setProperty(PrintConstants.ORIENTATION,
+                    ((Integer) event.widget.getData()).intValue());
         } else if (event.widget instanceof Text && inputControls != null
                 && inputControls.containsValue(event.widget)) {
             Text input = (Text) event.widget;
@@ -894,7 +984,6 @@ public class PageSetupDialog extends TitleAreaDialog {
                         .length());
                 input.setSelection(caretPosition);
             }
-
         }
     }
 
@@ -905,19 +994,85 @@ public class PageSetupDialog extends TitleAreaDialog {
         } catch (NumberFormatException e) {
             return;
         }
-        double step;
-        if (PrintConstants.MILLIMETER.equals(getString(
-                PrintConstants.MARGIN_UNIT, PrintConstants.INCH))) {
-            step = 0.5;
-        } else {
-            step = 0.1;
+
+        String[] parts = split1000(value);
+        int integer = Integer.parseInt(parts[0], 10);
+        integer += getStep() * stepFactor;
+        if (integer < 100) {
+            integer = 100;
         }
-        step *= stepFactor;
-        value += step;
-        if (value < 0.1) {
-            value = 0.1;
-        }
+        value = join1000(String.valueOf(integer), parts[1]);
         setMargin((String) input.getData(), value);
+    }
+
+    public int getStep() {
+        if (PrintConstants.MILLIMETER.equals(getString(
+                PrintConstants.MARGIN_UNIT, PrintConstants.INCH)))
+            return 500;
+        return 100;
+    }
+
+    /**
+     * Multiply the given number by 1000, and then split the result into integer
+     * part and decimal part.
+     * 
+     * <p>
+     * Sample:<br>
+     * 
+     * <pre>
+     * String[] parts = split1000(34.56);
+     * assert parts[0] == &quot;34560&quot;;
+     * assert parts[1] == &quot;00&quot;;
+     * 
+     * Srting[] parts2 = split1000(0.034524);
+     * assert parts2[0] == &quot;0034&quot;;
+     * assert parts2[1] == &quot;524000&quot;;
+     * </pre>
+     * 
+     * </p>
+     * 
+     * @param value
+     * @return
+     */
+    private static String[] split1000(double value) {
+        String repr = String.valueOf(value) + "000"; //$NON-NLS-1$
+        int dotIndex = repr.indexOf("."); //$NON-NLS-1$
+        if (dotIndex < 0) {
+            return new String[] { repr, "" }; //$NON-NLS-1$
+        } else {
+            return new String[] {
+                    repr.substring(0, dotIndex)
+                            + repr.substring(dotIndex + 1, dotIndex + 4),
+                    repr.substring(dotIndex + 4) };
+        }
+    }
+
+    /**
+     * Merge prefix(integer part) and suffix(decimal part) into a number and
+     * return result of the number devided by 1000.
+     * 
+     * <p>
+     * Sample:<br>
+     * 
+     * <pre>
+     * double value = join1000("34560", "00")
+     * assert value == 34.56
+     * 
+     * value = join1000("34", "524000")
+     * assert value == 0.034524
+     * </pre>
+     * 
+     * </p>
+     * 
+     * @param prefix
+     * @param suffix
+     * @return
+     */
+    private static double join1000(String prefix, String suffix) {
+        prefix = "000" + prefix; //$NON-NLS-1$
+        String mid = prefix.substring(prefix.length() - 3);
+        prefix = prefix.substring(0, prefix.length() - 3);
+        return Double.parseDouble(prefix + "." + mid + suffix); //$NON-NLS-1$
     }
 
     private void setMargin(String key, double value) {

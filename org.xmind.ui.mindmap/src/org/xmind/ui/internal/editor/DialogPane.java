@@ -24,14 +24,19 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.part.Page;
 
-public abstract class DialogPane {
+public abstract class DialogPane extends Page implements IDialogPane {
 
     private static final float CORNER_OFFSET = 20;
 
     private static final float CORNER_CONTROL_OFFSET = 5;
 
     private static final String DEFAULT_BUTTON_TRIGGER_EVENT_ID = "DEFAULT_BUTTON_TRIGGER_EVENT_ID"; //$NON-NLS-1$
+
+    private int returnCode = OK;
+
+    private IDialogPaneContainer paneContainer;
 
     private Map<Integer, Button> buttons;
 
@@ -44,6 +49,14 @@ public abstract class DialogPane {
     private Listener defaultButtonListener;
 
     private Listener escapeKeyListener;
+
+    public void init(IDialogPaneContainer paneContainer) {
+        this.paneContainer = paneContainer;
+    }
+
+    protected IDialogPaneContainer getPaneContainer() {
+        return paneContainer;
+    }
 
     public void createControl(Composite parent) {
         this.container = new Composite(parent, SWT.NONE);
@@ -258,8 +271,8 @@ public abstract class DialogPane {
     protected void addTriggerDefaultButtonListener(Control control,
             int triggerEvent) {
         control.addListener(triggerEvent, getDefaultButtonListener());
-        control.setData(DEFAULT_BUTTON_TRIGGER_EVENT_ID, Integer
-                .valueOf(triggerEvent));
+        control.setData(DEFAULT_BUTTON_TRIGGER_EVENT_ID,
+                Integer.valueOf(triggerEvent));
     }
 
     private Listener getDefaultButtonListener() {
@@ -379,6 +392,21 @@ public abstract class DialogPane {
     }
 
     protected void relayout() {
+        if (container == null || container.isDisposed())
+            return;
         container.getParent().layout(true);
     }
+
+    public void setReturnCode(int code) {
+        this.returnCode = code;
+    }
+
+    public int getReturnCode() {
+        return returnCode;
+    }
+
+    protected boolean close() {
+        return paneContainer.close();
+    }
+
 }

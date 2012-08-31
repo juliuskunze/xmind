@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -120,7 +120,7 @@ public class ThemesViewer extends GalleryViewer {
     }
 
     private static class ThemeSelectTool extends GallerySelectTool {
-        public boolean isTitleEditable(IPart p) {
+        protected boolean isTitleEditable(IPart p) {
             if (!super.isTitleEditable(p))
                 return false;
             IStyle theme = (IStyle) p.getModel();
@@ -155,23 +155,7 @@ public class ThemesViewer extends GalleryViewer {
 
     public ThemesViewer(Composite parent) {
         super();
-        setPartFactory(new ThemePartFactory(getPartFactory()));
-        setLabelProvider(new ThemeLabelProvider());
-        Properties properties = getProperties();
-        properties.set(GalleryViewer.Horizontal, Boolean.TRUE);
-        properties.set(GalleryViewer.Wrap, Boolean.TRUE);
-        properties.set(GalleryViewer.Layout, new GalleryLayout(
-                GalleryLayout.ALIGN_CENTER, GalleryLayout.ALIGN_FILL, 1, 1,
-                new Insets(5)));
-        properties.set(GalleryViewer.FrameContentSize, new Dimension(128, 64));
-        properties.set(GalleryViewer.TitlePlacement, GalleryViewer.TITLE_TOP);
-        properties.set(GalleryViewer.SingleClickToOpen, Boolean.FALSE);
-
-        EditDomain editDomain = new EditDomain();
-        editDomain.installTool(GEF.TOOL_SELECT, new ThemeSelectTool());
-        editDomain.installTool(GEF.TOOL_EDIT, new ThemeNameEditTool());
-        editDomain.setViewer(this);
-
+        init();
         createControl(parent);
 
         final Display display = parent.getDisplay();
@@ -186,6 +170,26 @@ public class ThemesViewer extends GalleryViewer {
                 }
             }
         });
+    }
+
+    protected void init() {
+        setPartFactory(new ThemePartFactory(getPartFactory()));
+        setLabelProvider(new ThemeLabelProvider());
+
+        EditDomain editDomain = new EditDomain();
+        editDomain.installTool(GEF.TOOL_SELECT, new ThemeSelectTool());
+        editDomain.installTool(GEF.TOOL_EDIT, new ThemeNameEditTool());
+        setEditDomain(editDomain);
+
+        Properties properties = getProperties();
+        properties.set(GalleryViewer.Horizontal, Boolean.TRUE);
+        properties.set(GalleryViewer.Wrap, Boolean.TRUE);
+        properties.set(GalleryViewer.Layout, new GalleryLayout(
+                GalleryLayout.ALIGN_CENTER, GalleryLayout.ALIGN_FILL, 1, 1,
+                new Insets(5)));
+        properties.set(GalleryViewer.FrameContentSize, new Dimension(128, 64));
+        properties.set(GalleryViewer.TitlePlacement, GalleryViewer.TITLE_TOP);
+        properties.set(GalleryViewer.SingleClickToOpen, Boolean.FALSE);
     }
 
     public void setSelection(ISelection selection) {
@@ -240,7 +244,7 @@ public class ThemesViewer extends GalleryViewer {
         EditDomain domain = getEditDomain();
         ITool tool = domain.getDefaultTool();
         ((GallerySelectTool) tool).getStatus().setStatus(GEF.ST_ACTIVE, true);
-        ((GallerySelectTool) tool).handleRequest(GEF.REQ_EDIT, this);
+        domain.handleRequest(GEF.REQ_EDIT, this);
     }
 
 }

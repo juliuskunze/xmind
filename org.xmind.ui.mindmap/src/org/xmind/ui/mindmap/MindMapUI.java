@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -40,7 +40,9 @@ public class MindMapUI {
 
     public static final String VIEW_BROSWER = "org.xmind.ui.BrowserView"; //$NON-NLS-1$
 
-    public static final String VIEW_OVERVIEW = "org.xmind.ui.OverviewBiew"; //$NON-NLS-1$
+    public static final String VIEW_OVERVIEW = "org.xmind.ui.OverviewView"; //$NON-NLS-1$
+
+    public static final String VIEW_REVISIONS = "org.xmind.ui.RevisionsView"; //$NON-NLS-1$
 
     public static final String POPUP_DIALOG_SETTINGS_ID = "org.xmind.ui.popupDialog"; //$NON-NLS-1$
 
@@ -585,6 +587,10 @@ public class MindMapUI {
      * </dl>
      */
     public static final String WorkbookClose = "workbookClose"; //$NON-NLS-1$
+
+    public static final int DEFAULT_EXPORT_MARGIN = 15;
+
+    public static final int NAV_SCROLL_STEP = 50;
 
     public MindMapUI() {
     }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,17 +13,15 @@
  *******************************************************************************/
 package org.xmind.gef.internal.image;
 
-import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Insets;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.xmind.gef.image.ExportAreaProvider;
 
 public class ConstrainedExportAreaProvider extends ExportAreaProvider {
 
-    public ConstrainedExportAreaProvider(IFigure figure,
-            Rectangle sourceArea, int constrainedWidth, int constrainedHeight,
-            Insets margins) {
-        super(figure, sourceArea, constrainedWidth, constrainedHeight, margins);
+    public ConstrainedExportAreaProvider(Rectangle sourceArea,
+            int constrainedWidth, int constrainedHeight, Insets margins) {
+        super(sourceArea, constrainedWidth, constrainedHeight, margins);
     }
 
     protected void adjustExportArea() {

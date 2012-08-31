@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -69,7 +69,7 @@ public class RotatableLineBorder extends LineBorder implements IRotatable {
     private void paintRotatedBorder(IFigure figure, Graphics graphics,
             Insets insets) {
         tempRect.setBounds(getPaintRectangle(figure, insets));
-        tempRect.crop(rotator.t(new PrecisionInsets(super.getInsets(figure)))
+        tempRect.shrink(rotator.t(new PrecisionInsets(super.getInsets(figure)))
                 .toDraw2DInsets());
         rect.setBounds(tempRect);
         rotator.setOrigin(rect.x + rect.width / 2, rect.y + rect.height / 2);

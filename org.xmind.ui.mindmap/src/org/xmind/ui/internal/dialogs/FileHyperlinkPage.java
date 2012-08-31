@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,20 +15,14 @@ package org.xmind.ui.internal.dialogs;
 
 import java.io.File;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.SafeRunner;
-import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -36,14 +30,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IEditorPart;
-import org.xmind.core.IWorkbook;
 import org.xmind.ui.dialogs.HyperlinkPage;
 import org.xmind.ui.internal.editor.MME;
-import org.xmind.ui.internal.editor.WorkbookRef;
 import org.xmind.ui.internal.protocols.FilePathParser;
-import org.xmind.ui.mindmap.IWorkbookRef;
-import org.xmind.ui.mindmap.MindMapUI;
-import org.xmind.ui.util.MindMapUtils;
 
 /**
  * 
@@ -155,8 +144,8 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
         int maxWidth = 98;
         for (Control c : composite.getChildren()) {
             if (c instanceof Button) {
-                maxWidth = Math.max(maxWidth, c.computeSize(SWT.DEFAULT,
-                        SWT.DEFAULT).x);
+                maxWidth = Math.max(maxWidth,
+                        c.computeSize(SWT.DEFAULT, SWT.DEFAULT).x);
             }
         }
         for (Control c : composite.getChildren()) {
@@ -217,65 +206,68 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
     public boolean tryFinish() {
         if (file != null && relative) {
             if (basePath == null) {
-                /*------------------------------------
-                if (!MessageDialog.openConfirm(null,
-                        DialogMessages.FileHyperlinkPage_WarningDialog_Title,
-                        DialogMessages.FileHyperlinkPage_WarningDialog_message))
+                editor.doSaveAs();
+                File newFilePath = MME.getFile(editor.getEditorInput());
+                if (newFilePath == null)
                     return false;
-                 --------------------------------------*/
-
-                String workbookPath = openSaveDialog();
-                if (workbookPath == null)
-                    return false;
-
-                basePath = new File(workbookPath).getParent();
-                if (basePath == null)
-                    return false;
-
+                basePath = newFilePath.getParent();
                 String relativePath = FilePathParser.toRelativePath(basePath,
                         file.getAbsolutePath());
                 if (relativePath != null) {
-                    saveWorkbook(workbookPath);
-                    super
-                            .setValue(FilePathParser.toURI(relativePath,
-                                    relative));
+                    super.setValue(FilePathParser.toURI(relativePath, relative));
                 }
+//                String workbookPath = openSaveDialog();
+//                if (workbookPath == null)
+//                    return false;
+//
+//                basePath = new File(workbookPath).getParent();
+//                if (basePath == null)
+//                    return false;
+//
+//                String relativePath = FilePathParser.toRelativePath(basePath,
+//                        file.getAbsolutePath());
+//                if (relativePath != null) {
+//                    saveWorkbook(workbookPath);
+//                    super
+//                            .setValue(FilePathParser.toURI(relativePath,
+//                                    relative));
+//                }
             }
         }
         return super.tryFinish();
     }
 
-    private String openSaveDialog() {
-        IWorkbook workbook = (IWorkbook) editor.getAdapter(IWorkbook.class);
-        String name = workbook.getPrimarySheet().getRootTopic().getTitleText();
-        String proposalName = MindMapUtils.trimFileName(name);
-        return DialogUtils.save(composite.getShell(), proposalName,
-                new String[] { "*" + MindMapUI.FILE_EXT_XMIND }, //$NON-NLS-1$
-                new String[] { DialogMessages.WorkbookFilterName }, 0, null);
-    }
-
-    private void saveWorkbook(final String path) {
-        if (path != null) {
-            final IWorkbookRef workbookRef = (IWorkbookRef) editor
-                    .getAdapter(IWorkbookRef.class);
-            if (workbookRef != null && workbookRef instanceof WorkbookRef) {
-                BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
-                    public void run() {
-                        final String errorMessage = NLS.bind(
-                                DialogMessages.FailedToSaveWorkbook_message,
-                                path);
-                        SafeRunner.run(new SafeRunnable(errorMessage) {
-                            public void run() throws Exception {
-                                ((WorkbookRef) workbookRef).saveWorkbookAs(MME
-                                        .createFileEditorInput(path),
-                                        new NullProgressMonitor());
-                            }
-                        });
-                    }
-                });
-            }
-        }
-    }
+//    private String openSaveDialog() {
+//        IWorkbook workbook = (IWorkbook) editor.getAdapter(IWorkbook.class);
+//        String name = workbook.getPrimarySheet().getRootTopic().getTitleText();
+//        String proposalName = MindMapUtils.trimFileName(name);
+//        return DialogUtils.save(composite.getShell(), proposalName,
+//                new String[] { "*" + MindMapUI.FILE_EXT_XMIND }, //$NON-NLS-1$
+//                new String[] { DialogMessages.WorkbookFilterName }, 0, null);
+//    }
+//
+//    private void saveWorkbook(final String path) {
+//        if (path != null) {
+//            final IWorkbookRef workbookRef = (IWorkbookRef) editor
+//                    .getAdapter(IWorkbookRef.class);
+//            if (workbookRef != null && workbookRef instanceof WorkbookRef) {
+//                BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
+//                    public void run() {
+//                        final String errorMessage = NLS.bind(
+//                                DialogMessages.FailedToSaveWorkbook_message,
+//                                path);
+//                        SafeRunner.run(new SafeRunnable(errorMessage) {
+//                            public void run() throws Exception {
+//                                ((WorkbookRef) workbookRef).saveWorkbookAs(
+//                                        MME.createFileEditorInput(path),
+//                                        new NullProgressMonitor(), null);
+//                            }
+//                        });
+//                    }
+//                });
+//            }
+//        }
+//    }
 
     public void handleEvent(Event event) {
         if (event.widget == pathInput) {
@@ -306,16 +298,14 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
     protected DirectoryDialog createFolderDialog() {
         DirectoryDialog dialog = new DirectoryDialog(composite.getShell(),
                 SWT.OPEN | SWT.SINGLE);
-        dialog
-                .setText(DialogMessages.FileHyperlinkPage_OpenFileDialog_windowTitle);
+        dialog.setText(DialogMessages.FileHyperlinkPage_OpenFileDialog_windowTitle);
         return dialog;
     }
 
     protected FileDialog createFileDialog() {
         FileDialog dialog = new FileDialog(composite.getShell(), SWT.OPEN
                 | SWT.SINGLE);
-        dialog
-                .setText(DialogMessages.FileHyperlinkPage_OpenFileDialog_windowTitle);
+        dialog.setText(DialogMessages.FileHyperlinkPage_OpenFileDialog_windowTitle);
         return dialog;
     }
 
@@ -352,8 +342,9 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
             return null;
         if (relative) {
             if (basePath != null)
-                return FilePathParser.toURI(FilePathParser.toRelativePath(
-                        basePath, file.getAbsolutePath()), relative);
+                return FilePathParser.toURI(
+                        FilePathParser.toRelativePath(basePath,
+                                file.getAbsolutePath()), relative);
         }
         return FilePathParser.toURI(file.getAbsolutePath(), relative);
     }

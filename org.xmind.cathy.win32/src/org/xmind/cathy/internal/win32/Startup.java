@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -10,6 +10,8 @@
  * Contributors: XMind Ltd. - initial API and implementation
  */
 package org.xmind.cathy.internal.win32;
+
+import java.lang.reflect.Field;
 
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -39,7 +41,7 @@ public class Startup implements IStartup {
     private void hookWindow(IWorkbenchWindow window) {
         Shell shell = window.getShell();
         if (shell != null && !shell.isDisposed()) {
-            int hWnd = shell.handle;
+            int hWnd = findWindowHandle(shell);
             logPrimaryWindow(hWnd);
             shell.addDisposeListener(new DisposeListener() {
                 public void widgetDisposed(DisposeEvent e) {
@@ -52,6 +54,25 @@ public class Startup implements IStartup {
                 }
             });
         }
+    }
+
+    /**
+     * Obtain <code>shell.handle</code> using reflection.
+     * 
+     * @param shell
+     * @return
+     */
+    private int findWindowHandle(Shell shell) {
+        try {
+            Field handleField = shell.getClass().getField("handle"); //$NON-NLS-1$
+            Object handle = handleField.get(shell);
+            if (handle instanceof Integer) {
+                return ((Integer) handle).intValue();
+            }
+        } catch (Exception e) {
+            //ignore
+        }
+        return 0;
     }
 
     private void checkRemainingWindow() {

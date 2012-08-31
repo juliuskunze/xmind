@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -19,7 +19,10 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.xmind.core.Core;
@@ -63,10 +66,15 @@ public class PasswordProvider implements IEncryptionHandler {
             messageLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                     false));
 
-            Text passwordInput = new Text(composite, SWT.BORDER | SWT.SINGLE
-                    | SWT.PASSWORD);
+            final Text passwordInput = new Text(composite, SWT.BORDER
+                    | SWT.SINGLE | SWT.PASSWORD);
             passwordInput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                     false));
+            passwordInput.addListener(SWT.Modify, new Listener() {
+                public void handleEvent(Event event) {
+                    value = passwordInput.getText();
+                }
+            });
 
             return composite;
         }
@@ -77,11 +85,18 @@ public class PasswordProvider implements IEncryptionHandler {
     }
 
     public String retrievePassword() throws CoreException {
-        PasswordDialog dialog = new PasswordDialog(null);
-        int ret = dialog.open();
-        if (ret == PasswordDialog.OK) {
-            return dialog.getValue();
-        }
-        throw new CoreException(Core.ERROR_CANCELLATION);
+        final String[] password = new String[1];
+        Display.getDefault().syncExec(new Runnable() {
+            public void run() {
+                PasswordDialog dialog = new PasswordDialog(null);
+                int ret = dialog.open();
+                if (ret == PasswordDialog.OK) {
+                    password[0] = dialog.getValue();
+                }
+            }
+        });
+        if (password[0] == null)
+            throw new CoreException(Core.ERROR_CANCELLATION);
+        return password[0];
     }
 }

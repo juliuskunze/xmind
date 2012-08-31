@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,28 +15,30 @@ package net.xmind.signin;
 
 import net.xmind.signin.internal.InternalXMindNet;
 
+import org.xmind.ui.internal.browser.BrowserUtil;
+
 public class XMindNet {
 
     public static IAccountInfo signIn() {
-        return InternalXMindNet.getInstance().getAuthenticator().signIn(null,
-                null);
+        return InternalXMindNet.getInstance().getAuthenticator()
+                .signIn(null, null);
     }
 
     public static IAccountInfo signIn(String message,
             ISignInDialogExtension extension) {
-        return InternalXMindNet.getInstance().getAuthenticator().signIn(
-                message, extension);
+        return InternalXMindNet.getInstance().getAuthenticator()
+                .signIn(message, extension);
     }
 
     public static void signIn(IAuthenticationListener callback, boolean block) {
-        InternalXMindNet.getInstance().getAuthenticator().signIn(callback,
-                block, null, null);
+        InternalXMindNet.getInstance().getAuthenticator()
+                .signIn(callback, block, null, null);
     }
 
     public static void signIn(IAuthenticationListener callback, boolean block,
             String message, ISignInDialogExtension extension) {
-        InternalXMindNet.getInstance().getAuthenticator().signIn(callback,
-                block, message, extension);
+        InternalXMindNet.getInstance().getAuthenticator()
+                .signIn(callback, block, message, extension);
     }
 
     public static void signOut() {
@@ -44,17 +46,24 @@ public class XMindNet {
     }
 
     public static String makeURL(String sourceURL) {
-        return InternalXMindNet.getInstance().getNavigator().makeURL(sourceURL);
+        return BrowserUtil.makeRedirectURL(sourceURL);
     }
 
-    public static void gotoURL(String url) {
-        InternalXMindNet.getInstance().getNavigator().gotoURL(url);
+    public static void gotoURL(String url, Object... values) {
+        InternalXMindNet.getInstance().getNavigator()
+                .gotoURL(false, url, values);
+    }
+
+    public static void gotoURL(boolean external, String urlPattern,
+            Object... values) {
+        InternalXMindNet.getInstance().getNavigator()
+                .gotoURL(external, urlPattern, values);
     }
 
     public static void addAuthenticationListener(
             IAuthenticationListener listener) {
-        InternalXMindNet.getInstance().getAccount().addAuthenticationListener(
-                listener);
+        InternalXMindNet.getInstance().getAccount()
+                .addAuthenticationListener(listener);
     }
 
     public static void removeAuthenticationListener(
@@ -63,23 +72,27 @@ public class XMindNet {
                 .removeAuthenticationListener(listener);
     }
 
+    @Deprecated
     public static void addAuthorizationListener(IAuthorizationListener listener) {
-        InternalXMindNet.getInstance().getAccount().addAuthorizationListener(
-                listener);
+        InternalXMindNet.getInstance().getAccount()
+                .addAuthorizationListener(listener);
     }
 
+    @Deprecated
     public static void removeAuthorizationListener(
             IAuthorizationListener listener) {
         InternalXMindNet.getInstance().getAccount()
                 .removeAuthorizationListener(listener);
     }
 
+    @Deprecated
     public static void addPreauthorizationListener(
             IPreauthorizationListener listener) {
         InternalXMindNet.getInstance().getAccount()
                 .addPreauthorizationListener(listener);
     }
 
+    @Deprecated
     public static void removePreauthorizationListener(
             IPreauthorizationListener listener) {
         InternalXMindNet.getInstance().getAccount()
@@ -109,6 +122,21 @@ public class XMindNet {
      */
     public static IAccountInfo getAccountInfo() {
         return InternalXMindNet.getInstance().getAccount().getAccountInfo();
+    }
+
+    public static ILicenseInfo getLicenseInfo() {
+        return InternalXMindNet.getInstance().getLicenseAgent()
+                .getLicenseInfo();
+    }
+
+    public static void addLicenseListener(ILicenseListener listener) {
+        InternalXMindNet.getInstance().getLicenseAgent()
+                .addLicenseListener(listener);
+    }
+
+    public static void removeLicenseListener(ILicenseListener listener) {
+        InternalXMindNet.getInstance().getLicenseAgent()
+                .removeLicenseListener(listener);
     }
 
 }

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,6 +17,7 @@ import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.PathData;
 import org.xmind.gef.draw2d.geometry.PrecisionPoint;
 import org.xmind.gef.draw2d.geometry.PrecisionRectangle;
 
@@ -27,6 +28,10 @@ public class Path extends org.eclipse.swt.graphics.Path {
      */
     public Path(Device device) {
         super(device);
+    }
+
+    public Path(Device device, PathData data) {
+        super(device, data);
     }
 
     /**
@@ -114,7 +119,7 @@ public class Path extends org.eclipse.swt.graphics.Path {
                 (float) bounds.width, (float) bounds.height, corner);
     }
 
-    private static final float CORNER_CONTROL_RATIO = 0.448f;
+    private static final float CORNER_CONTROL_RATIO = 0.447715f;
 
     public void addRoundedRectangle(float x, float y, float width,
             float height, float corner) {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -250,13 +250,14 @@ public class FontUtils {
                 progress.done();
                 if (callbacks == null)
                     return;
+                if (display.isDisposed())
+                    return;
                 for (int i = 0; i < callbacks.size(); i++) {
                     final IFontNameListCallback callback = callbacks.get(i);
                     if (callback != null) {
                         display.asyncExec(new Runnable() {
                             public void run() {
-                                callback
-                                        .setAvailableFontNames(availableFontNames);
+                                callback.setAvailableFontNames(availableFontNames);
                             }
                         });
                     }
@@ -525,7 +526,7 @@ public class FontUtils {
     }
 
     public static Font getNewName(String key, String name) {
-        if (key == null || name == null)
+        if (key == null)
             return null;
 
         String newKey;
@@ -685,8 +686,8 @@ public class FontUtils {
 
         if (reg.hasValueFor(key) || isDefaultKey(key)) {
             FontData[] fontData = reg.getFontData(key);
-            return getFont(newKey, bold(
-                    relativeHeight(fontData, relativeHeight), true));
+            return getFont(newKey,
+                    bold(relativeHeight(fontData, relativeHeight), true));
         }
         return null;
     }
@@ -715,9 +716,10 @@ public class FontUtils {
             if (newStyle < 0)
                 return reg.get(key);
             FontData[] fontData = reg.getFontData(key);
-            return getFont(newKey, style(fontData,
-                    ((newStyle & SWT.BOLD) != 0),
-                    ((newStyle & SWT.ITALIC) != 0)));
+            return getFont(
+                    newKey,
+                    style(fontData, ((newStyle & SWT.BOLD) != 0),
+                            ((newStyle & SWT.ITALIC) != 0)));
         }
         return null;
     }

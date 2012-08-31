@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,31 +13,37 @@
  *******************************************************************************/
 package net.xmind.signin;
 
+@Deprecated
 public interface ISubscriptionInfo {
 
     /**
      * Status for retrieving subscription info
      */
+    @Deprecated
     int RETRIEVING_SUBSCRIPTION_INFO = 0;
 
     /**
      * Status for not having subscribed
      */
+    @Deprecated
     int UNSUBSCRIBED = 1;
 
     /**
      * Status for having subscribed and not having expired
      */
+    @Deprecated
     int SUBSCRIPTION_VALID = 2;
 
     /**
      * Status for having subscribed but already expired
      */
+    @Deprecated
     int SUBSCRIPTION_EXPIRED = 3;
 
     /**
      * Status for unavailable to retrieve subscription info
      */
+    @Deprecated
     int UNKNOWN = 4;
 
     /**
@@ -45,6 +51,7 @@ public interface ISubscriptionInfo {
      * 
      * @return the subscription status
      */
+    @Deprecated
     int getSubscriptionStatus();
 
     /**
@@ -52,6 +59,7 @@ public interface ISubscriptionInfo {
      * 
      * @return <code>true</code> if this account has valid subscription
      */
+    @Deprecated
     boolean hasValidSubscription();
 
 }

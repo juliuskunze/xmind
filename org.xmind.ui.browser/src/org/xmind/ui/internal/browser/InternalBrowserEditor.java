@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and above are dual-licensed
  * under the Eclipse Public License (EPL), which is available at
@@ -22,7 +22,6 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
@@ -83,6 +82,7 @@ public class InternalBrowserEditor extends EditorPart implements
                 initialURL = bei.getURL();
             if (viewer != null) {
                 viewer.setURL(initialURL);
+                viewer.changeStyle(bei.getStyle());
                 site.getWorkbenchWindow().getActivePage().activate(this);
             }
 
@@ -99,10 +99,9 @@ public class InternalBrowserEditor extends EditorPart implements
                 oldImage.dispose();
         } else
             throw new PartInitException(
-                    NLS
-                            .bind(
-                                    BrowserMessages.BrowserEditor_ErrorInvalidEditorInput_message,
-                                    input.getName()));
+                    NLS.bind(
+                            BrowserMessages.BrowserEditor_ErrorInvalidEditorInput_message,
+                            input.getName()));
 
         setSite(site);
         setInput(input);
@@ -130,8 +129,8 @@ public class InternalBrowserEditor extends EditorPart implements
     }
 
     public void createPartControl(Composite parent) {
-        viewer = new BrowserViewer(parent, SWT.NONE, this);
-
+        viewer = new BrowserViewer(parent, getBrowserEditorInput().getStyle(),
+                this);
         viewer.setURL(initialURL);
 
         addAction(new CopyAction(viewer));
@@ -247,8 +246,8 @@ public class InternalBrowserEditor extends EditorPart implements
         final Browser[] ret = new Browser[1];
         SafeRunner.run(new SafeRunnable() {
             public void run() throws Exception {
-                final BrowserEditorInput input = new BrowserEditorInput(
-                        "", getNewSecondaryId()); //$NON-NLS-1$
+                final BrowserEditorInput input = new BrowserEditorInput("", //$NON-NLS-1$
+                        getNewSecondaryId(), getBrowserEditorInput().getStyle());
                 IEditorPart editor = getSite().getPage().openEditor(input,
                         BROWSER_EDITOR_ID);
                 if (editor instanceof InternalBrowserEditor) {

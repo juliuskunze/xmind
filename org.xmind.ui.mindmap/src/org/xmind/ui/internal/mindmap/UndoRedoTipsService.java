@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -109,7 +109,7 @@ public class UndoRedoTipsService extends GraphicalViewerService implements
         public void paintBackground(IFigure figure, Graphics graphics,
                 Insets insets) {
             Rectangle rect = getPaintRectangle(figure, insets);
-            Rectangle inner = rect.getCropped(getInsets(figure));
+            Rectangle inner = rect.getShrinked(getInsets(figure));
             Path p = new Path(Display.getCurrent());
             p.addArc(inner.x - r, inner.y, d, d, 90, 180);
             p.addRectangle(inner);
@@ -172,7 +172,7 @@ public class UndoRedoTipsService extends GraphicalViewerService implements
             Path framePath = new Path(Display.getCurrent());
             framePath.addRoundedRectangle(frameBounds, 4);
             figure.setPath(framePath);
-            figure.setBounds(figure.getPreferredBounds());
+//            figure.setBounds(figure.getPreferredBounds());
             return figure;
         }
 

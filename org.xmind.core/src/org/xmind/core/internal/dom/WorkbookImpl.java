@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -32,7 +32,6 @@ import static org.xmind.core.internal.zip.ArchiveConstants.META_XML;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +51,7 @@ import org.xmind.core.INotesContent;
 import org.xmind.core.IRelationship;
 import org.xmind.core.IRelationshipEnd;
 import org.xmind.core.IResourceRef;
+import org.xmind.core.IRevisionRepository;
 import org.xmind.core.ISheet;
 import org.xmind.core.ISummary;
 import org.xmind.core.ITopic;
@@ -61,7 +61,6 @@ import org.xmind.core.event.ICoreEventRegistration;
 import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.core.event.ICoreEventSupport;
-import org.xmind.core.internal.ElementRegistry;
 import org.xmind.core.internal.Workbook;
 import org.xmind.core.internal.event.CoreEventSupport;
 import org.xmind.core.io.DirectoryStorage;
@@ -90,9 +89,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
 
     private TempSaver tempSaver;
 
-    private ElementRegistry elementRegistry = null;
-
-    private NodeAdaptableProvider elementAdaptableProvider = null;
+    private NodeAdaptableRegistry adaptableRegistry;
 
     private CoreEventSupport coreEventSupport = null;
 
@@ -111,6 +108,8 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     private WorkbookComponentRefCounter elementRefCounter = null;
 
     private String password = null;
+
+    private RevisionRepositoryImpl revisionRepository = null;
 
     /**
      * @param implementation
@@ -132,6 +131,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
         this.implementation = implementation;
         this.saver = new WorkbookSaver(this, targetPath);
         this.tempSaver = new TempSaver(this);
+        this.adaptableRegistry = new NodeAdaptableRegistry(implementation, this);
         if (needInit)
             init();
     }
@@ -185,18 +185,18 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
             return getManifest();
         if (adapter == ICoreEventSupport.class)
             return getCoreEventSupport();
-        if (adapter == ElementRegistry.class)
-            return getElementRegistry();
         if (adapter == INodeAdaptableFactory.class)
             return this;
         if (adapter == INodeAdaptableProvider.class)
-            return getAdaptableProvider();
+            return getAdaptableRegistry();
         if (adapter == IMarkerRefCounter.class)
             return getMarkerRefCounter();
         if (adapter == IStyleRefCounter.class)
             return getStyleRefCounter();
         if (adapter == IWorkbookComponentRefManager.class)
             return getElementRefCounter();
+        if (adapter == IRevisionRepository.class)
+            return getRevisionRepository();
 
         return super.getAdapter(adapter);
     }
@@ -209,12 +209,19 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     }
 
     /**
+     * @return the adaptableRegistry
+     */
+    public NodeAdaptableRegistry getAdaptableRegistry() {
+        return adaptableRegistry;
+    }
+
+    /**
      * @see org.xmind.core.IWorkbook#createTopic()
      */
     public ITopic createTopic() {
         TopicImpl topic = new TopicImpl(
                 implementation.createElement(TAG_TOPIC), this);
-        getElementRegistry().register(topic);
+        getAdaptableRegistry().registerByNode(topic, topic.getImplementation());
         return topic;
     }
 
@@ -224,7 +231,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     public ISheet createSheet() {
         SheetImpl sheet = new SheetImpl(
                 implementation.createElement(TAG_SHEET), this);
-        getElementRegistry().register(sheet);
+        getAdaptableRegistry().registerByNode(sheet, sheet.getImplementation());
         return sheet;
     }
 
@@ -232,9 +239,10 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
      * @see org.xmind.core.IWorkbook#createRelationship()
      */
     public IRelationship createRelationship() {
-        RelationshipImpl relationship = new RelationshipImpl(implementation
-                .createElement(TAG_RELATIONSHIP), this);
-        getElementRegistry().register(relationship);
+        RelationshipImpl relationship = new RelationshipImpl(
+                implementation.createElement(TAG_RELATIONSHIP), this);
+        getAdaptableRegistry().registerByNode(relationship,
+                relationship.getImplementation());
         return relationship;
     }
 
@@ -253,16 +261,18 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     }
 
     public IBoundary createBoundary() {
-        BoundaryImpl boundary = new BoundaryImpl(implementation
-                .createElement(TAG_BOUNDARY), this);
-        getElementRegistry().register(boundary);
+        BoundaryImpl boundary = new BoundaryImpl(
+                implementation.createElement(TAG_BOUNDARY), this);
+        getAdaptableRegistry().registerByNode(boundary,
+                boundary.getImplementation());
         return boundary;
     }
 
     public ISummary createSummary() {
-        SummaryImpl summary = new SummaryImpl(implementation
-                .createElement(TAG_SUMMARY), this);
-        getElementRegistry().register(summary);
+        SummaryImpl summary = new SummaryImpl(
+                implementation.createElement(TAG_SUMMARY), this);
+        getAdaptableRegistry().registerByNode(summary,
+                summary.getImplementation());
         return summary;
     }
 
@@ -274,7 +284,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
         } else {
             content = new PlainNotesContentImpl(e, this);
         }
-        getElementRegistry().registerByKey(e, content);
+        getAdaptableRegistry().registerByNode(content, e);
         return content;
     }
 
@@ -299,14 +309,14 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
      */
     public List<ISheet> getSheets() {
         return DOMUtils.getChildList(getWorkbookElement(), TAG_SHEET,
-                getAdaptableProvider());
+                getAdaptableRegistry());
     }
 
     public ISheet getPrimarySheet() {
         Element e = DOMUtils.getFirstChildElementByTag(getWorkbookElement(),
                 TAG_SHEET);
         if (e != null)
-            return (ISheet) getAdaptable(e);
+            return (ISheet) getAdaptableRegistry().getAdaptable(e);
         return null;
     }
 
@@ -324,6 +334,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
             if (n != null) {
                 ((SheetImpl) sheet).addNotify(this);
                 fireIndexedTargetChange(Core.SheetAdd, sheet, sheet.getIndex());
+                updateModifiedTime();
             }
         }
     }
@@ -340,6 +351,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
             Node n = w.removeChild(s);
             if (n != null) {
                 fireIndexedTargetChange(Core.SheetRemove, sheet, oldIndex);
+                updateModifiedTime();
             }
         }
     }
@@ -377,8 +389,9 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
             targetIndex = ss.length - 1;
         }
         if (sourceIndex != targetIndex) {
-            fireIndexedTargetChange(Core.SheetMove, getAdaptable(s),
-                    sourceIndex);
+            fireIndexedTargetChange(Core.SheetMove, getAdaptableRegistry()
+                    .getAdaptable(s), sourceIndex);
+            updateModifiedTime();
         }
     }
 
@@ -408,7 +421,11 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     public void setManifest(ManifestImpl manifest) {
         if (manifest == null)
             throw new IllegalArgumentException("Manifest is null"); //$NON-NLS-1$
+        ManifestImpl oldManifest = this.manifest;
         this.manifest = manifest;
+        if (oldManifest != null) {
+            oldManifest.setWorkbook(null);
+        }
         manifest.setWorkbook(this);
     }
 
@@ -464,7 +481,11 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     public void setMeta(MetaImpl meta) {
         if (meta == null)
             throw new IllegalArgumentException("Meta is null"); //$NON-NLS-1$
+        MetaImpl oldMeta = this.meta;
         this.meta = meta;
+        if (oldMeta != null) {
+            oldMeta.setOwnedWorkbook(null);
+        }
         meta.setOwnedWorkbook(this);
     }
 
@@ -492,13 +513,28 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
         return elementRefCounter;
     }
 
+    public IRevisionRepository getRevisionRepository() {
+        if (revisionRepository == null) {
+            revisionRepository = new RevisionRepositoryImpl(this);
+        }
+        return revisionRepository;
+    }
+
     public ICloneData clone(Collection<? extends Object> sources) {
         return WorkbookUtilsImpl.clone(this, sources, null);
     }
 
-    public ITopic cloneTopic(ITopic topic) {
-        ICloneData result = clone(Arrays.asList(topic));
-        return (ITopic) result.get(topic);
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IWorkbook#importElement(org.xmind.core.IAdaptable)
+     */
+    public IAdaptable importElement(IAdaptable source) {
+        Node node = (Node) source.getAdapter(Node.class);
+        if (node == null)
+            return null;
+        Node ele = getImplementation().importNode(node, true);
+        return getAdaptableRegistry().getAdaptable(ele);
     }
 
     public IResourceRef createResourceRef(String resourceType, String resourceId) {
@@ -506,44 +542,23 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
         ele.setAttribute(ATTR_TYPE, resourceType);
         ele.setAttribute(ATTR_RESOURCE_ID, resourceId);
         ResourceRefImpl ref = new ResourceRefImpl(ele, this);
-        getElementRegistry().registerByKey(ele, ref);
+        getAdaptableRegistry().registerByNode(ref, ele);
         return ref;
     }
 
-    public ElementRegistry getElementRegistry() {
-        if (elementRegistry == null)
-            elementRegistry = new ElementRegistry();
-        return elementRegistry;
-    }
-
-    /**
-     * @see org.xmind.core.IWorkbook#findTopic(java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IWorkbook#findElementById(java.lang.String,
+     * org.xmind.core.IAdaptable)
      */
-    public ITopic findTopic(String id) {
-        Object element = getElementById(id);
-        return element instanceof ITopic ? (ITopic) element : null;
-    }
-
-    public Object getElementById(String id) {
-        Object element = getElementRegistry().getElement(id);
-        if (element == null) {
-            Element e = implementation.getElementById(id);
-            if (e != null) {
-                element = getAdaptable(e);
-            }
-        }
-        return element;
-    }
-
-    protected IAdaptable getAdaptable(Node node) {
-        return getAdaptableProvider().getAdaptable(node);
-    }
-
-    protected NodeAdaptableProvider getAdaptableProvider() {
-        if (elementAdaptableProvider == null)
-            elementAdaptableProvider = new NodeAdaptableProvider(
-                    getElementRegistry(), this);
-        return elementAdaptableProvider;
+    public Object findElement(String id, IAdaptable source) {
+        Node node = source == null ? null : (Node) source
+                .getAdapter(Node.class);
+        if (node == null)
+            node = getImplementation();
+        return getAdaptableRegistry().getAdaptable(id,
+                DOMUtils.getOwnerDocument(node));
     }
 
     public IAdaptable createAdaptable(Node node) {
@@ -589,7 +604,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     public void setPassword(String password) {
         String oldPassword = this.password;
         this.password = password;
-        fireValueChangeEvent(Core.PasswordChange, oldPassword, this.password);
+        fireValueChange(Core.PasswordChange, oldPassword, this.password);
     }
 
     /*
@@ -606,8 +621,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
      * @param oldValue
      * @param newValue
      */
-    private void fireValueChangeEvent(String type, String oldValue,
-            String newValue) {
+    private void fireValueChange(String type, Object oldValue, Object newValue) {
         ICoreEventSupport coreEventSupport = getCoreEventSupport();
         if (coreEventSupport != null)
             coreEventSupport
@@ -745,19 +759,25 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     }
 
     public String getFile() {
-        return saver == null ? null : saver.getFile();
+        return saver.getFile();
     }
 
     public void setFile(String file) {
-        if (saver != null)
-            saver.setFile(file);
+        saver.setFile(file);
+    }
+
+    public void setSkipRevisionsWhenSaving(boolean skipRevisions) {
+        saver.setSkipRevisions(skipRevisions);
+    }
+
+    public boolean isSkipRevisionsWhenSaving() {
+        return saver.isSkipRevisions();
     }
 
     public String getTempLocation() {
         IStorage storage = getTempStorage();
         return storage instanceof DirectoryStorage ? ((DirectoryStorage) storage)
-                .getFullPath()
-                : null;
+                .getFullPath() : null;
     }
 
     public void setTempLocation(String tempLocation) {
@@ -769,6 +789,29 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
 
     public void saveTemp() throws IOException, CoreException {
         tempSaver.save();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IModifiable#getModifiedTime()
+     */
+    public long getModifiedTime() {
+        String time = DOMUtils.getAttribute(getWorkbookElement(),
+                DOMConstants.ATTR_TIMESTAMP);
+        return NumberUtils.safeParseLong(time, 0);
+    }
+
+    public void updateModifiedTime() {
+        setModifiedTime(System.currentTimeMillis());
+    }
+
+    public void setModifiedTime(long time) {
+        long oldTime = getModifiedTime();
+        DOMUtils.setAttribute(getWorkbookElement(),
+                DOMConstants.ATTR_TIMESTAMP, Long.toString(time));
+        long newTime = getModifiedTime();
+        fireValueChange(Core.ModifyTime, oldTime, newTime);
     }
 
 }

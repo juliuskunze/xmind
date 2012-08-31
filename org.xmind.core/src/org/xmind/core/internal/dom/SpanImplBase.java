@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -66,9 +66,11 @@ public abstract class SpanImplBase implements ISpan {
     }
 
     protected void setImplementation(Node implementation) {
-        owner.unregister(this.implementation);
+//        owner.unregister(this.implementation);
+        owner.getAdaptableRegistry().unregister(this, this.implementation);
         this.implementation = implementation;
-        owner.register(this.implementation, this);
+//        owner.register(this.implementation, this);
+        owner.getAdaptableRegistry().register(this, this.implementation);
     }
 
     public HtmlNotesContentImpl getOwner() {
@@ -90,11 +92,16 @@ public abstract class SpanImplBase implements ISpan {
             DOMUtils.setAttribute((Element) implementation, ATTR_STYLE_ID,
                     styleId);
             WorkbookUtilsImpl.increaseStyleRef(workbook, this);
+            getOwner().updateModifiedTime();
         }
     }
 
     public IWorkbook getOwnedWorkbook() {
         return owner.getOwnedWorkbook();
+    }
+
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(implementation);
     }
 
     protected void addNotify(WorkbookImpl workbook) {
@@ -104,4 +111,5 @@ public abstract class SpanImplBase implements ISpan {
     protected void removeNotify(WorkbookImpl workbook) {
         WorkbookUtilsImpl.decreaseStyleRef(workbook, this);
     }
+
 }

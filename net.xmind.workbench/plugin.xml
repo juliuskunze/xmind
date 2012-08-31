@@ -27,14 +27,6 @@
             label="%actionSet.xmindnet.label"
             visible="true">
          <action
-               class="net.xmind.workbench.internal.actions.UpgradeActionDelegate"
-               id="net.xmind.ui.upgrade"
-               label="%action.upgrade.label"
-               menubarPath="help/more"
-               style="push"
-               tooltip="%action.upgrade.tooltip">
-         </action>
-         <action
                class="net.xmind.workbench.internal.actions.ShowAccountActionDelegate"
                definitionId="net.xmind.ui.command.showMyAccount"
                id="net.xmind.ui.showMyAccount"
@@ -51,14 +43,6 @@
                menubarPath="help/additions"
                style="push"
                tooltip="%action.signIn.tooltip">
-         </action>
-         <action
-               class="net.xmind.workbench.internal.actions.InviteActionDelegate"
-               id="net.xmind.ui.invite"
-               label="%action.invite.label"
-               menubarPath="help/group.xmind"
-               style="push"
-               tooltip="%action.invite.tooltip">
          </action>
          <action
                class="net.xmind.workbench.internal.actions.FeedbackActionDelegate"

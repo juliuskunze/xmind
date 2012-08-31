@@ -1,5 +1,6 @@
 package net.xmind.workbench.internal.actions;
 
+import net.xmind.signin.XMindNet;
 import net.xmind.signin.internal.Messages;
 
 import org.eclipse.jface.action.IAction;
@@ -9,8 +10,8 @@ import org.eclipse.ui.IActionDelegate2;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
-public class UpgradeActionDelegate extends XMindNetActionDelegate implements
-        IWorkbenchWindowActionDelegate, IActionDelegate2 {
+public class UpgradeActionDelegate implements IWorkbenchWindowActionDelegate,
+        IActionDelegate2 {
 
     private IWorkbenchWindow window;
 
@@ -22,7 +23,6 @@ public class UpgradeActionDelegate extends XMindNetActionDelegate implements
 
     public void init(IWorkbenchWindow window) {
         this.window = window;
-        setURL("http://www.xmind.net/pro/buy/"); //$NON-NLS-1$
         update();
     }
 
@@ -62,7 +62,7 @@ public class UpgradeActionDelegate extends XMindNetActionDelegate implements
         if (window == null)
             return;
 
-        UpgradeActionDelegate.super.gotoURL();
+        XMindNet.gotoURL(true, "http://www.xmind.net/xmind/buy/"); //$NON-NLS-1$
     }
 
     public void selectionChanged(IAction action, ISelection selection) {

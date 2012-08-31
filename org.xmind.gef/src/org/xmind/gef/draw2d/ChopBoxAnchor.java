@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -34,6 +34,52 @@ public class ChopBoxAnchor extends AbstractAnchor {
 
     public PrecisionPoint getLocation(double x, double y, double expansion) {
         return Geometry.getChopBoxLocation(x, y, getBox(), expansion);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.draw2d.AbstractAnchor#getEast(double)
+     */
+    @Override
+    protected PrecisionPoint getEast(double expansion) {
+        Rectangle r = getBox();
+        return new PrecisionPoint(r.x + r.width + expansion, r.y + r.height
+                * 0.5);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.draw2d.AbstractAnchor#getWest(double)
+     */
+    @Override
+    protected PrecisionPoint getWest(double expansion) {
+        Rectangle r = getBox();
+        return new PrecisionPoint(r.x - expansion, r.y + r.height * 0.5);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.draw2d.AbstractAnchor#getNorth(double)
+     */
+    @Override
+    protected PrecisionPoint getNorth(double expansion) {
+        Rectangle r = getBox();
+        return new PrecisionPoint(r.x + r.width * 0.5, r.y - expansion);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.draw2d.AbstractAnchor#getSouth(double)
+     */
+    @Override
+    protected PrecisionPoint getSouth(double expansion) {
+        Rectangle r = getBox();
+        return new PrecisionPoint(r.x + r.width * 0.5, r.y + r.height
+                + expansion);
     }
 
     protected Rectangle getBox() {

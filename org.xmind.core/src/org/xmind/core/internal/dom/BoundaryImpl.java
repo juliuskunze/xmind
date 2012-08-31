@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -90,6 +90,7 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
         DOMUtils.setText(implementation, TAG_TITLE, titleText);
         String newText = getLocalTitleText();
         fireValueChange(Core.TitleText, oldText, newText);
+        updateModifiedTime();
     }
 
     public String getStyleId() {
@@ -104,6 +105,7 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
         WorkbookUtilsImpl.increaseStyleRef(workbook, this);
         String newValue = getStyleId();
         fireValueChange(Core.Style, oldValue, newValue);
+        updateModifiedTime();
     }
 
     public ISheet getOwnedSheet() {
@@ -115,10 +117,15 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
         return ownedWorkbook;
     }
 
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(implementation);
+    }
+
     public ITopic getParent() {
         Element t = getParentTopicElement();
         if (t != null)
-            return (ITopic) ownedWorkbook.getAdaptable(t);
+            return (ITopic) ownedWorkbook.getAdaptableRegistry()
+                    .getAdaptable(t);
         return null;
     }
 
@@ -149,7 +156,8 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
         while (it.hasNext()) {
             Element t = it.next();
             if (i == index) {
-                return (ITopic) ownedWorkbook.getAdaptable(t);
+                return (ITopic) ownedWorkbook.getAdaptableRegistry()
+                        .getAdaptable(t);
             }
             i++;
         }
@@ -186,23 +194,25 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
     public void setEndIndex(int index) {
         String oldValue = DOMUtils.getAttribute(implementation, ATTR_RANGE);
         Integer oldIndexValue = toIndexValue(getEndIndex());
-        DOMUtils.setAttribute(implementation, ATTR_RANGE, InternalDOMUtils
-                .toRangeValue(getStartIndex(), index));
+        DOMUtils.setAttribute(implementation, ATTR_RANGE,
+                InternalDOMUtils.toRangeValue(getStartIndex(), index));
         Integer newIndexValue = toIndexValue(getEndIndex());
         String newValue = DOMUtils.getAttribute(implementation, ATTR_RANGE);
         fireValueChange(Core.EndIndex, oldIndexValue, newIndexValue);
         fireValueChange(Core.Range, oldValue, newValue);
+        updateModifiedTime();
     }
 
     public void setStartIndex(int index) {
         String oldValue = DOMUtils.getAttribute(implementation, ATTR_RANGE);
         Integer oldIndexValue = toIndexValue(getStartIndex());
-        DOMUtils.setAttribute(implementation, ATTR_RANGE, InternalDOMUtils
-                .toRangeValue(index, getEndIndex()));
+        DOMUtils.setAttribute(implementation, ATTR_RANGE,
+                InternalDOMUtils.toRangeValue(index, getEndIndex()));
         Integer newIndexValue = toIndexValue(getStartIndex());
         String newValue = DOMUtils.getAttribute(implementation, ATTR_RANGE);
         fireValueChange(Core.StartIndex, oldIndexValue, newIndexValue);
         fireValueChange(Core.Range, oldValue, newValue);
+        updateModifiedTime();
     }
 
     public boolean isMasterBoundary() {
@@ -216,6 +226,7 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
         DOMUtils.setAttribute(implementation, ATTR_RANGE, value);
         String newValue = DOMUtils.getAttribute(implementation, ATTR_RANGE);
         fireValueChange(Core.Range, oldValue, newValue);
+        updateModifiedTime();
     }
 
     protected WorkbookImpl getRealizedWorkbook() {
@@ -227,6 +238,9 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
     }
 
     protected void addNotify(WorkbookImpl workbook, TopicImpl parent) {
+        getImplementation().setIdAttribute(DOMConstants.ATTR_ID, true);
+        workbook.getAdaptableRegistry().registerById(this, getId(),
+                getImplementation().getOwnerDocument());
         setCoreEventSupport(parent.getCoreEventSupport());
         WorkbookUtilsImpl.increaseStyleRef(workbook, this);
     }
@@ -234,6 +248,9 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
     protected void removeNotify(WorkbookImpl workbook, TopicImpl parent) {
         WorkbookUtilsImpl.decreaseStyleRef(workbook, this);
         setCoreEventSupport(null);
+        workbook.getAdaptableRegistry().unregisterById(this, getId(),
+                getImplementation().getOwnerDocument());
+        getImplementation().setIdAttribute(DOMConstants.ATTR_ID, false);
     }
 
     public ICoreEventRegistration registerCoreEventListener(String type,
@@ -255,6 +272,28 @@ public class BoundaryImpl extends Boundary implements ICoreEventSource {
     private void fireValueChange(String type, Object oldValue, Object newValue) {
         getCoreEventSupport().dispatchValueChange(this, type, oldValue,
                 newValue);
+    }
+
+    public long getModifiedTime() {
+        String time = DOMUtils.getAttribute(implementation,
+                DOMConstants.ATTR_TIMESTAMP);
+        return NumberUtils.safeParseLong(time, 0);
+    }
+
+    public void updateModifiedTime() {
+        setModifiedTime(System.currentTimeMillis());
+        ITopic parent = getParent();
+        if (parent != null) {
+            ((TopicImpl) parent).updateModifiedTime();
+        }
+    }
+
+    public void setModifiedTime(long time) {
+        long oldTime = getModifiedTime();
+        DOMUtils.setAttribute(implementation, DOMConstants.ATTR_TIMESTAMP,
+                Long.toString(time));
+        long newTime = getModifiedTime();
+        fireValueChange(Core.ModifyTime, oldTime, newTime);
     }
 
 }

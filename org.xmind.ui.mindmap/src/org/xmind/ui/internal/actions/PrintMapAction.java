@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -26,13 +26,33 @@ import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.internal.print.PageSetupDialog;
 import org.xmind.ui.internal.print.PrintClient;
+import org.xmind.ui.internal.print.PrintConstants;
 import org.xmind.ui.mindmap.IMindMap;
-import org.xmind.ui.mindmap.IMindMapViewer;
 
 public class PrintMapAction extends PageAction {
 
     public PrintMapAction(IGraphicalEditorPage page) {
         super(ActionFactory.PRINT.getId(), page);
+    }
+
+    private IMindMap findMindMap(IGraphicalEditorPage page) {
+        IMindMap map = (IMindMap) page.getAdapter(IMindMap.class);
+        if (map != null)
+            return map;
+
+        if (page.getInput() instanceof IMindMap)
+            return (IMindMap) page.getInput();
+
+        IGraphicalViewer viewer = page.getViewer();
+        if (viewer != null) {
+            map = (IMindMap) viewer.getAdapter(IMindMap.class);
+            if (map != null)
+                return map;
+
+            if (viewer.getInput() instanceof IMindMap)
+                return (IMindMap) viewer.getInput();
+        }
+        return null;
     }
 
     public void run() {
@@ -44,50 +64,70 @@ public class PrintMapAction extends PageAction {
         if (page == null)
             return;
 
-        IGraphicalViewer viewer = page.getViewer();
-        if (viewer == null || !(viewer instanceof IMindMapViewer))
-            return;
-
-        IMindMapViewer mmv = (IMindMapViewer) viewer;
-        IMindMap mindMap = mmv.getMindMap();
-        if (mindMap == null)
-            return;
+//        IGraphicalViewer viewer = page.getViewer();
+//        if (viewer == null || !(viewer instanceof IMindMapViewer))
+//            return;
+//
+//        IMindMapViewer mmv = (IMindMapViewer) viewer;
+//        IMindMap mindMap = mmv.getMindMap();
+//        if (mindMap == null)
+//            return;
 
         Shell parentShell = editor.getSite().getShell();
         if (parentShell == null || parentShell.isDisposed())
             return;
 
+        IMindMap mindMap = findMindMap(page);
+        if (mindMap == null)
+            return;
+
         PageSetupDialog pageSetupDialog = new PageSetupDialog(parentShell,
-                editor, page, mmv, mindMap);
+                mindMap);
 
         while (true) {
             int open = pageSetupDialog.open();
             if (open == PageSetupDialog.CANCEL)
                 return;
 
+            IDialogSettings settings = pageSetupDialog.getSettings();
+            PrinterData printerData = new PrinterData();
+            try {
+                printerData.orientation = settings
+                        .getInt(PrintConstants.ORIENTATION);
+            } catch (NumberFormatException e) {
+                printerData.orientation = PrinterData.LANDSCAPE;
+            }
             PrintDialog printDialog = new PrintDialog(parentShell);
-            PrinterData printerData = printDialog.open();
+            printDialog.setPrinterData(printerData);
+            printerData = printDialog.open();
             if (printerData != null) {
-                print(printerData, pageSetupDialog.getSettings(), mindMap,
+                print(mindMap, printerData, settings, page.getViewer(),
                         parentShell);
                 return;
             }
         }
     }
 
-    private void print(PrinterData printerData, IDialogSettings settings,
-            final IMindMap source, Shell parentShell) {
-        final PrintClient client = new PrintClient(source.getCentralTopic()
-                .getTitleText(), parentShell, printerData, settings);
+    private void print(final IMindMap map, PrinterData printerData,
+            IDialogSettings settings, final IGraphicalViewer sourceViewer,
+            Shell parentShell) {
+        final PrintClient client = new PrintClient(getJobName(map),
+                parentShell, printerData, settings);
         Display display = parentShell.getDisplay();
         try {
             BusyIndicator.showWhile(display, new Runnable() {
                 public void run() {
-                    client.print(source);
+                    //client.print(sourceViewer);
+                    client.print(map);
                 }
             });
         } finally {
             client.dispose();
         }
+    }
+
+    private String getJobName(IMindMap map) {
+        return map.getCentralTopic().getTitleText()
+                .replaceAll("\r\n|\r|\n", " "); //$NON-NLS-1$ //$NON-NLS-2$
     }
 }

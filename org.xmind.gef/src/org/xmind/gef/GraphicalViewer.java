@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,7 +18,7 @@ import java.util.List;
 import org.eclipse.draw2d.FigureCanvas;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Layer;
-import org.eclipse.draw2d.RangeModel;
+import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.draw2d.Viewport;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
@@ -26,15 +26,12 @@ import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.ScrollBar;
 import org.xmind.gef.dnd.IDndSupport;
 import org.xmind.gef.event.PartsEventDispatcher;
+import org.xmind.gef.event.ViewerEventDispatcher;
 import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IGraphicalPart;
 import org.xmind.gef.part.IGraphicalRootPart;
@@ -89,95 +86,20 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
         }
     }
 
-    private final class UserMotionDetector implements Listener {
-
-        boolean mousePressing = false;
-
-        boolean keyPressing = false;
-
-        boolean resizedDuringMousePress = false;
-
-        boolean resizedDuringKeyPress = false;
-
-        public void handleEvent(Event event) {
-            if (event.type == SWT.MouseDown) {
-                mousePressing = true;
-            } else if (event.type == SWT.KeyDown) {
-                keyPressing = true;
-            } else if (event.type == SWT.MouseUp) {
-                mousePressing = false;
-                if (resizedDuringMousePress) {
-                    resizedDuringMousePress = false;
-                    performCenterJob();
-                }
-            } else if (event.type == SWT.KeyUp) {
-                keyPressing = false;
-                if (resizedDuringKeyPress) {
-                    resizedDuringKeyPress = false;
-                    performCenterJob();
-                }
-            }
-        }
-
-        // If resizing occurs while mouse or key is pressed,
-        // don't center until mouse or key is released
-        public boolean needsCenterWhenResizing() {
-            if (!mousePressing && !keyPressing)
-                return true;
-
-            if (mousePressing)
-                resizedDuringMousePress = true;
-            if (keyPressing)
-                resizedDuringKeyPress = true;
-            return false;
-        }
-    }
-
-    private final class ControlEventListener implements Listener {
-        public void handleEvent(Event event) {
-            if (event.type == SWT.Resize) {
-                if (userMotionDetector == null
-                        || userMotionDetector.needsCenterWhenResizing()) {
-                    performCenterJob();
-                } else {
-                    event.display.asyncExec(new Runnable() {
-                        public void run() {
-                            performCenterJob();
-                        }
-                    });
-                }
-                revalidateContents();
-            } else if (event.type == SWT.Selection) {
-                onScrolling();
-            } else if (event.type == SWT.FocusOut) {
-                hideToolTip();
-            } else if (event.type == SWT.FocusIn || event.type == SWT.Paint) {
-                // Fix bug:
-                FigureCanvas fc = getCanvas();
-                org.eclipse.swt.graphics.Rectangle clientArea = fc
-                        .getClientArea();
-                if (clientArea.width > 0 || clientArea.height > 0) {
-                    performCenterJob();
-                    fc.removeListener(event.type, this);
-                }
-            }
-        }
-    }
+    private LightweightSystem lws = createLightweightSystem();
 
     private ILayerManager layerManager = null;
 
-    private Point centerPoint = new Point();
-
-    private Display display = null;
-
-    private UserMotionDetector userMotionDetector = null;
-
-    private PartsEventDispatcher eventDispatcher = null;
+    private ViewerEventDispatcher eventDispatcher = createEventDispatcher();
 
     private ZoomManager zoomManager = null;
 
+    private Viewport viewport = new Viewport(true);
+
     public GraphicalViewer() {
         super();
+        lws.setEventDispatcher(eventDispatcher);
+        lws.setContents(viewport);
     }
 
     public Object getAdapter(Class adapter) {
@@ -192,6 +114,8 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
                     : null;
         if (adapter == IFigure.class)
             return getRootFigure();
+        if (adapter == Viewport.class)
+            return getViewport();
         return super.getAdapter(adapter);
     }
 
@@ -203,16 +127,11 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
     }
 
     public IPart findPart(int x, int y) {
-        Point p = convertPoint(x, y);
-        return findPart(p);
+        return findPart(convertPoint(x, y));
     }
 
     protected Point convertPoint(int controlX, int controlY) {
-        Point p = new Point(controlX, controlY);
-        if (getControl() != null && !getControl().isDisposed()) {
-            p = computeToLayer(p, true);
-        }
-        return p;
+        return computeToLayer(POINT.setLocation(controlX, controlY), true);
     }
 
     protected IPart findPart(Point position) {
@@ -220,86 +139,61 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
     }
 
     protected IPart findPart(IPart parent, Point position) {
-        if (parent == null)
+        if (parent == null || !(parent instanceof IGraphicalEditPart))
             return null;
-        if (parent instanceof IGraphicalEditPart) {
-            return (((IGraphicalEditPart) parent).findAt(position));
-        }
-        for (IPart p : parent.getChildren()) {
-            IPart ret = findPart(p, position);
-            if (ret != null)
-                return ret;
-        }
-        return null;
+        return (((IGraphicalEditPart) parent).findAt(position,
+                getPartSearchCondition()));
+    }
+
+    protected LightweightSystem createLightweightSystem() {
+        return new LightweightSystem();
+    }
+
+    public LightweightSystem getLightweightSystem() {
+        return lws;
+    }
+
+    protected Viewport getViewport() {
+        return viewport;
     }
 
     public Control createControl(Composite parent) {
         return createControl(parent, SWT.DOUBLE_BUFFERED);
     }
 
-    @Override
     protected Control internalCreateControl(Composite parent, int style) {
-        FigureCanvas fc = new FigureCanvas(parent, style);
-        eventDispatcher = createEventDispatcher();
-        eventDispatcher.setDndSupport(getDndSupport());
-        fc.getLightweightSystem().setEventDispatcher(eventDispatcher);
+        FigureCanvas canvas = new FigureCanvas(parent, style,
+                getLightweightSystem());
+        canvas.setViewport(viewport);
+        return canvas;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.AbstractViewer#hookControl(org.eclipse.swt.widgets.Control)
+     */
+    @Override
+    protected void hookControl(Control control) {
         if (getEditDomain() != null) {
             eventDispatcher.activate();
         }
-        IFigure rootFigure = getRootFigure();
-        if (rootFigure instanceof Viewport) {
-            fc.setViewport((Viewport) rootFigure);
-        } else {
-            fc.setContents(rootFigure);
-        }
-        return fc;
-    }
-
-    protected void hookControl(Control control) {
         super.hookControl(control);
-
-        Listener eventHandler = new ControlEventListener();
-        control.addListener(SWT.Resize, eventHandler);
-        control.addListener(SWT.FocusIn, eventHandler);
-        control.addListener(SWT.FocusOut, eventHandler);
-        control.addListener(SWT.Paint, eventHandler);
-
-        ScrollBar hBar = ((FigureCanvas) control).getHorizontalBar();
-        if (hBar != null) {
-            hBar.addListener(SWT.Selection, eventHandler);
-        }
-        ScrollBar vBar = ((FigureCanvas) control).getVerticalBar();
-        if (vBar != null) {
-            vBar.addListener(SWT.Selection, eventHandler);
-        }
-
-        display = control.getDisplay();
-        if (display != null) {
-            userMotionDetector = new UserMotionDetector();
-            display.addFilter(SWT.MouseDown, userMotionDetector);
-            display.addFilter(SWT.MouseUp, userMotionDetector);
-            display.addFilter(SWT.KeyDown, userMotionDetector);
-            display.addFilter(SWT.KeyUp, userMotionDetector);
-        }
     }
 
     public void setRootPart(IRootPart rootPart) {
-        if (getCanvas() != null && !getCanvas().isDisposed()) {
-            IFigure oldRootFigure = getRootFigure();
-            if (oldRootFigure instanceof Viewport) {
-                getCanvas().setViewport(null);
-            } else {
-                getCanvas().setContents(null);
-            }
-        }
         super.setRootPart(rootPart);
+        IFigure rootFigure = getRootFigure();
+        if (rootFigure instanceof Viewport) {
+            viewport = (Viewport) rootFigure;
+        } else {
+            viewport = new Viewport(true);
+            viewport.setContents(rootFigure);
+        }
+        getLightweightSystem().setContents(viewport);
         if (getCanvas() != null && !getCanvas().isDisposed()) {
-            IFigure newRootFigure = getRootFigure();
-            if (newRootFigure instanceof Viewport) {
-                getCanvas().setViewport((Viewport) newRootFigure);
-            } else {
-                getCanvas().setContents(newRootFigure);
-            }
+            getCanvas().setViewport(viewport);
         }
     }
 
@@ -311,28 +205,24 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
     }
 
     protected void revalidateContents() {
-        IPart contents = getRootPart().getContents();
-        if (contents != null && contents instanceof IGraphicalPart
-                && contents.getStatus().isActive()) {
-            ((IGraphicalPart) contents).getFigure().revalidate();
-        }
         getCanvas().layout(true);
     }
 
-    protected PartsEventDispatcher createEventDispatcher() {
+    protected ViewerEventDispatcher createEventDispatcher() {
         return new PartsEventDispatcher(this);
     }
 
-    public PartsEventDispatcher getEventDispatcher() {
-        return eventDispatcher;
-    }
+//    public ViewerEventDispatcher getEventDispatcher() {
+//        return eventDispatcher;
+//    }
 
-    public void setEditDomain(EditDomain domain) {
-        if (eventDispatcher != null) {
+    public void setEditDomain(EditDomain editDomain) {
+        if (getControl() != null && !getControl().isDisposed()) {
             eventDispatcher.deactivate();
         }
-        super.setEditDomain(domain);
-        if (getEditDomain() != null && eventDispatcher != null) {
+        super.setEditDomain(editDomain);
+        if (getEditDomain() != null && getControl() != null
+                && !getControl().isDisposed()) {
             eventDispatcher.activate();
         }
     }
@@ -350,8 +240,9 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
     }
 
     public void updateToolTip() {
-        if (eventDispatcher != null)
+        if (getControl() != null && !getControl().isDisposed()) {
             eventDispatcher.updateToolTip();
+        }
     }
 
     public void hideToolTip() {
@@ -374,7 +265,7 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
     }
 
     public Point getCenterPoint() {
-        return centerPoint;
+        return getViewport().getClientArea().getCenter();
     }
 
     public void center(Rectangle area) {
@@ -382,46 +273,26 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
     }
 
     public void center(Point center) {
-        if (center != null && !center.equals(centerPoint)) {
-            centerPoint.setLocation(center);
-        }
-        performCenterJob();
-    }
-
-    private void performCenterJob() {
-        if (!getCanvas().isDisposed()) {
-            org.eclipse.swt.graphics.Rectangle clientArea = getCanvas()
-                    .getClientArea();
-            int x = centerPoint.x - clientArea.width / 2;
-            int y = centerPoint.y - clientArea.height / 2;
-            if (usesSmoothScroll()) {
-                getCanvas().getViewport().setViewLocation(x, y);
-            } else {
-                getCanvas().scrollTo(x, y);
-            }
-        }
+        Rectangle clientArea = getViewport().getClientArea();
+        int x = center.x - clientArea.width / 2;
+        int y = center.y - clientArea.height / 2;
+        scrollTo(x, y);
     }
 
     public void scrollToX(int x) {
         if (usesSmoothScroll()) {
-            getCanvas().getViewport().setHorizontalLocation(x);
-//            getCanvas().scrollSmoothTo(x,
-//                    getCanvas().getViewport().getViewLocation().y);
+            getViewport().setHorizontalLocation(x);
         } else {
             getCanvas().scrollToX(x);
         }
-        updateCenterPoint();
     }
 
     public void scrollToY(int y) {
         if (usesSmoothScroll()) {
-            getCanvas().getViewport().setVerticalLocation(y);
-//            getCanvas().scrollSmoothTo(
-//                    getCanvas().getViewport().getViewLocation().x, y);
+            getViewport().setVerticalLocation(y);
         } else {
             getCanvas().scrollToY(y);
         }
-        updateCenterPoint();
     }
 
     public void scrollTo(Point p) {
@@ -430,12 +301,10 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
 
     public void scrollTo(int x, int y) {
         if (usesSmoothScroll()) {
-            getCanvas().getViewport().setViewLocation(x, y);
-//            getCanvas().scrollSmoothTo(x, y);
+            getViewport().setViewLocation(x, y);
         } else {
             getCanvas().scrollTo(x, y);
         }
-        updateCenterPoint();
     }
 
     protected boolean usesSmoothScroll() {
@@ -460,13 +329,7 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
      * @see org.xmind.gef.IViewer#getScrollPosition()
      */
     public Point getScrollPosition() {
-        return getCanvas().getViewport().getViewLocation();
-    }
-
-    protected void updateCenterPoint() {
-        Point p = getScrollPosition();
-        Dimension s = getClientArea().getSize();
-        centerPoint.setLocation(p.x + s.width / 2, p.y + s.height / 2);
+        return getViewport().getViewLocation();
     }
 
     /**
@@ -546,21 +409,6 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
         scrollDelta(dx, dy);
     }
 
-    protected void handleDispose(DisposeEvent e) {
-        if (display != null) {
-            if (userMotionDetector != null) {
-                display.removeFilter(SWT.MouseDown, userMotionDetector);
-                display.removeFilter(SWT.MouseUp, userMotionDetector);
-                display.removeFilter(SWT.KeyDown, userMotionDetector);
-                display.removeFilter(SWT.KeyUp, userMotionDetector);
-                userMotionDetector = null;
-            }
-            display = null;
-        }
-//        centerJob = null;
-        super.handleDispose(e);
-    }
-
     protected IGraphicalRootPart getGraphicalRootEditPart() {
         IRootPart rootPart = getRootPart();
         if (rootPart instanceof IGraphicalRootPart) {
@@ -574,31 +422,27 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
     }
 
     protected void inputChanged(Object input, Object oldInput) {
-        if (getControl() != null && !getControl().isDisposed()) {
+        boolean controlAvailable = getControl() != null
+                && !getControl().isDisposed();
+        if (controlAvailable) {
             getControl().setRedraw(false);
         }
 
         ISelection oldSelection = getSelection();
         setSelectionOnInputChanged(StructuredSelection.EMPTY);
         double oldScale = getZoomManager().getScale();
-
-        if (eventDispatcher != null) {
+        if (controlAvailable && getEditDomain() != null) {
             eventDispatcher.deactivate();
         }
-
         internalInputChanged(input, oldInput);
-
-        if (eventDispatcher != null) {
+        if (controlAvailable && getEditDomain() != null) {
             eventDispatcher.activate();
         }
-
         setSelectionOnInputChanged(oldSelection);
-
         if (oldScale >= 0) {
             getZoomManager().setScale(oldScale);
         }
-
-        if (getControl() != null && !getControl().isDisposed()) {
+        if (controlAvailable) {
             getControl().setRedraw(true);
         }
     }
@@ -611,91 +455,87 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
         super.inputChanged(input, oldInput);
     }
 
-    /**
-     * @param x
-     * @param y
-     */
-    protected void alternativeScrollTo(int x, int y) {
-        int hOffset = verifyScrollBarOffset(getCanvas().getViewport()
-                .getHorizontalRangeModel(), x);
-        int vOffset = verifyScrollBarOffset(getCanvas().getViewport()
-                .getVerticalRangeModel(), y);
-
-        int hOffsetOld = getCanvas().getViewport().getViewLocation().x;
-        if (hOffset == hOffsetOld) {
-            scrollToY(y);
-            return;
-        }
-        int dx = -hOffset + hOffsetOld;
-
-        int vOffsetOld = getCanvas().getViewport().getViewLocation().y;
-        if (vOffset == vOffsetOld) {
-            scrollToX(x);
-            return;
-        }
-        int dy = -vOffset + vOffsetOld;
-
-        Rectangle clientArea = getCanvas().getViewport().getBounds()
-                .getCropped(getCanvas().getViewport().getInsets());
-        Rectangle blit = clientArea.getResized(-Math.abs(dx), -Math.abs(dy));
-        Rectangle expose = clientArea.getCopy();
-        Rectangle expose2 = clientArea.getCopy();
-        Point dest = clientArea.getTopLeft();
-        expose.width = Math.abs(dx);
-        if (dx < 0) { //Moving left?
-            blit.translate(-dx, 0); //Move blit area to the right
-            expose.x = dest.x + blit.width;
-        } else
-            //Moving right
-            dest.x += dx; //Move expose area to the right
-
-        expose2.height = Math.abs(dy);
-        if (dy < 0) { //Moving up?
-            blit.translate(0, -dy); //Move blit area down
-            expose2.y = dest.y + blit.height; //Move expose area down
-        } else
-            //Moving down
-            dest.y += dy;
-
-        // fix for bug 41111
-        Control[] children = getCanvas().getChildren();
-        boolean[] manualMove = new boolean[children.length];
-        for (int i = 0; i < children.length; i++) {
-            org.eclipse.swt.graphics.Rectangle bounds = children[i].getBounds();
-            manualMove[i] = blit.width <= 0 || blit.height < 0
-                    || bounds.x > blit.x + blit.width
-                    || bounds.y > blit.y + blit.height
-                    || bounds.x + bounds.width < blit.x
-                    || bounds.y + bounds.height < blit.y;
-        }
-        getCanvas().scroll(dest.x, dest.y, blit.x, blit.y, blit.width,
-                blit.height, true);
-
-        for (int i = 0; i < children.length; i++) {
-            org.eclipse.swt.graphics.Rectangle bounds = children[i].getBounds();
-            if (manualMove[i])
-                children[i].setBounds(bounds.x + dx, bounds.y, bounds.width,
-                        bounds.height);
-        }
-
-        getCanvas().getViewport().setIgnoreScroll(true);
-        getCanvas().getViewport().setHorizontalLocation(hOffset);
-        getCanvas().getViewport().setVerticalLocation(vOffset);
-        getCanvas().getViewport().setIgnoreScroll(false);
-        getCanvas().redraw(expose.x, expose.y, expose.width, expose.height,
-                true);
-        getCanvas().redraw(expose2.x, expose2.y, expose2.width, expose2.height,
-                true);
-    }
-
-    private int verifyScrollBarOffset(RangeModel model, int value) {
-        value = Math.max(model.getMinimum(), value);
-        return Math.min(model.getMaximum() - model.getExtent(), value);
-    }
-
-    protected void onScrolling() {
-        updateCenterPoint();
-    }
+//    /**
+//     * @param x
+//     * @param y
+//     */
+//    protected void alternativeScrollTo(int x, int y) {
+//        int hOffset = verifyScrollBarOffset(getViewport()
+//                .getHorizontalRangeModel(), x);
+//        int vOffset = verifyScrollBarOffset(getViewport()
+//                .getVerticalRangeModel(), y);
+//
+//        int hOffsetOld = getViewport().getViewLocation().x;
+//        if (hOffset == hOffsetOld) {
+//            scrollToY(y);
+//            return;
+//        }
+//        int dx = -hOffset + hOffsetOld;
+//
+//        int vOffsetOld = getViewport().getViewLocation().y;
+//        if (vOffset == vOffsetOld) {
+//            scrollToX(x);
+//            return;
+//        }
+//        int dy = -vOffset + vOffsetOld;
+//
+//        Rectangle clientArea = getViewport().getBounds()
+//                .getCropped(getViewport().getInsets());
+//        Rectangle blit = clientArea.getResized(-Math.abs(dx), -Math.abs(dy));
+//        Rectangle expose = clientArea.getCopy();
+//        Rectangle expose2 = clientArea.getCopy();
+//        Point dest = clientArea.getTopLeft();
+//        expose.width = Math.abs(dx);
+//        if (dx < 0) { //Moving left?
+//            blit.translate(-dx, 0); //Move blit area to the right
+//            expose.x = dest.x + blit.width;
+//        } else
+//            //Moving right
+//            dest.x += dx; //Move expose area to the right
+//
+//        expose2.height = Math.abs(dy);
+//        if (dy < 0) { //Moving up?
+//            blit.translate(0, -dy); //Move blit area down
+//            expose2.y = dest.y + blit.height; //Move expose area down
+//        } else
+//            //Moving down
+//            dest.y += dy;
+//
+//        // fix for bug 41111
+//        Control[] children = getCanvas().getChildren();
+//        boolean[] manualMove = new boolean[children.length];
+//        for (int i = 0; i < children.length; i++) {
+//            org.eclipse.swt.graphics.Rectangle bounds = children[i].getBounds();
+//            manualMove[i] = blit.width <= 0 || blit.height < 0
+//                    || bounds.x > blit.x + blit.width
+//                    || bounds.y > blit.y + blit.height
+//                    || bounds.x + bounds.width < blit.x
+//                    || bounds.y + bounds.height < blit.y;
+//        }
+//        getCanvas().scroll(dest.x, dest.y, blit.x, blit.y, blit.width,
+//                blit.height, true);
+//
+//        for (int i = 0; i < children.length; i++) {
+//            org.eclipse.swt.graphics.Rectangle bounds = children[i].getBounds();
+//            if (manualMove[i])
+//                children[i].setBounds(bounds.x + dx, bounds.y, bounds.width,
+//                        bounds.height);
+//        }
+//
+//        getViewport().setIgnoreScroll(true);
+//        getViewport().setHorizontalLocation(hOffset);
+//        getViewport().setVerticalLocation(vOffset);
+//        getViewport().setIgnoreScroll(false);
+//        getCanvas().redraw(expose.x, expose.y, expose.width, expose.height,
+//                true);
+//        getCanvas().redraw(expose2.x, expose2.y, expose2.width, expose2.height,
+//                true);
+//    }
+//
+//    private int verifyScrollBarOffset(RangeModel model, int value) {
+//        value = Math.max(model.getMinimum(), value);
+//        return Math.min(model.getMaximum() - model.getExtent(), value);
+//    }
 
     public ZoomManager getZoomManager() {
         if (zoomManager == null)
@@ -709,9 +549,18 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
 
     public void setDndSupport(IDndSupport dndSupport) {
         super.setDndSupport(dndSupport);
-        if (eventDispatcher != null) {
-            eventDispatcher.setDndSupport(dndSupport);
-        }
+        eventDispatcher.setDndSupport(dndSupport);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.AbstractViewer#setCursor(org.eclipse.swt.graphics.Cursor)
+     */
+    @Override
+    public void setCursor(Cursor cursor) {
+        eventDispatcher.setOverridingCursor(cursor);
     }
 
 }

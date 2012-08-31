@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <templates>
-	<template resource="Brainstorming Chart.xmt" name="%template.brainStormingChart.name" />
-	<template resource="Meeting.xmt" name="%template.meetingChart.name" />
+	<template resource="Project Plan.xmt" name="%template.projectPlan.name" />
+	<template resource="Project Status Report.xmt" name="%template.projectStatusReport.name" />
+	<template resource="Projects Dashboard.xmt" name="%template.projectsDashboard.name" />
 	<template resource="Org Chart.xmt" name="%template.orgChart.name" />
-	<template resource="Project Management.xmt" name="%template.projectManagement.name" />
-	<template resource="Reading journals.xmt" name="%template.readingJournals.name"/>
-	<template resource="Personal Management.xmt" name="%template.personalManagement.name"/>
-	<template resource="Flow Chart.xmt" name="%template.flowChart.name"/>
+	<template resource="Short Meeting.xmt" name="%template.shortMeeting.name" />
+	<template resource="Meeting Management.xmt" name="%template.meetingManagement.name" />
+	<template resource="SWOT Analysis.xmt" name="%template.swotAnalysis.name" />
+	<template resource="Cause and Effect.xmt" name="%template.causeAndEffect.name" />
+	<template resource="Timeline.xmt" name="%template.timeline.name" />
+	<template resource="Make a Decision.xmt" name="%template.makeADecision.name" />
+	<template resource="Weekly Plan.xmt" name="%template.weeklyPlan.name" />
 </templates>

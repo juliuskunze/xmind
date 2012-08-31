@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -37,6 +37,8 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
 
     private Set<String> editRequestTypes = new HashSet<String>();
 
+    private Request lastForwardedRequest = null;
+
     public IGraphicalEditPart getSource() {
         return source;
     }
@@ -73,12 +75,12 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
         IPart target = request.getPrimaryTarget();
         if (target instanceof IGraphicalEditPart) {
             IGraphicalEditPart newSource = (IGraphicalEditPart) target;
-            if (newSource != getSource()) {
-                remainActive = true;
-                finishEditing();
-                remainActive = false;
-            }
-            if (newSource != null) {
+            if (canEdit(newSource)) {
+                if (newSource != getSource()) {
+                    remainActive = true;
+                    finishEditing();
+                    remainActive = false;
+                }
                 setSource(newSource);
                 if (acceptEditRequest(request)) {
                     getTargetViewer().setSelection(
@@ -91,8 +93,16 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
                 }
             } else {
                 finishEditing();
+                if (request != lastForwardedRequest) {
+                    lastForwardedRequest = request;
+                    getDomain().handleRequest(request);
+                }
             }
         }
+    }
+
+    protected boolean canEdit(IGraphicalEditPart target) {
+        return true;
     }
 
     protected boolean acceptEditRequest(Request request) {
@@ -125,7 +135,8 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
 
     protected boolean isViewRole(String role) {
         return GEF.ROLE_SELECTABLE.equals(role)
-                || GEF.ROLE_SCALABLE.equals(role);
+                || GEF.ROLE_SCALABLE.equals(role)
+                || GEF.ROLE_MODIFIABLE.equals(role);
     }
 
     protected Collection<String> getEditRequestTypes() {
@@ -140,10 +151,10 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
         editRequestTypes.remove(reqType);
     }
 
-    protected void handleSingleRequest(Request request) {
+    protected void internalHandleRequest(Request request) {
         if (request.getTargetViewer() == null
                 || request.getTargetViewer() != getTargetViewer()) {
-            super.handleSingleRequest(request);
+            super.internalHandleRequest(request);
             return;
         }
         String requestType = request.getType();
@@ -173,21 +184,20 @@ public abstract class EditTool extends GraphicalTool implements ISourceTool {
                 undo();
             }
         } else if (isViewRequest(requestType)) {
-            ITool defaultTool = getDomain().getDefaultTool();
-            if (defaultTool != null) {
-                defaultTool.handleRequest(request);
-            }
+            getDomain().getDefaultTool().handleRequest(request);
         } else {
             finishEditing();
-            ITool activeTool = getDomain().getActiveTool();
-            if (activeTool != this)
-                activeTool.handleRequest(request);
+            if (!getStatus().isStatus(GEF.ST_ACTIVE)) {
+                getDomain().handleRequest(request);
+            } else {
+                getDomain().getDefaultTool().handleRequest(request);
+            }
         }
     }
 
-    protected void internalHandleRequest(Request request) {
-        super.handleSingleRequest(request);
-    }
+//    protected void internalHandleRequest(Request request) {
+//        super.handleSingleRequest(request);
+//    }
 
     protected void selectAll() {
     }

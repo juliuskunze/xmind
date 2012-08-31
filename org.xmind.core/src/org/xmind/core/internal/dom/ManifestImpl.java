@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -25,12 +25,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -40,6 +38,7 @@ import org.w3c.dom.Node;
 import org.xmind.core.Core;
 import org.xmind.core.IEncryptionData;
 import org.xmind.core.IFileEntry;
+import org.xmind.core.IFileEntryFilter;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.Manifest;
 import org.xmind.core.util.DOMUtils;
@@ -102,31 +101,76 @@ public class ManifestImpl extends Manifest {
         return ownedWorkbook;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IWorkbookComponent#isOrphan()
+     */
+    public boolean isOrphan() {
+        return ownedWorkbook != null;
+    }
+
     protected Collection<IFileEntry> getAllRegisteredEntries() {
         if (entries == null)
             return NO_ENTRIES;
         return entries.values();
     }
 
-    public List<IFileEntry> getFileEntries() {
-        Element ms = getManifestElement();
-        List<IFileEntry> list = new ArrayList<IFileEntry>(ms.getChildNodes()
-                .getLength());
-        Iterator<Element> it = DOMUtils.childElementIterByTag(ms,
-                TAG_FILE_ENTRY);
-        while (it.hasNext()) {
-            Element e = it.next();
-            if (e.hasAttribute(ATTR_FULL_PATH)) {
-                String path = e.getAttribute(ATTR_FULL_PATH);
-                if (entries == null)
-                    entries = new TreeMap<String, IFileEntry>(ENTRY_COMPARATOR);
-                IFileEntry entry = entries.get(path);
-                if (entry == null)
-                    entry = createFileEntry(path, e);
-                list.add(entry);
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IManifest#iterFileEntries()
+     */
+    public Iterator<IFileEntry> iterFileEntries() {
+        return iterFileEntries(null);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IManifest#iterFileEntries(org.xmind.core.IManifest.
+     * IFileEntryFilter)
+     */
+    public Iterator<IFileEntry> iterFileEntries(final IFileEntryFilter filter) {
+        final Iterator<Element> it = DOMUtils.childElementIterByTag(
+                getManifestElement(), TAG_FILE_ENTRY);
+        return new Iterator<IFileEntry>() {
+
+            IFileEntry next = findNext();
+
+            private IFileEntry findNext() {
+                while (it.hasNext()) {
+                    Element e = it.next();
+                    if (e.hasAttribute(ATTR_FULL_PATH) && select(e)) {
+                        return getFileEntry(e);
+                    }
+                }
+                return null;
             }
-        }
-        return list;
+
+            private boolean select(Element e) {
+                if (filter == null)
+                    return true;
+
+                String path = e.getAttribute(ATTR_FULL_PATH);
+                String mediaType = e.getAttribute(ATTR_MEDIA_TYPE);
+                boolean isDirectory = path.endsWith("/"); //$NON-NLS-1$
+                return filter.select(path, mediaType, isDirectory);
+            }
+
+            public void remove() {
+            }
+
+            public IFileEntry next() {
+                IFileEntry n = next;
+                next = findNext();
+                return n;
+            }
+
+            public boolean hasNext() {
+                return next != null;
+            }
+        };
     }
 
     public IFileEntry getFileEntry(String path) {
@@ -198,6 +242,16 @@ public class ManifestImpl extends Manifest {
         return entry;
     }
 
+    private IFileEntry getFileEntry(Element element) {
+        String path = element.getAttribute(ATTR_FULL_PATH);
+        if (entries != null) {
+            IFileEntry entry = entries.get(path);
+            if (entry != null)
+                return entry;
+        }
+        return createFileEntry(path, element);
+    }
+
 //    public void insertElement(IFileEntry entry) {
 //        Element e = (Element) entry.getAdapter(Element.class);
 //
@@ -233,8 +287,8 @@ public class ManifestImpl extends Manifest {
 
     private Element findInsertLocation(Element entryElement) {
         if (entryElement.hasAttribute(ATTR_FULL_PATH))
-            return findInsertLocation(entryElement, entryElement
-                    .getAttribute(ATTR_FULL_PATH));
+            return findInsertLocation(entryElement,
+                    entryElement.getAttribute(ATTR_FULL_PATH));
         return null;
     }
 

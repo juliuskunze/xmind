@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,7 +15,6 @@ package org.xmind.ui.mindmap;
 
 import java.util.List;
 
-import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IEditorPart;
 import org.xmind.core.IWorkbook;
 import org.xmind.gef.command.ICommandStack;
@@ -34,14 +33,14 @@ public interface IWorkbookRef {
      */
     ICommandStack getCommandStack();
 
-    /**
-     * 
-     * @param selection
-     * @param reveal
-     * @param forceFocus
-     *            TODO
-     */
-    void setSelection(ISelection selection, boolean reveal, boolean forceFocus);
+//    /**
+//     * 
+//     * @param selection
+//     * @param reveal
+//     * @param forceFocus
+//     *            TODO
+//     */
+//    void setSelection(ISelection selection, boolean reveal, boolean forceFocus);
 
 //    /**
 //     * 

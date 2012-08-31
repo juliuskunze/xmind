@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,6 +20,14 @@ public interface IMeta extends IAdaptable, IWorkbookComponent {
     String AUTHOR = "Author"; //$NON-NLS-1$
 
     String DESCRIPTION = "Description"; //$NON-NLS-1$
+
+    String THUMBNAIL = "Thumbnail"; //$NON-NLS-1$
+
+    String ORIGIN_X = THUMBNAIL + SEP + "Origin" + IMeta.SEP + "X"; //$NON-NLS-1$ //$NON-NLS-2$
+
+    String ORIGIN_Y = THUMBNAIL + IMeta.SEP + "Origin" + IMeta.SEP + "Y"; //$NON-NLS-1$ //$NON-NLS-2$
+
+    String BACKGROUND_COLOR = THUMBNAIL + IMeta.SEP + "BackgroundColor"; //$NON-NLS-1$
 
     /**
      * 

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,7 +18,10 @@ import java.io.File;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.osgi.framework.Bundle;
@@ -34,6 +37,11 @@ public class CathyApplication implements IApplication {
      * @see org.eclipse.equinox.app.IApplication#start(org.eclipse.equinox.app.IApplicationContext)
      */
     public Object start(IApplicationContext context) throws Exception {
+        if (this == null) {
+            showBetaExpired();
+            return EXIT_OK;
+        }
+
         String[] args = Platform.getApplicationArgs();
         if (args != null && args.length > 0) {
             logArgs(args);
@@ -41,10 +49,13 @@ public class CathyApplication implements IApplication {
         if (shouldExitEarly()) {
             return EXIT_OK;
         }
+        System.setProperty("org.xmind.cathy.app.status", "starting"); //$NON-NLS-1$ //$NON-NLS-2$
         Display display = PlatformUI.createDisplay();
         try {
+            OpenDocumentHandler openDocumentHandler = new OpenDocumentHandler();
+            display.addListener(SWT.OpenDocument, openDocumentHandler);
             int returnCode = PlatformUI.createAndRunWorkbench(display,
-                    new CathyWorkbenchAdvisor());
+                    new CathyWorkbenchAdvisor(openDocumentHandler));
             if (returnCode == PlatformUI.RETURN_RESTART) {
                 return EXIT_RESTART;
             }
@@ -54,21 +65,41 @@ public class CathyApplication implements IApplication {
         }
     }
 
+    /**
+     * 
+     */
+    private void showBetaExpired() {
+        Display display = PlatformUI.createDisplay();
+        try {
+            Shell shell = new Shell(display);
+            try {
+                MessageBox mb = new MessageBox(shell, SWT.ICON_INFORMATION
+                        | SWT.OK);
+                mb.setText("XMind 3.3 Beta Expired"); //$NON-NLS-1$
+                mb.setMessage("Thanks for trying this beta out. You can download the latest version at www.xmind.net ."); //$NON-NLS-1$
+                mb.open();
+            } finally {
+                shell.dispose();
+            }
+        } finally {
+            display.dispose();
+        }
+    }
+
     private void logArgs(String[] args) {
         Log opening = Log.get(Log.OPENING);
         for (String arg : args) {
             if ("-p".equals(arg)) {//$NON-NLS-1$
-                opening.append("-p"); //$NON-NLS-1$
-            } else {
+                System.setProperty(
+                        "org.xmind.cathy.startup.presentation", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            } else if (!arg.startsWith("-")) { //$NON-NLS-1$
                 File file = new File(arg);
-                if (file.isFile()) {
-                    try {
-                        arg = file.getCanonicalPath();
-                    } catch (Exception e) {
-                        arg = file.getAbsolutePath();
-                    }
-                    opening.append(arg);
+                try {
+                    arg = file.getCanonicalPath();
+                } catch (Exception e) {
+                    arg = file.getAbsolutePath();
                 }
+                opening.append(arg);
             }
         }
     }

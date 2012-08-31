@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -44,6 +44,7 @@ public class HyperlinkSpanImpl extends SpanImplBase implements IHyperlinkSpan {
 
     public void setHref(String source) {
         DOMUtils.setAttribute(implementation, ATTR_HREF, source);
+        getOwner().updateModifiedTime();
     }
 
     public List<ISpan> getSpans() {
@@ -54,12 +55,14 @@ public class HyperlinkSpanImpl extends SpanImplBase implements IHyperlinkSpan {
         SpanImplBase base = (SpanImplBase) span;
         implementation.appendChild(base.getImplementation());
         base.addNotify(getOwner().getRealizedWorkbook());
+        getOwner().updateModifiedTime();
     }
 
     public void removeSpan(ISpan span) {
         SpanImplBase base = (SpanImplBase) span;
         base.removeNotify(getOwner().getRealizedWorkbook());
         implementation.removeChild(base.getImplementation());
+        getOwner().updateModifiedTime();
     }
 
     @Override

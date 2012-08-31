@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -52,6 +52,8 @@ public class Request {
 
     private Map<String, Object> results = null;
 
+    private boolean handled = false;
+
     /**
      * @param type
      */
@@ -88,8 +90,8 @@ public class Request {
     public EditDomain getTargetDomain() {
         if (domain != null)
             return domain;
-        if (viewer != null)
-            return viewer.getEditDomain();
+        if (getTargetViewer() != null)
+            return getTargetViewer().getEditDomain();
         return null;
     }
 
@@ -111,7 +113,12 @@ public class Request {
     }
 
     public IViewer getTargetViewer() {
-        return viewer;
+        if (viewer != null)
+            return viewer;
+        IPart target = getPrimaryTarget();
+        if (target != null)
+            return target.getSite().getViewer();
+        return null;
     }
 
     public List<IPart> getTargets() {
@@ -268,6 +275,14 @@ public class Request {
 
     public boolean hasResult(String resultName) {
         return results != null && results.containsKey(resultName);
+    }
+
+    public boolean isHandled() {
+        return this.handled;
+    }
+
+    public void markHandled() {
+        this.handled = true;
     }
 
 }

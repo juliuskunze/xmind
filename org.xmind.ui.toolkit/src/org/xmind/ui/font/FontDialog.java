@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -386,19 +386,19 @@ public class FontDialog extends Dialog implements IFontChooser {
             public void dispose() {
             }
 
-            public Object[] getValues(Object input) {
-                return new Integer[] { Integer.valueOf(MIN_FONT_HEIGHT),
-                        Integer.valueOf(MAX_FONT_HEIGHT) };
-            }
+//            public Object[] getValues(Object input) {
+//                return new Integer[] { Integer.valueOf(MIN_FONT_HEIGHT),
+//                        Integer.valueOf(MAX_FONT_HEIGHT) };
+//            }
 
-            public Object getValue(Object input, double portion) {
+            public Object getValue(Object input, double ratio) {
                 int value = (int) Math
-                        .round((MAX_FONT_HEIGHT - MIN_FONT_HEIGHT) * portion
+                        .round((MAX_FONT_HEIGHT - MIN_FONT_HEIGHT) * ratio
                                 + MIN_FONT_HEIGHT);
                 return Integer.valueOf(value);
             }
 
-            public double getPortion(Object input, Object value) {
+            public double getRatio(Object input, Object value) {
                 int v = ((Integer) value).intValue();
                 return (v - MIN_FONT_HEIGHT) * 1.0d
                         / (MAX_FONT_HEIGHT - MIN_FONT_HEIGHT);

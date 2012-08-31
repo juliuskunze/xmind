@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -18,6 +18,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 import org.xmind.core.Core;
 import org.xmind.core.internal.XmindCore;
+import org.xmind.ui.internal.editor.BackgroundWorkbookSaver;
 
 public class MindMapUIPlugin extends AbstractUIPlugin {
 
@@ -59,6 +60,7 @@ public class MindMapUIPlugin extends AbstractUIPlugin {
      * )
      */
     public void stop(BundleContext context) throws Exception {
+        BackgroundWorkbookSaver.getInstance().stopAll();
         plugin = null;
         super.stop(context);
     }

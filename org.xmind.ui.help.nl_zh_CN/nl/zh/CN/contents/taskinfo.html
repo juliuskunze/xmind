@@ -12,7 +12,7 @@
     <div class="wrapf">
         <div id="logo">
             <h1><a href="/">XMind</a></h1>
-            <h2>思维协作的典范</h2>
+            <h2>Collaborative Minds</h2>
         </div>
         <div id='help_title'></div>
     </div>
@@ -31,10 +31,32 @@
 			<li>进度：调整滑块、选择进度或者直接输入数字来调整当前任务的进度；</li>
 			<li>优先级：为任务选择合适的优先级；</li>
 			<li>检验点：若激活，则此任务在甘特图视图中不显示任何进度信息。</li>
+			<li>任务关联：您可以在此将选中的任务同其他任务建立依赖关系。</li>
 		</ul>
 	</li>
 </ol>
-<p><img height="444" width="352" alt="任务信息 视图" src="images/taskinfo-xmind.jpg"></p>
+<p><img height="559" width="386" alt="任务信息 视图" src="images/taskinfo.png"></p>
+
+<p>任务关联</p>
+<p>在项目实施过程中，您可能会经常需要为某两个任务之间建立一种依赖关系。现在，您可以很方便地在XMind里面做到这点。</p>
+<ol>
+	<li>选择任务 A</li>
+	<li>进入任务信息视图(从菜单选择 视图 --- 显示 任务信息)</li>
+	<li>滚动到视图的底部，在任务关联一栏点击 加号</br>
+	<p><img height="136" width="387" alt="任务关联" src="images/taskinfo_predecessors.png"></p></li>
+	<li>在对话框中选择任务B，</li>
+	<li>确定依赖关系的类型
+		<ul>
+			<li><b>截止日期-至-开始日期</b>, 任务A的 开始日期 不得早于任务B的 截止日期.</li>
+			<li><b>开始日期-至-截止日期</b>, 任务A的 截止日期 不得早于任务B的 开始日期.</li>
+			<li><b>开始日期-至-开始日期</b>, 任务A的 开始日期 不得早于任务B的 开始日期.</li>
+			<li><b>截止日期-至-截止日期</b>, 任务A的 截止日期 不得早于任务B的 截止日期.</li>
+		</ul>	
+	</li>
+	<li>点击完成</li>
+</ol>
+<p>任务关联添加对话框</br><img height="534" width="525" alt="任务关联添加对话框" src="images/task_dependency.png"></p>
+
 <p><b>注意：</b>在甘特图中，所有有任务信息的主题都会被同步显示出来。</p>
 <p>&nbsp;</p>
 <p>您可能还对下列内容感兴趣：</p>
@@ -55,9 +77,10 @@
 
 <div id="footer"><div class='wrapf'>
     <div class="footer-left">
-        <p>Copyright&copy; 2006-2010, XMind有限公司.</p>
+        <p>Copyright © 2006-2012, XMind Ltd., All rights reserved.</p>
     </div>
 </div></div>
 
+<script type='text/javascript' src='/js/bourbon-loader.js?except=rsh'></script>
 </body>
 </html>

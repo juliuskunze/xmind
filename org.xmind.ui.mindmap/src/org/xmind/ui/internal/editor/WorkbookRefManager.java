@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -37,6 +37,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.XMLMemento;
 import org.xmind.core.Core;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.internal.dom.WorkbookImpl;
 import org.xmind.gef.command.CommandStack;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.mindmap.IWorkbookRef;
@@ -49,48 +50,69 @@ public class WorkbookRefManager implements IWorkbookRefManager {
     private static final String TAG_OPENED_EDITOR = "editor"; //$NON-NLS-1$
     private static final String TAG_OPENED_INPUT = "input"; //$NON-NLS-1$
     private static final String ATTR_OPENED_ID = "factoryID"; //$NON-NLS-1$
+    private static final String ATTR_OPENED_TITLE = "title"; //$NON-NLS-1$
     private static final String TAG_OPENED_TEMPLOCATION = "tempLocation"; //$NON-NLS-1$
     private static final String ATTR_OPENED_FILE = "path"; //$NON-NLS-1$
-    private static final String ATTR_OPENED_TITLE = "title"; //$NON-NLS-1$
+    private static final String ATTR_SKIP_REVISIONS = "skip-revisions"; //$NON-NLS-1$
 
-    private class AutoHibernateJob implements Runnable {
+    private static class EditorState {
+        String tempLocation;
+        boolean skipRevisions;
+    }
+
+    private class AutoHibernateHandler implements Runnable {
+
+        private Thread thread;
 
         public void run() {
+            thread = Thread.currentThread();
             try {
                 Thread.sleep(getAutoHibernateIntervals());
             } catch (InterruptedException e) {
             }
 
-            while (autoHibernateThread == Thread.currentThread()) {
+            while (!isCanceled()) {
 
                 hibernateAll();
 
-                if (autoHibernateThread != Thread.currentThread())
+                if (isCanceled())
                     break;
 
                 try {
                     Thread.sleep(getAutoHibernateIntervals());
                 } catch (InterruptedException e) {
-                    break;
                 }
             }
+        }
+
+        protected boolean isCanceled() {
+            return autoHibernateThread != thread;
         }
 
     }
 
     private Map<Object, WorkbookRef> registry = new HashMap<Object, WorkbookRef>();
 
-    private Map<IEditorInput, String> lastSession = null;
+    private Map<IEditorInput, EditorState> lastSession = null;
 
     private static WorkbookRefManager instance;
 
     private Thread autoHibernateThread = null;
 
+    /**
+     * One minute delay between two hibernating operations.
+     */
     private long autoHibernateIntervals = 60000;
 
-    private File location = null;
+    private File sessionFile = null;
+
+    private Object sessionFileLock = new Object();
 
     private WorkbookRefManager() {
+    }
+
+    public Collection<IWorkbookRef> getWorkbookRefs() {
+        return new ArrayList<IWorkbookRef>(registry.values());
     }
 
     public synchronized WorkbookRef addReferrer(Object source,
@@ -119,11 +141,12 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         initializeRef((WorkbookRef) ref, source);
 
         if (lastSession != null) {
-            String tempLocation = lastSession.get(source);
-            if (tempLocation != null) {
+            EditorState state = lastSession.get(source);
+            if (state != null) {
                 File file = MME.getFile(source);
-                ref.setWorkbookLoader(new TempWorkbookLoader(ref, tempLocation,
-                        file == null ? null : file.getAbsolutePath()));
+                ref.setWorkbookLoader(new TempWorkbookLoader(ref,
+                        state.tempLocation, file == null ? null : file
+                                .getAbsolutePath(), state.skipRevisions));
             }
         }
 
@@ -157,6 +180,8 @@ public class WorkbookRefManager implements IWorkbookRefManager {
                         boolean noRelatedRef = findRef(ref.getWorkbook()) == null;
 
                         ref.dispose(noRelatedRef);
+
+                        hibernateAll();
                     }
                 }
             }
@@ -226,66 +251,82 @@ public class WorkbookRefManager implements IWorkbookRefManager {
     }
 
     public void setAutoHibernateIntervals(long autoHibernateIntervals) {
-        this.autoHibernateIntervals = autoHibernateIntervals;
+        this.autoHibernateIntervals = Math.max(60000, autoHibernateIntervals);
     }
 
     private void ensureAutoHibernateStarted() {
         if (autoHibernateThread != null)
             return;
 
-        autoHibernateThread = new Thread(new AutoHibernateJob());
-        autoHibernateThread.setDaemon(true);
-        autoHibernateThread.setName("XMind: Auto Save Temporary Workbooks"); //$NON-NLS-1$
-        autoHibernateThread.setPriority(Thread.MIN_PRIORITY);
-        autoHibernateThread.start();
+        Thread newThread = new Thread(new AutoHibernateHandler());
+        newThread.setDaemon(true);
+        newThread.setName("XMind: Auto Save Temporary Workbooks"); //$NON-NLS-1$
+        newThread.setPriority(Thread.MIN_PRIORITY);
+        autoHibernateThread = newThread;
+        newThread.start();
     }
 
-    private void hibernateAll() {
+    public void hibernateAll() {
         if (registry.isEmpty()) {
             stopAutoHibernate();
-            return;
-        }
-
-        XMLMemento memento = null;
-        synchronized (this) {
-            for (Entry<Object, WorkbookRef> en : registry.entrySet()) {
-                WorkbookRef ref = en.getValue();
-                IWorkbook workbook = ref.getWorkbook();
-                if (workbook != null) {
-                    try {
-                        workbook.saveTemp();
-                    } catch (Throwable e) {
-                    }
-                    Object key = en.getKey();
-                    if (key instanceof IEditorInput) {
-                        if (memento == null) {
-                            memento = XMLMemento
-                                    .createWriteRoot(TAG_OPENED_EDITORS);
-                        }
-                        saveMemento(memento, (IEditorInput) key, workbook
-                                .getTempLocation());
-                    }
-                }
+            synchronized (sessionFileLock) {
+                getSessionFile().delete();
+            }
+        } else {
+            synchronized (sessionFileLock) {
+                saveSession();
             }
         }
-        if (location == null) {
-            location = new File(Core.getWorkspace().getTempFile(".opened")); //$NON-NLS-1$
+    }
+
+    private void stopAutoHibernate() {
+        Thread oldThread = autoHibernateThread;
+        autoHibernateThread = null;
+        if (oldThread != null) {
+            oldThread.interrupt();
+        }
+    }
+
+    protected void saveSession() {
+        XMLMemento memento = XMLMemento.createWriteRoot(TAG_OPENED_EDITORS);
+        for (WorkbookRef ref : registry.values()) {
+            IWorkbook workbook = ref.getWorkbook();
+            if (workbook != null) {
+                try {
+                    workbook.saveTemp();
+                } catch (Throwable e) {
+                }
+                Object key = ref.getKey();
+                IMemento editorMem = memento.createChild(TAG_OPENED_EDITOR);
+                if (key instanceof IEditorInput) {
+                    saveEditorInput(editorMem, (IEditorInput) key);
+                }
+                saveTempLocation(editorMem, workbook.getTempLocation());
+                editorMem.putBoolean(ATTR_SKIP_REVISIONS,
+                        ((WorkbookImpl) workbook).isSkipRevisionsWhenSaving());
+            }
         }
         if (memento != null) {
             try {
                 memento.save(new OutputStreamWriter(new FileOutputStream(
-                        location), "utf-8")); //$NON-NLS-1$
+                        getSessionFile()), "utf-8")); //$NON-NLS-1$
             } catch (IOException e) {
                 Logger.log(e, "Failed to save session log."); //$NON-NLS-1$
             }
         } else {
-            location.delete();
+            getSessionFile().delete();
         }
     }
 
-    private void saveMemento(XMLMemento memento, IEditorInput input, String path) {
-        IMemento editorMem = memento.createChild(TAG_OPENED_EDITOR);
-        IMemento inputMem = editorMem.createChild(TAG_OPENED_INPUT);
+    private File getSessionFile() {
+        if (sessionFile == null) {
+            sessionFile = new File(Core.getWorkspace().getTempFile(".opened")); //$NON-NLS-1$
+        }
+        return sessionFile;
+    }
+
+    private void saveEditorInput(IMemento memento, IEditorInput input) {
+        IMemento inputMem = memento.createChild(TAG_OPENED_INPUT);
         IPersistableElement p = input.getPersistable();
         if (p != null) {
             p.saveState(inputMem);
@@ -294,21 +335,43 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         } else {
             inputMem.putString(ATTR_OPENED_TITLE, input.getName());
         }
+    }
 
-        IMemento pathMem = editorMem.createChild(TAG_OPENED_TEMPLOCATION);
+    private IEditorInput loadEditorInput(IMemento memento) {
+        IMemento inputMem = memento.getChild(TAG_OPENED_INPUT);
+        if (inputMem == null)
+            return new WorkbookEditorInput();
+        String factoryId = inputMem.getString(ATTR_OPENED_ID);
+        if (factoryId != null) {
+            IElementFactory factory = PlatformUI.getWorkbench()
+                    .getElementFactory(factoryId);
+            return (IEditorInput) factory.createElement(inputMem);
+        } else {
+            String title = inputMem.getString(ATTR_OPENED_TITLE);
+            return new WorkbookEditorInput(title);
+        }
+    }
+
+    private void saveTempLocation(IMemento memento, String path) {
+        IMemento pathMem = memento.createChild(TAG_OPENED_TEMPLOCATION);
         pathMem.putString(ATTR_OPENED_FILE, path);
     }
 
-    private void stopAutoHibernate() {
-        if (autoHibernateThread != null) {
-            autoHibernateThread.interrupt();
-        }
-        autoHibernateThread = null;
+    private EditorState loadEditorState(IMemento memento) {
+        IMemento tempMem = memento.getChild(TAG_OPENED_TEMPLOCATION);
+        if (tempMem == null)
+            return null;
+        EditorState state = new EditorState();
+        state.tempLocation = tempMem.getString(ATTR_OPENED_FILE);
+        Boolean skipRevisions = tempMem.getBoolean(ATTR_SKIP_REVISIONS);
+        state.skipRevisions = skipRevisions != null
+                && skipRevisions.booleanValue();
+        return state;
     }
 
     public List<IEditorInput> loadLastSession() {
         File file = new File(Core.getWorkspace().getTempFile(".opened")); //$NON-NLS-1$
-        if (!file.exists())
+        if (!file.exists() || !file.isFile() || !file.canRead())
             return null;
         lastSession = null;
         return loadSessionFromFile(file);
@@ -316,50 +379,39 @@ public class WorkbookRefManager implements IWorkbookRefManager {
 
     private List<IEditorInput> loadSessionFromFile(File file) {
         List<IEditorInput> list = null;
+        FileInputStream fileStream = null;
         InputStreamReader reader = null;
         try {
-            reader = new InputStreamReader(new FileInputStream(file), "utf-8"); //$NON-NLS-1$
-        } catch (Exception e1) {
-            Logger.log(e1, "Failed to read file"); //$NON-NLS-1$
-            try {
-                reader.close();
-            } catch (IOException e) {
-            }
-        }
-        try {
+            fileStream = new FileInputStream(file);
+            reader = new InputStreamReader(fileStream, "utf-8"); //$NON-NLS-1$
             XMLMemento memento = XMLMemento.createReadRoot(reader);
             IMemento[] elements = memento.getChildren(TAG_OPENED_EDITOR);
             for (IMemento editorMem : elements) {
-                IMemento inputMem = editorMem.getChild(TAG_OPENED_INPUT);
-                IEditorInput input = null;
-                if (inputMem == null)
-                    continue;
-                String factoryId = inputMem.getString(ATTR_OPENED_ID);
-                if (factoryId != null) {
-                    IElementFactory factory = PlatformUI.getWorkbench()
-                            .getElementFactory(factoryId);
-                    input = (IEditorInput) factory.createElement(inputMem);
-                } else {
-                    String title = inputMem.getString(ATTR_OPENED_TITLE);
-                    input = new WorkbookEditorInput(title);
+                IEditorInput input = loadEditorInput(editorMem);
+                EditorState state = loadEditorState(editorMem);
+                if (state != null) {
+                    if (lastSession == null)
+                        lastSession = new HashMap<IEditorInput, EditorState>();
+                    lastSession.put(input, state);
                 }
-                IMemento tempMem = editorMem.getChild(TAG_OPENED_TEMPLOCATION);
-                String path = tempMem.getString(ATTR_OPENED_FILE);
-
-                if (lastSession == null)
-                    lastSession = new HashMap<IEditorInput, String>();
-                lastSession.put(input, path);
                 if (list == null)
                     list = new ArrayList<IEditorInput>();
                 list.add(input);
             }
-            return list;
         } catch (Exception e) {
             Logger.log(e, "Failed to load session log."); //$NON-NLS-1$
         } finally {
-            try {
-                reader.close();
-            } catch (IOException e2) {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e2) {
+                }
+            }
+            if (fileStream != null) {
+                try {
+                    fileStream.close();
+                } catch (IOException e2) {
+                }
             }
         }
         return list;

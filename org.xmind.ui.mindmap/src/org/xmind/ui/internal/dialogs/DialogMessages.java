@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -105,6 +105,9 @@ public class DialogMessages extends NLS {
     public static String PageSetupDialog_Font_text;
     public static String PageSetupDialog_Font_toolTip;
     public static String PageSetupDialog_JustForReference;
+    public static String PageSetupDialog_Orientation;
+    public static String PageSetupDialog_Landscape;
+    public static String PageSetupDialog_Portrait;
 
     public static String FileHyperlinkPage_ChooseFile_text;
 
@@ -145,8 +148,17 @@ public class DialogMessages extends NLS {
     public static String FileHyperlinkPage_AbsoluteButton_Text;
     public static String FileHyperlinkPage_RelativeButton_Text;
 
+    public static String RevisionPreviewDialog_CorruptedRevision_message;
+
+    public static String RevisionPreviewDialog_CurrentRevision_title;
+
+    public static String RevisionPreviewDialog_Revision_titlePattern;
+
     public static String SortMessageDialog_Messages;
     public static String SortMessageDialog_Title;
+
+    public static String NewWorkbookWizardDialog_OpenExistingFile_text;
+    public static String NewWorkbookWizardDialog_Choose_text;
 
     static {
         // initialize resource bundle

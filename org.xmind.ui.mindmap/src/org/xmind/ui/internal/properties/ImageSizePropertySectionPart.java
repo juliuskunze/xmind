@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -276,13 +276,15 @@ public class ImageSizePropertySectionPart extends
 
     private void resetImageSize() {
         getActiveDomain().handleRequest(
-                new Request(GEF.REQ_RESIZE).setParameter(GEF.PARAM_SIZE, null));
+                new Request(GEF.REQ_RESIZE).setViewer(getActiveViewer())
+                        .setParameter(GEF.PARAM_SIZE, null));
     }
 
     private void modifySize(int width, int height) {
         getActiveDomain().handleRequest(
-                new Request(GEF.REQ_RESIZE).setParameter(GEF.PARAM_SIZE,
-                        new Dimension(width, height)));
+                new Request(GEF.REQ_RESIZE).setViewer(getActiveViewer())
+                        .setParameter(GEF.PARAM_SIZE,
+                                new Dimension(width, height)));
     }
 
 }

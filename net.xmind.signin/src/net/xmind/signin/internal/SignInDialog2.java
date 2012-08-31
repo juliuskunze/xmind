@@ -1,7 +1,12 @@
 package net.xmind.signin.internal;
 
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import net.xmind.signin.IButtonCreator;
 import net.xmind.signin.IDataStore;
@@ -9,9 +14,8 @@ import net.xmind.signin.ISignInDialogExtension;
 import net.xmind.signin.ISignInDialogExtension2;
 import net.xmind.signin.XMindNet;
 
-import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.PostMethod;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -22,39 +26,74 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.xmind.ui.resources.FontUtils;
 
 public class SignInDialog2 extends Dialog implements IJobChangeListener,
         IButtonCreator {
 
-    private class InternalSignInJob extends Job {
+    private static class InternalSignInJob extends Job {
 
         private String user;
 
         private String password;
 
-        private boolean remember;
+//        private boolean remember;
 
-        public InternalSignInJob(String user, String passwrod, boolean remember) {
+        private XMindNetRequest request = null;
+
+        private IDataStore data;
+
+        public InternalSignInJob(String user, String passwrod) {
             super("Sign in to XMind.net"); //$NON-NLS-1$
             setSystem(true);
             this.user = user;
             this.password = passwrod;
-            this.remember = remember;
+//            this.remember = remember;
+        }
+
+        public IDataStore getData() {
+            return data;
+        }
+
+        @Override
+        protected void canceling() {
+            if (request != null) {
+                request.abort();
+            }
+            super.canceling();
+        }
+
+        private String hash(String password) {
+            MessageDigest md5;
+            try {
+                try {
+                    // Try BouncyCastle:
+                    md5 = MessageDigest.getInstance("MD5", "BC"); //$NON-NLS-1$ //$NON-NLS-2$
+                } catch (NoSuchProviderException e) {
+                    md5 = MessageDigest.getInstance("MD5"); //$NON-NLS-1$
+                }
+            } catch (NoSuchAlgorithmException e) {
+                return null;
+            }
+            Base64 encoder = new Base64();
+            try {
+                return new String(encoder.encode(md5.digest(password
+                        .getBytes("UTF-8"))), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+            } catch (UnsupportedEncodingException e) {
+                return null;
+            }
         }
 
         @Override
@@ -62,65 +101,56 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             if (monitor.isCanceled())
                 return Status.CANCEL_STATUS;
 
-            String url = "https://www.xmind.net/_res/token/" + user; //$NON-NLS-1$
-            PostMethod method = new PostMethod(url);
-            method.addParameter("user", user); //$NON-NLS-1$
-            method.addParameter("password", password); //$NON-NLS-1$
-            method.addParameter("remember", Boolean.toString(remember)); //$NON-NLS-1$
-
-            if (monitor.isCanceled())
-                return Status.CANCEL_STATUS;
-
-            HttpClient client = new HttpClient();
-            int code;
-            try {
-                code = client.executeMethod(method);
-            } catch (Exception e) {
-                return new Status(IStatus.WARNING, Activator.PLUGIN_ID,
-                        Messages.SignInDialog_NetworkError_message, e);
+            request = new XMindNetRequest(true);
+            request.uri("/_res/token/%s", user); //$NON-NLS-1$
+            request.addParameter("user", user); //$NON-NLS-1$
+            String pwdhash = hash(password);
+            if (pwdhash != null) {
+                request.addParameter("pwd", pwdhash); //$NON-NLS-1$
+            } else {
+                request.addParameter("password", password); //$NON-NLS-1$
             }
+//            request.addParameter("remember", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            request.post();
 
-            if (monitor.isCanceled())
+            if (monitor.isCanceled() || request.isAborted())
                 return Status.CANCEL_STATUS;
 
+            int code = request.getCode();
+            IDataStore data = request.getData();
             if (code == HttpStatus.SC_OK) {
-                JSONObject json;
-                try {
-                    String resp = method.getResponseBodyAsString();
-                    json = new JSONObject(resp);
-                } catch (Exception e) {
-                    return new Status(IStatus.WARNING, Activator.PLUGIN_ID,
-                            Messages.SignInDialog_ApplicationError_message, e);
-                }
-
-                if (monitor.isCanceled())
-                    return Status.CANCEL_STATUS;
-
-                code = json.optInt("_code", -1); //$NON-NLS-1$
-                if (code == HttpStatus.SC_OK) {
-                    try {
-                        json
-                                .put(SignInJob.REMEMBER, Boolean
-                                        .toString(remember));
-                    } catch (JSONException e) {
-                        //never happens
-                    }
-                    data = new JSONStore(json);
+                if (data != null) {
+                    this.data = data;
                     return Status.OK_STATUS;
-                } else {
-                    return new Status(IStatus.WARNING, Activator.PLUGIN_ID,
-                            code, Messages.SignInDialog_RequestError_message,
-                            null);
                 }
+                return error(code,
+                        Messages.SignInDialog_ApplicationError_message,
+                        request.getException());
+            } else if (code == XMindNetRequest.ERROR) {
+                return error(code, Messages.SignInDialog_NetworkError_message,
+                        request.getException());
+            } else if (code >= 400 && code < 500) {
+                return error(code, Messages.SignInDialog_RequestError_message,
+                        null);
+            } else {
+                return error(code, Messages.SignInDialog_ServerError_message,
+                        null);
             }
+        }
 
+        private static IStatus error(int code, String message,
+                Throwable exception) {
             return new Status(IStatus.WARNING, Activator.PLUGIN_ID, code,
-                    Messages.SignInDialog_ServerError_message, null);
+                    message, exception);
         }
 
     }
 
+    private boolean sheet;
+
     private String message;
+
+    private String errorMessage = null;
 
     private ISignInDialogExtension extension;
 
@@ -128,65 +158,78 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
 
     private Text passwordField;
 
-    private Button rememberCheck;
+    //private Button rememberCheck;
 
-    private Label messageLabel;
+    private Composite messageArea;
 
-    private Label messageIcon;
+    private Composite errorMessageArea;
 
-    private boolean showingErrorMessage = false;
+    private Label errorLabel;
 
-    private IDataStore data = null;
+    private Properties data;
 
     private Job signInJob;
 
     private List<Integer> buttonIds = new ArrayList<Integer>();
 
     public SignInDialog2(Shell parentShell) {
-        this(parentShell, null, null);
+        this(parentShell, null, null, false, null);
     }
 
     public SignInDialog2(Shell parentShell, String message,
             ISignInDialogExtension extension) {
+        this(parentShell, message, extension, false, null);
+    }
+
+    public SignInDialog2(Shell parentShell, String message,
+            ISignInDialogExtension extension, boolean sheet, Properties data) {
         super(parentShell);
-        setBlockOnOpen(true);
-        setShellStyle(SWT.TITLE | SWT.CLOSE | SWT.APPLICATION_MODAL);
         this.message = message == null ? Messages.SignInDialog_message
                 : message;
         this.extension = extension;
+        this.sheet = sheet;
+        this.data = data == null ? new Properties() : data;
+        if (sheet) {
+            setShellStyle(getShellStyle() | SWT.SHEET);
+        }
+        setBlockOnOpen(true);
     }
 
     @Override
     protected Control createDialogArea(Composite parent) {
-        Composite composite = new Composite(parent, SWT.NONE);
-        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gridData.widthHint = SWT.DEFAULT;
-        gridData.heightHint = SWT.DEFAULT;
-        composite.setLayoutData(gridData);
-
-        GridLayout gridLayout = new GridLayout(1, false);
-        gridLayout.marginWidth = 0;
-        gridLayout.marginHeight = 0;
-        gridLayout.verticalSpacing = 0;
-        gridLayout.horizontalSpacing = 0;
-        composite.setLayout(gridLayout);
-
         if (message != null) {
-            createMessageArea(composite);
-            createSeparator(composite);
+            createMessageArea(parent);
+            createSeparator(parent);
         }
+        Composite composite = (Composite) super.createDialogArea(parent);
         createFormArea(composite);
-
         return composite;
     }
 
     private void createMessageArea(Composite parent) {
-        Composite composite = new Composite(parent, SWT.NONE);
-        GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
-        gridData.widthHint = 540;
+        Composite messageStack = new Composite(parent, SWT.NONE);
+        StackLayout layout = new StackLayout();
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        messageStack.setLayout(layout);
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        gridData.widthHint = 480;
         gridData.heightHint = SWT.DEFAULT;
-        composite.setLayoutData(gridData);
+        messageStack.setLayoutData(gridData);
 
+        messageArea = createMessagePage(messageStack);
+        createMessageIcon(messageArea, SWT.ICON_INFORMATION);
+        createMessageLabel(messageArea, message);
+
+        errorMessageArea = createMessagePage(messageStack);
+        createMessageIcon(errorMessageArea, SWT.ICON_WARNING);
+        errorLabel = createMessageLabel(errorMessageArea, errorMessage);
+
+        setErrorMessage(errorMessage);
+    }
+
+    private Composite createMessagePage(Composite parent) {
+        Composite composite = new Composite(parent, SWT.NONE);
         GridLayout gridLayout = new GridLayout(2, false);
         gridLayout.marginWidth = 15;
         gridLayout.marginHeight = 10;
@@ -195,32 +238,34 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         composite.setLayout(gridLayout);
         composite.setBackground(parent.getDisplay().getSystemColor(
                 SWT.COLOR_LIST_BACKGROUND));
-        createMessageIcon(composite);
-        createMessageLabel(composite);
+        return composite;
     }
 
-    private void createMessageIcon(Composite parent) {
-        messageIcon = new Label(parent, SWT.NONE);
-        GridData gridData = new GridData(SWT.BEGINNING, SWT.CENTER, false,
-                false);
+    private Label createMessageIcon(Composite parent, int image) {
+        Label icon = new Label(parent, SWT.NONE);
+        GridData gridData = new GridData(SWT.BEGINNING, SWT.CENTER, false, true);
         gridData.widthHint = SWT.DEFAULT;
         gridData.heightHint = SWT.DEFAULT;
-        messageIcon.setLayoutData(gridData);
-        messageIcon.setBackground(parent.getBackground());
-        messageIcon.setImage(parent.getDisplay().getSystemImage(
-                SWT.ICON_INFORMATION));
+        icon.setLayoutData(gridData);
+        icon.setBackground(parent.getBackground());
+        icon.setImage(parent.getDisplay().getSystemImage(image));
+        return icon;
     }
 
-    private void createMessageLabel(Composite parent) {
-        messageLabel = new Label(parent, SWT.WRAP);
-        GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+    private Label createMessageLabel(Composite parent, String message) {
+        Label label = new Label(parent, SWT.WRAP);
+        GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, true);
         gridData.widthHint = SWT.DEFAULT;
         gridData.heightHint = SWT.DEFAULT;
-        messageLabel.setLayoutData(gridData);
-        messageLabel.setBackground(parent.getBackground());
-        messageLabel.setForeground(parent.getDisplay().getSystemColor(
+        label.setLayoutData(gridData);
+        label.setBackground(parent.getBackground());
+        label.setForeground(parent.getDisplay().getSystemColor(
                 SWT.COLOR_LIST_FOREGROUND));
-        messageLabel.setText(message);
+        label.setFont(FontUtils.getRelativeHeight(JFaceResources.DEFAULT_FONT,
+                -1));
+        if (message != null)
+            label.setText(message);
+        return label;
     }
 
     private void createSeparator(Composite parent) {
@@ -234,29 +279,38 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
     private void createFormArea(Composite parent) {
         Composite form = new Composite(parent, SWT.NONE);
         form.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        GridLayout gridLayout = new GridLayout(3, false);
-        gridLayout.marginWidth = 35;
-        gridLayout.marginHeight = 30;
+        GridLayout gridLayout = new GridLayout(2, false);
+        gridLayout.marginWidth = 30;
+        gridLayout.marginHeight = 25;
         gridLayout.marginBottom = 15;
-        gridLayout.verticalSpacing = 7;
+        gridLayout.verticalSpacing = 12;
         gridLayout.horizontalSpacing = 7;
         form.setLayout(gridLayout);
 
         // Row 1:
         createNameLabel(form);
         createNameField(form);
-        createSignUpButton(form);
+//        createSignUpButton(form);
 
         // Row 2:
         createPasswordLabel(form);
         createPasswordField(form);
-        createForgotPasswordButton(form);
+//        createForgotPasswordButton(form);
+
+        // Row 3:
+        Label emptyPlaceholder = new Label(form, SWT.NONE);
+        emptyPlaceholder.setLayoutData(new GridData(SWT.END, SWT.CENTER, false,
+                false));
+
+        Control forgotButton = createForgotPasswordButton(form);
+        ((GridData) forgotButton.getLayoutData()).verticalIndent = -10;
     }
 
     private void createNameLabel(Composite parent) {
         Label label = new Label(parent, SWT.NONE);
         label.setLayoutData(new GridData(SWT.END, SWT.CENTER, false, false));
         label.setText(Messages.SignInDialog_NameField_text);
+        label.setFont(FontUtils.getBold(JFaceResources.DEFAULT_FONT));
     }
 
     private void createNameField(Composite parent) {
@@ -264,9 +318,11 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         nameField
                 .setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) nameField.getLayoutData()).widthHint = 160;
+        nameField.setText(data.getProperty(XMindNetAccount.USER, "")); //$NON-NLS-1$
         nameField.addListener(SWT.Modify, new Listener() {
             public void handleEvent(Event event) {
-                restoreMessageArea();
+                data.setProperty(XMindNetAccount.USER, nameField.getText());
+                setErrorMessage(null);
             }
         });
         nameField.addListener(SWT.FocusIn, new Listener() {
@@ -276,23 +332,24 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         });
     }
 
-    private void createSignUpButton(Composite parent) {
+    private Control createSignUpButton(Composite parent) {
         Control link = createLink(parent, Messages.SignInDialog_NotMember_text,
                 new Runnable() {
                     public void run() {
-                        XMindNet.gotoURL("http://www.xmind.net/signup/"); //$NON-NLS-1$
-                        close();
+                        XMindNet.gotoURL(true,
+                                "https://www.xmind.net/xmind/signup/"); //$NON-NLS-1$
+//                        close();
                     }
                 });
-        link
-                .setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
-                        false));
+        link.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        return link;
     }
 
     private void createPasswordLabel(Composite parent) {
         Label label = new Label(parent, SWT.NONE);
         label.setLayoutData(new GridData(SWT.END, SWT.CENTER, false, false));
         label.setText(Messages.SignInDialog_PasswordField_text);
+        label.setFont(FontUtils.getBold(JFaceResources.DEFAULT_FONT));
     }
 
     private void createPasswordField(Composite parent) {
@@ -302,7 +359,7 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         ((GridData) passwordField.getLayoutData()).widthHint = 160;
         passwordField.addListener(SWT.Modify, new Listener() {
             public void handleEvent(Event event) {
-                restoreMessageArea();
+                setErrorMessage(null);
             }
         });
         passwordField.addListener(SWT.FocusIn, new Listener() {
@@ -312,18 +369,17 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         });
     }
 
-    private void createForgotPasswordButton(Composite parent) {
+    private Control createForgotPasswordButton(Composite parent) {
         Control link = createLink(parent,
                 Messages.SignInDialog_ForgotPassword_text, new Runnable() {
                     public void run() {
-                        XMindNet
-                                .gotoURL("http://www.xmind.net/signin/forgotpassword/"); //$NON-NLS-1$
-                        close();
+                        XMindNet.gotoURL(true,
+                                "https://www.xmind.net/xmind/forgotpassword/"); //$NON-NLS-1$
+//                        close();
                     }
                 });
-        link
-                .setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
-                        false));
+        link.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        return link;
     }
 
     private Control createLink(final Composite parent, String text,
@@ -348,12 +404,13 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
                     inside = true;
                     link.setForeground(pressedColor);
                 } else if (event.type == SWT.MouseUp) {
-                    if (pressed && inside) {
-                        openHandler.run();
-                    }
+                    boolean shouldRun = pressed && inside;
                     pressed = false;
                     inside = false;
                     link.setForeground(normalColor);
+                    if (shouldRun) {
+                        openHandler.run();
+                    }
                 } else if (event.type == SWT.MouseExit) {
                     if (pressed) {
                         inside = false;
@@ -416,7 +473,8 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         gridLayout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
         composite.setLayout(gridLayout);
 
-        createRememberCheck(composite);
+        createSignUpButton(composite);
+        //createRememberCheck(composite);
         if (extension != null) {
             createExtensionControls(composite);
         }
@@ -426,12 +484,12 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         return extension instanceof ISignInDialogExtension2;
     }
 
-    private void createRememberCheck(Composite parent) {
-        rememberCheck = new Button(parent, SWT.CHECK);
-        rememberCheck.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-                false));
-        rememberCheck.setText(Messages.SignInDialog_Remember_text);
-    }
+//    private void createRememberCheck(Composite parent) {
+//        rememberCheck = new Button(parent, SWT.CHECK);
+//        rememberCheck.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
+//                false));
+//        rememberCheck.setText(Messages.SignInDialog_Remember_text);
+//    }
 
     private void createExtensionControls(Composite parent) {
         Composite composite = new Composite(parent, SWT.NONE);
@@ -464,6 +522,10 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
     protected void createButtonsForButtonBar(Composite parent) {
         createButton(parent, IDialogConstants.OK_ID,
                 Messages.SignInDialog_SignIn_text, true);
+        if (sheet) {
+            createButton(parent, IDialogConstants.CANCEL_ID,
+                    IDialogConstants.CANCEL_LABEL, false);
+        }
         if (extension instanceof ISignInDialogExtension2) {
             ((ISignInDialogExtension2) extension).contributeToButtonBar(this,
                     parent, this);
@@ -482,7 +544,8 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
      */
     @Override
     protected void buttonPressed(int buttonId) {
-        if (buttonId != IDialogConstants.OK_ID) {
+        if (buttonId != IDialogConstants.OK_ID
+                && buttonId != IDialogConstants.CANCEL_ID) {
             if (extension instanceof ISignInDialogExtension2) {
                 ((ISignInDialogExtension2) extension).handleButtonPressed(this,
                         buttonId);
@@ -528,8 +591,8 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
 
     private void startJob() {
         stopJob();
-        signInJob = new InternalSignInJob(nameField.getText(), passwordField
-                .getText(), rememberCheck.getSelection());
+        signInJob = new InternalSignInJob(nameField.getText(),
+                passwordField.getText());
         signInJob.addJobChangeListener(this);
         signInJob.schedule();
     }
@@ -543,18 +606,18 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
     }
 
     public String getUserID() {
-        return data == null ? null : data.getString(XMindNetAccount.USER);
+        return data == null ? null : data.getProperty(XMindNetAccount.USER);
     }
 
     public String getToken() {
-        return data == null ? null : data.getString(XMindNetAccount.TOKEN);
+        return data == null ? null : data.getProperty(XMindNetAccount.TOKEN);
     }
 
-    public boolean shouldRemember() {
-        return data == null ? false : data.getBoolean(SignInJob.REMEMBER);
-    }
+//    public boolean shouldRemember() {
+//        return data == null ? false : data.getBoolean(SignInJob.REMEMBER);
+//    }
 
-    public IDataStore getData() {
+    public Properties getData() {
         return data;
     }
 
@@ -571,6 +634,8 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             signInJob = null;
             final IStatus result = event.getResult();
             if (result.getSeverity() == IStatus.OK) {
+                IDataStore resultData = ((InternalSignInJob) job).getData();
+                data.putAll(resultData.toMap());
                 getShell().getDisplay().asyncExec(new Runnable() {
                     public void run() {
                         setReturnCode(OK);
@@ -601,24 +666,23 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
     public void sleeping(IJobChangeEvent event) {
     }
 
-    private void restoreMessageArea() {
-        if (!showingErrorMessage)
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+        if (errorLabel == null || errorLabel.isDisposed())
             return;
-        if (messageLabel == null || messageLabel.isDisposed())
-            return;
-        messageLabel.setText(message);
-        messageIcon.setImage(messageIcon.getDisplay().getSystemImage(
-                SWT.ICON_INFORMATION));
-        showingErrorMessage = false;
-    }
-
-    private void setErrorMessage(String erorMessage) {
-        if (messageLabel == null || messageLabel.isDisposed())
-            return;
-        messageLabel.setText(erorMessage);
-        messageIcon.setImage(Display.getCurrent()
-                .getSystemImage(SWT.ICON_ERROR));
-        showingErrorMessage = true;
+        Composite stack = messageArea.getParent();
+        StackLayout layout = (StackLayout) stack.getLayout();
+        if (errorMessage == null) {
+            layout.topControl = messageArea;
+            messageArea.setVisible(true);
+            errorMessageArea.setVisible(false);
+        } else {
+            errorLabel.setText(errorMessage);
+            layout.topControl = errorMessageArea;
+            messageArea.setVisible(false);
+            errorMessageArea.setVisible(true);
+        }
+        stack.layout();
     }
 
 }

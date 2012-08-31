@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,7 +15,6 @@ package org.xmind.ui.internal.mindmap;
 
 import org.eclipse.draw2d.IFigure;
 import org.xmind.gef.draw2d.AbstractAnchor;
-import org.xmind.gef.draw2d.IAnchorListener;
 import org.xmind.gef.draw2d.IDecoratedFigure;
 import org.xmind.gef.draw2d.IDecoratedFigureListener;
 import org.xmind.gef.draw2d.decoration.IDecoration;
@@ -30,35 +29,33 @@ public class DecoratedAnchor extends AbstractAnchor implements
         super(owner);
     }
 
-    protected void setOwner(IFigure owner) {
-        if (owner == getOwner())
-            return;
-
-        if (getOwner() instanceof IDecoratedFigure && hasAnchorListener()) {
-            ((IDecoratedFigure) getOwner()).removeDecoratedFigureListener(this);
-        }
-        super.setOwner(owner);
-        if (getOwner() instanceof IDecoratedFigure && hasAnchorListener()) {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.draw2d.AbstractAnchor#hookOwner(org.eclipse.draw2d.IFigure)
+     */
+    @Override
+    protected void hookOwner(IFigure owner) {
+        super.hookOwner(owner);
+        if (getOwner() instanceof IDecoratedFigure) {
             ((IDecoratedFigure) getOwner()).addDecoratedFigureListener(this);
         }
     }
 
-    public void addAnchorListener(IAnchorListener listener) {
-        boolean hadAnchorListener = hasAnchorListener();
-        super.addAnchorListener(listener);
-        if (!hadAnchorListener && hasAnchorListener()
-                && getOwner() instanceof IDecoratedFigure) {
-            ((IDecoratedFigure) getOwner()).addDecoratedFigureListener(this);
-        }
-    }
-
-    public void removeAnchorListener(IAnchorListener listener) {
-        boolean hadAnchorListener = hasAnchorListener();
-        super.removeAnchorListener(listener);
-        if (hadAnchorListener && !hasAnchorListener()
-                && getOwner() instanceof IDecoratedFigure) {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.gef.draw2d.AbstractAnchor#unhookOwner(org.eclipse.draw2d.IFigure
+     * )
+     */
+    @Override
+    protected void unhookOwner(IFigure owner) {
+        if (getOwner() instanceof IDecoratedFigure) {
             ((IDecoratedFigure) getOwner()).removeDecoratedFigureListener(this);
         }
+        super.unhookOwner(owner);
     }
 
     public PrecisionPoint getLocation(int orientation, double expansion) {

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -15,19 +15,15 @@ package net.xmind.share;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Platform;
 import org.xmind.core.IMeta;
 
 public class Info {
-
-    /**
-     * <p>
-     * "Thumbnail" is a prefix of all thumbnail-related keys.
-     * </p>
-     */
-    private static final String THUMBNAIL = "Thumbnail"; //$NON-NLS-1$
 
     /**
      * <p>
@@ -40,7 +36,7 @@ public class Info {
      * (Also used as a key for setting and getting related metadata)
      * </p>
      */
-    public static final String X = THUMBNAIL + IMeta.SEP + "X"; //$NON-NLS-1$
+    public static final String X = IMeta.THUMBNAIL + IMeta.SEP + "X"; //$NON-NLS-1$
 
     /**
      * <p>
@@ -53,7 +49,7 @@ public class Info {
      * (Also used as a key for setting and getting related metadata)
      * </p>
      */
-    public static final String Y = THUMBNAIL + IMeta.SEP + "Y"; //$NON-NLS-1$
+    public static final String Y = IMeta.THUMBNAIL + IMeta.SEP + "Y"; //$NON-NLS-1$
 
     /**
      * <p>
@@ -66,49 +62,7 @@ public class Info {
      * (Also used as a key for setting and getting related metadata)
      * </p>
      */
-    public static final String SCALE = THUMBNAIL + IMeta.SEP + "Scale"; //$NON-NLS-1$
-
-    /**
-     * <p>
-     * Key="Thumbnail/Origin/X"
-     * </p>
-     * <p>
-     * Value Type: {@link Integer}
-     * </p>
-     * <p>
-     * (Also used as a key for setting and getting related metadata)
-     * </p>
-     */
-    public static final String ORIGIN_X = THUMBNAIL + IMeta.SEP
-            + "Origin" + IMeta.SEP + "X"; //$NON-NLS-1$ //$NON-NLS-2$
-
-    /**
-     * <p>
-     * Key="Thumbnail/Origin/Y"
-     * </p>
-     * <p>
-     * Value Type: {@link Integer}
-     * </p>
-     * <p>
-     * (Also used as a key for setting and getting related metadata)
-     * </p>
-     */
-    public static final String ORIGIN_Y = THUMBNAIL + IMeta.SEP
-            + "Origin" + IMeta.SEP + "Y"; //$NON-NLS-1$ //$NON-NLS-2$
-
-    /**
-     * <p>
-     * Key="Thumbnail/BackgroundColor"
-     * </p>
-     * <p>
-     * Value Type: {@link String}, e.g. "#ff00a4"
-     * </p>
-     * <p>
-     * (Also used as a key for setting and getting related metadata)
-     * </p>
-     */
-    public static final String BACKGROUND_COLOR = THUMBNAIL + IMeta.SEP
-            + "BackgroundColor"; //$NON-NLS-1$
+    public static final String SCALE = IMeta.THUMBNAIL + IMeta.SEP + "Scale"; //$NON-NLS-1$
 
     /**
      * "Share" is a prefix of all keys related to <a
@@ -190,6 +144,30 @@ public class Info {
     public static final String PRIVACY_PUBLIC = "1"; //$NON-NLS-1$
     public static final String PRIVACY_PRIVATE = "2"; //$NON-NLS-1$
     public static final String PRIVACY_UNLISTED = "3"; //$NON-NLS-1$
+
+    /**
+     * <p>
+     * Key="Share/LanguageChannel"
+     * </p>
+     * <p>
+     * Values: ["en", "zh", "fr", "de", "es", "ja", "ww" (Worldwide)]
+     * <p>
+     * (Also used as a key for setting and getting related metadata)
+     * </p>
+     * 
+     */
+    public static final String LANGUAGE_CHANNEL = SHARE + IMeta.SEP
+            + "LanguageChannel"; //$NON-NLS-1$
+
+    public static final List<String> LANGUAGE_CODES = Arrays.asList(//
+            "en", //$NON-NLS-1$
+            "zh", //$NON-NLS-1$
+            "fr", //$NON-NLS-1$
+            "de", //$NON-NLS-1$
+            "ja", //$NON-NLS-1$
+            "es", //$NON-NLS-1$
+            "ww" //$NON-NLS-1$
+    );
 
     /**
      * <p>
@@ -376,6 +354,17 @@ public class Info {
     @Override
     public String toString() {
         return properties.toString();
+    }
+
+    public static String getDefaultLanguageCode() {
+        String lang = Platform.getNL();
+        int index = lang.indexOf("_"); //$NON-NLS-1$
+        if (index > 0)
+            lang = lang.substring(0, index);
+        index = LANGUAGE_CODES.indexOf(lang);
+        if (index < 0)
+            lang = LANGUAGE_CODES.get(LANGUAGE_CODES.size() - 1);
+        return lang;
     }
 
 }

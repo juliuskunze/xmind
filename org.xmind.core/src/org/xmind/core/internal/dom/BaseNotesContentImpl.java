@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -87,7 +87,8 @@ public abstract class BaseNotesContentImpl implements INotesContent {
         if (DOMUtils.isElementByTag(p, TAG_NOTES)) {
             Node t = p.getParentNode();
             if (DOMUtils.isElementByTag(t, TAG_TOPIC)) {
-                ITopic topic = (ITopic) ownedWorkbook.getAdaptable(t);
+                ITopic topic = (ITopic) ownedWorkbook.getAdaptableRegistry()
+                        .getAdaptable(t);
                 if (topic != null)
                     return topic.getNotes();
             }
@@ -99,8 +100,24 @@ public abstract class BaseNotesContentImpl implements INotesContent {
         return ownedWorkbook;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.IWorkbookComponent#isOrphan()
+     */
+    public boolean isOrphan() {
+        return DOMUtils.isOrphanNode(implementation);
+    }
+
     protected abstract void addNotify(WorkbookImpl workbook);
 
     protected abstract void removeNotify(WorkbookImpl workbook);
+
+    protected void updateModifiedTime() {
+        TopicImpl topic = getTopic();
+        if (topic != null) {
+            topic.updateModifiedTime();
+        }
+    }
 
 }

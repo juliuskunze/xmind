@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,12 +13,10 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
-import net.xmind.signin.IAccountInfo;
-import net.xmind.signin.IAuthorizationListener;
-import net.xmind.signin.IPreauthorizationListener;
+import net.xmind.signin.ILicenseInfo;
+import net.xmind.signin.ILicenseListener;
 import net.xmind.signin.XMindNet;
 
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.CoolBarManager;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
@@ -41,10 +39,9 @@ import org.xmind.cathy.internal.jobs.CheckOpenFilesJob;
 import org.xmind.ui.internal.workbench.Util;
 
 public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
-        implements IPartListener2, IPropertyListener, IAuthorizationListener,
-        IPreauthorizationListener {
+        implements IPartListener2, IPropertyListener, ILicenseListener {
 
-    private boolean showPro = false;
+    private String licenseName = null;
 
     private IWorkbenchPartReference activePartRef = null;
 
@@ -64,7 +61,7 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
         configurer.setShowStatusLine(true);
         configurer.setShowProgressIndicator(true);
         configurer.setTitle(WorkbenchMessages.AppWindowTitle);
-        XMindNet.addAuthorizationListener(this);
+        XMindNet.addLicenseListener(this);
     }
 
     public void postWindowOpen() {
@@ -90,27 +87,23 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
                 });
             }
         }
-        XMindNet.addPreauthorizationListener(this);
     }
 
     @Override
     public void postWindowClose() {
-        XMindNet.removePreauthorizationListener(this);
-        XMindNet.removeAuthorizationListener(this);
+        XMindNet.removeLicenseListener(this);
     }
 
-    public void authorized(IAccountInfo accountInfo) {
-        this.showPro = accountInfo.hasValidSubscription();
-        updateWindowTitle();
-    }
-
-    public void unauthorized(IStatus result, IAccountInfo accountInfo) {
-        this.showPro = false;
-        updateWindowTitle();
-    }
-
-    public void preauthorized() {
-        this.showPro = true;
+    public void licenseVerified(ILicenseInfo info) {
+        if ((info.getType() & ILicenseInfo.VALID_PRO_LICENSE) != 0) {
+            licenseName = "Pro"; //$NON-NLS-1$
+        } else if ((info.getType() & ILicenseInfo.VALID_PLUS_LICENSE) != 0) {
+            licenseName = "Plus"; //$NON-NLS-1$
+        } else if ((info.getType() & ILicenseInfo.VALID_PRO_SUBSCRIPTION) != 0) {
+            licenseName = "Pro"; //$NON-NLS-1$
+        } else {
+            licenseName = null;
+        }
         updateWindowTitle();
     }
 
@@ -173,10 +166,10 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
             return;
 
         StringBuffer sb = new StringBuffer(20);
-        if (showPro) {
-            sb.append(WorkbenchMessages.ProWindowTitle);
-        } else {
-            sb.append(WorkbenchMessages.AppWindowTitle);
+        sb.append(WorkbenchMessages.AppWindowTitle);
+        if (licenseName != null) {
+            sb.append(" "); //$NON-NLS-1$
+            sb.append(licenseName);
         }
         IWorkbenchPage page = window.getActivePage();
         if (page != null) {
@@ -185,8 +178,8 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
                 sb.append(" - "); //$NON-NLS-1$
                 IEditorInput input = editor.getEditorInput();
                 if (input != null
-                        && !editor.getClass().toString().contains(
-                                "org.xmind.ui.internal.browser")) { //$NON-NLS-1$
+                        && !editor.getClass().toString()
+                                .contains("org.xmind.ui.internal.browser")) { //$NON-NLS-1$
                     String text = input.getToolTipText();
                     if (text != null) {
                         sb.append(text);

@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.core.util;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -22,8 +23,11 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.xmind.core.CoreException;
+import org.xmind.core.IFileEntryFilter;
 import org.xmind.core.io.IInputSource;
 import org.xmind.core.io.IOutputTarget;
 import org.xmind.core.io.IStorage;
@@ -67,16 +71,34 @@ public class FileUtils {
 
     public static void transfer(IStorage oldStorage, IStorage newStorage)
             throws IOException, CoreException {
+        transfer(oldStorage, newStorage, null);
+    }
+
+    public static void transfer(IStorage oldStorage, IStorage newStorage,
+            IFileEntryFilter filter) throws IOException, CoreException {
         IInputSource inSource = oldStorage.getInputSource();
         IOutputTarget outTarget = newStorage.getOutputTarget();
-        Iterator<String> entries = inSource.getEntries();
+        transfer(inSource, outTarget, filter);
+    }
+
+    public static void transfer(IInputSource inputSource,
+            IOutputTarget outputTarget) throws IOException {
+        transfer(inputSource, outputTarget, null);
+    }
+
+    public static void transfer(IInputSource inputSource,
+            IOutputTarget outputTarget, IFileEntryFilter filter)
+            throws IOException {
+        Iterator<String> entries = inputSource.getEntries();
         while (entries.hasNext()) {
-            String stream = entries.next();
-            InputStream is = inSource.getEntryStream(stream);
-            if (is != null) {
-                OutputStream os = outTarget.getEntryStream(stream);
-                if (os != null) {
-                    transfer(is, os);
+            String entryPath = entries.next();
+            if (filter == null || filter.select(entryPath, null, false)) {
+                InputStream is = inputSource.getEntryStream(entryPath);
+                if (is != null) {
+                    OutputStream os = outputTarget.getEntryStream(entryPath);
+                    if (os != null) {
+                        transfer(is, os);
+                    }
                 }
             }
         }
@@ -206,6 +228,87 @@ public class FileUtils {
         if (i >= 0)
             return fileName.substring(0, i);
         return fileName;
+    }
+
+    public static void extractZipFile(String filename, IOutputTarget target)
+            throws IOException {
+        extractZipFile(filename, target, null);
+    }
+
+    public static void extractZipFile(String filename, IOutputTarget target,
+            IFileEntryFilter filter) throws IOException {
+        FileInputStream fin = new FileInputStream(filename);
+        try {
+            ZipInputStream zin = new ZipInputStream(
+                    new BufferedInputStream(fin));
+            try {
+                extractZipFile(zin, target, filter);
+            } finally {
+                zin.close();
+            }
+        } finally {
+            fin.close();
+        }
+    }
+
+    public static void extractZipFile(File file, IOutputTarget target)
+            throws IOException {
+        extractZipFile(file, target, null);
+    }
+
+    public static void extractZipFile(File file, IOutputTarget target,
+            IFileEntryFilter filter) throws IOException {
+        FileInputStream fin = new FileInputStream(file);
+        try {
+            ZipInputStream zin = new ZipInputStream(
+                    new BufferedInputStream(fin));
+            try {
+                extractZipFile(zin, target, filter);
+            } finally {
+                zin.close();
+            }
+        } finally {
+            fin.close();
+        }
+    }
+
+    public static void extractZipFile(ZipInputStream zin, IOutputTarget target)
+            throws IOException {
+        extractZipFile(zin, target, null);
+    }
+
+    public static void extractZipFile(ZipInputStream zin, IOutputTarget target,
+            IFileEntryFilter filter) throws IOException {
+        ZipEntry entry;
+        while ((entry = zin.getNextEntry()) != null) {
+            String entryPath = entry.getName();
+            if (!entry.isDirectory()
+                    && (filter == null || filter.select(entryPath, null, false))) {
+                if (target.isEntryAvaialble(entryPath)) {
+                    OutputStream out = target.getEntryStream(entryPath);
+                    if (out != null) {
+                        try {
+                            FileUtils.transfer(zin, out, false);
+                        } finally {
+                            try {
+                                out.close();
+                            } catch (IOException ignore) {
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static void extractZipStream(InputStream stream, IOutputTarget target)
+            throws IOException {
+        extractZipStream(stream, target, null);
+    }
+
+    public static void extractZipStream(InputStream stream,
+            IOutputTarget target, IFileEntryFilter filter) throws IOException {
+        extractZipFile(new ZipInputStream(stream), target, filter);
     }
 
 }

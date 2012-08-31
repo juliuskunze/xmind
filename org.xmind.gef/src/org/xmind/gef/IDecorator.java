@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,14 +16,13 @@ package org.xmind.gef;
 import org.eclipse.draw2d.IFigure;
 import org.xmind.gef.part.IGraphicalPart;
 
-
 /**
  * @author Frank Shaka
  */
 public interface IDecorator {
 
     void decorate(IGraphicalPart part, IFigure figure);
-    
+
     void decorateChildren(IGraphicalPart part, IFigure figure);
 
     void activate(IGraphicalPart part, IFigure figure);

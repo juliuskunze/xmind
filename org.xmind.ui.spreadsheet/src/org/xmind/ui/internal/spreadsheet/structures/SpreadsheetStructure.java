@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -312,7 +312,7 @@ public class SpreadsheetStructure extends AbstractBranchStructure implements
                 editTool.setTargetViewer(chartBranch.getSite().getViewer());
                 domain.setActiveTool(Spreadsheet.TOOL_EDIT_COLUMN_HEAD);
                 if (domain.getActiveTool() == editTool) {
-                    editTool.handleRequest(new Request(GEF.REQ_EDIT)
+                    domain.handleRequest(new Request(GEF.REQ_EDIT)
                             .setPrimaryTarget(chartBranch).setViewer(
                                     chartBranch.getSite().getViewer())
                             .setParameter(Spreadsheet.PARAM_CHART, chart)

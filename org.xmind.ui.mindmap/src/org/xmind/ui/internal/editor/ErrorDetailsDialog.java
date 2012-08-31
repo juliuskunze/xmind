@@ -128,7 +128,7 @@ public class ErrorDetailsDialog extends Dialog {
 
         ps.println("Time: " + String.format("%1$tF %1$tT", time)); //$NON-NLS-1$ //$NON-NLS-2$
 
-        ps.print("XMind: 3.2.1"); //$NON-NLS-1$
+        ps.print("XMind: 3.3.0"); //$NON-NLS-1$
         if (isPro()) {
             ps.println(" Pro"); //$NON-NLS-1$
         } else {
@@ -138,8 +138,7 @@ public class ErrorDetailsDialog extends Dialog {
         ps.println("Java Version: " + System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$ 
         ps.println("Java Vendor: " + System.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
         ps.println("Java Runtime: " + System.getProperty("java.runtime.name")); //$NON-NLS-1$ //$NON-NLS-2$
-        ps
-                .println("    Version: " + System.getProperty("java.runtime.version")); //$NON-NLS-1$ //$NON-NLS-2$
+        ps.println("    Version: " + System.getProperty("java.runtime.version")); //$NON-NLS-1$ //$NON-NLS-2$
         ps.println("Java VM: " + System.getProperty("java.vm.name")); //$NON-NLS-1$ //$NON-NLS-2$
         ps.println("    Version: " + System.getProperty("java.vm.version")); //$NON-NLS-1$ //$NON-NLS-2$
         ps.println("    Vendor: " + System.getProperty("java.vm.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -150,6 +149,7 @@ public class ErrorDetailsDialog extends Dialog {
                 + ")"); //$NON-NLS-1$
         ps.println("Language: " + System.getProperty("user.language")); //$NON-NLS-1$ //$NON-NLS-2$
         ps.println("Country: " + System.getProperty("user.country")); //$NON-NLS-1$ //$NON-NLS-2$
+        ps.println("XMind Distribution Pack: " + System.getProperty("org.xmind.product.distribution.id")); //$NON-NLS-1$ //$NON-NLS-2$
 
         ps.println("-----------------------------"); //$NON-NLS-1$
         error.printStackTrace(ps);

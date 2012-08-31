@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -16,6 +16,7 @@ package org.xmind.ui.tools;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextViewer;
+import org.xmind.gef.GEF;
 import org.xmind.gef.Request;
 import org.xmind.gef.event.KeyEvent;
 import org.xmind.gef.event.MouseEvent;
@@ -58,7 +59,7 @@ public abstract class MindMapEditToolBase extends FloatingTextEditTool {
         }
         Request request = createTextRequest(source, document);
         if (request != null)
-            internalHandleRequest(request);
+            source.handleRequest(request, GEF.ROLE_MODIFIABLE);
     }
 
     protected boolean shouldIgnoreTextChange(IPart source, IDocument document,

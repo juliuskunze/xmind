@@ -63,9 +63,11 @@ public class FloatingTopicCreateTool extends DummyCreateTool {
      * (non-Javadoc)
      * 
      * @see
-     * org.xmind.gef.tool.CreateTool#handleSingleRequest(org.xmind.gef.Request)
+     * org.xmind.gef.tool.CreateTool#internalHandleRequest(org.xmind.gef.Request
+     * )
      */
-    protected void handleSingleRequest(Request request) {
+    @Override
+    protected void internalHandleRequest(Request request) {
         if (!getStatus().isStatus(GEF.ST_ACTIVE))
             return;
 
@@ -74,7 +76,7 @@ public class FloatingTopicCreateTool extends DummyCreateTool {
             this.request = request;
             pack();
         } else {
-            super.handleSingleRequest(request);
+            super.internalHandleRequest(request);
         }
     }
 

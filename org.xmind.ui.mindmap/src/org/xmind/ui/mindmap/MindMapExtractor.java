@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -74,19 +74,21 @@ public class MindMapExtractor {
             result.addSheet(newSheet);
             result.removeSheet(result.getPrimarySheet());
 
-            String newTopicId = (String) cloneResult.get(sourceTopic.getId());
+            String newTopicId = cloneResult.getString(
+                    ICloneData.WORKBOOK_COMPONENTS, sourceTopic.getId());
             ITopic newRootTopic = result.findTopic(newTopicId);
             newSheet.replaceRootTopic(newRootTopic);
 
             Set<String> newRelIds = new HashSet<String>(sourceRels.size());
             for (IRelationship sr : sourceRels) {
-                String newRelId = (String) cloneResult.get(sr.getId());
+                String newRelId = cloneResult.getString(
+                        ICloneData.WORKBOOK_COMPONENTS, sr.getId());
                 if (newRelId != null)
                     newRelIds.add(newRelId);
             }
 
-            Set<IRelationship> newRels = new HashSet<IRelationship>(newSheet
-                    .getRelationships());
+            Set<IRelationship> newRels = new HashSet<IRelationship>(
+                    newSheet.getRelationships());
             for (IRelationship r : newRels) {
                 if (!newRelIds.contains(r.getId())) {
                     newSheet.removeRelationship(r);

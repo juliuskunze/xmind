@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -86,6 +86,7 @@ public class DirectoryStorage implements IStorage {
      * @see org.xmind.core.io.IStorage#clear()
      */
     public void clear() {
-        FileUtils.clearDir(dir);
+//        FileUtils.clearDir(dir);
+        FileUtils.delete(dir);
     }
 }

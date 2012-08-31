@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -17,7 +17,6 @@ import static org.xmind.gef.GEF.ST_HIDE_CMENU;
 import static org.xmind.gef.GEF.TOOL_DEFAULT;
 
 import org.xmind.gef.GEF;
-import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
 import org.xmind.gef.event.KeyEvent;
 import org.xmind.gef.event.MouseEvent;
@@ -77,10 +76,10 @@ public abstract class CreateTool extends GraphicalTool {
 
     protected abstract boolean canFinish(String requestType);
 
-    protected void handleSingleRequest(Request request) {
+    protected void internalHandleRequest(Request request) {
         if (request.getTargetViewer() == null
                 || request.getTargetViewer() != getTargetViewer()) {
-            super.handleSingleRequest(request);
+            super.internalHandleRequest(request);
             return;
         }
         String requestType = request.getType();
@@ -93,18 +92,11 @@ public abstract class CreateTool extends GraphicalTool {
                 && getStatus().isStatus(GEF.ST_ACTIVE)) {
             cancel();
         } else if (isViewRequest(requestType)) {
-            ITool defaultTool = getDomain().getTool(GEF.TOOL_DEFAULT);
-            if (defaultTool != null) {
-                defaultTool.handleRequest(request);
-            }
+            getDomain().getDefaultTool().handleRequest(request);
         } else {
             if (getStatus().isStatus(GEF.ST_ACTIVE))
                 cancel();
-
-            ITool tool = getDomain().getActiveTool();
-            if (tool != this) {
-                tool.handleRequest(request);
-            }
+            getDomain().handleRequest(request);
         }
     }
 
@@ -117,13 +109,13 @@ public abstract class CreateTool extends GraphicalTool {
                 || GEF.ROLE_SCALABLE.equals(role);
     }
 
-    protected void internalHandleRequest(Request request) {
-        super.handleSingleRequest(request);
-    }
+//    protected void internalHandleRequest(Request request) {
+//        super.handleSingleRequest(request);
+//    }
 
-    protected void internalHandleRequest(String requestType, IViewer viewer) {
-        super.handleRequest(requestType, viewer);
-    }
+//    protected void internalHandleRequest(String requestType, IViewer viewer) {
+//        super.handleRequest(requestType, viewer);
+//    }
 
     /**
      * @see org.xmind.gef.tool.GraphicalTool#copyStatus(org.xmind.gef.tool.ITool)

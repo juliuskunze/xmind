@@ -1,5 +1,5 @@
 /* ******************************************************************************
- * Copyright (c) 2006-2010 XMind Ltd. and others.
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
  * 
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
@@ -14,11 +14,11 @@
 package org.xmind.ui.internal.notes;
 
 import org.eclipse.jface.text.IFindReplaceTarget;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.part.IContributedContentsView;
+import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.findreplace.AbstractFindReplaceOperationProvider;
-import org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider;
+import org.xmind.ui.mindmap.ITopicPart;
 
 /**
  * 
@@ -29,10 +29,25 @@ public class NotesFindReplaceOperationProvider extends
 
     private IViewPart view;
 
-    private boolean findingInEditor = false;
+//    private boolean findingInEditor = false;
 
     public NotesFindReplaceOperationProvider(IViewPart view) {
         this.view = view;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider#
+     * getContextName()
+     */
+    public String getContextName() {
+        ITopicPart topicPart = (ITopicPart) view.getAdapter(ITopicPart.class);
+        if (topicPart != null) {
+            return NLS.bind(MindMapMessages.Notes_FindReplaceContextPattern,
+                    topicPart.getTopic().getTitleText());
+        }
+        return MindMapMessages.EmptyNotes_FindReplaceContextName;
     }
 
     protected IFindReplaceTarget getFindReplaceTarget() {
@@ -43,16 +58,17 @@ public class NotesFindReplaceOperationProvider extends
         return false;
     }
 
-    @Override
-    public boolean find(String toFind) {
-        if (findingInEditor)
-            return false;
-        return super.find(toFind);
-    }
+//    @Override
+//    public boolean find(String toFind) {
+//        if (findingInEditor)
+//            return false;
+//        return super.find(toFind);
+//    }
 
     @Override
     protected boolean findNext(String toFind) {
-        return findInNotes(toFind) || findInEditor(toFind);
+        return findInNotes(toFind);
+//        return findInNotes(toFind) || findInEditor(toFind);
     }
 
     private boolean findInNotes(String toFind) {
@@ -61,39 +77,40 @@ public class NotesFindReplaceOperationProvider extends
 
     private boolean findInNotes(IFindReplaceTarget target, String toFind) {
         if (target != null && target.canPerformFind()) {
-            int offset = target.findAndSelect(isForward() ? target
-                    .getSelection().x
-                    + target.getSelection().y : target.getSelection().x - 1,
-                    toFind, isForward(), isCaseSensitive(), isWholeWord());
+            int offset = target.findAndSelect(
+                    isForward() ? target.getSelection().x
+                            + target.getSelection().y
+                            : target.getSelection().x - 1, toFind, isForward(),
+                    isCaseSensitive(), isWholeWord());
             return offset >= 0;
         }
         return false;
     }
 
-    private boolean findInEditor(String toFind) {
-        IContributedContentsView contributed = (IContributedContentsView) view
-                .getAdapter(IContributedContentsView.class);
-        if (contributed != null) {
-            IWorkbenchPart contributing = contributed.getContributingPart();
-            if (contributing != null) {
-                IFindReplaceOperationProvider frProvider = (IFindReplaceOperationProvider) contributing
-                        .getAdapter(IFindReplaceOperationProvider.class);
-                if (frProvider != null) {
-                    findingInEditor = true;
-                    try {
-                        boolean found = frProvider.find(toFind);
-                        if (found) {
-                            view.getSite().getPage().activate(contributing);
-                        }
-                        return found;
-                    } finally {
-                        findingInEditor = false;
-                    }
-                }
-            }
-        }
-        return false;
-    }
+//    private boolean findInEditor(String toFind) {
+//        IContributedContentsView contributed = (IContributedContentsView) view
+//                .getAdapter(IContributedContentsView.class);
+//        if (contributed != null) {
+//            IWorkbenchPart contributing = contributed.getContributingPart();
+//            if (contributing != null) {
+//                IFindReplaceOperationProvider frProvider = (IFindReplaceOperationProvider) contributing
+//                        .getAdapter(IFindReplaceOperationProvider.class);
+//                if (frProvider != null) {
+//                    findingInEditor = true;
+//                    try {
+//                        boolean found = frProvider.find(toFind);
+//                        if (found) {
+//                            view.getSite().getPage().activate(contributing);
+//                        }
+//                        return found;
+//                    } finally {
+//                        findingInEditor = false;
+//                    }
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
     @Override
     protected boolean replaceAll(String toFind, String toReplaceWith) {
@@ -109,7 +126,8 @@ public class NotesFindReplaceOperationProvider extends
 
     @Override
     protected boolean replaceNext(String toFind, String toReplaceWith) {
-        return replaceInNotes(toFind, toReplaceWith) || findInEditor(toFind);
+        return replaceInNotes(toFind, toReplaceWith);
+//        return replaceInNotes(toFind, toReplaceWith) || findInEditor(toFind);
     }
 
     private boolean replaceInNotes(String toFind, String toReplaceWith) {
@@ -139,6 +157,20 @@ public class NotesFindReplaceOperationProvider extends
     @Override
     public boolean canReplaceAll(String toFind, String toReplaceWith) {
         return super.canReplaceAll(toFind, toReplaceWith);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.ui.internal.findreplace.AbstractFindReplaceOperationProvider
+     * #understandsPatameter(int)
+     */
+    @Override
+    public boolean understandsPatameter(int parameter) {
+        return super.understandsPatameter(parameter)
+                && parameter != PARAM_WORKBOOK
+                && parameter != PARAM_CURRENT_MAP;
     }
 
 }
