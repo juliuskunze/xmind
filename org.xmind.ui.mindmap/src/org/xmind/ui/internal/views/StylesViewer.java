@@ -162,9 +162,8 @@ public class StylesViewer extends CategorizedGalleryViewer implements
     private static class StyleSelectTool extends GallerySelectTool {
 
         protected boolean isTitleEditable(IPart p) {
-            return super.isTitleEditable(p)
-                    && ((IStyle) p.getModel()).getOwnedStyleSheet() != MindMapUI
-                            .getResourceManager().getSystemStyleSheet();
+            return ((IStyle) p.getModel()).getOwnedStyleSheet() != MindMapUI
+                    .getResourceManager().getSystemStyleSheet();
         }
 
     }

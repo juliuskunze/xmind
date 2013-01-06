@@ -16,35 +16,26 @@ package org.xmind.ui.internal.mindmap;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.geometry.Point;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Display;
 import org.xmind.core.ITopic;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerRef;
 import org.xmind.gef.GEF;
-import org.xmind.gef.IViewer;
 import org.xmind.gef.draw2d.SizeableImageFigure;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.part.IRequestHandler;
 import org.xmind.gef.policy.NullEditPolicy;
 import org.xmind.gef.service.IFeedback;
-import org.xmind.gef.service.IImageRegistryService;
 import org.xmind.ui.mindmap.IMarkerPart;
 import org.xmind.ui.mindmap.ISelectionFeedbackHelper;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.resources.ImageReference;
 import org.xmind.ui.util.MarkerImageDescriptor;
 
 public class MarkerPart extends MindMapPartBase implements IMarkerPart {
 
-    private ImageDescriptor imgDesc = null;
-
-    private Image image = null;
-
-    private boolean imageCreatable = true;
-
-    private boolean imageNeedsDispose = false;
+    private ImageReference imageRef = null;
 
     public MarkerPart() {
         setDecorator(MarkerDecorator.getInstance());
@@ -108,47 +99,25 @@ public class MarkerPart extends MindMapPartBase implements IMarkerPart {
     }
 
     public Image getImage() {
-        if (image == null && imageCreatable) {
-            image = createImage();
-        }
-        return image;
-    }
-
-    private Image createImage() {
-        IViewer viewer = getSite().getViewer();
-        if (viewer != null) {
-            IImageRegistryService service = (IImageRegistryService) viewer
-                    .getService(IImageRegistryService.class);
-            if (service != null) {
-                return service.getImage(getImageDescriptor(), false, this);
-            }
-        }
-        imageNeedsDispose = true;
-        return getImageDescriptor().createImage(false, Display.getCurrent());
+        if (imageRef != null && !imageRef.isDisposed())
+            return imageRef.getImage();
+        return null;
     }
 
     protected void onDeactivated() {
-        imageCreatable = false;
-        IViewer viewer = getSite().getViewer();
-        if (viewer != null) {
-            IImageRegistryService service = (IImageRegistryService) viewer
-                    .getService(IImageRegistryService.class);
-            if (service != null) {
-                service.decreaseRef(getImageDescriptor(), this);
-            }
-        }
-        if (image != null && imageNeedsDispose) {
-            image.dispose();
-            image = null;
+        if (imageRef != null) {
+            imageRef.dispose();
+            imageRef = null;
         }
         super.onDeactivated();
     }
 
-    private ImageDescriptor getImageDescriptor() {
-        if (imgDesc == null) {
-            imgDesc = MarkerImageDescriptor.createFromMarkerRef(getMarkerRef());
-        }
-        return imgDesc;
+    @Override
+    public void setModel(Object model) {
+        super.setModel(model);
+        this.imageRef = new ImageReference(
+                MarkerImageDescriptor.createFromMarkerRef(getMarkerRef()),
+                false);
     }
 
     /*

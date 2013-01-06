@@ -13,12 +13,16 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
-import java.io.File;
+import java.util.Arrays;
+
+import net.xmind.signin.internal.XMindUpdater;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
@@ -31,74 +35,116 @@ import org.osgi.framework.Bundle;
  */
 public class CathyApplication implements IApplication {
 
+    public static final String SYS_VERSION = "org.xmind.product.version"; //$NON-NLS-1$
+
+    public static final String SYS_BUILDID = "org.xmind.product.buildid"; //$NON-NLS-1$
+
+    public static final String SYS_APP_STATUS = "org.xmind.cathy.app.status"; //$NON-NLS-1$
+
+    public static final String APP_VERSION = "3.3.1"; //$NON-NLS-1$
+
     public static final String ARG_ACTIVATE = "--activate"; //$NON-NLS-1$
 
     /**
      * @see org.eclipse.equinox.app.IApplication#start(org.eclipse.equinox.app.IApplicationContext)
      */
     public Object start(IApplicationContext context) throws Exception {
-        if (this == null) {
-            showBetaExpired();
+        // Add product information to system properties:
+        System.setProperty(SYS_VERSION, APP_VERSION);
+        System.setProperty(SYS_BUILDID, context.getBrandingBundle()
+                .getVersion().toString());
+
+        // Check if there's already a running XMind instance:
+        if (shouldExitEarly()) {
+            // Log all application arguments to local disk to exchange 
+            // between running XMind instances:
+            String[] args = Platform.getApplicationArgs();
+            if (args != null && args.length > 0) {
+                logArgs(args);
+            }
             return EXIT_OK;
         }
 
-        String[] args = Platform.getApplicationArgs();
-        if (args != null && args.length > 0) {
-            logArgs(args);
-        }
-        if (shouldExitEarly()) {
-            return EXIT_OK;
-        }
-        System.setProperty("org.xmind.cathy.app.status", "starting"); //$NON-NLS-1$ //$NON-NLS-2$
         Display display = PlatformUI.createDisplay();
         try {
-            OpenDocumentHandler openDocumentHandler = new OpenDocumentHandler();
-            display.addListener(SWT.OpenDocument, openDocumentHandler);
+            // Install global OpenDocument listener:
+            OpenDocumentQueue.getInstance().hook(display);
+
+            // Check if this is an expired beta version:
+            if (checkBetaExpired())
+                return EXIT_OK;
+
+            // Check if there's previously downloaded software updates:
+            if (checkSoftwareUpdateOnStart())
+                return EXIT_OK;
+
+            // Log all application arguments to local disk to exchange 
+            // between running XMind instances:
+            String[] args = Platform.getApplicationArgs();
+            if (args != null && args.length > 0) {
+                logArgs(args);
+            }
+
+            // Mark application status to 'starting':
+            System.setProperty(SYS_APP_STATUS, "starting"); //$NON-NLS-1$
+
+            // Set cookies to let web pages loaded within internal web browser
+            // to recognize the environment:
+            initializeInternalBrowserCookies();
+
+            // Launch workbench and get return code:
             int returnCode = PlatformUI.createAndRunWorkbench(display,
-                    new CathyWorkbenchAdvisor(openDocumentHandler));
+                    new CathyWorkbenchAdvisor());
+
             if (returnCode == PlatformUI.RETURN_RESTART) {
+                // Restart:
                 return EXIT_RESTART;
             }
+
+            // Quit:
             return EXIT_OK;
         } finally {
             display.dispose();
         }
     }
 
-    /**
-     * 
-     */
+    private void initializeInternalBrowserCookies() {
+        Browser.setCookie(
+                "_env=xmind_" + APP_VERSION + "; path=/; domain=.xmind.net", //$NON-NLS-1$ //$NON-NLS-2$
+                "http://www.xmind.net/"); //$NON-NLS-1$
+    }
+
+    private boolean checkBetaExpired() {
+        long time = System.currentTimeMillis();
+        if (time < 0) {
+            showBetaExpired();
+            return true;
+        }
+        return false;
+    }
+
     private void showBetaExpired() {
-        Display display = PlatformUI.createDisplay();
+        Shell shell = new Shell(Display.getCurrent());
         try {
-            Shell shell = new Shell(display);
-            try {
-                MessageBox mb = new MessageBox(shell, SWT.ICON_INFORMATION
-                        | SWT.OK);
-                mb.setText("XMind 3.3 Beta Expired"); //$NON-NLS-1$
-                mb.setMessage("Thanks for trying this beta out. You can download the latest version at www.xmind.net ."); //$NON-NLS-1$
-                mb.open();
-            } finally {
-                shell.dispose();
-            }
+            MessageBox mb = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.OK);
+            mb.setText("XMind Beta Expired"); //$NON-NLS-1$
+            mb.setMessage("XMind v3.3.1(Beta) has expired. Thank you for helping us evaluate it. You can download the latest version at http://www.xmind.net/ ."); //$NON-NLS-1$
+            mb.open();
+            Program.launch("http://www.xmind.net/xmind/downloads/"); //$NON-NLS-1$
         } finally {
-            display.dispose();
+            shell.dispose();
         }
     }
 
     private void logArgs(String[] args) {
+        CathyPlugin.log("Application arguments to be logged: " //$NON-NLS-1$
+                + Arrays.toString(args));
         Log opening = Log.get(Log.OPENING);
         for (String arg : args) {
             if ("-p".equals(arg)) {//$NON-NLS-1$
                 System.setProperty(
                         "org.xmind.cathy.startup.presentation", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             } else if (!arg.startsWith("-")) { //$NON-NLS-1$
-                File file = new File(arg);
-                try {
-                    arg = file.getCanonicalPath();
-                } catch (Exception e) {
-                    arg = file.getAbsolutePath();
-                }
                 opening.append(arg);
             }
         }
@@ -134,4 +180,7 @@ public class CathyApplication implements IApplication {
         });
     }
 
+    private boolean checkSoftwareUpdateOnStart() {
+        return XMindUpdater.checkSoftwareUpdateOnStart();
+    }
 }

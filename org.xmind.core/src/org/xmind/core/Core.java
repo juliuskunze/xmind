@@ -895,6 +895,45 @@ public class Core {
      */
     public static final String RevisionRemove = "revisionRemove"; //$NON-NLS-1$
 
+    /**
+     * Core event type for metadata change in {@link org.xmind.core.IMeta}
+     * (value is 'metadata').
+     * 
+     * <dl>
+     * <dt>Source:</dt>
+     * <dd>{@link org.xmind.core.IMeta}</dd>
+     * <dt>Target:</dt>
+     * <dd>a {@link String} representing the key of the modified metadata</dd>
+     * <dt>OldValue:</dt>
+     * <dd>the old {@link String} value of the metadata, or <code>null</code> to
+     * indicate this metadata was created</dd>
+     * <dt>NewValue:</dt>
+     * <dd>the new {@link String} value of the metadata, or <code>null</code> to
+     * indicate this metadata was deleted</dd>
+     * </dl>
+     */
+    public static final String Metadata = "metadata"; //$NON-NLS-1$
+
+    /**
+     * Core event type for attribute change in {@link org.xmind.core.IMetaData}
+     * (value is 'metadataAttribute').
+     * 
+     * <dl>
+     * <dt>Source:</dt>
+     * <dd>{@link org.xmind.core.IMeta}</dd>
+     * <dt>Target:</dt>
+     * <dd>a {@link String} representing the key of the modified metadata</dd>
+     * <dt>Data:</dt>
+     * <dd>a {@link String} representing the name of the modified attribute</dd>
+     * <dt>OldValue:</dt>
+     * <dd>the old {@link String} value of the attribute, or <code>null</code>
+     * to indicate this attribute was added</dd>
+     * <dt>NewValue:</dt>
+     * <dd>the new {@link String} value of the attribute, or <code>null</code>
+     * to indicate this attribute was removed</dd>
+     */
+    public static final String MetadataAttribute = "metadataAttribute"; //$NON-NLS-1$
+
 //    /**
 //     * Core event type for adding one or more labels (value is 'labelAdd').
 //     * <dl>

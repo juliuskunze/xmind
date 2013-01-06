@@ -16,26 +16,18 @@ import java.io.IOException;
 
 import net.xmind.share.Info;
 import net.xmind.share.Messages;
+import net.xmind.share.Uploader;
 import net.xmind.share.XmindSharePlugin;
-import net.xmind.signin.IAccountInfo;
-import net.xmind.signin.IAuthenticationListener;
-import net.xmind.signin.XMindNet;
+import net.xmind.signin.internal.Activator;
 
-import org.apache.commons.httpclient.HttpStatus;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.PlatformUI;
 import org.xmind.core.CoreException;
 import org.xmind.core.IMeta;
 import org.xmind.core.IWorkbook;
-import org.xmind.ui.dialogs.SimpleInfoPopupDialog;
 
 public class UploadJob extends Job {
 
@@ -136,37 +128,29 @@ public class UploadJob extends Job {
         this.info = info;
     }
 
+    /**
+     * @return the session
+     */
+    public UploadSession getSession() {
+        return session;
+    }
+
     protected IStatus run(IProgressMonitor monitor) {
-        IStatus status = doRun(monitor);
-
-        // prompt completion information to user
-        if (status.isOK()) {
-            promptCompletion();
-            return status;
-        }
-
+        IStatus status = upload(monitor);
         if (status.matches(IStatus.ERROR)) {
-            // show error dialog
-            status = promptError(session.getStatus(), status);
-
-            if (status.isOK() || !status.matches(IStatus.ERROR))
-                return status;
-
-            // log this error, but prevent system from prompting dialogs,
-            // because we have shown our own dialogs above.
+            // log this error, but prevent system from prompting error dialogs,
+            // leaving error displaying for Uploader.
             XmindSharePlugin.getDefault().getLog().log(status);
-            return new Status(IStatus.WARNING, status.getPlugin(),
+            status = new Status(IStatus.WARNING, status.getPlugin(),
                     status.getCode(), status.getMessage() == null
                             || "".equals(status.getMessage()) ? //$NON-NLS-1$ 
                     Messages.UploadJob_Failure_message
                             : status.getMessage(), status.getException());
         }
-
-        // other status
         return status;
     }
 
-    private IStatus doRun(IProgressMonitor monitor) {
+    private IStatus upload(IProgressMonitor monitor) {
         monitor.beginTask(null, 100);
         session = new UploadSession(info);
 
@@ -180,7 +164,11 @@ public class UploadJob extends Job {
         monitor.worked(5);
 
         // save the permalink into file
-        savePermalink();
+        String permalink = session.getPermalink();
+        if (permalink == null)
+            return new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    "Upload session is prepared, but has no permalink to use."); //$NON-NLS-1$
+        savePermalink(permalink);
         if (monitor.isCanceled())
             return Status.CANCEL_STATUS;
         monitor.worked(5);
@@ -226,140 +214,29 @@ public class UploadJob extends Job {
         return Status.OK_STATUS;
     }
 
-    private void savePermalink() {
-        if (session.getPermalink() == null)
-            return;
-
+    private void savePermalink(String permalink) {
         IWorkbook workbook = (IWorkbook) info.getProperty(Info.WORKBOOK);
         if (workbook != null) {
             workbook.getMeta().setValue(Info.SHARE + IMeta.SEP + "SourceUrl", //$NON-NLS-1$
-                    session.getPermalink());
+                    permalink);
             File file = (File) info.getProperty(Info.FILE);
             if (file != null) {
                 try {
-                    workbook.saveTemp();
-                    workbook.save(file.getAbsolutePath());
+                    String path = file.getAbsolutePath();
+                    workbook.save(path);
+                    Uploader.validateUploadFile(path);
                 } catch (IOException ignore) {
                 } catch (CoreException ignore) {
                 }
             } else {
                 try {
                     workbook.save();
+                    Uploader.validateUploadFile(workbook.getFile());
                 } catch (IOException ignore) {
                 } catch (CoreException ignore) {
                 }
             }
         }
-    }
-
-    private void promptCompletion() {
-        final Display display = PlatformUI.getWorkbench().getDisplay();
-        if (display == null || display.isDisposed())
-            return;
-        display.asyncExec(new Runnable() {
-            public void run() {
-                final SimpleInfoPopupDialog[] dialogs = new SimpleInfoPopupDialog[1];
-                IAction viewAction = new Action() {
-                    public void run() {
-                        showUploadedMap(session.getViewLink());
-                        if (dialogs[0] != null)
-                            dialogs[0].close();
-                    }
-                };
-                viewAction.setText(Messages.UploadJob_View_text);
-
-                SimpleInfoPopupDialog dialog = new SimpleInfoPopupDialog(null,
-                        null, Messages.UploadJob_OpenMap_message, 0, null,
-                        viewAction);
-                dialog.setDuration(10000);
-                dialog.setGroupId("org.xmind.notifications"); //$NON-NLS-1$
-                dialog.popUp();
-                dialogs[0] = dialog;
-            }
-        });
-    }
-
-    private void showUploadedMap(String url) {
-        if (url != null) {
-            XMindNet.gotoURL(true, url);
-            return;
-        }
-
-        IAccountInfo accountInfo = XMindNet.getAccountInfo();
-        if (accountInfo == null)
-            return;
-
-        String userId = accountInfo.getUser();
-        String token = accountInfo.getAuthToken();
-        XMindNet.gotoURL(
-                String.format("http://www.xmind.net/xmind/account/%s/%s/", //$NON-NLS-1$
-                        userId, token), true);
-    }
-
-    private IStatus promptError(int uploadStatus, IStatus error) {
-        int code = error.getCode();
-        String message = null;
-        boolean tryAgainAllowed = true;
-        if (uploadStatus == UploadSession.PREPARING) {
-            if (code > 0) {
-                if (code == HttpStatus.SC_UNAUTHORIZED) {
-                    resignin();
-                    return Status.CANCEL_STATUS;
-                }
-            }
-        } else if (uploadStatus == UploadSession.UPLOADING) {
-            if (code > 0) {
-                if (code == HttpStatus.SC_NOT_FOUND) {
-                    return Status.CANCEL_STATUS;
-                } else if (code == UploadSession.CODE_VERIFICATION_FAILURE) {
-                    message = Messages.ErrorDialog_Unauthorized_message;
-                    tryAgainAllowed = false;
-                }
-            }
-        }
-
-        if (message == null)
-            message = Messages.ErrorDialog_message;
-
-        promptErrorMessage(message, tryAgainAllowed);
-        return error;
-    }
-
-    private void promptErrorMessage(final String message,
-            final boolean tryAgainAllowed) {
-        Display display = PlatformUI.getWorkbench().getDisplay();
-        if (display == null || display.isDisposed())
-            return;
-
-        display.asyncExec(new Runnable() {
-            public void run() {
-                if (tryAgainAllowed) {
-                    if (MessageDialog.openQuestion(null,
-                            Messages.ErrorDialog_title, message)) {
-                        schedule();
-                    }
-                } else {
-                    MessageDialog.openError(null, Messages.ErrorDialog_title,
-                            message);
-                }
-            }
-        });
-    }
-
-    private void resignin() {
-        XMindNet.signOut();
-        XMindNet.signIn(new IAuthenticationListener() {
-
-            public void postSignIn(IAccountInfo accountInfo) {
-                info.setProperty(Info.USER_ID, accountInfo.getUser());
-                info.setProperty(Info.TOKEN, accountInfo.getAuthToken());
-                schedule();
-
-            }
-
-            public void postSignOut(IAccountInfo oldAccountInfo) {
-            }
-        }, false);
     }
 
     @Override

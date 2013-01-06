@@ -28,6 +28,7 @@ import org.eclipse.ui.IEditorPart;
 import org.xmind.core.Core;
 import org.xmind.core.CoreException;
 import org.xmind.core.IEncryptionHandler;
+import org.xmind.core.IMeta;
 import org.xmind.core.IRevision;
 import org.xmind.core.IRevisionManager;
 import org.xmind.core.IRevisionRepository;
@@ -103,6 +104,14 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
 
     public void setWorkbookSaver(IWorkbookSaver workbookSaver) {
         this.workbookSaver = workbookSaver;
+    }
+
+    public IWorkbookBackupMaker getWorkbookBackupMaker() {
+        if (workbookSaver instanceof IWorkbookBackupMaker)
+            return (IWorkbookBackupMaker) workbookSaver;
+        if (workbookLoader instanceof IWorkbookBackupMaker)
+            return (IWorkbookBackupMaker) workbookLoader;
+        return null;
     }
 
     public boolean isReady() {
@@ -340,9 +349,9 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         return workbook != null && workbookSaver != null;
     }
 
-    public boolean canSaveToTarget() {
+    public boolean willOverwriteTarget() {
         return workbook != null && workbookSaver != null
-                && workbookSaver.canSaveToTarget();
+                && workbookSaver.willOverwriteTarget();
     }
 
     public void saveWorkbook(IProgressMonitor monitor,
@@ -369,6 +378,9 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         monitor.worked(10);
         mainWorkTicks -= 10;
 
+        // Delete old preview:
+        workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.jpg"); //$NON-NLS-1$
+        workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.png"); //$NON-NLS-1$
         if (previewSaver != null) {
             monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
             savePreview(monitor);
@@ -379,7 +391,34 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         mainWorkTicks -= 10;
 
         monitor.subTask(MindMapMessages.WorkbookSaver_SaveWorkbookContent_taskName);
-        workbookSaver.save(monitor, workbook);
+        Object backup = WorkbookBackupManager.getInstance()
+                .ensureBackedUp(this);
+        try {
+            workbookSaver.save(monitor, workbook);
+        } catch (Throwable e) {
+            if (backup != null) {
+                IWorkbookBackupMaker backupMaker = getWorkbookBackupMaker();
+                if (backupMaker != null) {
+                    try {
+                        backupMaker.restore(monitor, backup);
+                    } catch (Throwable e2) {
+                    }
+                }
+            }
+            if (e instanceof IOException)
+                throw (IOException) e;
+            if (e instanceof CoreException)
+                throw (CoreException) e;
+            if (e instanceof org.eclipse.core.runtime.CoreException)
+                throw (org.eclipse.core.runtime.CoreException) e;
+            if (e instanceof Error)
+                throw (Error) e;
+            if (e instanceof RuntimeException)
+                throw (RuntimeException) e;
+            throw new org.eclipse.core.runtime.CoreException(new Status(
+                    IStatus.ERROR, MindMapUI.PLUGIN_ID,
+                    e.getLocalizedMessage(), e));
+        }
         monitor.worked(mainWorkTicks);
 
         monitor.subTask(MindMapMessages.WorkbookSaver_Finalize_taskName);
@@ -426,8 +465,15 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         monitor.worked(10);
         mainWorkTicks -= 10;
 
-        monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
-        savePreview(monitor);
+        // Delete old preview:
+        workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.jpg"); //$NON-NLS-1$
+        workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.png"); //$NON-NLS-1$
+        if (previewSaver != null) {
+            monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
+            savePreview(monitor);
+        } else {
+            setPreviewOutdated(true);
+        }
         monitor.worked(10);
         mainWorkTicks -= 10;
 
@@ -445,7 +491,8 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
     private void saveRevisions(IProgressMonitor monitor) throws IOException,
             CoreException {
         if (!isContentDirty()
-                || ((WorkbookImpl) workbook).isSkipRevisionsWhenSaving())
+                || ((WorkbookImpl) workbook).isSkipRevisionsWhenSaving()
+                || !shouldSaveNewRevisions())
             return;
 
         IRevisionRepository repo = workbook.getRevisionRepository();
@@ -458,6 +505,12 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
                 manager.addRevision(sheet);
             }
         }
+    }
+
+    private boolean shouldSaveNewRevisions() {
+        String value = workbook.getMeta().getValue(
+                IMeta.CONFIG_AUTO_REVISION_GENERATION);
+        return value == null || IMeta.V_YES.equalsIgnoreCase(value);
     }
 
     private void savePreview(IProgressMonitor monitor) {

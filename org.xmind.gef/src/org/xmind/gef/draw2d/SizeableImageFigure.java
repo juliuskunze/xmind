@@ -166,7 +166,7 @@ public class SizeableImageFigure extends ReferencedFigure implements IHasImage {
         boolean stretched = isStretched();
         if (constrained
                 && (stretched || imageSize.width > area.width || imageSize.height > area.height)) {
-            adaptAreaToRatio(area, imageSize);
+            adaptAreaToRatio(area, imageSize, stretched);
         } else if (!stretched) {
             adaptAreaToSize(area, imageSize);
         }
@@ -180,14 +180,15 @@ public class SizeableImageFigure extends ReferencedFigure implements IHasImage {
         area.height = size.height;
     }
 
-    protected void adaptAreaToRatio(Rectangle area, Dimension ratio) {
+    protected void adaptAreaToRatio(Rectangle area, Dimension ratio,
+            boolean bigger) {
         int a = ratio.width * area.height;
         int b = ratio.height * area.width;
-        if (a > b) {
+        if (bigger ? (a < b) : (a > b)) {
             int h = area.width == 0 ? 0 : b / ratio.width;
             area.y += (area.height - h) / 2;
             area.height = h;
-        } else if (a < b) {
+        } else if (bigger ? (a > b) : (a < b)) {
             int w = area.height == 0 ? 0 : a / ratio.height;
             area.x += (area.width - w) / 2;
             area.width = w;

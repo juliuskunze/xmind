@@ -56,4 +56,6 @@ public interface IManifest extends IWorkbookComponent, IAdaptable {
 
     IEncryptionData getEncryptionData(String entryPath);
 
+    boolean deleteFileEntry(String path);
+
 }

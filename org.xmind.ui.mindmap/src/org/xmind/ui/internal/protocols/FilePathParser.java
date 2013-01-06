@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.Platform;
+
 /**
  * 
  * @author Karelun Huang
@@ -25,6 +27,17 @@ import java.util.List;
 public class FilePathParser {
 
     private static final String SEP = System.getProperty("file.separator"); //$NON-NLS-1$
+
+    private static final String FILE_PROTOCOL = "file:"; //$NON-NLS-1$
+
+    private static final String PROTOCOL_SEP = "//"; //$NON-NLS-1$
+
+    private static final String PATH_SEP = "/"; //$NON-NLS-1$
+
+    private static final String WIN_NETWORK_PATH_PREFIX = "\\\\"; //$NON-NLS-1$
+
+    private static final boolean isWindows = Platform.OS_WIN32.equals(Platform
+            .getOS());
 
     public static String toPath(String uri) {
         if (uri == null)
@@ -34,14 +47,13 @@ public class FilePathParser {
         } catch (Exception e) {
         }
         String path;
-        if (uri.startsWith("file:")) //$NON-NLS-1$
+        if (uri.startsWith(FILE_PROTOCOL))
             path = uri.substring(5);
         else
             path = uri;
-        if (path.startsWith("//")) //$NON-NLS-1$
+        if (path.startsWith(PROTOCOL_SEP))
             path = path.substring(2);
-        if (path.startsWith("/") //$NON-NLS-1$
-                && "win32".equals(System.getProperty("osgi.os"))) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (isWindows && path.startsWith(PATH_SEP)) {
             path = path.substring(1);
         }
         return path;
@@ -50,13 +62,15 @@ public class FilePathParser {
     public static String toURI(String path, boolean relative) {
         if (path == null)
             return null;
-        if (File.separatorChar != '/')
-            path = path.replace(File.separatorChar, '/');
-        return encode(relative ? "file:" + path : "file://" + path, true); //$NON-NLS-1$ //$NON-NLS-2$
+        if (isWindows)
+            return encode(FILE_PROTOCOL + path, true);
+        return encode(relative ? FILE_PROTOCOL + path : FILE_PROTOCOL
+                + PROTOCOL_SEP + path, true);
     }
 
     public static boolean isPathRelative(String path) {
-        return !new File(path).isAbsolute();
+        return !(isWindows && path.startsWith(WIN_NETWORK_PATH_PREFIX))
+                && !new File(path).isAbsolute();
     }
 
     private static List<File> getRoutine(File file, List<File> routine) {
@@ -78,6 +92,8 @@ public class FilePathParser {
     }
 
     public static String toRelativePath(String base, String absolutePath) {
+        if (isWindows && absolutePath.startsWith(WIN_NETWORK_PATH_PREFIX))
+            return absolutePath;
         File file = new File(absolutePath);
         File baseFile = new File(base);
         List<File> routine = getRoutine(file, new ArrayList<File>());
@@ -100,21 +116,11 @@ public class FilePathParser {
     }
 
     public static String toAbsolutePath(String base, String relativePath) {
-
         try {
             return new File(base, relativePath).getCanonicalPath();
         } catch (IOException e) {
             return new File(base, relativePath).getAbsolutePath();
         }
-    }
-
-    public static void main(String[] args) {
-        String base = "/Applications/Utilities/Console.app/Contents/info.plist"; //$NON-NLS-1$
-        String absolutePath = "/Users/frankshaka/Desktop/a.xmind"; //$NON-NLS-1$
-        String relativePath = toRelativePath(base, absolutePath);
-        System.out.println(relativePath);
-        System.out.println(isPathRelative(relativePath));
-        System.out.println(toAbsolutePath(base, relativePath));
     }
 
     /*
@@ -335,6 +341,16 @@ public class FilePathParser {
             return (i1 << 4) | i2;
         }
         return -1;
+    }
+
+    @SuppressWarnings("nls")
+    public static void main(String[] args) {
+        String base = "/Applications/Utilities/Console.app/Contents/info.plist";
+        String absolutePath = "/Users/frankshaka/Desktop/a.xmind";
+        String relativePath = toRelativePath(base, absolutePath);
+        System.out.println(relativePath);
+        System.out.println(isPathRelative(relativePath));
+        System.out.println(toAbsolutePath(base, relativePath));
     }
 
 }

@@ -26,11 +26,13 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -156,8 +158,69 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
 
     private SoftCheckFileFieldEditor homeMapField;
 
+    private Control homeMapControl;
+
+    private Control recentFilesControl;
+
     public GeneralPrefPage() {
         super(WorkbenchMessages.GeneralPrefPage_title, FLAT);
+    }
+
+    @Override
+    public void applyData(Object data) {
+        if (PrefConstants.HOME_MAP_LOCATION.equals(data)) {
+            if (homeMapControl != null && !homeMapControl.isDisposed()) {
+                homeMapControl.setFocus();
+                highlight(homeMapControl.getParent());
+            }
+        } else if (IPreferenceConstants.RECENT_FILES.equals(data)) {
+            if (recentFilesControl != null && !recentFilesControl.isDisposed()) {
+                recentFilesControl.setFocus();
+                highlight(recentFilesControl.getParent());
+            }
+        }
+    }
+
+    private void highlight(final Control control) {
+        final Display display = control.getDisplay();
+        final Color oldBackground = control.getBackground();
+        final Color c1 = oldBackground == null ? display
+                .getSystemColor(SWT.COLOR_WIDGET_BACKGROUND) : oldBackground;
+        final int r1 = c1.getRed(), g1 = c1.getGreen(), b1 = c1.getBlue();
+        final int r0 = 255, g0 = 240, b0 = 180;
+        final int total = 30;
+        final int[] step = new int[] { 0 };
+        final Color[] c = new Color[1];
+        display.timerExec(500, new Runnable() {
+            public void run() {
+                if (control.isDisposed())
+                    return;
+                c[0] = new Color(display, r0, g0, b0);
+                control.setBackground(c[0]);
+                display.timerExec(20, new Runnable() {
+                    public void run() {
+                        c[0].dispose();
+
+                        if (control.isDisposed())
+                            return;
+
+                        ++step[0];
+                        if (step[0] > total) {
+                            control.setBackground(null);
+                            return;
+                        }
+
+                        int x = step[0], y = total - step[0];
+                        int r = (r0 * y + r1 * x) / total;
+                        int g = (g0 * y + g1 * x) / total;
+                        int b = (b0 * y + b1 * x) / total;
+                        c[0] = new Color(display, r, g, b);
+                        control.setBackground(c[0]);
+                        display.timerExec(20, this);
+                    }
+                });
+            }
+        });
     }
 
     protected IPreferenceStore doGetPreferenceStore() {
@@ -221,10 +284,11 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
     }
 
     private void fillHomeMapFields(Composite parent) {
+        Composite container = createFieldContainer(parent, true);
         addField(homeMapField = new SoftCheckFileFieldEditor(
                 PrefConstants.HOME_MAP_LOCATION,
-                WorkbenchMessages.HomeMap_label, createFieldContainer(parent,
-                        true)));
+                WorkbenchMessages.HomeMap_label, container));
+        homeMapControl = homeMapField.getTextControl(container);
         homeMapField.setErrorMessage(WorkbenchMessages.HomeMap_NotFound_error);
         String xmindExt = "*" + MindMapUI.FILE_EXT_XMIND; //$NON-NLS-1$
         homeMapField.setExtensions(new String[] { xmindExt });
@@ -239,9 +303,11 @@ public class GeneralPrefPage extends FieldEditorPreferencePage implements
     }
 
     private void addRecentFileCountField() {
+        Composite container = getFieldEditorParent();
         addField(recentFilesField = new IntegerFieldEditor(
                 IPreferenceConstants.RECENT_FILES,
-                WorkbenchMessages.RecentFiles_label, getFieldEditorParent()));
+                WorkbenchMessages.RecentFiles_label, container));
+        recentFilesControl = recentFilesField.getTextControl(container);
     }
 
 //    private void addRememberLastSessionField() {

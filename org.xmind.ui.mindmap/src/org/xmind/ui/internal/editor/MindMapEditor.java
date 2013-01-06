@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Layer;
+import org.eclipse.draw2d.geometry.Insets;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -43,12 +44,9 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.StackLayout;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
@@ -70,7 +68,6 @@ import org.eclipse.ui.views.properties.IPropertySheetPage;
 import org.osgi.framework.Bundle;
 import org.xmind.core.Core;
 import org.xmind.core.CoreException;
-import org.xmind.core.IFileEntry;
 import org.xmind.core.IMeta;
 import org.xmind.core.ISheet;
 import org.xmind.core.ISheetComponent;
@@ -88,6 +85,7 @@ import org.xmind.gef.GEF;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.command.Command;
 import org.xmind.gef.command.ICommandStack;
+import org.xmind.gef.image.ResizeConstants;
 import org.xmind.gef.ui.actions.IActionRegistry;
 import org.xmind.gef.ui.actions.RedoAction;
 import org.xmind.gef.ui.actions.UndoAction;
@@ -99,7 +97,6 @@ import org.xmind.ui.IWordContextProvider;
 import org.xmind.ui.actions.MindMapActionFactory;
 import org.xmind.ui.commands.ModifyTitleTextCommand;
 import org.xmind.ui.commands.MoveSheetCommand;
-import org.xmind.ui.dialogs.SimpleInfoPopupDialog;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.MindMapWordContextProvider;
@@ -116,6 +113,7 @@ import org.xmind.ui.internal.properties.MindMapPropertySheetPage;
 import org.xmind.ui.mindmap.IMindMap;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.IWorkbookRef;
+import org.xmind.ui.mindmap.MindMap;
 import org.xmind.ui.mindmap.MindMapImageExporter;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.prefs.PrefConstants;
@@ -299,6 +297,12 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
         }
         super.init(site, input);
         setMiniBarContributor(new MindMapMiniBarContributor());
+        WorkbookHistory.getInstance().add(input);
+        Display.getCurrent().asyncExec(new Runnable() {
+            public void run() {
+                NewWorkbookEditor.closeAll(getSite().getWorkbenchWindow());
+            }
+        });
     }
 
     protected ICommandStack createCommandStack() {
@@ -511,16 +515,6 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
         if (Core.getCurrentVersion().equals(version))
             return;
 
-        final SimpleInfoPopupDialog popup = new SimpleInfoPopupDialog(getSite()
-                .getShell(), "", //$NON-NLS-1$
-                "", //$NON-NLS-1$
-                SWT.ICON_INFORMATION);
-        popup.popUp(getContainer());
-        getContainer().addDisposeListener(new DisposeListener() {
-            public void widgetDisposed(DisposeEvent e) {
-                popup.close();
-            }
-        });
     }
 
     protected IGraphicalEditorPage createSheetPage(ISheet sheet, int index) {
@@ -551,7 +545,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
 
     public int promptToSaveOnClose() {
         if (BackgroundWorkbookSaver.getInstance().isRunning()
-                && workbookRef != null && workbookRef.canSaveToTarget()) {
+                && workbookRef != null && workbookRef.willOverwriteTarget()) {
             NullProgressMonitor monitor = new NullProgressMonitor();
             doSave(monitor, true);
             if (monitor.isCanceled())
@@ -563,11 +557,12 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
 
     private void saveWorkbook(IProgressMonitor monitor,
             boolean useProgressDialog, final boolean skipNewRevisions) {
+        final IWorkbookReferrer previewSaver = this;
         runWithProgress(new IRunnableWithProgress() {
             public void run(IProgressMonitor monitor)
                     throws InvocationTargetException, InterruptedException {
                 try {
-                    workbookRef.saveWorkbook(monitor, MindMapEditor.this,
+                    workbookRef.saveWorkbook(monitor, previewSaver,
                             skipNewRevisions);
                 } catch (Exception e) {
                     throw new InvocationTargetException(e);
@@ -579,14 +574,17 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
     private void saveWorkbookAs(final IEditorInput newInput,
             IProgressMonitor monitor, boolean useProgressDialog,
             final boolean skipNewRevisions) {
+        final IWorkbookReferrer previewSaver = this;
         runWithProgress(new IRunnableWithProgress() {
             public void run(IProgressMonitor monitor)
                     throws InvocationTargetException, InterruptedException {
                 try {
-                    workbookRef.saveWorkbookAs(newInput, monitor, null,
+                    workbookRef.saveWorkbookAs(newInput, monitor, previewSaver,
                             skipNewRevisions);
+                    WorkbookHistory.getInstance().add(newInput);
                 } catch (Exception e) {
-                    throw new InvocationTargetException(e);
+                    throw new InvocationTargetException(e,
+                            e.getLocalizedMessage());
                 }
             }
         }, monitor, useProgressDialog);
@@ -595,33 +593,37 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
     private void runWithProgress(final IRunnableWithProgress runnable,
             final IProgressMonitor monitor, final boolean useProgressDialog) {
         if (useProgressDialog) {
-            final ProgressMonitorDialog dialog = new ProgressMonitorDialog(
-                    getSite().getShell());
-            SafeRunner.run(new SafeRunnable() {
-                public void run() throws Exception {
-                    dialog.run(true, true, runnable);
+            getSite().getShell().getDisplay().syncExec(new Runnable() {
+                public void run() {
+                    final ProgressMonitorDialog dialog = new ProgressMonitorDialog(
+                            getSite().getShell());
+                    SafeRunner.run(new SafeRunnable() {
+                        public void run() throws Exception {
+                            dialog.run(true, true, runnable);
+                        }
+
+                        public void handleException(Throwable e) {
+                            if (e instanceof InvocationTargetException) {
+                                e = ((InvocationTargetException) e).getCause();
+                            }
+                            super.handleException(e);
+                        }
+                    });
                 }
             });
         } else {
-            BusyIndicator.showWhile(getSite().getShell().getDisplay(),
-                    new Runnable() {
-                        public void run() {
-                            SafeRunner.run(new SafeRunnable() {
-                                public void run() throws Exception {
-                                    runnable.run(monitor);
-                                }
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    runnable.run(monitor);
+                }
 
-                                @Override
-                                public void handleException(Throwable e) {
-                                    if (e instanceof InvocationTargetException) {
-                                        e = ((InvocationTargetException) e)
-                                                .getCause();
-                                    }
-                                    super.handleException(e);
-                                }
-                            });
-                        }
-                    });
+                public void handleException(Throwable e) {
+                    if (e instanceof InvocationTargetException) {
+                        e = ((InvocationTargetException) e).getCause();
+                    }
+                    super.handleException(e);
+                }
+            });
         }
     }
 
@@ -649,7 +651,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
     }
 
     private void doSave(IProgressMonitor monitor, boolean useProgressDialog) {
-        if (!workbookRef.canSaveToTarget()) {
+        if (!workbookRef.willOverwriteTarget()) {
             doSaveAs(monitor, useProgressDialog);
         } else {
             int ret = promptWorkbookVersion(getPartName());
@@ -960,40 +962,48 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
             if (url != null) {
                 savePreviewFromURL(url, workbook);
             }
-        } else if (getPageCount() <= 0
-                || MindMapUIPlugin.getDefault().getPreferenceStore()
-                        .getBoolean(PrefConstants.PREVIEW_SKIPPED)) {
+        } else if (MindMapUIPlugin.getDefault().getPreferenceStore()
+                .getBoolean(PrefConstants.PREVIEW_SKIPPED)) {
             URL url = BundleUtility.find(MindMapUI.PLUGIN_ID,
                     IMindMapImages.DEFAULT_THUMBNAIL);
             if (url != null) {
                 savePreviewFromURL(url, workbook);
             }
-        } else {
-            MindMapImageExporter exporter = new MindMapImageExporter(getSite()
-                    .getShell().getDisplay());
-            IGraphicalViewer sourceViewer = getPage(0).getViewer();
-            exporter.setSource(sourceViewer.getInput(), null, null);
-            exporter.setTargetWorkbook(workbook);
-            exporter.export();
-            org.eclipse.draw2d.geometry.Point origin = exporter
-                    .calcRelativeOrigin();
-            workbook.getMeta().setValue(IMeta.ORIGIN_X,
-                    String.valueOf(origin.x));
-            workbook.getMeta().setValue(IMeta.ORIGIN_Y,
-                    String.valueOf(origin.y));
-            workbook.getMeta().setValue(IMeta.BACKGROUND_COLOR,
-                    getBackgroundColor(sourceViewer));
+        } else if (getPageCount() > 0) {
+            Shell parentShell = getSite().getShell();
+            final Display display = parentShell.getDisplay();
+            display.syncExec(new Runnable() {
+                public void run() {
+                    MindMapImageExporter exporter = new MindMapImageExporter(
+                            display);
+                    IGraphicalViewer sourceViewer = getPage(0).getViewer();
+                    IMindMap map = (IMindMap) sourceViewer
+                            .getAdapter(IMindMap.class);
+                    if (map == null
+                            || map.getCentralTopic().equals(
+                                    map.getSheet().getRootTopic())) {
+                        exporter.setSourceViewer(sourceViewer, null, null,
+                                new Insets(MindMapUI.DEFAULT_EXPORT_MARGIN));
+                    } else {
+                        exporter.setSource(new MindMap(map.getSheet()), null,
+                                new Insets(MindMapUI.DEFAULT_EXPORT_MARGIN));
+                    }
+                    exporter.setResize(ResizeConstants.RESIZE_MAXPIXELS, 1280,
+                            1024);
+                    exporter.setTargetWorkbook(workbook);
 
-            // Delete old preview file entry:
-            String oldPreview = "Thumbnails/thumbnail.jpg"; //$NON-NLS-1$
-            IFileEntry oldPreviewEntry = workbook.getManifest().getFileEntry(
-                    oldPreview);
-            if (oldPreviewEntry != null) {
-                oldPreviewEntry.increaseReference();
-                oldPreviewEntry.decreaseReference();
-                oldPreviewEntry.decreaseReference();
-                oldPreviewEntry.decreaseReference();
-            }
+                    exporter.export();
+                    org.eclipse.draw2d.geometry.Point origin = exporter
+                            .calcRelativeOrigin();
+                    workbook.getMeta().setValue(IMeta.ORIGIN_X,
+                            String.valueOf(origin.x));
+                    workbook.getMeta().setValue(IMeta.ORIGIN_Y,
+                            String.valueOf(origin.y));
+                    workbook.getMeta().setValue(IMeta.BACKGROUND_COLOR,
+                            getBackgroundColor(sourceViewer));
+                }
+            });
+
         }
     }
 

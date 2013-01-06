@@ -136,7 +136,8 @@ public class WorkbookSaver {
      * @throws CoreException
      */
     public void save(OutputStream output) throws IOException, CoreException {
-        save(new ZipStreamOutputTarget(new ZipOutputStream(output)), null);
+        save(new ZipStreamOutputTarget(new ZipOutputStream(output), false),
+                null);
 
         // the target can't be reused
         this.target = null;
@@ -168,7 +169,7 @@ public class WorkbookSaver {
                     target = new DirectoryOutputTarget(file);
                 } else {
                     target = new ZipStreamOutputTarget(new ZipOutputStream(
-                            new FileOutputStream(file)));
+                            new FileOutputStream(file)), false);
                 }
             }
         }

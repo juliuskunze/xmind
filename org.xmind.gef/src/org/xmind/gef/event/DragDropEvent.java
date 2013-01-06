@@ -14,7 +14,6 @@
 package org.xmind.gef.event;
 
 import org.eclipse.draw2d.geometry.Point;
-import org.eclipse.jface.util.Util;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.xmind.gef.dnd.DndData;
@@ -74,7 +73,8 @@ public class DragDropEvent {
         this.sourceSWTEvent = swtEvent;
         this.target = host;
         this.location = location;
-        this.detail = Util.isMac() ? DND.DROP_COPY : detail;
+//        this.detail = Util.isMac() ? DND.DROP_COPY : detail;
+        this.detail = detail;
         this.operations = operations;
     }
 

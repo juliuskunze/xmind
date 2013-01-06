@@ -43,12 +43,11 @@ import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.io.DownloadJob;
 import org.xmind.ui.io.UIJobChangeListener;
-import org.xmind.ui.mindmap.IWorkbookRef;
 import org.xmind.ui.mindmap.MindMapUI;
 
 /**
  * @author frankshaka
- * 
+ * @deprecated Use ImageDownloader instead
  */
 public class ImageDownloadCenter {
 
@@ -58,6 +57,8 @@ public class ImageDownloadCenter {
 
         private String url;
 
+        private ICommandStack commandStack;
+
         private File tempFile;
 
         private DownloadJob job;
@@ -65,9 +66,11 @@ public class ImageDownloadCenter {
         /**
          * 
          */
-        public ImageDownloadProcess(ITopic topic, String url) {
+        public ImageDownloadProcess(ITopic topic, String url,
+                ICommandStack commandStack) {
             this.topic = topic;
             this.url = url;
+            this.commandStack = commandStack;
             this.tempFile = createTempFile(FileUtils.getExtension(url));
             start();
         }
@@ -175,8 +178,8 @@ public class ImageDownloadCenter {
 
         private Dimension getSize() {
             try {
-                Image image = new Image(Display.getCurrent(), tempFile
-                        .getAbsolutePath());
+                Image image = new Image(Display.getCurrent(),
+                        tempFile.getAbsolutePath());
                 Rectangle size = image.getBounds();
                 image.dispose();
                 return Geometry.getScaledConstrainedSize(size.width,
@@ -209,22 +212,13 @@ public class ImageDownloadCenter {
                     if (entry != null) {
                         String source = HyperlinkUtils.toAttachmentURL(entry
                                 .getPath());
-                        IWorkbookRef ref = MindMapUI.getWorkbookRefManager()
-                                .findRef(workbook);
-                        if (ref != null) {
-                            ICommandStack cs = ref.getCommandStack();
-                            if (cs != null) {
-                                List<Command> cmds = new ArrayList<Command>();
-                                cmds.add(new ModifyImageSourceCommand(topic,
-                                        source));
-                                cmds.add(new ModifyImageSizeCommand(topic,
-                                        size.width, size.height));
-                                Command cmd = new CompoundCommand(cmds);
-                                cmd
-                                        .setLabel(MindMapMessages.Command_InsertImage);
-                                cs.execute(cmd);
-                            }
-                        }
+                        List<Command> cmds = new ArrayList<Command>();
+                        cmds.add(new ModifyImageSourceCommand(topic, source));
+                        cmds.add(new ModifyImageSizeCommand(topic, size.width,
+                                size.height));
+                        Command cmd = new CompoundCommand(cmds);
+                        cmd.setLabel(MindMapMessages.Command_InsertImage);
+                        commandStack.execute(cmd);
                     }
                 }
             });
@@ -239,9 +233,11 @@ public class ImageDownloadCenter {
     private ImageDownloadCenter() {
     }
 
-    public void startDownload(ITopic topic, String url) {
+    public void startDownload(ITopic topic, String url,
+            ICommandStack commandStack) {
         cancel(topic);
-        processes.put(topic, new ImageDownloadProcess(topic, url));
+        processes
+                .put(topic, new ImageDownloadProcess(topic, url, commandStack));
     }
 
     public void cancel(ITopic topic) {

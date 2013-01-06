@@ -14,7 +14,7 @@ public interface IWorkbookSaver {
      * @return <code>true</code> if the save operationg will overwrite existing
      *         target, or <code>false</code> otherwise
      */
-    boolean canSaveToTarget();
+    boolean willOverwriteTarget();
 
     /**
      * Save the workbook.

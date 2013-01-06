@@ -40,6 +40,11 @@ public class SiteEventStore {
         } catch (WorkbenchException e) {
             XMindNetWorkbench.log(e, "Failed to read site-events.xml."); //$NON-NLS-1$
             this.writeRoot = XMLMemento.createWriteRoot(TAG_ROOT);
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException e) {
+            }
         }
         this.events = writeRoot.getChild(TAG_EVENTS);
         if (this.events == null) {
@@ -97,7 +102,7 @@ public class SiteEventStore {
 
     public XMLSiteEvent copyEvent(ISiteEvent event) {
         XMLSiteEvent e = createEvent(event.getId());
-        e.setTitle(event.getTitle());
+        e.setText(event.getText());
         e.setPrompt(event.getPrompt());
         e.setEventUrl(event.getEventUrl());
         e.setMoreUrl(event.getMoreUrl());

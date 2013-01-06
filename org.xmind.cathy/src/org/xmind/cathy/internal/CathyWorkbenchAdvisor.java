@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
+import java.util.Arrays;
+
 import net.xmind.signin.ILicenseInfo;
 import net.xmind.signin.ILicenseListener;
 import net.xmind.signin.XMindNet;
@@ -26,6 +28,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.ISaveablePart2;
@@ -36,22 +39,15 @@ import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
+import org.xmind.cathy.internal.jobs.OpenFilesJob;
 import org.xmind.cathy.internal.jobs.StartupJob;
 import org.xmind.ui.internal.dialogs.DialogMessages;
+import org.xmind.ui.internal.editor.WorkbookHistory;
 
 public class CathyWorkbenchAdvisor extends WorkbenchAdvisor implements
         ILicenseListener {
 
     private static final String PERSPECTIVE_ID = "org.xmind.ui.perspective.mindmapping"; //$NON-NLS-1$
-
-    private OpenDocumentHandler openDocumentHandler;
-
-    /**
-     * 
-     */
-    public CathyWorkbenchAdvisor(OpenDocumentHandler openDocumentHandler) {
-        this.openDocumentHandler = openDocumentHandler;
-    }
 
     public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(
             IWorkbenchWindowConfigurer configurer) {
@@ -88,6 +84,7 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor implements
     @Override
     public void postShutdown() {
         XMindNet.removeLicenseListener(this);
+        WorkbookHistory.getInstance().save();
         super.postShutdown();
     }
 
@@ -188,22 +185,6 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor implements
         return closed;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.application.WorkbenchAdvisor#eventLoopIdle(org.eclipse
-     * .swt.widgets.Display)
-     */
-    @Override
-    public void eventLoopIdle(Display display) {
-        if (openDocumentHandler != null) {
-            openDocumentHandler.checkAndOpenFiles(getWorkbenchConfigurer()
-                    .getWorkbench());
-        }
-        super.eventLoopIdle(display);
-    }
-
     public void licenseVerified(ILicenseInfo info) {
         String name = info.getLicensedTo();
         if (name != null && !"".equals(name)) { //$NON-NLS-1$
@@ -231,6 +212,33 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor implements
         }
         System.setProperty("org.xmind.product.license.type", //$NON-NLS-1$ 
                 licenseType);
+    }
+
+    @Override
+    public void eventLoopIdle(Display display) {
+        String[] paths = OpenDocumentQueue.getInstance().drain();
+        if (paths.length > 0) {
+            CathyPlugin.log("Ready to open files: " + Arrays.toString(paths)); //$NON-NLS-1$
+            openFiles(paths);
+            IWorkbenchWindow window = getWorkbenchConfigurer().getWorkbench()
+                    .getActiveWorkbenchWindow();
+            if (window != null) {
+                Shell shell = window.getShell();
+                if (shell != null && !shell.isDisposed()) {
+                    shell.forceActive();
+                }
+            }
+        } else {
+            super.eventLoopIdle(display);
+        }
+    }
+
+    private void openFiles(String[] paths) {
+        OpenFilesJob job = new OpenFilesJob(getWorkbenchConfigurer()
+                .getWorkbench(),
+                WorkbenchMessages.CheckOpenFilesJob_CheckFiles_name,
+                Arrays.asList(paths));
+        job.schedule();
     }
 
 }

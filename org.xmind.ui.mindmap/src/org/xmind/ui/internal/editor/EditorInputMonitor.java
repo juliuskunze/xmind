@@ -61,11 +61,11 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
     /**
      * 
      */
-    private void checkFiles() {
+    private void checkTarget() {
         if (oldValue == null) {
             recordOldValue();
         } else {
-            boolean newValue = canSaveToTarget();
+            boolean newValue = willOverwriteTarget();
             if (oldValue.booleanValue() != newValue) {
                 addDirtyMarker();
                 oldValue = Boolean.valueOf(newValue);
@@ -85,12 +85,12 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
      * 
      */
     private void recordOldValue() {
-        oldValue = Boolean.valueOf(canSaveToTarget());
+        oldValue = Boolean.valueOf(willOverwriteTarget());
     }
 
-    private boolean canSaveToTarget() {
+    private boolean willOverwriteTarget() {
         WorkbookRef ref = (WorkbookRef) editor.getAdapter(IWorkbookRef.class);
-        return ref != null && ref.canSaveToTarget();
+        return ref != null && ref.willOverwriteTarget();
     }
 
     /*
@@ -101,7 +101,7 @@ public class EditorInputMonitor implements ShellListener, IPropertyListener {
      * .ShellEvent)
      */
     public void shellActivated(ShellEvent e) {
-        checkFiles();
+        checkTarget();
     }
 
     /*

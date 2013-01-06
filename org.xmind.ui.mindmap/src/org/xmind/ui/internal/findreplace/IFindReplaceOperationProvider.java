@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.xmind.ui.internal.findreplace;
 
+import org.eclipse.swt.graphics.Font;
+
 /**
  * @author Frank Shaka
  */
@@ -35,6 +37,8 @@ public interface IFindReplaceOperationProvider {
     int PARAM_ALL = 1 << 16;
 
     String getContextName();
+
+    String getContextName(int maxWidth, Font font);
 
     /**
      * Finds the next object containing the specified string.

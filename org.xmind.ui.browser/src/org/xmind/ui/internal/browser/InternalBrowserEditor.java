@@ -19,8 +19,11 @@ import java.util.Map;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.graphics.Image;
@@ -35,6 +38,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
+import org.xmind.ui.browser.IBrowserSupport;
 import org.xmind.ui.browser.IBrowserViewer;
 import org.xmind.ui.browser.IBrowserViewerContainer;
 import org.xmind.ui.internal.browser.actions.CopyAction;
@@ -80,9 +84,15 @@ public class InternalBrowserEditor extends EditorPart implements
             initialURL = null;
             if (bei.getURL() != null)
                 initialURL = bei.getURL();
-            if (viewer != null) {
+            if (viewer != null && viewer.getControl() != null
+                    && !viewer.getControl().isDisposed()) {
                 viewer.setURL(initialURL);
-                viewer.changeStyle(bei.getStyle());
+                int style = bei.getStyle();
+                if ((style & IBrowserSupport.NO_LOCATION_BAR) != 0
+                        && (style & IBrowserSupport.NO_EXTRA_CONTRIBUTIONS) != 0) {
+                    style |= IBrowserSupport.NO_TOOLBAR;
+                }
+                viewer.changeStyle(style);
                 site.getWorkbenchWindow().getActivePage().activate(this);
             }
 
@@ -128,9 +138,12 @@ public class InternalBrowserEditor extends EditorPart implements
         return disposed;
     }
 
-    public void createPartControl(Composite parent) {
-        viewer = new BrowserViewer(parent, getBrowserEditorInput().getStyle(),
-                this);
+    public void createPartControl(final Composite parent) {
+        int style = getBrowserEditorInput().getStyle();
+        boolean noViewerToolBar = ((style & IBrowserSupport.NO_LOCATION_BAR) != 0 && (style & IBrowserSupport.NO_EXTRA_CONTRIBUTIONS) != 0)
+                || ((style & IBrowserSupport.NO_TOOLBAR) != 0);
+        viewer = new BrowserViewer(parent, noViewerToolBar ? style
+                | IBrowserSupport.NO_TOOLBAR : style, this);
         viewer.setURL(initialURL);
 
         addAction(new CopyAction(viewer));
@@ -138,17 +151,55 @@ public class InternalBrowserEditor extends EditorPart implements
         addAction(new PasteAction(viewer));
         addAction(new DeleteAction(viewer));
 
-        if (!lockName) {
-            PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
-                public void propertyChange(PropertyChangeEvent event) {
-                    if (IBrowserViewer.PROPERTY_TITLE.equals(event
-                            .getPropertyName())) {
+        PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                if (lockName)
+                    return;
+                if (IBrowserViewer.PROPERTY_TITLE.equals(event
+                        .getPropertyName())) {
+                    if (event.getNewValue() != null)
                         setPartName((String) event.getNewValue());
-                    }
+                } else if (IBrowserViewer.PROPERTY_LOCATION.equals(event
+                        .getPropertyName())) {
+                    if (event.getNewValue() != null)
+                        setContentDescription((String) event.getNewValue());
                 }
-            };
-            viewer.addPropertyChangeListener(propertyChangeListener);
+            }
+        };
+        viewer.addPropertyChangeListener(propertyChangeListener);
+
+        if (noViewerToolBar) {
+            IToolBarManager toolBar = getEditorSite().getActionBars()
+                    .getToolBarManager();
+            toolBar.add(viewer.getBackAction());
+            toolBar.add(viewer.getForwardAction());
+            toolBar.add(viewer.getStopRefreshAction());
+
         }
+        viewer.getBusyIndicator().addSelectionChangedListener(
+                new ISelectionChangedListener() {
+                    public void selectionChanged(SelectionChangedEvent event) {
+                        if (!parent.isDisposed()) {
+                            parent.getDisplay().asyncExec(new Runnable() {
+                                public void run() {
+                                    if (!parent.isDisposed() && image != null
+                                            && !image.isDisposed()) {
+                                        Image currentImage = viewer
+                                                .getBusyIndicator()
+                                                .getCurrentImage();
+                                        if (currentImage == null
+                                                || !viewer.getBusyIndicator()
+                                                        .isAnimating()) {
+                                            setTitleImage(image);
+                                        } else {
+                                            setTitleImage(currentImage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
     }
 
     private void addAction(IAction action) {

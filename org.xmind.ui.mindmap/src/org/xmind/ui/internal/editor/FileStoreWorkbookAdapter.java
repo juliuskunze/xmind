@@ -13,14 +13,16 @@
  *******************************************************************************/
 package org.xmind.ui.internal.editor;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -29,10 +31,21 @@ import org.xmind.core.IEncryptionHandler;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.internal.dom.WorkbookImpl;
 import org.xmind.core.io.IStorage;
+import org.xmind.core.util.FileUtils;
+import org.xmind.ui.io.MonitoredInputStream;
+import org.xmind.ui.io.MonitoredOutputStream;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.Logger;
 
 public class FileStoreWorkbookAdapter implements IWorkbookLoader,
-        IWorkbookSaver {
+        IWorkbookSaver, IWorkbookBackupMaker {
+
+    private static final String SUBDIR_WORKBOOK_BACKUP = "WorkbookBackups"; //$NON-NLS-1$
+
+    private static class FileBackup {
+        long lastTimestamp;
+        File tempLocation;
+    }
 
     private IFileStore fileStore;
 
@@ -65,161 +78,107 @@ public class FileStoreWorkbookAdapter implements IWorkbookLoader,
         }
     }
 
-    private static IFileStore createTempFile(IFileStore fileStore) {
-        IFileStore parent = fileStore.getParent();
-        return (parent != null) ? createTempFile(fileStore, parent) : null;
-    }
-
-    private static IFileStore createTempFile(IFileStore fileStore,
-            IFileStore parent) {
-        IFileInfo info = fileStore.fetchInfo();
-        if (!info.exists())
-            return null;
-        String name = info.getName();
-        int i = 1;
-        String newName = name + "." + i + ".tmp"; //$NON-NLS-1$ //$NON-NLS-2$
-        IFileStore newFile = parent.getChild(newName);
-        while (newFile.fetchInfo().exists()) {
-            i++;
-            newName = name + "." + i + ".tmp"; //$NON-NLS-1$ //$NON-NLS-2$
-            newFile = parent.getChild(newName);
-        }
-        return newFile;
-    }
-
     public void save(IProgressMonitor monitor, final IWorkbook workbook)
             throws IOException, org.xmind.core.CoreException, CoreException {
-        IFileStore tempFile = createTempFile(fileStore);
-        if (tempFile != null) {
-            tempFile.getParent().mkdir(0, monitor);
-            OutputStream output = tempFile.openOutputStream(0, monitor);
-            try {
-                workbook.save(output);
-            } finally {
-                output.close();
-            }
-            try {
-                //checkFileValidity(monitor, workbook, tempFile);
-                fileStore.delete(0, monitor);
-                tempFile.move(fileStore, EFS.OVERWRITE, monitor);
-            } finally {
-                try {
-                    if (tempFile.fetchInfo().exists()) {
-                        tempFile.delete(0, monitor);
-                    }
-                } catch (Exception e) {
-                    //ignore
-                }
-            }
-        } else {
-            OutputStream output = fileStore.openOutputStream(0, monitor);
-            try {
-                workbook.save(output);
-            } finally {
-                output.close();
-            }
-        }
+        OutputStream output = fileStore.openOutputStream(0, monitor);
+        workbook.save(output);
         workbook.setFile(fileStore.toLocalFile(0, monitor).getAbsolutePath());
     }
 
-//    /**
-//     * Check if the file saved as the same as the workbook to be saved.
-//     * 
-//     * @param monitor
-//     * @param workbook
-//     * @param tempFile
-//     */
-//    private void checkFileValidity(IProgressMonitor monitor,
-//            final IWorkbook workbook, IFileStore tempFile)
-//            throws CoreException, org.xmind.core.CoreException, IOException {
-//        InputStream input = tempFile.openInputStream(0, monitor);
-//        try {
-//            IStorage tempStorage = WorkbookRef.createStorage();
-//            IWorkbook workbook2 = Core.getWorkbookBuilder().loadFromStream(
-//                    input, tempStorage, new IEncryptionHandler() {
-//
-//                        String password = workbook.getPassword();
-//
-//                        public String retrievePassword()
-//                                throws org.xmind.core.CoreException {
-//                            return password;
-//                        }
-//
-//                    });
-//            checkValidity(ArchiveConstants.CONTENT_XML, workbook, workbook2);
-//            checkValidity(ArchiveConstants.META_XML, workbook.getMeta(),
-//                    workbook2.getMeta());
-//            checkValidity(ArchiveConstants.MANIFEST_XML,
-//                    workbook.getManifest(), workbook2.getManifest());
-//            checkValidity(ArchiveConstants.MARKER_SHEET_XML,
-//                    workbook.getMarkerSheet(), workbook2.getMarkerSheet());
-//            checkValidity(ArchiveConstants.STYLES_XML,
-//                    workbook.getStyleSheet(), workbook2.getStyleSheet());
-//            IInputSource source = tempStorage.getInputSource();
-//            for (IFileEntry entry : workbook.getManifest().getFileEntries()) {
-//                if (entry.hasBeenReferred()) {
-//                    if (!source.hasEntry(entry.getPath())) {
-//                        throw new CoreException(new Status(IStatus.ERROR,
-//                                MindMapUIPlugin.PLUGIN_ID,
-//                                MindMapMessages.WorkbookSavedIncorrectly_error
-//                                        + entry.getPath()));
-//                    }
-//                }
-//            }
-//
-//            tempStorage.clear();
-//        } finally {
-//            input.close();
-//        }
-//    }
-//
-//    private void checkValidity(String name, IAdaptable a1, IAdaptable a2)
-//            throws CoreException {
-//        if (!elementEquals(a1, a2))
-//            throw new CoreException(new Status(IStatus.ERROR,
-//                    MindMapUIPlugin.PLUGIN_ID,
-//                    MindMapMessages.WorkbookSavedIncorrectly_error + name));
-//    }
-//
-//    private boolean elementEquals(IAdaptable a1, IAdaptable a2) {
-//        Node n1 = (Node) a1.getAdapter(Node.class);
-//        if (n1 == null)
-//            return false;
-//        Node n2 = (Node) a2.getAdapter(Node.class);
-//        if (n2 == null)
-//            return false;
-//        String s1 = toString(n1);
-//        if (s1 == null)
-//            return false;
-//        String s2 = toString(n2);
-//        if (s2 == null)
-//            return false;
-//        return s1.equals(s2);
-//    }
-//
-//    private String toString(Node node) {
-//        String string = null;
-//        try {
-//            ByteArrayOutputStream output = new ByteArrayOutputStream(1000);
-//            try {
-//                DOMUtils.save(node, output, true);
-//                string = output.toString();
-//            } finally {
-//                output.close();
-//            }
-//        } catch (IOException e) {
-//        } catch (org.xmind.core.CoreException e) {
-//        }
-//        return string;
-//    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xmind.ui.internal.editor.IWorkbookSaver#isOverwriting()
-     */
-    public boolean canSaveToTarget() {
+    public boolean willOverwriteTarget() {
         return fileStore.fetchInfo().exists();
+    }
+
+    public Object backup(IProgressMonitor monitor, Object previousBackup) {
+        long timestamp = fileStore.fetchInfo().getLastModified();
+        if (previousBackup != null && (previousBackup instanceof FileBackup)
+                && ((FileBackup) previousBackup).lastTimestamp >= timestamp) {
+            return previousBackup;
+        }
+
+        File tempLocation = (previousBackup != null && previousBackup instanceof FileBackup) ? ((FileBackup) previousBackup).tempLocation
+                : null;
+        if (tempLocation == null) {
+            tempLocation = new File(Core.getWorkspace().getTempFile(
+                    SUBDIR_WORKBOOK_BACKUP + File.separator
+                            + Core.getIdFactory().createId()
+                            + FileUtils.getExtension(fileStore.getName())));
+        }
+        if (tempLocation.getParentFile() != null)
+            tempLocation.getParentFile().mkdirs();
+
+        try {
+            InputStream input = new MonitoredInputStream(
+                    fileStore.openInputStream(0, monitor), monitor);
+            try {
+                OutputStream output = new MonitoredOutputStream(
+                        new BufferedOutputStream(new FileOutputStream(
+                                tempLocation), 4096), monitor);
+                try {
+                    byte[] buffer = new byte[4096];
+                    int read;
+                    while ((read = input.read(buffer)) >= 0) {
+                        output.write(buffer, 0, read);
+                    }
+
+                    FileBackup backup = new FileBackup();
+                    backup.lastTimestamp = timestamp;
+                    backup.tempLocation = tempLocation;
+                    return backup;
+                } finally {
+                    try {
+                        output.close();
+                    } catch (IOException e) {
+                    }
+                }
+            } finally {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                }
+            }
+
+        } catch (Throwable e) {
+            Logger.log(e);
+            return previousBackup;
+        }
+    }
+
+    public void restore(IProgressMonitor monitor, Object backup) {
+        if (backup == null || !(backup instanceof FileBackup))
+            return;
+        File tempLocation = ((FileBackup) backup).tempLocation;
+        try {
+            InputStream input = new MonitoredInputStream(
+                    new BufferedInputStream(new FileInputStream(tempLocation),
+                            4096), monitor);
+            try {
+                OutputStream output = new MonitoredOutputStream(
+                        fileStore.openOutputStream(0, monitor), monitor);
+                try {
+                    byte[] buffer = new byte[4096];
+                    int read;
+                    while ((read = input.read(buffer)) >= 0) {
+                        output.write(buffer, 0, read);
+                    }
+                } finally {
+                    try {
+                        output.close();
+                    } catch (IOException e) {
+                    }
+                }
+            } finally {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                }
+            }
+
+        } catch (Throwable e) {
+            Logger.log(
+                    e,
+                    "Failed to resotre backup: " + tempLocation.getAbsolutePath()); //$NON-NLS-1$
+        }
     }
 
 }

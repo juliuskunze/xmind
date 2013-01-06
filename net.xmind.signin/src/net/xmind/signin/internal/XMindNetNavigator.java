@@ -18,6 +18,7 @@ import org.eclipse.jface.util.SafeRunnable;
 import org.xmind.ui.browser.BrowserSupport;
 import org.xmind.ui.browser.IBrowser;
 import org.xmind.ui.browser.IBrowserSupport;
+import org.xmind.ui.comm.XMindCommandCenter;
 import org.xmind.ui.internal.browser.BrowserUtil;
 
 public class XMindNetNavigator {
@@ -32,8 +33,10 @@ public class XMindNetNavigator {
 
     public void gotoURL(boolean external, String urlPattern, Object... values) {
         final String url = EncodingUtils.format(urlPattern, values);
-        if (url.startsWith("xmind:")) //$NON-NLS-1$
+        if (url.startsWith("xmind:")) {//$NON-NLS-1$
+            XMindCommandCenter.dispatch(url);
             return;
+        }
         final IBrowser browser;
         if (external) {
             browser = BrowserSupport.getInstance().createBrowser(

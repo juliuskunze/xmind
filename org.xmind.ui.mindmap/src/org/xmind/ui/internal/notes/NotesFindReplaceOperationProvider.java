@@ -15,6 +15,7 @@ package org.xmind.ui.internal.notes;
 
 import org.eclipse.jface.text.IFindReplaceTarget;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.ui.IViewPart;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.findreplace.AbstractFindReplaceOperationProvider;
@@ -48,6 +49,16 @@ public class NotesFindReplaceOperationProvider extends
                     topicPart.getTopic().getTitleText());
         }
         return MindMapMessages.EmptyNotes_FindReplaceContextName;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider#
+     * getContextName(int, org.eclipse.swt.graphics.Font)
+     */
+    public String getContextName(int maxWidth, Font font) {
+        return constrainText(getContextName(), maxWidth, font);
     }
 
     protected IFindReplaceTarget getFindReplaceTarget() {

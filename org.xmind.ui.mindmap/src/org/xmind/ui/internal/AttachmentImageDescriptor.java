@@ -99,7 +99,7 @@ public class AttachmentImageDescriptor extends ImageDescriptor {
     }
 
     public int hashCode() {
-        return super.hashCode();
+        return workbook.hashCode() + path.hashCode();
     }
 
     public static ImageDescriptor createFromEntryPath(IWorkbook workbook,
@@ -114,8 +114,8 @@ public class AttachmentImageDescriptor extends ImageDescriptor {
 
     private static ImageData getMissingData() {
         if (MISSING_DATA == null) {
-            MISSING_DATA = MindMapUI.getImages().get(
-                    IMindMapImages.MISSING_IMAGE).getImageData();
+            MISSING_DATA = MindMapUI.getImages()
+                    .get(IMindMapImages.MISSING_IMAGE).getImageData();
         }
         return MISSING_DATA;
     }

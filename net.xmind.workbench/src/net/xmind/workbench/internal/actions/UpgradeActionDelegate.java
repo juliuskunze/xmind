@@ -2,6 +2,7 @@ package net.xmind.workbench.internal.actions;
 
 import net.xmind.signin.XMindNet;
 import net.xmind.signin.internal.Messages;
+import net.xmind.workbench.internal.XMindNetWorkbench;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
@@ -62,7 +63,7 @@ public class UpgradeActionDelegate implements IWorkbenchWindowActionDelegate,
         if (window == null)
             return;
 
-        XMindNet.gotoURL(true, "http://www.xmind.net/xmind/buy/"); //$NON-NLS-1$
+        XMindNet.gotoURL(true, XMindNetWorkbench.URL_PURCHASE);
     }
 
     public void selectionChanged(IAction action, ISelection selection) {

@@ -22,13 +22,18 @@ import java.util.List;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xmind.core.Core;
 import org.xmind.core.IMetaData;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.event.ICoreEventListener;
+import org.xmind.core.event.ICoreEventRegistration;
+import org.xmind.core.event.ICoreEventSource;
+import org.xmind.core.event.ICoreEventSupport;
 import org.xmind.core.internal.ElementRegistry;
 import org.xmind.core.internal.Meta;
 import org.xmind.core.util.DOMUtils;
 
-public class MetaImpl extends Meta {
+public class MetaImpl extends Meta implements ICoreEventSource {
 
     private Document implementation;
 
@@ -134,28 +139,41 @@ public class MetaImpl extends Meta {
     }
 
     public void setValue(String keyPath, String value) {
+        String oldValue = null;
         Element d;
         if (value == null) {
             d = findElementByPath(keyPath, false);
             if (d != null && d.getParentNode() != null) {
+                oldValue = d.getTextContent();
                 d.getParentNode().removeChild(d);
             }
         } else {
             d = findElementByPath(keyPath, true);
             if (d != null) {
+                oldValue = d.getTextContent();
                 d.setTextContent(value);
             }
         }
+        getCoreEventSupport().dispatchTargetValueChange(this, Core.Metadata,
+                keyPath, oldValue, value);
     }
 
     public void addMetaData(IMetaData data) {
         Element mdEle = ((MetaDataImpl) data).getImplementation();
         getMetaElement().appendChild(mdEle);
+        String keyPath = ((MetaDataImpl) data).getKeyPath();
+        String newValue = data.getValue();
+        getCoreEventSupport().dispatchTargetValueChange(this, Core.Metadata,
+                keyPath, null, newValue);
     }
 
     public void removeMetaData(IMetaData data) {
+        String keyPath = ((MetaDataImpl) data).getKeyPath();
+        String oldValue = data.getValue();
         Element mdEle = ((MetaDataImpl) data).getImplementation();
         getMetaElement().removeChild(mdEle);
+        getCoreEventSupport().dispatchTargetValueChange(this, Core.Metadata,
+                keyPath, oldValue, null);
     }
 
     public IMetaData createMetaData(String key) {
@@ -192,6 +210,28 @@ public class MetaImpl extends Meta {
             elementRegistry = new ElementRegistry();
         }
         return elementRegistry;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.core.event.ICoreEventSource#getCoreEventSupport()
+     */
+    public ICoreEventSupport getCoreEventSupport() {
+        return ownedWorkbook.getCoreEventSupport();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.core.event.ICoreEventSource#registerCoreEventListener(java.
+     * lang.String, org.xmind.core.event.ICoreEventListener)
+     */
+    public ICoreEventRegistration registerCoreEventListener(String type,
+            ICoreEventListener listener) {
+        return getCoreEventSupport().registerCoreEventListener(this, type,
+                listener);
     }
 
 }

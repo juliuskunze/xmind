@@ -115,8 +115,10 @@ public class WorkbookUtilsImpl {
                         sourceMarker.getId(), sourceMarker,
                         sourceMarker.getOwnedSheet(), data);
             }
+            return null;
+        } else {
+            return source;
         }
-        return null;
     }
 
     private static Object cloneWorkbookComponent(WorkbookImpl targetWorkbook,
@@ -257,8 +259,10 @@ public class WorkbookUtilsImpl {
         } else {
             styledEle.setAttribute(styleTag, targetStyleId);
         }
-        data.putString(ICloneData.STYLESHEET_COMPONENTS, sourceStyleId,
-                targetStyleId);
+        if (sourceStyleId != null && targetStyleId != null) {
+            data.putString(ICloneData.STYLESHEET_COMPONENTS, sourceStyleId,
+                    targetStyleId);
+        }
 
 //        String oldStyleId = DOMUtils.getAttribute(styledEle, styleTag);
 //        if (oldStyleId == null)

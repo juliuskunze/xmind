@@ -121,8 +121,6 @@ public class ThemesViewer extends GalleryViewer {
 
     private static class ThemeSelectTool extends GallerySelectTool {
         protected boolean isTitleEditable(IPart p) {
-            if (!super.isTitleEditable(p))
-                return false;
             IStyle theme = (IStyle) p.getModel();
             return theme != MindMapUI.getResourceManager().getBlankTheme()
                     && theme.getOwnedStyleSheet() != MindMapUI

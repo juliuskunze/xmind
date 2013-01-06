@@ -13,9 +13,13 @@
  *******************************************************************************/
 package org.xmind.gef.dnd;
 
+import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TransferData;
 import org.xmind.gef.IViewer;
+import org.xmind.gef.Request;
+import org.xmind.gef.command.Command;
+import org.xmind.gef.part.IPart;
 
 public interface IDndClient {
 
@@ -25,6 +29,26 @@ public interface IDndClient {
 
     Object toTransferData(Object[] viewerElements, IViewer viewer);
 
-    Object[] toViewerElements(Object transferData, IViewer viewer, Object target);
+    /**
+     * 
+     * @param transferData
+     * @param viewer
+     * @param target
+     * @return
+     * @deprecated Use makeDNDCommand(Object, Request)
+     */
+    Object[] toViewerElements(Object transferredData, IViewer viewer,
+            Object target);
+
+    Command makeDNDCommand(Object transferredData, Request request);
+
+    boolean canCopy(TransferData data, IViewer viewer, Point location,
+            IPart target);
+
+    boolean canMove(TransferData data, IViewer viewer, Point location,
+            IPart target);
+
+    boolean canLink(TransferData data, IViewer viewer, Point location,
+            IPart target);
 
 }

@@ -672,20 +672,25 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
     }
 
     private void gotoNotesView() {
-        if (window == null)
-            return;
+        Display.getCurrent().asyncExec(new Runnable() {
+            public void run() {
+                if (window == null)
+                    return;
 
-        IWorkbenchPage workbenchPage = window.getActivePage();
-        if (workbenchPage == null)
-            return;
+                IWorkbenchPage workbenchPage = window.getActivePage();
+                if (workbenchPage == null)
+                    return;
 
-        close();
-        try {
-            workbenchPage.showView(MindMapUI.VIEW_NOTES, null,
-                    IWorkbenchPage.VIEW_ACTIVATE);
-        } catch (PartInitException e) {
-            Logger.log(e, "GotoNotesViewAction failed to show Notes View."); //$NON-NLS-1$
-        }
+                close();
+                try {
+                    workbenchPage.showView(MindMapUI.VIEW_NOTES, null,
+                            IWorkbenchPage.VIEW_ACTIVATE);
+                } catch (PartInitException e) {
+                    Logger.log(e,
+                            "GotoNotesViewAction failed to show Notes View."); //$NON-NLS-1$
+                }
+            }
+        });
     }
 
     public void documentAboutToBeChanged(DocumentEvent event) {

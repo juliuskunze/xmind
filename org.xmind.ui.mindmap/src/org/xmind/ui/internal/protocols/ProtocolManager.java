@@ -59,8 +59,8 @@ public class ProtocolManager extends RegistryReader implements IProtocolManager 
         public void run() {
             SafeRunner.run(new SafeRunnable() {
                 public void run() throws Exception {
-                    BrowserSupport.getInstance().createBrowser(
-                            DEFAULT_BROWSER_ID).openURL(url);
+                    BrowserSupport.getInstance()
+                            .createBrowser(DEFAULT_BROWSER_ID).openURL(url);
                 }
             });
         }
@@ -203,8 +203,9 @@ public class ProtocolManager extends RegistryReader implements IProtocolManager 
             context = new TopicContext((ITopicPart) context);
         }
         IProtocolDescriptor desc = findProtocolDescriptor(uri);
-        return adaptAction(getProtocol(desc).createOpenHyperlinkAction(context,
-                uri), desc, uri);
+        return adaptAction(
+                getProtocol(desc).createOpenHyperlinkAction(context, uri),
+                desc, uri);
     }
 
     private IAction adaptAction(IAction action, IProtocolDescriptor desc,

@@ -45,6 +45,8 @@ public class SimpleInfoPopupDialog extends SmoothPopupDialog {
 
     private Image icon;
 
+    private boolean closeOnAction = false;
+
     public SimpleInfoPopupDialog(Shell parent, String title, String infoText) {
         this(parent, title, infoText, 0, null, null);
     }
@@ -139,6 +141,9 @@ public class SimpleInfoPopupDialog extends SmoothPopupDialog {
         hyperlink.addHyperlinkListener(new HyperlinkAdapter() {
             public void linkActivated(HyperlinkEvent e) {
                 openHyperlink(action);
+                if (closeOnAction) {
+                    close();
+                }
             }
         });
         return hyperlink;
@@ -196,6 +201,15 @@ public class SimpleInfoPopupDialog extends SmoothPopupDialog {
 
     protected boolean hasIcon() {
         return iconId > 0 && getIcon() != null;
+    }
+
+    /**
+     * Turn on/off "close popup dialog on left/right action triggered" feature.
+     * 
+     * @param enabled
+     */
+    public void setCloseOnAction(boolean enabled) {
+        this.closeOnAction = enabled;
     }
 
 }

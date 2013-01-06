@@ -25,6 +25,7 @@ import net.xmind.signin.IXMindNetCommandHandler;
 
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.util.SafeRunnable;
+import org.xmind.ui.browser.IBrowserViewer;
 import org.xmind.ui.browser.IPropertyChangingListener;
 import org.xmind.ui.browser.PropertyChangingEvent;
 import org.xmind.ui.internal.browser.BrowserViewer;
@@ -32,24 +33,24 @@ import org.xmind.ui.internal.browser.BrowserViewer;
 public class XMindNetCommandSupport implements PropertyChangeListener,
         IPropertyChangingListener {
 
-    private Map<String, List<IXMindNetCommandHandler>> handlers = new HashMap<String, List<IXMindNetCommandHandler>>(
-            1);
+    private Map<String, List<IXMindNetCommandHandler>> commandHandlers = new HashMap<String, List<IXMindNetCommandHandler>>(
+            3);
 
     public void propertyChange(PropertyChangeEvent evt) {
         //do nothing
     }
 
     public void propertyChanging(PropertyChangingEvent event) {
-        if (event.getSource() instanceof BrowserViewer) {
+        if (IBrowserViewer.PROPERTY_STATUS.equals(event.getPropertyName())
+                && event.getSource() instanceof BrowserViewer) {
             String url = ((BrowserViewer) event.getSource()).getURL();
             if (isXMindUrl(url)) {
-                XMindNetCommand command = new XMindNetCommand((String) event
-                        .getNewValue());
-                if (!command.parse())
-                    return;
-
-                event.doit = false;
-                fireXMindNetCommand(command);
+                XMindNetCommand command2 = XMindNetCommand
+                        .createFromText((String) event.getNewValue());
+                if (command2 != null) {
+                    event.doit = false;
+                    fireXMindNetCommand(command2);
+                }
             }
         }
     }
@@ -66,23 +67,25 @@ public class XMindNetCommandSupport implements PropertyChangeListener,
         return false;
     }
 
-    public void addXMindNetCommandHandler(String commandName,
+    public synchronized void addXMindNetCommandHandler(String commandName,
             IXMindNetCommandHandler handler) {
-        List<IXMindNetCommandHandler> handlerList = handlers.get(commandName);
+        List<IXMindNetCommandHandler> handlerList = commandHandlers
+                .get(commandName);
         if (handlerList == null) {
             handlerList = new ArrayList<IXMindNetCommandHandler>();
-            handlers.put(commandName, handlerList);
+            commandHandlers.put(commandName, handlerList);
         }
         handlerList.add(handler);
     }
 
-    public void removeXMindNetCommandHandler(String commandName,
+    public synchronized void removeXMindNetCommandHandler(String commandName,
             IXMindNetCommandHandler handler) {
-        List<IXMindNetCommandHandler> handlerList = handlers.get(commandName);
+        List<IXMindNetCommandHandler> handlerList = commandHandlers
+                .get(commandName);
         if (handlerList != null && !handlerList.isEmpty()) {
             handlerList.remove(handler);
             if (handlerList.isEmpty()) {
-                handlers.remove(commandName);
+                commandHandlers.remove(commandName);
             }
         }
     }
@@ -90,14 +93,16 @@ public class XMindNetCommandSupport implements PropertyChangeListener,
     private boolean fireXMindNetCommand(final XMindNetCommand command) {
         String cmd = command.getCommandName();
         if (cmd != null) {
-            List<IXMindNetCommandHandler> handlerList = handlers.get(cmd);
+            List<IXMindNetCommandHandler> handlerList = commandHandlers
+                    .get(cmd);
             if (handlerList != null && !handlerList.isEmpty()) {
                 return fireXMindCommand(command, handlerList.toArray());
             }
         }
         String code = command.getCode();
         if (code != null) {
-            List<IXMindNetCommandHandler> handlerList = handlers.get(code);
+            List<IXMindNetCommandHandler> handlerList = commandHandlers
+                    .get(code);
             if (handlerList != null && !handlerList.isEmpty()) {
                 return fireXMindCommand(command, handlerList.toArray());
             }
@@ -123,4 +128,5 @@ public class XMindNetCommandSupport implements PropertyChangeListener,
         }
         return handled[0];
     }
+
 }

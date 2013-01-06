@@ -2,6 +2,7 @@
 <?eclipse version="3.2"?>
 <plugin>
    <extension-point id="browserViewerContributions" name="Browser Viewer Contributions" schema="schema/browserViewerContributions.exsd"/>
+   <extension-point id="xmindCommandHandlers" name="XMind Command Handlers" schema="schema/xmindCommandHandlers.exsd"/>
    <extension
          point="org.eclipse.ui.preferencePages">
       <page

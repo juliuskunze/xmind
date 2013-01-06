@@ -151,6 +151,7 @@ public class WorkbookRefManager implements IWorkbookRefManager {
         }
 
         registry.put(source, ref);
+        WorkbookBackupManager.getInstance().addWorkbook(ref);
         return ref;
     }
 
@@ -180,6 +181,8 @@ public class WorkbookRefManager implements IWorkbookRefManager {
                         boolean noRelatedRef = findRef(ref.getWorkbook()) == null;
 
                         ref.dispose(noRelatedRef);
+
+                        WorkbookBackupManager.getInstance().removeWorkbook(ref);
 
                         hibernateAll();
                     }

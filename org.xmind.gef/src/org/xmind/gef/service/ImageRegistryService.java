@@ -26,6 +26,11 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.xmind.gef.IViewer;
 
+/**
+ * 
+ * @author frankshaka
+ * @deprecated Use org.xmind.ui.toolkit plugin's ImageReference instead
+ */
 public class ImageRegistryService extends AbstractViewerService implements
         IImageRegistryService {
 

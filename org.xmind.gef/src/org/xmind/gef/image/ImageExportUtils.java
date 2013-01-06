@@ -27,6 +27,7 @@ import org.eclipse.swt.graphics.ImageLoader;
 import org.xmind.gef.draw2d.geometry.Geometry;
 import org.xmind.gef.internal.image.ConstrainedExportAreaProvider;
 import org.xmind.gef.internal.image.FittedExportAreaProvider;
+import org.xmind.gef.internal.image.MaxPixelsExportAreaProvider;
 import org.xmind.gef.internal.image.SWTImageWriter;
 import org.xmind.gef.internal.image.StretchedExportAreaProvider;
 
@@ -74,91 +75,12 @@ public class ImageExportUtils {
         } else if (resizeStrategy == ResizeConstants.RESIZE_CONSTRAIN) {
             return new ConstrainedExportAreaProvider(sourceArea, wHint, hHint,
                     margins);
+        } else if (resizeStrategy == ResizeConstants.RESIZE_MAXPIXELS) {
+            return new MaxPixelsExportAreaProvider(sourceArea, wHint, hHint,
+                    margins);
         }
         return new ExportAreaProvider(sourceArea, wHint, hHint, margins);
     }
-
-//    public static ImageDescriptor createImageDescriptor(IFigure figure) {
-//        return FigureImageDescriptor.createFromFigure(
-//                figure,
-//                createExportAreaProvider(getBounds(figure),
-//                        ResizeConstants.RESIZE_NONE, -1, -1, null));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(IFigure figure,
-//            Insets margins) {
-//        return FigureImageDescriptor.createFromFigure(
-//                figure,
-//                createExportAreaProvider(getBounds(figure),
-//                        ResizeConstants.RESIZE_NONE, -1, -1, margins));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(IFigure figure,
-//            int resizeStrategy, int wHint, int hHint) {
-//        return FigureImageDescriptor.createFromFigure(
-//                figure,
-//                createExportAreaProvider(getBounds(figure), resizeStrategy,
-//                        wHint, hHint, null));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(IFigure figure,
-//            int resizeStrategy, int wHint, int hHint, Insets margins) {
-//        return FigureImageDescriptor.createFromFigure(
-//                figure,
-//                createExportAreaProvider(getBounds(figure), resizeStrategy,
-//                        wHint, hHint, margins));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(IFigure figure,
-//            Rectangle sourceArea) {
-//        return FigureImageDescriptor.createFromFigure(
-//                figure,
-//                createExportAreaProvider(sourceArea,
-//                        ResizeConstants.RESIZE_NONE, -1, -1, null));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(IFigure figure,
-//            Rectangle sourceArea, Insets margins) {
-//        return FigureImageDescriptor.createFromFigure(
-//                figure,
-//                createExportAreaProvider(sourceArea,
-//                        ResizeConstants.RESIZE_NONE, -1, -1, margins));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(IFigure figure,
-//            Rectangle sourceArea, int resizeStrategy, int wHint, int hHint,
-//            Insets margins) {
-//        return FigureImageDescriptor.createFromFigure(
-//                figure,
-//                createExportAreaProvider(sourceArea, resizeStrategy, wHint,
-//                        hHint, margins));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(
-//            IExportSourceProvider source) {
-//        return FigureImageDescriptor.createFromFigures(
-//                source.getContents(),
-//                createExportAreaProvider(source.getSourceArea(),
-//                        ResizeConstants.RESIZE_NONE, -1, -1,
-//                        source.getMargins()));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(
-//            IExportSourceProvider source, int resizeStrategy) {
-//        return FigureImageDescriptor.createFromFigures(
-//                source.getContents(),
-//                createExportAreaProvider(source.getSourceArea(),
-//                        resizeStrategy, -1, -1, source.getMargins()));
-//    }
-//
-//    public static ImageDescriptor createImageDescriptor(
-//            IExportSourceProvider source, int resizeStrategy, int wHint,
-//            int hHint) {
-//        return FigureImageDescriptor.createFromFigures(
-//                source.getContents(),
-//                createExportAreaProvider(source.getSourceArea(),
-//                        resizeStrategy, wHint, hHint, source.getMargins()));
-//    }
 
     public static ImageWriter createImageWriter(Image image, int format,
             OutputStream output) {

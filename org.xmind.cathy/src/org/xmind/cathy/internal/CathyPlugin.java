@@ -14,8 +14,10 @@
 package org.xmind.cathy.internal;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.xmind.core.internal.XmindCore;
 
@@ -139,8 +141,18 @@ public class CathyPlugin extends AbstractUIPlugin {
         // Activate XMind Core
         XmindCore.getDefault();
 
-        // Activate Proxy Plugin
-        org.eclipse.core.internal.net.Activator.getInstance();
+        activateNetworkSettings();
+    }
+
+    private void activateNetworkSettings() {
+        Bundle networkPlugin = Platform.getBundle("org.eclipse.core.net"); //$NON-NLS-1$
+        if (networkPlugin != null) {
+            try {
+                networkPlugin
+                        .loadClass("org.eclipse.core.internal.net.Activator"); //$NON-NLS-1$
+            } catch (ClassNotFoundException e) {
+            }
+        }
     }
 
     /**

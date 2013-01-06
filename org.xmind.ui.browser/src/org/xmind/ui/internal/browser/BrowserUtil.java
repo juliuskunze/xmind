@@ -121,6 +121,8 @@ public class BrowserUtil {
     }
 
     public static String makeRedirectURL(String url) {
+        if (url == null || "".equals(url)) //$NON-NLS-1$
+            return url;
         if (url.startsWith("file:")) //$NON-NLS-1$
             return url;
         try {

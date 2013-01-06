@@ -158,7 +158,7 @@ public class RevisionManagerImpl extends RevisionManager implements
         Node node = (Node) content.getAdapter(Node.class);
         if (node == null)
             throw new CoreException(Core.ERROR_INVALID_ARGUMENT,
-                    "Invalid content with content type: " + getContentType()); //$NON-NLS-1$
+                    "Invalid content for content type: " + getContentType()); //$NON-NLS-1$
 
         IRevision latest = getLatestRevision();
         if (latest != null) {

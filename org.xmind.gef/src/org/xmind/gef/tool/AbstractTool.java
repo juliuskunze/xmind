@@ -562,7 +562,9 @@ public abstract class AbstractTool implements ITool, IDragDropHandler {
 
     protected Request createTargetedRequest(String type, IViewer viewer,
             boolean includeRootPartIfEmpty) {
-        return fillTargets(new Request(type), viewer, includeRootPartIfEmpty);
+        return fillTargets(
+                new Request(type).setViewer(viewer).setDomain(getDomain()),
+                viewer, includeRootPartIfEmpty);
     }
 
     protected Request fillTargets(Request request, IViewer viewer,

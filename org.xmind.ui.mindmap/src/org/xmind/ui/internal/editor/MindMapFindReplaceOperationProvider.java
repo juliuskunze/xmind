@@ -20,6 +20,7 @@ import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Display;
 import org.xmind.core.ITitled;
 import org.xmind.gef.EditDomain;
@@ -72,6 +73,39 @@ public class MindMapFindReplaceOperationProvider extends
             return title;
         }
         return NLS.bind("{0} - {1}", title, pageTitle); //$NON-NLS-1$
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider#
+     * getContextName(int, org.eclipse.swt.graphics.Font)
+     */
+    public String getContextName(int maxWidth, Font font) {
+        String title = editor.getTitle();
+        IGraphicalEditorPage page = editor.getActivePageInstance();
+        String pageTitle = page == null ? null : page.getPageTitle();
+        if (pageTitle == null || "".equals(pageTitle)) { //$NON-NLS-1$
+            return constrainText(title, maxWidth, font);
+        }
+        String name = NLS.bind("{0} - {1}", title, pageTitle); //$NON-NLS-1$
+        if (computeTextWidth(name, font) > maxWidth) {
+            int halfMaxWidth = (maxWidth - computeTextWidth(" - ", font)) / 2 - 1; //$NON-NLS-1$
+            int w1 = computeTextWidth(title, font);
+            int w2 = computeTextWidth(pageTitle, font);
+            if (w1 > halfMaxWidth) {
+                title = constrainText(title,
+                        Math.max(halfMaxWidth, halfMaxWidth * 2 - w2), font);
+                w1 = computeTextWidth(title, font);
+            }
+            name = NLS.bind("{0} - {1}", title, pageTitle); //$NON-NLS-1$
+            if (computeTextWidth(name, font) > maxWidth) {
+                pageTitle = constrainText(pageTitle,
+                        Math.max(halfMaxWidth, halfMaxWidth * 2 - w1), font);
+            }
+            name = NLS.bind("{0} - {1}", title, pageTitle); //$NON-NLS-1$
+        }
+        return name;
     }
 
     private class SearchResult {

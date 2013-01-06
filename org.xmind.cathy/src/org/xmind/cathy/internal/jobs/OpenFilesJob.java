@@ -29,10 +29,10 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.xmind.cathy.internal.WorkbenchMessages;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.util.FileUtils;
+import org.xmind.ui.comm.XMindCommandCenter;
 import org.xmind.ui.internal.MarkerImpExpUtils;
 import org.xmind.ui.internal.editor.MME;
 import org.xmind.ui.internal.editor.WorkbookEditorInput;
@@ -40,6 +40,7 @@ import org.xmind.ui.internal.imports.freemind.FreeMindImporter;
 import org.xmind.ui.internal.imports.mm.MindManagerImporter;
 import org.xmind.ui.internal.prefs.MarkerManagerPrefPage;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.PrefUtils;
 import org.xmind.ui.wizards.MindMapImporter;
 
 /**
@@ -172,6 +173,11 @@ public class OpenFilesJob extends AbstractCheckFilesJob {
      */
     protected IEditorInput createEditorInput(String fileName,
             IProgressMonitor monitor) throws Exception {
+        if (fileName.startsWith("xmind:")) { //$NON-NLS-1$
+            XMindCommandCenter.dispatch(fileName);
+            return null;
+        }
+
         final String path = fileName;
         String extension = FileUtils.getExtension(path);
 
@@ -221,8 +227,7 @@ public class OpenFilesJob extends AbstractCheckFilesJob {
 
         display.asyncExec(new Runnable() {
             public void run() {
-                PreferencesUtil.createPreferenceDialogOn(null,
-                        MarkerManagerPrefPage.ID, null, null).open();
+                PrefUtils.openPrefDialog(null, MarkerManagerPrefPage.ID);
             }
         });
     }

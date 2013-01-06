@@ -27,23 +27,23 @@ public class CoreException extends Exception {
     private String codeInfo;
 
     public CoreException(int type) {
-        super();
+        super(getErrorMessage(type, null));
         this.type = type;
     }
 
     public CoreException(int type, String codeInfo) {
-        super();
+        super(getErrorMessage(type, codeInfo));
         this.type = type;
         this.codeInfo = codeInfo;
     }
 
     public CoreException(int type, Throwable cause) {
-        super(cause);
+        super(getErrorMessage(type, null), cause);
         this.type = type;
     }
 
     public CoreException(int type, String codeInfo, Throwable cause) {
-        super(cause);
+        super(getErrorMessage(type, codeInfo), cause);
         this.type = type;
         this.codeInfo = codeInfo;
     }
@@ -80,4 +80,35 @@ public class CoreException extends Exception {
         return super.getMessage();
     }
 
+    private static String getErrorMessage(int type, String codeInfo) {
+        String err;
+        if (type == Core.ERROR_NULL_ARGUMENT) {
+            err = "Null argument"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_INVALID_ARGUMENT) {
+            err = "Invalid argument"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_INVALID_FILE) {
+            err = "Invalid file"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_NO_SUCH_ENTRY) {
+            err = "No such entry"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_FAIL_ACCESS_XML_PARSER) {
+            err = "Failed to access XML parser"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_FAIL_PARSING_XML) {
+            err = "Failed to parse XML"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_NO_WORKBOOK_CONTENT) {
+            err = "No workbook content"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_FAIL_ACCESS_XML_TRANSFORMER) {
+            err = "Failed to access XML transformer"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_FAIL_INIT_CRYPTOGRAM) {
+            err = "Failed to initialize cryptogram engine"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_WRONG_PASSWORD) {
+            err = "Wrong password"; //$NON-NLS-1$
+        } else if (type == Core.ERROR_CANCELLATION) {
+            err = "Operation canceled"; //$NON-NLS-1$
+        } else {
+            err = "Unexpected error"; //$NON-NLS-1$
+        }
+        if (codeInfo != null)
+            return String.format("%s: %s", err, codeInfo); //$NON-NLS-1$
+        return err;
+    }
 }

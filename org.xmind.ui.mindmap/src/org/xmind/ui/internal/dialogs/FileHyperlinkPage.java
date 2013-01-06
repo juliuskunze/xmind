@@ -44,6 +44,8 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
 
     private String basePath;
 
+    private String path;
+
     private boolean relative;
 
     private File file;
@@ -55,6 +57,8 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
     private Button relativeButton;
 
     private Button absoluteButton;
+
+    private Text absolutePathPreview;
 
     private Button fileChooser;
 
@@ -103,26 +107,35 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
     }
 
     private void createOptionsArea(Composite parent) {
-        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
         Group group = new Group(parent, SWT.NONE);
-        group.setLayoutData(layoutData);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         GridLayout layout = new GridLayout(2, true);
 
         group.setLayout(layout);
         group.setText(DialogMessages.FileHyperlinkPage_HrefGroup_Text);
 
         absoluteButton = new Button(group, SWT.RADIO);
-        absoluteButton.setLayoutData(layoutData);
+        absoluteButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false));
         absoluteButton
                 .setText(DialogMessages.FileHyperlinkPage_AbsoluteButton_Text);
         absoluteButton.setSelection(true);
         absoluteButton.addListener(SWT.Selection, this);
 
         relativeButton = new Button(group, SWT.RADIO);
-        relativeButton.setLayoutData(layoutData);
+        relativeButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false));
         relativeButton
                 .setText(DialogMessages.FileHyperlinkPage_RelativeButton_Text);
         relativeButton.addListener(SWT.Selection, this);
+
+        absolutePathPreview = new Text(group, SWT.BORDER | SWT.SINGLE
+                | SWT.READ_ONLY);
+        absolutePathPreview.setBackground(group.getBackground());
+        GridData absolutePathPreviewLayoutData = new GridData(SWT.FILL,
+                SWT.FILL, true, false);
+        absolutePathPreviewLayoutData.horizontalSpan = 2;
+        absolutePathPreview.setLayoutData(absolutePathPreviewLayoutData);
     }
 
     private void createPathChoosers(Composite parent) {
@@ -175,14 +188,16 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
     @Override
     public void setValue(String value) {
         super.setValue(value);
-        String path = value == null ? null : FilePathParser.toPath(value);
-        relative = path == null ? false : FilePathParser.isPathRelative(path);
-        file = getFile(path);
-        if (pathInput != null && !pathInput.isDisposed()) {
-            ignoreModify = true;
-            pathInput
-                    .setText(file == null ? (path == null ? "" : path) : file.getAbsolutePath()); //$NON-NLS-1$
-            ignoreModify = false;
+        setPath(value == null ? null : FilePathParser.toPath(value));
+    }
+
+    protected void update() {
+        if (!ignoreModify) {
+            if (pathInput != null && !pathInput.isDisposed()) {
+                ignoreModify = true;
+                pathInput.setText(path == null ? "" : path); //$NON-NLS-1$
+                ignoreModify = false;
+            }
         }
         if (absoluteButton != null && !absoluteButton.isDisposed()) {
             absoluteButton.setSelection(!relative);
@@ -190,16 +205,15 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
         if (relativeButton != null && !relativeButton.isDisposed()) {
             relativeButton.setSelection(relative);
         }
-    }
-
-    private File getFile(String path) {
-        if (path == null)
-            return null;
-        if (relative)
-            return basePath == null ? new File(System.getProperty("user.home"), //$NON-NLS-1$
-                    path) : new File(FilePathParser.toAbsolutePath(basePath,
-                    path));
-        return new File(path);
+        if (absolutePathPreview != null && !absolutePathPreview.isDisposed()) {
+            absolutePathPreview
+                    .setText(file == null ? "" : file.getAbsolutePath()); //$NON-NLS-1$
+        }
+        warningFileNotExists = (file != null && !file.exists());
+        warningRelative = (relative && basePath == null);
+        updateWarningMessage();
+        super.setValue(computeURI());
+        setCanFinish(getValue() != null);
     }
 
     @Override
@@ -216,77 +230,31 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
                 if (relativePath != null) {
                     super.setValue(FilePathParser.toURI(relativePath, relative));
                 }
-//                String workbookPath = openSaveDialog();
-//                if (workbookPath == null)
-//                    return false;
-//
-//                basePath = new File(workbookPath).getParent();
-//                if (basePath == null)
-//                    return false;
-//
-//                String relativePath = FilePathParser.toRelativePath(basePath,
-//                        file.getAbsolutePath());
-//                if (relativePath != null) {
-//                    saveWorkbook(workbookPath);
-//                    super
-//                            .setValue(FilePathParser.toURI(relativePath,
-//                                    relative));
-//                }
             }
         }
         return super.tryFinish();
     }
 
-//    private String openSaveDialog() {
-//        IWorkbook workbook = (IWorkbook) editor.getAdapter(IWorkbook.class);
-//        String name = workbook.getPrimarySheet().getRootTopic().getTitleText();
-//        String proposalName = MindMapUtils.trimFileName(name);
-//        return DialogUtils.save(composite.getShell(), proposalName,
-//                new String[] { "*" + MindMapUI.FILE_EXT_XMIND }, //$NON-NLS-1$
-//                new String[] { DialogMessages.WorkbookFilterName }, 0, null);
-//    }
-//
-//    private void saveWorkbook(final String path) {
-//        if (path != null) {
-//            final IWorkbookRef workbookRef = (IWorkbookRef) editor
-//                    .getAdapter(IWorkbookRef.class);
-//            if (workbookRef != null && workbookRef instanceof WorkbookRef) {
-//                BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
-//                    public void run() {
-//                        final String errorMessage = NLS.bind(
-//                                DialogMessages.FailedToSaveWorkbook_message,
-//                                path);
-//                        SafeRunner.run(new SafeRunnable(errorMessage) {
-//                            public void run() throws Exception {
-//                                ((WorkbookRef) workbookRef).saveWorkbookAs(
-//                                        MME.createFileEditorInput(path),
-//                                        new NullProgressMonitor(), null);
-//                            }
-//                        });
-//                    }
-//                });
-//            }
-//        }
-//    }
-
     public void handleEvent(Event event) {
         if (event.widget == pathInput) {
             if (event.type == SWT.Modify) {
                 if (!ignoreModify) {
-                    setFile(pathInput.getText(), false);
+                    ignoreModify = true;
+                    setPath(pathInput.getText());
+                    ignoreModify = false;
                 }
             }
         } else if (event.widget == fileChooser) {
             FileDialog dialog = createFileDialog();
             String path = dialog.open();
             if (path != null) {
-                setFile(path, true);
+                setFile(path);
             }
         } else if (event.widget == folderChooser) {
             DirectoryDialog dialog = createFolderDialog();
             String path = dialog.open();
             if (path != null) {
-                setFile(path, true);
+                setFile(path);
             }
         } else if (event.widget == relativeButton) {
             setRelative(true);
@@ -309,25 +277,33 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
         return dialog;
     }
 
-    protected void setFile(String path, boolean updateWidget) {
-        boolean invalidPath = path == null || "".equals(path); //$NON-NLS-1$
-        file = invalidPath ? null : new File(path);
-        super.setValue(getURI());
-        setCanFinish(!invalidPath);
-        warningFileNotExists = !invalidPath && file != null && !file.exists();
-        updateWarningMessage();
-        if (updateWidget && pathInput != null && !pathInput.isDisposed()) {
-            ignoreModify = true;
-            pathInput.setText(path);
-            ignoreModify = false;
-        }
+    protected void setPath(String path) {
+        this.path = (path == null || "".equals(path)) ? null : path; //$NON-NLS-1$
+        this.relative = path == null ? false : FilePathParser
+                .isPathRelative(path);
+        this.file = path == null ? null
+                : (relative && basePath != null ? new File(
+                        FilePathParser.toAbsolutePath(basePath, path))
+                        : new File(path));
+        update();
+    }
+
+    protected void setFile(String fullPath) {
+        this.file = fullPath == null || "".equals(fullPath) ? null : new File(fullPath); //$NON-NLS-1$
+        this.path = this.file == null ? null
+                : (relative && basePath != null ? FilePathParser
+                        .toRelativePath(basePath, fullPath) : fullPath);
+        update();
     }
 
     protected void setRelative(boolean relative) {
         this.relative = relative;
-        warningRelative = (relative && basePath == null);
-        super.setValue(getURI());
-        updateWarningMessage();
+        if (basePath != null) {
+            this.path = this.file == null ? null : (relative ? FilePathParser
+                    .toRelativePath(basePath, file.getAbsolutePath()) : file
+                    .getAbsolutePath());
+        }
+        update();
     }
 
     private void updateWarningMessage() {
@@ -337,16 +313,8 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
                                 : null), WARNING);
     }
 
-    private String getURI() {
-        if (file == null)
-            return null;
-        if (relative) {
-            if (basePath != null)
-                return FilePathParser.toURI(
-                        FilePathParser.toRelativePath(basePath,
-                                file.getAbsolutePath()), relative);
-        }
-        return FilePathParser.toURI(file.getAbsolutePath(), relative);
+    private String computeURI() {
+        return path == null ? null : FilePathParser.toURI(path, relative);
     }
 
     public void dispose() {

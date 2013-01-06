@@ -50,12 +50,12 @@ public class MindMapDndSupport extends RegistryReader implements IDndSupport {
     public DndData parseData(TransferData[] dataTypes, Object source,
             boolean usePendingData) {
         List<String> clientIds = getClientIds();
-        for (String clientId : clientIds) {
-            IDndClient client = getDndClient(clientId);
-            if (client != null) {
-                Transfer transfer = client.getTransfer();
-                if (transfer != null) {
-                    for (TransferData dataType : dataTypes) {
+        for (TransferData dataType : dataTypes) {
+            for (String clientId : clientIds) {
+                IDndClient client = getDndClient(clientId);
+                if (client != null) {
+                    Transfer transfer = client.getTransfer();
+                    if (transfer != null) {
                         if (transfer.isSupportedType(dataType)) {
                             Object data = parseData(client, transfer, dataType,
                                     source);

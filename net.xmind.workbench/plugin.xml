@@ -3,10 +3,6 @@
 <plugin>
    <extension
          point="org.eclipse.ui.commands">
-      <category
-            id="net.xmind.ui.commands"
-            name="%commandCategory.xmindnet.name">
-      </category>
       <command
             categoryId="net.xmind.ui.commands"
             description="%command.signIn.description"
@@ -18,6 +14,12 @@
             description="%command.showAccount.description"
             id="net.xmind.ui.command.showMyAccount"
             name="%command.showAccount.name">
+      </command>
+      <command
+            categoryId="net.xmind.ui.commands"
+            description="%command.checkForUpdates.description"
+            id="net.xmind.ui.command.checkForUpdates"
+            name="%command.checkForUpdates.name">
       </command>
    </extension>
    <extension
@@ -45,6 +47,14 @@
                tooltip="%action.signIn.tooltip">
          </action>
          <action
+               class="net.xmind.workbench.internal.actions.NewsletterSubscriptionActionDelegate"
+               id="net.xmind.ui.subscribeNewsletter"
+               label="%action.subscribeToNewsletter.label"
+               menubarPath="help/group.xmind"
+               style="push"
+               tooltip="%action.subscribeToNewsletter.tooltip">
+         </action>
+         <action
                class="net.xmind.workbench.internal.actions.FeedbackActionDelegate"
                id="net.xmind.ui.feedback"
                label="%action.feedback.label"
@@ -60,13 +70,30 @@
                style="push"
                tooltip="%action.welcome.tooltip">
          </action>
+         <action
+               class="net.xmind.workbench.internal.actions.CheckForUpdatesActionDelegate"
+               definitionId="net.xmind.ui.command.checkForUpdates"
+               id="net.xmind.ui.checkForUpdates"
+               label="%action.checkForUpdates.label"
+               menubarPath="help/group.updates"
+               style="push"
+               tooltip="%action.checkForUpdates.tooltip">
+         </action>
       </actionSet>
    </extension>
    <extension
          point="org.eclipse.ui.startup">
       <startup
-            class="net.xmind.workbench.internal.notification.SiteEventNotificationService">
+            class="net.xmind.workbench.internal.XMindNetWorkbenchServiceCenter">
       </startup>
+   </extension>
+   <extension
+         point="org.xmind.ui.browser.xmindCommandHandlers">
+      <handler
+            class="net.xmind.workbench.internal.CheckForUpdatesCommandHandler"
+            id="org.xmind.ui.xmindCommandHandler.checkForUpdates"
+            command="^checkForUpdates$">
+      </handler>
    </extension>
 
 </plugin>

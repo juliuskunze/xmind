@@ -142,6 +142,7 @@ public class GeneralUploaderPage extends UploaderPage implements
         if (lang == null || "".equals(lang)) { //$NON-NLS-1$
             lang = Info.getDefaultLanguageCode();
         }
+        getInfo().setProperty(Info.LANGUAGE_CHANNEL, lang);
 
         int index = Info.LANGUAGE_CODES.indexOf(lang);
         if (index < 0) {

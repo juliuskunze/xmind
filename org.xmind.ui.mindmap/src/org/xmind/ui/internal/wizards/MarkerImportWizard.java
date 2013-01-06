@@ -43,7 +43,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.eclipse.ui.forms.events.HyperlinkAdapter;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.widgets.FormText;
@@ -53,6 +52,7 @@ import org.xmind.ui.internal.MarkerImpExpUtils;
 import org.xmind.ui.internal.dialogs.DialogMessages;
 import org.xmind.ui.internal.prefs.MarkerManagerPrefPage;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.PrefUtils;
 
 public class MarkerImportWizard extends Wizard implements IImportWizard {
 
@@ -457,8 +457,7 @@ public class MarkerImportWizard extends Wizard implements IImportWizard {
     private void openMarkerManagerPage() {
         Display.getCurrent().asyncExec(new Runnable() {
             public void run() {
-                PreferencesUtil.createPreferenceDialogOn(null,
-                        MarkerManagerPrefPage.ID, null, null).open();
+                PrefUtils.openPrefDialog(null, MarkerManagerPrefPage.ID);
             }
         });
     }

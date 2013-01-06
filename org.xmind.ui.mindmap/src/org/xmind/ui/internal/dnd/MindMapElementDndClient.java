@@ -13,12 +13,17 @@
  *******************************************************************************/
 package org.xmind.ui.internal.dnd;
 
+import java.util.Arrays;
+
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TransferData;
+import org.xmind.core.ICloneData;
+import org.xmind.core.ITopic;
+import org.xmind.core.IWorkbook;
 import org.xmind.gef.IViewer;
-import org.xmind.gef.dnd.IDndClient;
+import org.xmind.gef.Request;
 
-public class MindMapElementDndClient implements IDndClient {
+public class MindMapElementDndClient extends MindMapDNDClientBase {
 
     private MindMapElementTransfer transfer = MindMapElementTransfer
             .getInstance();
@@ -27,10 +32,14 @@ public class MindMapElementDndClient implements IDndClient {
         return viewerElements;
     }
 
-    public Object[] toViewerElements(Object transferData, IViewer viewer,
-            Object target) {
-        if (transferData != null && transferData instanceof Object[])
-            return (Object[]) transferData;
+    @Override
+    protected Object[] toViewerElements(Object transferData, Request request,
+            IWorkbook workbook, ITopic targetParent, boolean dropInParent) {
+        if (transferData != null && transferData instanceof Object[]) {
+            Object[] elements = (Object[]) transferData;
+            ICloneData cloneData = workbook.clone(Arrays.asList(elements));
+            return cloneData.getCloneds().toArray();
+        }
         return null;
     }
 

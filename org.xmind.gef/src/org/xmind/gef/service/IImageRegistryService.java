@@ -16,6 +16,11 @@ package org.xmind.gef.service;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
+/**
+ * 
+ * @author frankshaka
+ * @deprecated Use org.xmind.ui.toolkit plugin's ImageReference instead
+ */
 public interface IImageRegistryService extends IViewerService {
 
     Image getImage(ImageDescriptor imageDescriptor,

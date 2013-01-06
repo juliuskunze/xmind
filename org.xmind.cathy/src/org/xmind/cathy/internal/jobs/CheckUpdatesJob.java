@@ -17,10 +17,10 @@ import net.xmind.signin.IDataStore;
 import net.xmind.signin.XMindNet;
 import net.xmind.signin.internal.XMindNetRequest;
 
-import org.apache.commons.httpclient.HttpStatus;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -33,9 +33,9 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -50,26 +50,17 @@ import org.xmind.ui.viewers.FileUtils;
 /**
  * 
  * @author Frank Shaka
+ * @deprecated See net.xmind.signin.internal.update.CheckForUpdatesJob in
+ *             net.xmind.signin plugin.
  */
 public class CheckUpdatesJob extends Job {
 
-    private static class NewUpdateDialog extends Dialog {
+    private static final String PLUGIN_ID = CathyPlugin.PLUGIN_ID;
 
-        private String downloadUrl;
+    private class NewUpdateDialog extends Dialog {
 
-        private String version;
-
-        private int size;
-
-        private String allDownloadsUrl;
-
-        public NewUpdateDialog(String downloadUrl, String version, int size,
-                String allDownloadsUrl) {
-            super((Shell) null);
-            this.downloadUrl = downloadUrl;
-            this.version = version;
-            this.size = size;
-            this.allDownloadsUrl = allDownloadsUrl;
+        public NewUpdateDialog(Shell parentShell) {
+            super(parentShell);
         }
 
         @Override
@@ -158,28 +149,15 @@ public class CheckUpdatesJob extends Job {
             label.setText(WorkbenchMessages.CheckUpdatesJob_NewUpdate_moreDownloads_text);
             label.setForeground(parent.getDisplay().getSystemColor(
                     SWT.COLOR_BLUE));
+            label.setCursor(parent.getDisplay()
+                    .getSystemCursor(SWT.CURSOR_HAND));
             label.addListener(SWT.MouseUp, new Listener() {
                 public void handleEvent(Event event) {
                     openAllDownloadsUrl();
                 }
             });
-            label.setCursor(parent.getDisplay()
-                    .getSystemCursor(SWT.CURSOR_HAND));
         }
 
-        @Override
-        protected void okPressed() {
-            super.okPressed();
-            openDownloadUrl();
-        }
-
-        private void openAllDownloadsUrl() {
-            XMindNet.gotoURL(true, allDownloadsUrl);
-        }
-
-        private void openDownloadUrl() {
-            Program.launch(downloadUrl);
-        }
     }
 
     private final IWorkbench workbench;
@@ -188,6 +166,14 @@ public class CheckUpdatesJob extends Job {
 
     private XMindNetRequest checkVersionRequest = null;
 
+    private String downloadUrl = null;
+
+    private String allDownloadsUrl = null;
+
+    private String version = null;
+
+    private long size = 0;
+
     public CheckUpdatesJob(IWorkbench workbench, boolean showFailureResult) {
         super(WorkbenchMessages.CheckUpdatesJob_jobName);
         this.workbench = workbench;
@@ -195,87 +181,84 @@ public class CheckUpdatesJob extends Job {
     }
 
     protected IStatus run(IProgressMonitor monitor) {
-        monitor.beginTask(null, 1);
-        if (showFailureResult) {
-            try {
-                doCheck();
-            } catch (Throwable e) {
-                return new Status(IStatus.ERROR, CathyPlugin.PLUGIN_ID,
-                        WorkbenchMessages.CheckUpdatesJob_Fail_message, e);
-            }
-        } else {
-            try {
-                doCheck();
-            } catch (Throwable e) {
-                return new Status(IStatus.WARNING, CathyPlugin.PLUGIN_ID,
-                        WorkbenchMessages.CheckUpdatesJob_Fail_message, e);
-            }
-        }
+        monitor.beginTask(null, 100);
+
+        IStatus checked = check(new SubProgressMonitor(monitor, 1));
+        if (!checked.isOK())
+            return checked;
+
         if (monitor.isCanceled())
             return Status.CANCEL_STATUS;
         monitor.done();
         return Status.OK_STATUS;
     }
 
-    protected void doCheck() throws Throwable {
-        XMindNetRequest request = new XMindNetRequest();
-        this.checkVersionRequest = request;
-        request.uri("/_api/checkVersion/3.3.0"); //$NON-NLS-1$
-        request.addParameter("distrib", CathyPlugin.getDistributionId()); //$NON-NLS-1$
-        request.get();
+    private IStatus check(IProgressMonitor monitor) {
+        monitor.beginTask(null, 1);
 
-        if (request.isAborted())
-            return;
+        monitor.subTask("Checking for new updates"); //$NON-NLS-1$
 
-        int code = request.getCode();
-        IDataStore data = request.getData();
-        if (code == HttpStatus.SC_OK && data != null) {
-            String downloadUrl = data.getString("download"); //$NON-NLS-1$
-            if (downloadUrl != null) {
-                String allDownloadsUrl = data.getString("allDownloads"); //$NON-NLS-1$
-                int size = data.getInt("size"); //$NON-NLS-1$
-                String version = data.getString("version"); //$NON-NLS-1$
-                if (allDownloadsUrl == null) {
-                    allDownloadsUrl = "http://www.xmind.net/xmind/downloads/"; //$NON-NLS-1$
-                }
-                showNewUpdateDialog(downloadUrl, version, size, allDownloadsUrl);
-            } else {
-                showNoUpdateDialog();
-            }
-        } else {
-            if (request.getException() != null)
-                throw request.getException();
-            showNoUpdateDialog();
+        String currentVersion = System.getProperty("org.xmind.product.version"); //$NON-NLS-1$
+        if (currentVersion == null) {
+            throw new IllegalStateException(
+                    "XMind application not running. Failed to fetch product version."); //$NON-NLS-1$
+        }
+        String distribId = System
+                .getProperty("org.xmind.product.distribution.id"); //$NON-NLS-1$
+        if (distribId == null || "".equals(distribId)) { //$NON-NLS-1$
+            distribId = "cathy_portable"; //$NON-NLS-1$
         }
 
-//        String url = "http://www.xmind.net/_api/checkVersion/3.3.0"; //$NON-NLS-1$
-//        String distribId = CathyPlugin.getDistributionId();
-//        url = url + "?distrib=" + distribId; //$NON-NLS-1$
-//        HttpMethod method = new GetMethod(url);
-//        int code = new HttpClient().executeMethod(method);
-//        if (code == HttpStatus.SC_OK) {
-//            String resp = method.getResponseBodyAsString();
-//            JSONObject json = new JSONObject(resp);
-//            code = json.getInt("_code"); //$NON-NLS-1$
-//            if (code == HttpStatus.SC_OK) {
-//                String downloadUrl = json.getString("download"); //$NON-NLS-1$
-//                String allDownloadsUrl = json.getString("allDownloads"); //$NON-NLS-1$
-//                int size = json.getInt("size"); //$NON-NLS-1$
-//                String version = json.getString("version"); //$NON-NLS-1$
-//                if (downloadUrl != null) {
-//                    if (allDownloadsUrl == null)
-//                        allDownloadsUrl = "http://www.xmind.net/downloads/"; //$NON-NLS-1$
-//                    showNewUpdateDialog(downloadUrl, version, size,
-//                            allDownloadsUrl);
-//                } else {
-//                    showNoUpdateDialog();
-//                }
-//            } else {
-//                showNoUpdateDialog();
-//            }
-//        } else {
-//            showNoUpdateDialog();
-//        }
+        downloadUrl = null;
+        allDownloadsUrl = null;
+        version = null;
+        size = 0;
+
+        XMindNetRequest request = new XMindNetRequest();
+        this.checkVersionRequest = request;
+        request.path("/_api/checkVersion/%s", currentVersion); //$NON-NLS-1$
+        request.addParameter("distrib", distribId); //$NON-NLS-1$
+        request.get();
+
+        if (monitor.isCanceled())
+            return Status.CANCEL_STATUS;
+
+        if (request.isAborted())
+            return Status.CANCEL_STATUS;
+
+        if (request.getError() != null)
+            return errorStatus(request.getError(), request.getError()
+                    .getLocalizedMessage());
+
+        monitor.done();
+
+        int code = request.getStatusCode();
+        IDataStore data = request.getData();
+        if (code == XMindNetRequest.HTTP_OK) {
+            if (data != null) {
+                downloadUrl = data.getString("download"); //$NON-NLS-1$
+                if (downloadUrl != null) {
+                    allDownloadsUrl = data.getString("allDownloads"); //$NON-NLS-1$
+                    size = data.getLong("size"); //$NON-NLS-1$
+                    version = data.getString("version"); //$NON-NLS-1$
+                    if (allDownloadsUrl == null) {
+                        allDownloadsUrl = "http://www.xmind.net/xmind/downloads/"; //$NON-NLS-1$
+                    }
+                    return showNewUpdate(monitor);
+                }
+            }
+            return errorStatus(null, NLS.bind(
+                    "Invalid response from checking for new updates: {0}", //$NON-NLS-1$
+                    request.getResponseText()));
+        } else if (code == XMindNetRequest.HTTP_NOT_FOUND) {
+            return showNoUpdate(monitor);
+        } else {
+            return errorStatus(
+                    null,
+                    NLS.bind(
+                            "Failed to check for new updates due to unexpected error ({0}).", //$NON-NLS-1$
+                            code));
+        }
     }
 
     @Override
@@ -286,26 +269,66 @@ public class CheckUpdatesJob extends Job {
         super.canceling();
     }
 
-    private void showNoUpdateDialog() {
-        if (showFailureResult) {
-            workbench.getDisplay().asyncExec(new Runnable() {
-                public void run() {
-                    MessageDialog.openInformation(null,
-                            WorkbenchMessages.AppWindowTitle,
-                            WorkbenchMessages.CheckUpdatesJob_NoUpdate_message);
-                }
-            });
-        }
-    }
-
-    private void showNewUpdateDialog(final String downloadUrl,
-            final String version, final int size, final String allDownloadsUrl) {
-        workbench.getDisplay().asyncExec(new Runnable() {
+    private IStatus runInUI(final IProgressMonitor monitor,
+            final Runnable runnable) {
+        Display display = workbench.getDisplay();
+        if (display == null || display.isDisposed())
+            return Status.CANCEL_STATUS;
+        final Throwable[] error = new Throwable[1];
+        error[0] = null;
+        display.syncExec(new Runnable() {
             public void run() {
-                new NewUpdateDialog(downloadUrl, version, size, allDownloadsUrl)
-                        .open();
+                try {
+                    runnable.run();
+                } catch (Throwable e) {
+                    error[0] = e;
+                }
             }
         });
+        if (monitor.isCanceled())
+            return Status.CANCEL_STATUS;
+        if (error[0] != null) {
+            return errorStatus(error[0], null);
+        }
+        return Status.OK_STATUS;
+    }
+
+    private IStatus showNewUpdate(IProgressMonitor monitor) {
+        final boolean[] canceled = new boolean[1];
+        canceled[0] = false;
+        IStatus shown = runInUI(monitor, new Runnable() {
+            public void run() {
+                int ret = new NewUpdateDialog(null).open();
+                if (ret != NewUpdateDialog.OK) {
+                    canceled[0] = true;
+                }
+            }
+        });
+        if (!shown.isOK())
+            return shown;
+        if (canceled[0])
+            return Status.CANCEL_STATUS;
+        return Status.OK_STATUS;
+    }
+
+    private IStatus showNoUpdate(IProgressMonitor monitor) {
+        return runInUI(monitor, new Runnable() {
+            public void run() {
+                MessageDialog.openInformation(null,
+                        WorkbenchMessages.AppWindowTitle,
+                        WorkbenchMessages.CheckUpdatesJob_NoUpdate_message);
+            }
+        });
+    }
+
+    private IStatus errorStatus(Throwable exception, String message) {
+        if (showFailureResult)
+            return new Status(IStatus.ERROR, PLUGIN_ID, message, exception);
+        return new Status(IStatus.WARNING, PLUGIN_ID, message, exception);
+    }
+
+    private void openAllDownloadsUrl() {
+        XMindNet.gotoURL(true, allDownloadsUrl);
     }
 
 }

@@ -219,7 +219,9 @@ public abstract class Exporter implements IExporter {
             overviewExportShellProvider = new GhostShellProvider(getDisplay());
         }
         Properties properties = new Properties();
-        properties.set(IMindMapViewer.VIEWER_MAX_TOPIC_LEVEL, 1);
+        if (getBoolean(ExportContants.SEPARATE_OVERVIEW)) {
+            properties.set(IMindMapViewer.VIEWER_MAX_TOPIC_LEVEL, 1);
+        }
         MindMapImageExporter exporter = new MindMapImageExporter(getDisplay());
         exporter.setSource(new MindMap(topic.getOwnedSheet(), topic),
                 overviewExportShellProvider, properties, null);

@@ -26,11 +26,11 @@ public class XMLSiteEvent implements ISiteEvent {
         element.putString(ATTR_ID, id);
     }
 
-    public String getTitle() {
+    public String getText() {
         return element.getTextData();
     }
 
-    public void setTitle(String title) {
+    public void setText(String title) {
         element.putTextData(title);
     }
 
@@ -74,6 +74,39 @@ public class XMLSiteEvent implements ISiteEvent {
         element.putString(ATTR_ACTION_TEXT, actionText);
     }
 
+    public String getHTML() {
+        return attr(ATTR_HTML);
+    }
+
+    public void setHTML(String html) {
+        element.putString(ATTR_HTML, html);
+    }
+
+    public String getInternalUrl() {
+        return attr(ATTR_INTERNAL_URL);
+    }
+
+    public void setInternalUrl(String url) {
+        element.putString(ATTR_INTERNAL_URL, url);
+    }
+
+    public int getDuration() {
+        Integer duration = element.getInteger(ATTR_DURATION);
+        return duration == null ? 0 : duration.intValue();
+    }
+
+    public void setDuration(int duration) {
+        element.putInteger(ATTR_DURATION, duration);
+    }
+
+    public String getCaption() {
+        return attr(ATTR_CAPTION);
+    }
+
+    public void setCaption(String caption) {
+        element.putString(ATTR_CAPTION, caption);
+    }
+
     public int hashCode() {
         return element.hashCode();
     }
@@ -90,7 +123,7 @@ public class XMLSiteEvent implements ISiteEvent {
     public String toString() {
         return "SiteEvent{id=" + getId() //$NON-NLS-1$
                 + ",type=" + getPrompt() //$NON-NLS-1$
-                + ",title=" + getTitle() //$NON-NLS-1$
+                + ",title=" + getText() //$NON-NLS-1$
                 + ",url=" + getEventUrl() //$NON-NLS-1$
                 + "}"; //$NON-NLS-1$
     }

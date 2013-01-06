@@ -98,6 +98,13 @@ public class WorkbenchMessages extends NLS {
     public static String About_LicenseTypePattern;
     public static String About_LicenseType_Unactivated;
 
+    public static String DownloadAndOpenFileJob_jobName;
+    public static String DownloadAndOpenFileJob_Task_Download_with_url;
+    public static String DownloadAndOpenFileJob_Task_OpenDownloadedFile_with_url;
+    public static String DownloadAndOpenFileJob_Error_FailedToCreateTempFile;
+    public static String DownloadAndOpenFileJob_Error_FailedToLoadWorkbook_with_url;
+    public static String DownloadAndOpenFileJob_DownloadJob_jobName;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, WorkbenchMessages.class);
     }

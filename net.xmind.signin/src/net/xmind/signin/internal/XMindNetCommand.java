@@ -16,14 +16,12 @@ public class XMindNetCommand implements IXMindNetCommand {
 
     public static final String COMMAND = "xmind_cmd"; //$NON-NLS-1$
 
-    private String text;
-
-    private Properties properties = new Properties();
+    private Properties properties;
 
     private IDataStore json = null;
 
-    public XMindNetCommand(String text) {
-        this.text = text;
+    private XMindNetCommand(Properties properties) {
+        this.properties = properties;
     }
 
     public String get(String key) {
@@ -59,10 +57,11 @@ public class XMindNetCommand implements IXMindNetCommand {
         return get(COMMAND);
     }
 
-    public boolean parse() {
+    public static XMindNetCommand createFromText(String text) {
         if (!text.startsWith("xmind_")) //$NON-NLS-1$
-            return false;
+            return null;
 
+        Properties properties = new Properties();
         String[] parts = text.split(";"); //$NON-NLS-1$
         for (String part : parts) {
             String[] kv = part.split("="); //$NON-NLS-1$
@@ -70,7 +69,6 @@ public class XMindNetCommand implements IXMindNetCommand {
                 properties.setProperty(kv[0], kv[1]);
             }
         }
-        return true;
+        return new XMindNetCommand(properties);
     }
-
 }

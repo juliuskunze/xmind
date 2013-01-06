@@ -15,6 +15,7 @@ package org.xmind.ui.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.eclipse.osgi.util.NLS;
@@ -25,6 +26,7 @@ import org.xmind.core.IWorkbook;
 import org.xmind.core.style.IStyle;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.style.StyleUtils;
+import org.xmind.ui.util.Logger;
 
 public class WorkbookFactory {
 
@@ -61,10 +63,16 @@ public class WorkbookFactory {
     public static InputStream createEmptyWorkbookStream(String initialPath,
             IStyle theme) {
         IWorkbook workbook = createEmptyWorkbook(initialPath, theme);
-        ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
         try {
             workbook.save(out);
         } catch (Throwable e) {
+            Logger.log(e);
+        } finally {
+            try {
+                out.close();
+            } catch (IOException e) {
+            }
         }
         return new ByteArrayInputStream(out.toByteArray());
     }

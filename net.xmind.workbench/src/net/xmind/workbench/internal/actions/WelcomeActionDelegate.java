@@ -2,6 +2,7 @@ package net.xmind.workbench.internal.actions;
 
 import net.xmind.signin.IAccountInfo;
 import net.xmind.signin.XMindNet;
+import net.xmind.workbench.internal.XMindNetWorkbench;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
@@ -9,8 +10,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 public class WelcomeActionDelegate implements IWorkbenchWindowActionDelegate {
-
-    private static final String DEFAULT_URL = "http://www.xmind.net/xmind/welcome/"; //$NON-NLS-1$
 
     private IWorkbenchWindow window;
 
@@ -44,10 +43,10 @@ public class WelcomeActionDelegate implements IWorkbenchWindowActionDelegate {
 
         IAccountInfo accountInfo = XMindNet.getAccountInfo();
         if (accountInfo != null) {
-            XMindNet.gotoURL("http://www.xmind.net/xmind/welcome/%s/%s", //$NON-NLS-1$
+            XMindNet.gotoURL(XMindNetWorkbench.URL_WELCOME_USER,
                     accountInfo.getUser(), accountInfo.getAuthToken());
         } else {
-            XMindNet.gotoURL(DEFAULT_URL);
+            XMindNet.gotoURL(XMindNetWorkbench.URL_WELCOME);
         }
     }
 

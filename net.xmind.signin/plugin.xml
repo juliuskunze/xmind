@@ -8,5 +8,12 @@
             id="org.xmind.ui.browserContribution.xmindCommandListener">
       </contribution>
    </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            id="net.xmind.ui.commands"
+            name="%commandCategory.xmindnet.name">
+      </category>
+   </extension>
 
 </plugin>

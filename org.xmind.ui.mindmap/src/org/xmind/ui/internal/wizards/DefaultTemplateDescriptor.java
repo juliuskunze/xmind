@@ -13,14 +13,9 @@
  *******************************************************************************/
 package org.xmind.ui.internal.wizards;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
-import org.xmind.core.util.FileUtils;
 import org.xmind.ui.internal.WorkbookFactory;
-import org.xmind.ui.util.Logger;
 
 public class DefaultTemplateDescriptor extends AbstractTemplateDescriptor {
 
@@ -28,34 +23,17 @@ public class DefaultTemplateDescriptor extends AbstractTemplateDescriptor {
 
     private String name;
 
-    private byte[] data;
-
     public DefaultTemplateDescriptor(String id, String name) {
         this.id = id;
         this.name = name;
-        try {
-            this.data = readData(WorkbookFactory.createEmptyWorkbookStream());
-        } catch (IOException e) {
-            Logger.log(e, "Failed to load default template."); //$NON-NLS-1$
-            this.data = new byte[0];
-        }
-    }
-
-    public DefaultTemplateDescriptor(String id, String name, InputStream stream)
-            throws IOException {
-        this.id = id;
-        this.name = name;
-        this.data = readData(stream);
-    }
-
-    private byte[] readData(InputStream stream) throws IOException {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        FileUtils.transfer(stream, output);
-        return output.toByteArray();
     }
 
     public String getId() {
         return id;
+    }
+
+    public String getSymbolicName() {
+        return "default:" + getId(); //$NON-NLS-1$
     }
 
     public String getName() {
@@ -63,7 +41,7 @@ public class DefaultTemplateDescriptor extends AbstractTemplateDescriptor {
     }
 
     public InputStream newStream() {
-        return new ByteArrayInputStream(data);
+        return WorkbookFactory.createEmptyWorkbookStream();
     }
 
     @Override

@@ -56,9 +56,10 @@ public class OpenWorkbookDialog {
 
         FileDialog fd = new FileDialog(window.getShell(), SWT.OPEN | SWT.MULTI);
         String xmindExt = "*" + MindMapUI.FILE_EXT_XMIND; //$NON-NLS-1$
+        String xmtExt = "*" + MindMapUI.FILE_EXT_TEMPLATE; //$NON-NLS-1$
         String oldExt = "*" + OLD_FILE_EXT; //$NON-NLS-1$
-        String allSupportedFileExt = String.format("%s;%s", //$NON-NLS-1$
-                xmindExt, oldExt);
+        String allSupportedFileExt = String.format("%s;%s;%s", //$NON-NLS-1$
+                xmindExt, xmtExt, oldExt);
         String allExt = "*.*"; //$NON-NLS-1$
         fd.setFilterExtensions(new String[] { xmindExt, oldExt,
                 allSupportedFileExt, allExt });
@@ -70,7 +71,7 @@ public class OpenWorkbookDialog {
                 NLS.bind("{0} ({1}, {2})", //$NON-NLS-1$
                         new Object[] {
                                 DialogMessages.AllSupportedFilesFilterName,
-                                xmindExt, oldExt }),
+                                xmindExt, xmtExt, oldExt }),
                 NLS.bind("{0} ({1})", DialogMessages.AllFilesFilterName, //$NON-NLS-1$
                         allExt) });
         fd.setFilterIndex(getFilterIndex());

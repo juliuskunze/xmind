@@ -19,8 +19,10 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xmind.core.Core;
 import org.xmind.core.IMeta;
 import org.xmind.core.IMetaData;
+import org.xmind.core.event.CoreEvent;
 import org.xmind.core.internal.MetaData;
 import org.xmind.core.util.DOMUtils;
 
@@ -99,12 +101,42 @@ public class MetaDataImpl extends MetaData {
         return implementation.getTextContent();
     }
 
+    protected String getKeyPath() {
+        StringBuilder sb = new StringBuilder(20);
+        Element e = implementation;
+        sb.insert(0, e.getTagName());
+        Node p = e.getParentNode();
+        Element metaElement = ownedMeta.getMetaElement();
+        while (p != null && p != e && p != metaElement && p instanceof Element) {
+            e = (Element) p;
+            sb.insert(0, IMeta.SEP);
+            sb.insert(0, e.getTagName());
+            p = e.getParentNode();
+        }
+        return sb.toString();
+    }
+
     public void setAttribute(String key, String value) {
+        String oldValue = DOMUtils.getAttribute(implementation, key);
         DOMUtils.setAttribute(implementation, key, value);
+        String newValue = DOMUtils.getAttribute(implementation, key);
+        if (oldValue != newValue
+                && (oldValue == null || !oldValue.equals(newValue))) {
+            CoreEvent event = new CoreEvent(ownedMeta, Core.MetadataAttribute,
+                    getKeyPath(), oldValue, newValue);
+            event.setData(key);
+            ownedMeta.getCoreEventSupport().dispatch(ownedMeta, event);
+        }
     }
 
     public void setValue(String value) {
+        String oldValue = implementation.getTextContent();
         implementation.setTextContent(value);
+        String newValue = implementation.getTextContent();
+        if (!oldValue.equals(newValue)) {
+            ownedMeta.getCoreEventSupport().dispatchTargetValueChange(
+                    ownedMeta, Core.Metadata, getKeyPath(), oldValue, newValue);
+        }
     }
 
 }

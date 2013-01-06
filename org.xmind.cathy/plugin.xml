@@ -29,7 +29,7 @@
          </property>
           <property
           		name="introTitle"
-          		value="Welcome to XMind 3.0"/>
+          		value="Welcome to XMind 3.3"/>
           <property
           		name="introBrandingImage"
           		value="product:icons/introimage.png"/>
@@ -63,13 +63,14 @@
          point="org.eclipse.ui.preferencePages">
       <page
             class="org.xmind.cathy.internal.GeneralPrefPage"
-            id="org.xmind.ui.GeneralPrefPage"
+            id="org.eclipse.ui.preferencePages.Workbench"
             name="%prefPage.general.name">
       </page>
       <page
-            name="%prefPage.keys.name"
+            category="org.eclipse.ui.preferencePages.Workbench"
             class="org.eclipse.ui.ExtensionFactory:newKeysPreferencePage"
-            id="org.eclipse.ui.preferencePages.Keys">
+            id="org.eclipse.ui.preferencePages.Keys"
+            name="%prefPage.keys.name">
          <keywordReference id="org.eclipse.ui.ide.keys"/>
       </page>
    </extension>
@@ -108,5 +109,28 @@
       <startup
             class="org.xmind.cathy.internal.AutoSaveService">
       </startup>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="org.xmind.cathy.internal.ShowAllPreferencesHandler"
+            commandId="org.eclipse.ui.window.preferences">
+         <activeWhen>
+            <with
+                  variable="activeWorkbenchWindow">
+               <instanceof
+                     value="org.eclipse.ui.IWorkbenchWindow">
+               </instanceof>
+            </with>
+         </activeWhen>
+      </handler>
+   </extension>
+   <extension
+         point="org.xmind.ui.browser.xmindCommandHandlers">
+      <handler
+            class="org.xmind.cathy.internal.OpenFileCommandHandler"
+            id="org.xmind.ui.xmindCommandHandler.openFile"
+            command="^openFile$">
+      </handler>
    </extension>
 </plugin>

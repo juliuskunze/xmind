@@ -27,6 +27,10 @@ public class Messages extends NLS {
     public static String SiteEventNotificationService_View_text;
     public static String SiteEventNotificationService_More_text;
 
+    public static String CheckForUpdatesJob_jobName;
+
+    public static String NewsletterSubscriptionReminder_message;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
     }

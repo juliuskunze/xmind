@@ -1,6 +1,7 @@
 package net.xmind.workbench.internal.actions;
 
 import net.xmind.signin.XMindNet;
+import net.xmind.workbench.internal.XMindNetWorkbench;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
@@ -39,7 +40,7 @@ public class FeedbackActionDelegate implements IWorkbenchWindowActionDelegate {
         if (window == null)
             return;
 
-        XMindNet.gotoURL("http://www.xmind.net/xmind/feedback/"); //$NON-NLS-1$
+        XMindNet.gotoURL(XMindNetWorkbench.URL_FEEDBACK);
     }
 
     /*

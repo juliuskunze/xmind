@@ -160,6 +160,27 @@ public class DialogMessages extends NLS {
     public static String NewWorkbookWizardDialog_OpenExistingFile_text;
     public static String NewWorkbookWizardDialog_Choose_text;
 
+    public static String TopicProtocol_ConfirmDeleteInvalidTopicHyperlink_windowTitle;
+    public static String TopicProtocol_ConfirmDeleteInvalidTopicHyperlink_message;
+
+    public static String DND_ExternalFolder;
+    public static String DND_ExternalFolder_confirmation_with_path;
+    public static String DND_ExternalFile;
+    public static String DND_ExternalFile_confirmation_with_path_size;
+    public static String DND_MultipleExternalFiles;
+    public static String DND_MultipleExternalFiles_moreFiles_with_number;
+    public static String DND_MultipleExternalFiles_confirmation_with_fileList;
+    public static String DND_ConfirmDroppingFileDialog_title_with_type;
+    public static String DND_ConfirmDroppingFileDialog_LinkButton_text;
+    public static String DND_ConfirmDroppingFileDialog_CopyButton_text;
+    public static String DND_ConfirmDroppingFileDialog_RememberCheck_text_with_type;
+
+    public static String ConfirmDeleteTemplateDialog_title;
+    public static String ConfirmDeleteTemplateDialog_message_with_templateName;
+
+    public static String ConfirmClearRecentFileListDialog_title;
+    public static String ConfirmClearRecentFileListDialog_message;
+
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, DialogMessages.class);

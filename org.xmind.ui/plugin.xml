@@ -35,6 +35,13 @@
                contentTypeId="org.xmind.contenttypes.xmt">
          </contentTypeBinding>
       </editor>
+      <editor
+            class="org.xmind.ui.internal.editor.NewWorkbookEditor"
+            default="false"
+            icon="icons/e/new_wiz.gif"
+            id="org.xmind.ui.NewWorkbookChooser"
+            name="%editor.newWorkbook.name">
+      </editor>
    </extension>
    <extension
          point="org.eclipse.ui.perspectives">
@@ -59,7 +66,7 @@
       <category
             description="Commands for editing text"
             id="org.xmind.ui.category.text.edit"
-            name="Text Edit">
+            name="%commandCategory.textEditor.name">
       </category>
       <command
             categoryId="org.xmind.ui.category.mindmap"
@@ -478,14 +485,27 @@
             name="%context.inBackCover.name"
             parentId="org.xmind.ui.context.mindmap">
       </context>
+      <context
+            description="%context.newWorkbookTab.description"
+            id="org.xmind.ui.context.home"
+            name="%context.newWorkbookTab.name"
+            parentId="org.eclipse.ui.contexts.window">
+      </context>
    </extension>
    <extension
          point="org.eclipse.ui.bindings">
       <key
             commandId="org.eclipse.ui.edit.delete"
             contextId="org.xmind.ui.context.mindmap.edit"
-            platform="carbon"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            platform="cocoa"
+            sequence="BS">
+      </key>
+      <key
+            commandId="org.eclipse.ui.edit.delete"
+            contextId="org.xmind.ui.context.home"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            platform="cocoa"
             sequence="BS">
       </key>
       <key
@@ -2080,39 +2100,6 @@
          </class>
       </decoration>
    </extension>
-   <!-- extension
-         point="org.xmind.ui.elementTypes">
-      <elementType
-            id="org.xmind.ui.elementType.topic"
-            objectClass="org.xmind.core.ITopic"
-            name="Topic">
-      </elementType>
-      <elementType
-            id="org.xmind.ui.elementType.sheet"
-            objectClass="org.xmind.core.ISheet"
-            name="Sheet">
-      </elementType>
-      <elementType
-            id="org.xmind.ui.elementType.boundary"
-            objectClass="org.xmind.core.IBoundary"
-            name="Boundary">
-      </elementType>
-      <elementType
-            id="org.xmind.ui.elementType.relationship"
-            objectClass="org.xmind.core.IRelationship"
-            name="Relationship">
-      </elementType>
-      <elementType
-            id="org.xmind.ui.elementType.summary"
-            objectClass="org.xmind.core.ISummary"
-            name="Summary">
-      </elementType>
-      <elementType
-            id="org.xmind.ui.elementType.marker"
-            objectClass="org.xmind.core.marker.IMarkerRef"
-            name="Marker">
-      </elementType>
-   </extension -->
    <extension
          point="org.xmind.ui.propertySections">
       <section

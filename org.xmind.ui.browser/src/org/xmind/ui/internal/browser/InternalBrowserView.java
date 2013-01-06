@@ -15,14 +15,22 @@ package org.xmind.ui.internal.browser;
 
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.ActionContributionItem;
+import org.eclipse.jface.action.GroupMarker;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
@@ -32,6 +40,10 @@ import org.xmind.ui.browser.IBrowser;
 import org.xmind.ui.browser.IBrowserSupport;
 import org.xmind.ui.browser.IBrowserViewer;
 import org.xmind.ui.browser.IBrowserViewerContainer;
+import org.xmind.ui.internal.browser.actions.CopyAction;
+import org.xmind.ui.internal.browser.actions.CutAction;
+import org.xmind.ui.internal.browser.actions.DeleteAction;
+import org.xmind.ui.internal.browser.actions.PasteAction;
 
 public class InternalBrowserView extends ViewPart implements
         IBrowserViewerContainer {
@@ -69,19 +81,125 @@ public class InternalBrowserView extends ViewPart implements
 
     public static final String BROWSER_VIEW_ID = "org.xmind.ui.BrowserView"; //$NON-NLS-1$
 
-    //private static Map<String, Integer> numbers = new HashMap<String, Integer>();
+    private static final String GROUP_CONTROLS = "org.xmind.ui.browser.controls"; //$NON-NLS-1$
+
+    private static final String KEY_STYLE = "style"; //$NON-NLS-1$
 
     private BrowserViewer viewer;
 
     private String clientId;
 
+    private int style;
+
+    private ActionContributionItem backActionItem = null;
+
+    private ActionContributionItem forwardActionItem = null;
+
+    private ActionContributionItem stopRefreshActionItem = null;
+
     public void setClientId(String clientId) {
         this.clientId = clientId;
     }
 
-    public void createPartControl(Composite parent) {
+    public void changeStyle(int newStyle) {
+        if ((newStyle & IBrowserSupport.NO_LOCATION_BAR) != 0
+                && (newStyle & IBrowserSupport.NO_EXTRA_CONTRIBUTIONS) != 0) {
+            newStyle |= IBrowserSupport.NO_TOOLBAR;
+        }
+        this.style = newStyle;
+        if (viewer != null && viewer.getControl() != null
+                && !viewer.getControl().isDisposed()) {
+            int oldStyle = viewer.getStyle();
+            viewer.changeStyle(newStyle);
+            boolean hadNoToolBar = (oldStyle & IBrowserSupport.NO_TOOLBAR) != 0;
+            boolean hasNoToolBar = (newStyle & IBrowserSupport.NO_TOOLBAR) != 0;
+            if (hasNoToolBar && !hadNoToolBar) {
+                IToolBarManager toolBar = getViewSite().getActionBars()
+                        .getToolBarManager();
+                addControls(toolBar);
+                toolBar.update(true);
+            } else if (hadNoToolBar && !hasNoToolBar) {
+                IToolBarManager toolBar = getViewSite().getActionBars()
+                        .getToolBarManager();
+                removeControls(toolBar);
+                toolBar.update(true);
+            }
+        }
+    }
+
+    private void removeControls(IToolBarManager toolBar) {
+        if (backActionItem != null) {
+            toolBar.remove(backActionItem);
+            backActionItem.dispose();
+            backActionItem = null;
+        }
+        if (forwardActionItem != null) {
+            toolBar.remove(forwardActionItem);
+            forwardActionItem.dispose();
+            forwardActionItem = null;
+        }
+        if (stopRefreshActionItem != null) {
+            toolBar.remove(stopRefreshActionItem);
+            stopRefreshActionItem.dispose();
+            stopRefreshActionItem = null;
+        }
+    }
+
+    private void addControls(IToolBarManager toolBar) {
+        stopRefreshActionItem = new ActionContributionItem(
+                viewer.getStopRefreshAction());
+        toolBar.prependToGroup(GROUP_CONTROLS, stopRefreshActionItem);
+        forwardActionItem = new ActionContributionItem(
+                viewer.getForwardAction());
+        toolBar.prependToGroup(GROUP_CONTROLS, forwardActionItem);
+        backActionItem = new ActionContributionItem(viewer.getBackAction());
+        toolBar.prependToGroup(GROUP_CONTROLS, backActionItem);
+    }
+
+    @Override
+    public void saveState(IMemento memento) {
+        memento.putInteger(KEY_STYLE, style);
+        super.saveState(memento);
+    }
+
+    @Override
+    public void init(IViewSite site, IMemento memento) throws PartInitException {
+        this.clientId = site.getSecondaryId();
+        Integer styleValue = memento == null ? null : memento
+                .getInteger(KEY_STYLE);
+        this.style = styleValue == null ? SWT.NONE : styleValue.intValue();
+        super.init(site, memento);
+    }
+
+    public void createPartControl(final Composite parent) {
+        viewer = new BrowserViewer(parent, style, this);
         initActions();
-        viewer = new BrowserViewer(parent, SWT.NONE, this);
+        final Image defaultImage = getTitleImage();
+        viewer.getBusyIndicator().addSelectionChangedListener(
+                new ISelectionChangedListener() {
+                    public void selectionChanged(SelectionChangedEvent event) {
+                        if (!parent.isDisposed()) {
+                            parent.getDisplay().asyncExec(new Runnable() {
+                                public void run() {
+                                    if (!parent.isDisposed()
+                                            && defaultImage != null
+                                            && !defaultImage.isDisposed()) {
+                                        Image currentImage = viewer
+                                                .getBusyIndicator()
+                                                .getCurrentImage();
+                                        if (currentImage == null
+                                                || !viewer.getBusyIndicator()
+                                                        .isAnimating()) {
+                                            setTitleImage(defaultImage);
+                                        } else {
+                                            setTitleImage(currentImage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
     }
 
     /**
@@ -93,14 +211,27 @@ public class InternalBrowserView extends ViewPart implements
         OpenInExternalAction openInExternalAction = new OpenInExternalAction();
 
         IMenuManager menu = actionBars.getMenuManager();
+        menu.add(new GroupMarker(GROUP_CONTROLS));
         menu.add(openInExternalAction);
-        menu.add(new Separator());
         menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
         IToolBarManager toolBar = actionBars.getToolBarManager();
+        toolBar.add(new GroupMarker(GROUP_CONTROLS));
         toolBar.add(openInExternalAction);
-        toolBar.add(new Separator());
         toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+
+        registerAction(actionBars, new CopyAction(viewer));
+        registerAction(actionBars, new CutAction(viewer));
+        registerAction(actionBars, new PasteAction(viewer));
+        registerAction(actionBars, new DeleteAction(viewer));
+
+        if ((style & IBrowserSupport.NO_TOOLBAR) != 0) {
+            addControls(toolBar);
+        }
+    }
+
+    private void registerAction(IActionBars actionBars, IAction action) {
+        actionBars.setGlobalActionHandler(action.getId(), action);
     }
 
     public void setFocus() {
@@ -169,16 +300,5 @@ public class InternalBrowserView extends ViewPart implements
         });
         return ret[0];
     }
-
-//    private String getNewSecondaryId() {
-//        Integer num = numbers.get(getClientId());
-//        if (num == null) {
-//            num = Integer.valueOf(1);
-//        } else {
-//            num = Integer.valueOf(num.intValue() + 1);
-//        }
-//        numbers.put(getClientId(), num);
-//        return getClientId() + "-" + num.toString(); //$NON-NLS-1$
-//    }
 
 }

@@ -13,18 +13,17 @@
  *******************************************************************************/
 package org.xmind.ui.internal.mindmap;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.net.MalformedURLException;
+import java.net.URL;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.xmind.core.Core;
 import org.xmind.core.IImage;
 import org.xmind.core.ITopic;
@@ -33,30 +32,30 @@ import org.xmind.core.event.ICoreEventRegister;
 import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.GEF;
-import org.xmind.gef.IViewer;
 import org.xmind.gef.draw2d.SizeableImageFigure;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.part.IRequestHandler;
 import org.xmind.gef.policy.NullEditPolicy;
 import org.xmind.gef.service.IFeedback;
-import org.xmind.gef.service.IImageRegistryService;
 import org.xmind.gef.util.GEFUtils;
 import org.xmind.ui.internal.AttachmentImageDescriptor;
 import org.xmind.ui.mindmap.IImagePart;
-import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.ISelectionFeedbackHelper;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.resources.ImageReference;
 
 public class ImagePart extends MindMapPartBase implements IImagePart {
 
+    private static final String FILE_PROTOCOL = "file"; //$NON-NLS-1$
+
     private ImageDescriptor imageDescriptor = null;
 
-    private Image image = null;
+    private ImageReference imageRef = null;
 
-    private boolean imageCreatable = true;
+    private String imageURL = null;
 
-    private boolean imageNeedsDispose = false;
+    private Runnable imageUpdater = null;
 
     public ImagePart() {
         setDecorator(ImageDecorator.getInstance());
@@ -70,50 +69,25 @@ public class ImagePart extends MindMapPartBase implements IImagePart {
         return imageDescriptor;
     }
 
-    public void setImageDescriptor(ImageDescriptor imageDescriptor) {
-        if (imageDescriptor == this.imageDescriptor)
+    protected synchronized void setImageDescriptor(
+            ImageDescriptor imageDescriptor) {
+        if (imageDescriptor == this.imageDescriptor
+                || (imageDescriptor != null && imageDescriptor
+                        .equals(this.imageDescriptor)))
             return;
-        releaseImage();
+        ImageReference oldImageRef = this.imageRef;
         this.imageDescriptor = imageDescriptor;
-    }
-
-    private void releaseImage() {
-        IViewer viewer = getSite().getViewer();
-        if (viewer != null) {
-            IImageRegistryService service = (IImageRegistryService) viewer
-                    .getService(IImageRegistryService.class);
-            if (service != null) {
-                service.decreaseRef(getImageDescriptor(), this);
-            }
+        if (oldImageRef != null) {
+            oldImageRef.dispose();
         }
-        if (image != null && imageNeedsDispose) {
-            image.dispose();
-        }
-        image = null;
-        imageNeedsDispose = false;
+        this.imageRef = this.imageDescriptor == null ? null
+                : new ImageReference(this.imageDescriptor, true);
     }
 
     public Image getImage() {
-        if (image == null && imageCreatable) {
-            image = createImage();
-        }
-        return image;
-    }
-
-    private Image createImage() {
-        if (getImageDescriptor() == null)
-            return null;
-
-        IViewer viewer = getSite().getViewer();
-        if (viewer != null) {
-            IImageRegistryService service = (IImageRegistryService) viewer
-                    .getService(IImageRegistryService.class);
-            if (service != null) {
-                return service.getImage(getImageDescriptor(), true, this);
-            }
-        }
-        imageNeedsDispose = true;
-        return getImageDescriptor().createImage(false, Display.getCurrent());
+        if (imageRef != null && !imageRef.isDisposed())
+            return imageRef.getImage();
+        return null;
     }
 
     public SizeableImageFigure getImageFigure() {
@@ -135,19 +109,16 @@ public class ImagePart extends MindMapPartBase implements IImagePart {
 
     public void setModel(Object model) {
         super.setModel(model);
-        setImageDescriptor(createNewImageDescriptor());
+        updateImageDescriptor();
     }
 
     protected void onDeactivated() {
-        ImageDownloadCenter.getInstance().cancel(getTopic());
-        if (updateBusyImageThread != null) {
-            updateBusyImageThread.interrupt();
-            updateBusyImageThread = null;
-        }
-        imageCreatable = false;
         getImageFigure().setImage(null);
-//        depressImageCreation = true;
-        releaseImage();
+        setImageURL(null);
+        if (imageRef != null) {
+            imageRef.dispose();
+            imageRef = null;
+        }
         super.onDeactivated();
     }
 
@@ -205,87 +176,104 @@ public class ImagePart extends MindMapPartBase implements IImagePart {
                 || Core.ImageWidth.equals(type)) {
             update();
         } else if (Core.ImageSource.equals(type)) {
-            setImageDescriptor(createNewImageDescriptor());
+            updateImageDescriptor();
             update();
         } else {
             super.handleCoreEvent(event);
         }
     }
 
-    private ImageDescriptor createNewImageDescriptor() {
-        if (isDownloading()) {
-            return getBusyImageDescriptor(0);
-        }
-        if (updateBusyImageThread != null) {
-            updateBusyImageThread.interrupt();
-            updateBusyImageThread = null;
-        }
-
+    private void updateImageDescriptor() {
         IImage imageModel = getImageModel();
         String source = imageModel.getSource();
         if (source != null) {
             if (HyperlinkUtils.isAttachmentURL(source)) {
+                setImageURL(null);
                 String path = HyperlinkUtils.toAttachmentPath(source);
-                return AttachmentImageDescriptor.createFromEntryPath(imageModel
-                        .getOwnedWorkbook(), path);
+                setImageDescriptor(AttachmentImageDescriptor
+                        .createFromEntryPath(imageModel.getOwnedWorkbook(),
+                                path));
+                setToolTip(null);
+            } else {
+                URL url = checkFileURL(source);
+                if (url != null) {
+                    setImageURL(null);
+                    setImageDescriptor(ImageDescriptor.createFromURL(url));
+                    setToolTip(url.getPath());
+                } else {
+                    setImageURL(source);
+                }
+            }
+        } else {
+            setImageURL(null);
+            setImageDescriptor(null);
+            setToolTip(null);
+        }
+    }
+
+    private URL checkFileURL(String source) {
+        try {
+            URL url = new URL(source);
+            if (FILE_PROTOCOL.equalsIgnoreCase(url.getProtocol()))
+                return url;
+        } catch (MalformedURLException e) {
+        }
+        return null;
+    }
+
+    private void setImageURL(String newURL) {
+        if (newURL == imageURL || (newURL != null && newURL.equals(imageURL)))
+            return;
+
+        String oldImageURL = this.imageURL;
+
+        this.imageURL = newURL;
+
+        ImageDownloader.getInstance()
+                .unregister(oldImageURL, getImageUpdater());
+        if (imageURL != null) {
+            ImageDownloader.getInstance().register(imageURL, getImageUpdater());
+            setImageDescriptor(ImageDownloader.getInstance().getImage(imageURL));
+            IStatus status = ImageDownloader.getInstance().getStatus(imageURL);
+            if (status.getSeverity() == IStatus.OK) {
+                setToolTip(imageURL);
+            } else {
+                setToolTip(status.getMessage());
             }
         }
-        return getWarningImageDescriptor();
     }
 
-    private static List<ImageDescriptor> BusyImages = null;
+    private Runnable getImageUpdater() {
+        if (imageUpdater == null) {
+            imageUpdater = new Runnable() {
+                public void run() {
+                    if (imageURL == null)
+                        return;
 
-    private static ImageDescriptor WarningImage = null;
-
-    private static List<ImageDescriptor> getBusyImageDescriptors() {
-        if (BusyImages == null) {
-            BusyImages = findBusyImageDescriptors();
+                    setImageDescriptor(ImageDownloader.getInstance().getImage(
+                            imageURL));
+                    IStatus status = ImageDownloader.getInstance().getStatus(
+                            imageURL);
+                    if (status.getSeverity() == IStatus.OK) {
+                        setToolTip(imageURL);
+                    } else {
+                        setToolTip(status.getMessage());
+                    }
+                    update();
+                }
+            };
         }
-        return BusyImages;
+        return imageUpdater;
     }
 
-    private static ImageDescriptor getWarningImageDescriptor() {
-        if (WarningImage == null)
-            WarningImage = ImageDescriptor.createFromImage(Display.getCurrent()
-                    .getSystemImage(SWT.ICON_WARNING));
-        return WarningImage;
-    }
-
-    private static List<ImageDescriptor> findBusyImageDescriptors() {
-        List<ImageDescriptor> list = new ArrayList<ImageDescriptor>();
-        for (int index = 1; index <= 12; index++) {
-            String path = String.format("/icons/busy/busy_f%02d.gif", index); //$NON-NLS-1$
-            ImageDescriptor img = AbstractUIPlugin.imageDescriptorFromPlugin(
-                    "org.xmind.ui.browser", path); //$NON-NLS-1$
-            if (img != null) {
-                list.add(img);
-            }
-        }
-        if (list.isEmpty()) {
-            list.add(MindMapUI.getImages().get(IMindMapImages.STOP, true));
-        }
-        return list;
-    }
-
-    private static ImageDescriptor getBusyImageDescriptor(int index) {
-        return getBusyImageDescriptors().get(index);
-    }
-
-    private Thread updateBusyImageThread;
-
-    public boolean isDownloading() {
-        return ImageDownloadCenter.getInstance().isDownloading(getTopic());
-    }
-
-    public boolean hasProblem() {
-        return getImageDescriptor() != null
-                && getImageDescriptor() == WarningImage;
+    private void setToolTip(String message) {
+        getFigure().setToolTip(message == null ? null : new Label(message));
     }
 
     protected void declareEditPolicies(IRequestHandler reqHandler) {
         super.declareEditPolicies(reqHandler);
-        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE,
+                NullEditPolicy.getInstance());
         reqHandler.installEditPolicy(GEF.ROLE_DELETABLE,
                 MindMapUI.POLICY_DELETABLE);
         reqHandler.installEditPolicy(GEF.ROLE_MOVABLE,

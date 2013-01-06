@@ -50,7 +50,6 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
 import org.eclipse.ui.forms.widgets.Section;
 import org.eclipse.ui.part.IContributedContentsView;
@@ -78,6 +77,7 @@ import org.xmind.ui.internal.wizards.MarkerImportWizard;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.MarkerImageDescriptor;
+import org.xmind.ui.util.PrefUtils;
 
 public class MarkerView extends ViewPart implements IContributedContentsView {
 
@@ -90,8 +90,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         }
 
         public void run() {
-            PreferencesUtil.createPreferenceDialogOn(null,
-                    MarkerManagerPrefPage.ID, null, null).open();
+            PrefUtils.openPrefDialog(null, MarkerManagerPrefPage.ID);
         }
     }
 
@@ -151,9 +150,11 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
             if (viewer != null) {
                 EditDomain domain = viewer.getEditDomain();
                 if (domain != null) {
-                    Request req = new Request(REQ_ADD_MARKER).setViewer(viewer)
-                            .setDomain(domain).setParameter(
-                                    MindMapUI.PARAM_MARKER_ID, marker.getId());
+                    Request req = new Request(REQ_ADD_MARKER)
+                            .setViewer(viewer)
+                            .setDomain(domain)
+                            .setParameter(MindMapUI.PARAM_MARKER_ID,
+                                    marker.getId());
                     domain.handleRequest(req);
                     MindMapUI.getResourceManager().getRecentMarkerGroup()
                             .addMarker(marker);

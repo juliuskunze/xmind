@@ -17,6 +17,7 @@ import net.xmind.signin.IAccountInfo;
 import net.xmind.signin.IAuthenticationListener;
 import net.xmind.signin.XMindNet;
 import net.xmind.signin.internal.Messages;
+import net.xmind.workbench.internal.XMindNetWorkbench;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
@@ -107,8 +108,7 @@ public class ShowAccountActionDelegate implements
         if (window == null || XMindNet.getAccountInfo() == null)
             return;
 
-        XMindNet.gotoURL("http://www.xmind.net/xmind/account/%s/%s/", //$NON-NLS-1$ 
-                getUserID(), getToken());
+        XMindNet.gotoURL(XMindNetWorkbench.URL_ACCOUNT, getUserID(), getToken());
     }
 
     /*

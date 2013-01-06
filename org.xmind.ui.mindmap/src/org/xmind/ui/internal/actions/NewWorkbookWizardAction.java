@@ -5,7 +5,7 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.xmind.ui.internal.MindMapMessages;
-import org.xmind.ui.internal.dialogs.NewWorkbookWizardDialog;
+import org.xmind.ui.internal.editor.NewWorkbookEditor;
 
 public class NewWorkbookWizardAction extends Action implements IWorkbenchAction {
 
@@ -30,7 +30,8 @@ public class NewWorkbookWizardAction extends Action implements IWorkbenchAction 
         if (window == null)
             return;
 
-        NewWorkbookWizardDialog.openWizard(window, false);
+        NewWorkbookEditor.open(window, false);
+//        NewWorkbookWizardDialog.openWizard(window, false);
     }
 
     public void dispose() {

@@ -16,6 +16,7 @@ package org.xmind.ui.internal.browser;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchActionConstants;
@@ -107,6 +108,12 @@ public class BrowserEditorActionContributor extends EditorActionBarContributor {
                         openInExternalAction);
             }
         }
+    }
+
+    @Override
+    public void contributeToToolBar(IToolBarManager toolBarManager) {
+        super.contributeToToolBar(toolBarManager);
+        toolBarManager.add(openInExternalAction);
     }
 
     public void setActiveEditor(IEditorPart targetEditor) {

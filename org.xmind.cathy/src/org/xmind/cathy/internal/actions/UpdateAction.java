@@ -21,6 +21,7 @@ import org.xmind.cathy.internal.jobs.CheckUpdatesJob;
 
 /**
  * @author briansun
+ * @deprecated See CheckUpdatesActionDelegate in net.xmind.workbench plugin.
  */
 public class UpdateAction extends Action implements IWorkbenchAction {
 

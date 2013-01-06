@@ -42,9 +42,11 @@ public class Activator extends AbstractUIPlugin {
      * org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext
      * )
      */
+    @SuppressWarnings("restriction")
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
+        org.eclipse.core.internal.net.Activator.getInstance();
     }
 
     /*

@@ -16,8 +16,6 @@ package org.xmind.cathy.internal;
 import java.lang.reflect.Method;
 import java.util.Properties;
 
-//import org.eclipse.swt.internal.win32.OS;
-
 public class ApplicationValidator implements IApplicationValidator {
 
     public ApplicationValidator() {
@@ -42,7 +40,6 @@ public class ApplicationValidator implements IApplicationValidator {
 
     private boolean isValidWindow(int hWnd) {
         int length = invokeOSMethod("GetWindowTextLength", hWnd); //$NON-NLS-1$
-        // OS.GetWindowTextLength(hWnd);
         return length > 0;
     }
 
@@ -61,8 +58,6 @@ public class ApplicationValidator implements IApplicationValidator {
     private void notifyOpenedWindow(int hWnd) {
         invokeOSMethod("SetForegroundWindow", hWnd); //$NON-NLS-1$
         invokeOSMethod("SetFocus", hWnd); //$NON-NLS-1$
-//        OS.SetForegroundWindow(hWnd);
-//        OS.SetFocus(hWnd);
     }
 
     private static Class<?> OS_CLAZZ = null;

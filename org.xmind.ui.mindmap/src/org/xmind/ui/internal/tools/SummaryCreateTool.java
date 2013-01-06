@@ -26,7 +26,7 @@ public class SummaryCreateTool extends TopicAreaSelectTool {
 
     public void finish() {
         super.finish();
-        if (request != null) {
+        if (request != null && request.hasTargets()) {
             getDomain().handleRequest(request);
             request = null;
         }

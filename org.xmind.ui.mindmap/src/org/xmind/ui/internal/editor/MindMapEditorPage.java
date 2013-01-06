@@ -126,6 +126,7 @@ import org.xmind.ui.prefs.PrefConstants;
 import org.xmind.ui.resources.ColorUtils;
 import org.xmind.ui.util.MindMapUtils;
 
+@SuppressWarnings("deprecation")
 public class MindMapEditorPage extends GraphicalEditorPage implements
         ICoreEventListener, IColorProvider, IEditDomainListener,
         IPropertyChangeListener, FocusListener {

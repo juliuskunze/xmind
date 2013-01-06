@@ -4,11 +4,11 @@ import java.io.File;
 import java.io.IOException;
 
 import net.xmind.share.Info;
+import net.xmind.share.Uploader;
 import net.xmind.share.XmindSharePlugin;
 import net.xmind.signin.IDataStore;
 import net.xmind.signin.internal.XMindNetRequest;
 
-import org.apache.commons.httpclient.HttpStatus;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -47,8 +47,6 @@ public class UploadSession {
 
     private static final String UPLOAD_API = "/_fs/mapfile/%s"; //$NON-NLS-1$
     private static final String SESSION_API = "/_fs/mapfile/%s/%s"; //$NON-NLS-1$
-//    private static final String RES_URL = "http://www.xmind.net/_fs/mapfile/"; //$NON-NLS-1$
-//    private static final String RES_URL = "http://172.16.231.141:8080/upload/"; //$NON-NLS-1$
 
     private String userName;
 
@@ -147,7 +145,7 @@ public class UploadSession {
         if (DEBUG)
             request.debug();
         prepareRequest = request;
-        request.uri(UPLOAD_API, userName);
+        request.path(UPLOAD_API, userName);
         request.setAuthToken(authToken);
         request.addParameter("title", title); //$NON-NLS-1$
         request.post();
@@ -157,16 +155,16 @@ public class UploadSession {
             return ok();
         }
 
-        int code = request.getCode();
+        int code = request.getStatusCode();
         IDataStore data = request.getData();
 
         debug("[upload][prepare] response code=%s", code); //$NON-NLS-1$
         debug("[upload][prepare] response text='%s'", request.getResponseText()); //$NON-NLS-1$
 
-        if (code == HttpStatus.SC_OK && data != null) {
+        if (code == XMindNetRequest.HTTP_OK && data != null) {
             String sessionId = data.getString("session"); //$NON-NLS-1$
             if (sessionId == null)
-                return error(500);
+                return error(XMindNetRequest.HTTP_INTERNAL_ERROR);
             this.sessionId = sessionId;
             this.permalink = data.getString("url"); //$NON-NLS-1$
             String mapname = data.getString("mapname"); //$NON-NLS-1$
@@ -178,46 +176,7 @@ public class UploadSession {
             return ok();
         }
 
-        return error(code, request.getException());
-
-//        try {
-//            String url = makeUploadURL(userName);
-//            debug("[prepare upload] url=" + url); //$NON-NLS-1$
-//
-//            HttpClient client = new HttpClient();
-//            request.setURI(new URI(url, true, client.getParams()
-//                    .getUriCharset()));
-//            request.setRequestHeader("Content-Type", //$NON-NLS-1$
-//                    "application/x-www-form-urlencoded; charset=UTF-8"); //$NON-NLS-1$
-//            setTokenAndJson(request, authToken);
-//            request.setParameter("title", title); //$NON-NLS-1$
-//
-//            debug("[prepare upload] execute 'post'"); //$NON-NLS-1$
-//            int code = client.executeMethod(request);
-//            debug("[prepare upload] result code=" + code); //$NON-NLS-1$
-//            if (code != HttpStatus.SC_OK)
-//                return error(code);
-//
-//            String resp = request.getResponseBodyAsString();
-//            debug("[prepare upload] response=" + resp); //$NON-NLS-1$
-//            JSONObject json = new JSONObject(resp);
-//            code = json.optInt("_code", -1); //$NON-NLS-1$
-//            if (code != HttpStatus.SC_OK)
-//                return error(code);
-//
-//            this.sessionId = json.getString("session"); //$NON-NLS-1$
-//            this.permalink = json.optString("url", null); //$NON-NLS-1$
-//            String mapname = json.optString("mapname", null); //$NON-NLS-1$
-//            if (mapname != null) {
-//                this.viewLink = "http://www.xmind.net/xmind/map/" + userName //$NON-NLS-1$ 
-//                        + "/" + authToken + "/" + mapname; //$NON-NLS-1$ //$NON-NLS-2$
-//            }
-//            return ok();
-//        } catch (IOException e) {
-//            return error(e);
-//        } catch (JSONException e) {
-//            return error(e);
-//        }
+        return error(code, request.getError());
     }
 
     /**
@@ -243,11 +202,15 @@ public class UploadSession {
         debug("[upload][transfer] userName=%s, sessionId=%s, sourceFile=%s", //$NON-NLS-1$
                 userName, sessionId, sourceFile.getAbsolutePath());
 
+//        System.out.println("About to send file: "
+//                + sourceFile.getAbsolutePath());
+        Uploader.validateUploadFile(sourceFile.getAbsolutePath());
+
         XMindNetRequest request = new XMindNetRequest().multipart();
         if (DEBUG)
             request.debug();
         transferRequest = request;
-        request.uri(SESSION_API, userName, sessionId);
+        request.path(SESSION_API, userName, sessionId);
         request.addParameter("map", sourceFile); //$NON-NLS-1$
         request.post();
 
@@ -256,31 +219,15 @@ public class UploadSession {
             return ok();
         }
 
-        int code = request.getCode();
+        int code = request.getStatusCode();
         debug("[upload][transfer] response code=%s", code); //$NON-NLS-1$
         debug("[upload][transfer] response text=%s", request.getResponseText()); //$NON-NLS-1$
 
-        if (code == HttpStatus.SC_OK)
+        if (code == XMindNetRequest.HTTP_OK)
             return ok();
 
-        return error(code, request.getException());
-//        
-//        try {
-//            Part[] parts = new Part[] { new FilePart("map", sourceFile) }; //$NON-NLS-1$
-//            String url = makeUploadURL(userName, sessionId);
-//            HttpClient client = new HttpClient();
-//            request.setURI(new URI(url, true, client.getParams()
-//                    .getUriCharset()));
-//            request.setRequestEntity(new MultipartRequestEntity(parts, request
-//                    .getParams()));
-//            int code = client.executeMethod(request);
-//            if (code != HttpStatus.SC_OK) {
-//                return error(code);
-//            }
-//            return ok();
-//        } catch (IOException e) {
-//            return error(e);
-//        }
+        return error(code, request.getError());
+
     }
 
     /**
@@ -316,7 +263,7 @@ public class UploadSession {
         if (DEBUG)
             request.debug();
         retrieveProgressRequest = request;
-        request.uri(SESSION_API, userName, sessionId);
+        request.path(SESSION_API, userName, sessionId);
         request.setAuthToken(authToken);
         request.get();
 
@@ -325,19 +272,19 @@ public class UploadSession {
             return ok();
         }
 
-        int code = request.getCode();
+        int code = request.getStatusCode();
         IDataStore data = request.getData();
         debug("[upload][progress] response code=%s", code); //$NON-NLS-1$
         debug("[upload][progress] response text=%s", request.getResponseText()); //$NON-NLS-1$
 
-        if (code == HttpStatus.SC_OK && data != null) {
+        if (code == XMindNetRequest.HTTP_OK && data != null) {
             String status = data.getString("status"); //$NON-NLS-1$
             if (status != null) {
                 debug("[upload][progress] status=%s", status); //$NON-NLS-1$
                 if ("forbidden".equals(status)) { //$NON-NLS-1$
                     return error(CODE_VERIFICATION_FAILURE);
                 } else if ("error".equals(status)) { //$NON-NLS-1$
-                    return error(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                    return error(XMindNetRequest.HTTP_INTERNAL_ERROR);
                 } else if ("finished".equals(status)) { //$NON-NLS-1$
                     setStatus(COMPLETED);
                     return ok();
@@ -347,39 +294,7 @@ public class UploadSession {
             return ok();
         }
 
-        return error(code, request.getException());
-
-//        try {
-//            HttpClient client = new HttpClient();
-//            request.setURI(new URI(makeUploadURL(userName, sessionId), true,
-//                    client.getParams().getUriCharset()));
-//            setTokenAndJson(request, authToken);
-//            int code = client.executeMethod(request);
-//            if (code != HttpStatus.SC_OK) {
-//                return error(code);
-//            }
-//            String respBody = request.getResponseBodyAsString();
-//            debug("[upload session info] " + respBody); //$NON-NLS-1$
-//            JSONObject resp = new JSONObject(respBody);
-//            if (resp.has("status")) { //$NON-NLS-1$
-//                String status = resp.getString("status"); //$NON-NLS-1$
-//                debug("[upload progress] status=" + status); //$NON-NLS-1$
-//                if ("forbidden".equals(status)) { //$NON-NLS-1$
-//                    return error(CODE_VERIFICATION_FAILURE);
-//                } else if ("error".equals(status)) { //$NON-NLS-1$
-//                    return error(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-//                } else if ("finished".equals(status)) { //$NON-NLS-1$
-//                    setStatus(COMPLETED);
-//                    return ok();
-//                }
-//            }
-//            uploadProgress = resp.getDouble("progress"); //$NON-NLS-1$
-//            return ok();
-//        } catch (IOException e) {
-//            return error(e);
-//        } catch (JSONException e) {
-//            return error(e);
-//        }
+        return error(code, request.getError());
     }
 
     /**
@@ -417,7 +332,7 @@ public class UploadSession {
         XMindNetRequest request = new XMindNetRequest();
         if (DEBUG)
             request.debug();
-        request.uri(SESSION_API, userName, sessionId);
+        request.path(SESSION_API, userName, sessionId);
         request.setAuthToken(authToken);
         request.delete();
 
@@ -426,30 +341,16 @@ public class UploadSession {
             return ok();
         }
 
-        int code = request.getCode();
+        int code = request.getStatusCode();
         debug("[upload][cancel] response code=%s", code); //$NON-NLS-1$
         debug("[upload][cancel] response text=%s", request.getResponseText()); //$NON-NLS-1$
 
-        if (code == HttpStatus.SC_OK) {
+        if (code == XMindNetRequest.HTTP_OK) {
             setStatus(CANCELED);
             return ok();
         }
 
-        return error(code, request.getException());
-
-//        try {
-//            DeleteMethod method = new DeleteMethod(makeUploadURL(userName,
-//                    sessionId));
-//            setTokenAndJson(method, authToken);
-//            HttpClient client = new HttpClient();
-//            int code = client.executeMethod(method);
-//            if (code != HttpStatus.SC_OK)
-//                return error(code);
-//            setStatus(CANCELED);
-//            return ok();
-//        } catch (IOException e) {
-//            return error(e);
-//        }
+        return error(code, request.getError());
     }
 
     private void setStatus(int status) {
@@ -487,33 +388,5 @@ public class UploadSession {
             XmindSharePlugin.log(String.format(message, values));
         }
     }
-
-//    /**
-//     * http://www.xmind.net/_fs/mapfile/{USERNAME}/{SESSION}
-//     */
-//    private static String makeUploadURL(String... paths) {
-//        return makeURL(RES_URL, paths);
-//    }
-//
-//    public static String makeURL(String url, String... paths) {
-//        StringBuilder sb = new StringBuilder(url.length() + paths.length * 10);
-//        sb.append(url);
-//        for (String path : paths) {
-//            if (sb.charAt(sb.length() - 1) != '/') {
-//                sb.append('/');
-//            }
-//            try {
-//                sb.append(URLEncoder.encode(path, "UTF-8")); //$NON-NLS-1$
-//            } catch (UnsupportedEncodingException e) {
-//                sb.append(path);
-//            }
-//        }
-//        return sb.toString();
-//    }
-//
-//    public static void setTokenAndJson(HttpMethod method, String token) {
-//        method.setRequestHeader("AuthToken", token); //$NON-NLS-1$
-//        method.setRequestHeader("accept", "application/json"); //$NON-NLS-1$ //$NON-NLS-2$
-//    }
 
 }

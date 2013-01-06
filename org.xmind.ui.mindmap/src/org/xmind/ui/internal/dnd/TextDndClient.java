@@ -23,10 +23,10 @@ import org.eclipse.swt.dnd.TransferData;
 import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
 import org.xmind.gef.IViewer;
-import org.xmind.gef.dnd.IDndClient;
+import org.xmind.gef.Request;
 import org.xmind.ui.util.MindMapUtils;
 
-public class TextDndClient implements IDndClient {
+public class TextDndClient extends MindMapDNDClientBase {
 
     private static final String LINE_DELIMITER = System
             .getProperty("line.separator"); //$NON-NLS-1$
@@ -82,20 +82,20 @@ public class TextDndClient implements IDndClient {
         return MindMapUtils.getText(element, null);
     }
 
-    public Object[] toViewerElements(Object transferData, IViewer viewer,
-            Object target) {
+    @Override
+    protected Object[] toViewerElements(Object transferData, Request request,
+            IWorkbook workbook, ITopic targetParent, boolean dropInParent) {
         if (transferData instanceof String) {
             String text = (String) transferData;
-            IWorkbook workbook = (IWorkbook) viewer.getAdapter(IWorkbook.class);
             if (workbook != null) {
-                return buildeTopics(text, viewer, workbook);
+                return buildeTopics(text, workbook);
             }
             return new Object[] { text };
         }
         return null;
     }
 
-    private Object[] buildeTopics(String text, IViewer viewer, IWorkbook wb) {
+    private Object[] buildeTopics(String text, IWorkbook wb) {
         String[] lines = text.split("\\r\\n|\\r|\\n"); //$NON-NLS-1$
         ArrayList<ITopic> topics = new ArrayList<ITopic>(lines.length);
         HashMap<ITopic, Integer> map = new HashMap<ITopic, Integer>();

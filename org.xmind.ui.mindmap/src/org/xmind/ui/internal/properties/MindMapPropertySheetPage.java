@@ -150,7 +150,7 @@ public class MindMapPropertySheetPage extends GraphicalPropertySheetPage {
         String[] names = new String[objects.length];
         for (int i = 0; i < objects.length; i++) {
             Object obj = objects[i];
-            names[i] = getObjectName(obj);
+            names[i] = trim(getObjectName(obj));
         }
         return names;
     }
@@ -190,6 +190,11 @@ public class MindMapPropertySheetPage extends GraphicalPropertySheetPage {
             sb.append(s);
         }
         return sb.toString();
+    }
+
+    private static String trim(String name) {
+        name = name.replaceAll("\\s+", " ").trim(); //$NON-NLS-1$ //$NON-NLS-2$
+        return name.length() > 100 ? name.substring(0, 97) + "..." : name; //$NON-NLS-1$
     }
 
 }

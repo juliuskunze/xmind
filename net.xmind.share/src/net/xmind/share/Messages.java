@@ -65,6 +65,8 @@ public class Messages extends NLS {
     public static String ErrorDialog_title;
     public static String ErrorDialog_message;
     public static String ErrorDialog_Unauthorized_message;
+    public static String ErrorDialog_OutOfMemory_message;
+    public static String ErrorDialog_UnexpectedError_message;
 
     static {
         // initialize resource bundle

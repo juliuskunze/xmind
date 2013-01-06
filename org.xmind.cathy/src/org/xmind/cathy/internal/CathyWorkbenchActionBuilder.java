@@ -17,7 +17,6 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IStatusLineManager;
@@ -29,18 +28,18 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
-import org.eclipse.ui.actions.ContributionItemFactory;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.internal.provisional.application.IActionBarConfigurer2;
 import org.xmind.cathy.internal.actions.HelpAction;
 import org.xmind.cathy.internal.actions.ShowKeyAssistAction;
-import org.xmind.cathy.internal.actions.UpdateAction;
 import org.xmind.ui.internal.actions.ActionConstants;
 import org.xmind.ui.internal.actions.NewWorkbookAction;
 import org.xmind.ui.internal.actions.NewWorkbookWizardAction;
 import org.xmind.ui.internal.actions.OpenHomeMapAction;
 import org.xmind.ui.internal.actions.OpenWorkbookAction;
+import org.xmind.ui.internal.actions.ReopenWorkbookMenu;
+import org.xmind.ui.internal.editor.SaveActionUpdater;
 
 public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
@@ -97,13 +96,15 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
     private IWorkbenchAction helpAction;
 
-    private IWorkbenchAction updateAction;
+//    private IWorkbenchAction updateAction;
 
     private IWorkbenchAction aboutAction;
 
-    private IContributionItem reopenEditors;
+    private IAction reopenEditors;
 
     private IAction keyAssistAction;
+
+    private SaveActionUpdater saveActionUpdater;
 
 //    private NewMenu newMenu;
 
@@ -141,7 +142,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         register(closeAllAction);
 
         saveAction = ActionFactory.SAVE.create(window);
-        saveAction.setText(WorkbenchMessages.SaveAction_text);
         register(saveAction);
 
         saveAsAction = ActionFactory.SAVE_AS.create(window);
@@ -192,20 +192,32 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         findAction = ActionFactory.FIND.create(window);
         register(findAction);
 
-        reopenEditors = ContributionItemFactory.REOPEN_EDITORS.create(window);
+//        reopenEditors = ContributionItemFactory.REOPEN_EDITORS.create(window);
+        reopenEditors = new ReopenWorkbookMenu(window);
 
         // For Help Menu:
         helpAction = new HelpAction("org.xmind.ui.help", window); //$NON-NLS-1$
         register(helpAction);
 
-        updateAction = new UpdateAction("org.xmind.ui.update", window); //$NON-NLS-1$
-        register(updateAction);
+//        updateAction = new UpdateAction("org.xmind.ui.update", window); //$NON-NLS-1$
+//        register(updateAction);
 
         aboutAction = ActionFactory.ABOUT.create(window);
         register(aboutAction);
 
         keyAssistAction = new ShowKeyAssistAction();
         register(keyAssistAction);
+
+        this.saveActionUpdater = new SaveActionUpdater(window, saveAction);
+    }
+
+    @Override
+    public void dispose() {
+        if (saveActionUpdater != null) {
+            saveActionUpdater.dispose();
+            saveActionUpdater = null;
+        }
+        super.dispose();
     }
 
     private static boolean isPro() {
@@ -240,6 +252,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         menu.add(openAction);
         menu.add(openHomeMapAction);
+        menu.add(reopenEditors);
         menu.add(new GroupMarker(IWorkbenchActionConstants.OPEN_EXT));
         menu.add(new Separator());
 
@@ -264,9 +277,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(exportAction);
         menu.add(new GroupMarker(IWorkbenchActionConstants.IMPORT_EXT));
         menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-
-        menu.add(reopenEditors);
-        menu.add(new Separator());
 
         // If we're on OS X we shouldn't show this command in the File menu. It
         // should be invisible to the user. However, we should not remove it -
@@ -339,9 +349,9 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new Separator("group.tools")); //$NON-NLS-1$
         menu.add(new Separator("group.updates")); //$NON-NLS-1$
 
-        if (!CathyPlugin.getDistributionId().startsWith("vindy")) { //$NON-NLS-1$
-            menu.add(updateAction);
-        }
+//        if (!CathyPlugin.getDistributionId().startsWith("vindy")) { //$NON-NLS-1$
+//            menu.add(updateAction);
+//        }
 
         if (!isPro()) {
             menu.add(new GroupMarker("group.upgrade")); //$NON-NLS-1$

@@ -30,7 +30,7 @@ import net.xmind.signin.internal.XMindNetRequest;
 import net.xmind.workbench.internal.Messages;
 import net.xmind.workbench.internal.XMindNetWorkbench;
 
-import org.apache.commons.httpclient.HttpStatus;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -40,20 +40,19 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IStartup;
 import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.xmind.core.Core;
-import org.xmind.ui.dialogs.SimpleInfoPopupDialog;
+import org.xmind.ui.dialogs.NotificationWindow;
 
-public class SiteEventNotificationService implements IStartup,
-        IWorkbenchListener, ILicenseListener {
+public class SiteEventNotificationService implements ILicenseListener {
+
+    private static int POPUP_DURATION = 60000;
 
     private class CheckSiteEventJob extends Job {
 
@@ -74,8 +73,12 @@ public class SiteEventNotificationService implements IStartup,
                 return Status.CANCEL_STATUS;
 
             request = new XMindNetRequest();
-            request.uri("/_api/events"); //$NON-NLS-1$
-            request.addParameter("version", "3.3.0"); //$NON-NLS-1$ //$NON-NLS-2$
+            request.path("/_api/events"); //$NON-NLS-1$
+            request.addParameter("version", productVersion); //$NON-NLS-1$
+            String buildId = System.getProperty("org.xmind.product.buildid"); //$NON-NLS-1$
+            if (buildId != null) {
+                request.addParameter("buildid", buildId); //$NON-NLS-1$
+            }
             request.addParameter("os", Platform.getOS()); //$NON-NLS-1$
             request.addParameter("arch", Platform.getOSArch()); //$NON-NLS-1$
             request.addParameter("nl", Platform.getNL()); //$NON-NLS-1$
@@ -86,20 +89,20 @@ public class SiteEventNotificationService implements IStartup,
             if (monitor.isCanceled() || request.isAborted())
                 return Status.CANCEL_STATUS;
 
-            int code = request.getCode();
+            int code = request.getStatusCode();
             IDataStore data = request.getData();
-            if (code == HttpStatus.SC_OK) {
+            if (code == XMindNetRequest.HTTP_OK) {
                 if (data != null) {
                     return handleSiteEvents(monitor, data);
                 } else {
-                    XMindNetWorkbench.log(request.getException(),
+                    XMindNetWorkbench.log(request.getError(),
                             "Failed to parse response of site events."); //$NON-NLS-1$
                 }
-            } else if (code == XMindNetRequest.ERROR) {
-                XMindNetWorkbench.log(request.getException(),
+            } else if (code == XMindNetRequest.HTTP_ERROR) {
+                XMindNetWorkbench.log(request.getError(),
                         "Failed to connect to xmind.net for site events."); //$NON-NLS-1$
             } else {
-                XMindNetWorkbench.log(request.getException(),
+                XMindNetWorkbench.log(request.getError(),
                         "Failed to retrieve site events: " + code); //$NON-NLS-1$
             }
             return Status.CANCEL_STATUS;
@@ -113,7 +116,7 @@ public class SiteEventNotificationService implements IStartup,
             }
             // for test:
 //          JSONObject js = new JSONObject();
-//          js.put("id", "8");
+//          js.put("id", "9999");
 //          js.put("prompt", "always");
 //          js.put("title", "XMind official group on Biggerplate");
 //          js.put("url", "http://blog.xmind.net/en/2012/02/biggerplate/");
@@ -193,9 +196,14 @@ public class SiteEventNotificationService implements IStartup,
 
     private IPreferenceStore prefStore;
 
-    public SiteEventNotificationService() {
+    private String productVersion;
+
+    public SiteEventNotificationService(IWorkbench workbench) {
+        Assert.isNotNull(workbench);
+        this.workbench = workbench;
         prefStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
                 "org.xmind.cathy"); //$NON-NLS-1$
+        productVersion = System.getProperty("org.xmind.product.version"); //$NON-NLS-1$
     }
 
     private SiteEventStore getLocalEventStore() {
@@ -319,21 +327,33 @@ public class SiteEventNotificationService implements IStartup,
                     return;
 
                 for (ISiteEvent event : events) {
-                    SimpleInfoPopupDialog dialog = new SimpleInfoPopupDialog(
-                            shell,
-                            null,
-                            event.getTitle(),
-                            0,
-                            event.getMoreUrl() == null ? null
-                                    : new URLAction(
-                                            Messages.SiteEventNotificationService_More_text,
-                                            event.getMoreUrl(), event
-                                                    .isOpenExternal()),
-                            new URLAction(event.getActionText(), event
-                                    .getEventUrl(), event.isOpenExternal()));
-                    dialog.setDuration(10000);
-                    dialog.setGroupId("org.xmind.notifications"); //$NON-NLS-1$
-                    dialog.popUp(shell);
+                    String caption = event.getCaption();
+                    String url = event.getInternalUrl();
+                    if (url == null) {
+                        url = event.getEventUrl();
+                    }
+                    String moreUrl = event.getMoreUrl();
+                    String text = event.getHTML();
+                    if (text == null) {
+                        text = event.getText();
+                    }
+                    int duration = event.getDuration();
+                    if (duration < 0) { // long time stay
+                        duration = 0;
+                    } else if (duration == 0) { // default value
+                        duration = POPUP_DURATION;
+                    }
+                    if (text != null) {
+                        IAction action = new URLAction(text, url, event
+                                .isOpenExternal());
+                        IAction moreAction = moreUrl == null ? null
+                                : new URLAction(
+                                        Messages.SiteEventNotificationService_More_text,
+                                        moreUrl, event.isOpenExternal());
+                        new NotificationWindow(shell, caption, action,
+                                moreAction, duration).setCloseOnMoreLink(true)
+                                .open();
+                    }
                 }
             }
         });
@@ -350,18 +370,6 @@ public class SiteEventNotificationService implements IStartup,
         }
     }
 
-    public void earlyStartup() {
-        this.workbench = PlatformUI.getWorkbench();
-        workbench.addWorkbenchListener(this);
-        int type = XMindNet.getLicenseInfo().getType();
-        if (type == ILicenseInfo.VERIFYING) {
-            XMindNet.addLicenseListener(this);
-        } else {
-            parseLicenseType(type);
-            checkEvent();
-        }
-    }
-
     protected void parseLicenseType(int type) {
         if ((type & ILicenseInfo.VALID_PRO_LICENSE) != 0) {
             licenseType = "pro_license"; //$NON-NLS-1$
@@ -374,12 +382,25 @@ public class SiteEventNotificationService implements IStartup,
         }
     }
 
-    public void postShutdown(IWorkbench workbench) {
-        stop();
-        if (this.workbench == null)
+    public void start() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
             return;
-        this.workbench.removeWorkbenchListener(this);
-        this.workbench = null;
+        }
+        if (productVersion != null && !"".equals(productVersion)) { //$NON-NLS-1$
+            int type = XMindNet.getLicenseInfo().getType();
+            if (type == ILicenseInfo.VERIFYING) {
+                XMindNet.addLicenseListener(this);
+            } else {
+                parseLicenseType(type);
+                checkEvent();
+            }
+        }
+    }
+
+    public void shutdown() {
+        stop();
         XMindNet.removeLicenseListener(this);
     }
 

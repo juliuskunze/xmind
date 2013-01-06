@@ -247,8 +247,8 @@ public class SignInDialog extends Dialog implements StatusTextListener,
     }
 
     private boolean checkCommand(String text) {
-        XMindNetCommand command = new XMindNetCommand(text);
-        if (!command.parse())
+        XMindNetCommand command = XMindNetCommand.createFromText(text);
+        if (command == null)
             return false;
         if ("200".equals(command.getCode())) { //$NON-NLS-1$
             return executeJSON(command.getContent());

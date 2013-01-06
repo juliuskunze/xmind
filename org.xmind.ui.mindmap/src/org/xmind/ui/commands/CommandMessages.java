@@ -120,6 +120,9 @@ public class CommandMessages extends NLS {
     public static String Command_Sort;
     public static String Command_ModifyWidth;
 
+    public static String Command_TurnOnAutoRevisionSaving;
+    public static String Command_TurnOffAutoRevisionSaving;
+
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, CommandMessages.class);

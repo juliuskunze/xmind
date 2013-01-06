@@ -30,6 +30,10 @@ public class URLTemplateDescriptor extends AbstractTemplateDescriptor {
         this.name = name;
     }
 
+    public String getSymbolicName() {
+        return url.toExternalForm();
+    }
+
     public String getName() {
         return name;
     }

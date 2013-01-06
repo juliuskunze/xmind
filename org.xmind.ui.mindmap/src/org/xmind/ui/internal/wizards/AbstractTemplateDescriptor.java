@@ -14,9 +14,19 @@
 package org.xmind.ui.internal.wizards;
 
 import java.beans.PropertyChangeSupport;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.IEditorInput;
+import org.xmind.core.IFileEntryFilter;
+import org.xmind.core.internal.zip.ArchiveConstants;
+import org.xmind.core.internal.zip.ZipStreamOutputTarget;
+import org.xmind.core.util.FileUtils;
 import org.xmind.ui.internal.ITemplateDescriptor;
+import org.xmind.ui.internal.editor.MME;
 
 public abstract class AbstractTemplateDescriptor implements ITemplateDescriptor {
 
@@ -38,4 +48,29 @@ public abstract class AbstractTemplateDescriptor implements ITemplateDescriptor 
         return pcs;
     }
 
+    public IEditorInput createEditorInput() {
+        InputStream stream = newStream();
+        if (stream != null) {
+            return MME.createTemplatedEditorInput(removeRevisions(stream));
+        }
+        return MME.createNonExistingEditorInput();
+    }
+
+    private InputStream removeRevisions(InputStream stream) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        try {
+            FileUtils.extractZipStream(stream, new ZipStreamOutputTarget(
+                    new ZipOutputStream(buffer), false),
+                    new IFileEntryFilter() {
+                        public boolean select(String path, String mediaType,
+                                boolean isDirectory) {
+                            return !path
+                                    .startsWith(ArchiveConstants.PATH_REVISIONS);
+                        }
+                    });
+        } catch (Exception e) {
+            return newStream();
+        }
+        return new ByteArrayInputStream(buffer.toByteArray());
+    }
 }

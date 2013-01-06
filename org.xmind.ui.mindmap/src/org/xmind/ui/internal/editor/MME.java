@@ -1,6 +1,7 @@
 package org.xmind.ui.internal.editor;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -14,12 +15,23 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.osgi.framework.Bundle;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.util.FileUtils;
+import org.xmind.ui.internal.MarkerImpExpUtils;
 import org.xmind.ui.internal.MindMapUIPlugin;
+import org.xmind.ui.internal.dialogs.DialogMessages;
+import org.xmind.ui.internal.prefs.MarkerManagerPrefPage;
+import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.PrefUtils;
 
 public class MME {
 
@@ -282,4 +294,90 @@ public class MME {
         return ideBundle;
     }
 
+    public static void launch(IWorkbenchWindow window, String path,
+            String fileName) {
+        File file = new File(path);
+        if (!file.exists()) {
+            if (Display.getCurrent() != null) {
+                if (!MessageDialog
+                        .openConfirm(
+                                window.getShell(),
+                                DialogMessages.InfoFileNotExists_title,
+                                NLS.bind(
+                                        DialogMessages.InfoFileNotExists_message,
+                                        path))) {
+                    return;
+                }
+            }
+        }
+        String extension = FileUtils.getExtension(path);
+        if (MindMapUI.FILE_EXT_TEMPLATE.equalsIgnoreCase(extension)) {
+            if (window != null && Display.getCurrent() != null) {
+                if (openTemplate(window, path, fileName))
+                    return;
+            }
+        } else if (MindMapUI.FILE_EXT_XMIND.equalsIgnoreCase(extension)) {
+            if (window != null && Display.getCurrent() != null) {
+                if (openMindMap(window, path, fileName))
+                    return;
+            }
+        } else if (MindMapUI.FILE_EXT_MARKER_PACKAGE
+                .equalsIgnoreCase(extension)) {
+            if (importMarkers(path))
+                return;
+        }
+
+        org.xmind.ui.viewers.FileUtils.launch(file.getAbsolutePath());
+    }
+
+    /**
+     * @param window
+     * @param path
+     */
+    private static boolean openTemplate(IWorkbenchWindow window, String path,
+            String fileName) {
+        return openMindMap(window, path, fileName);
+    }
+
+    /**
+     * @param window
+     * @param path
+     */
+    private static boolean openMindMap(final IWorkbenchWindow window,
+            final String path, final String fileName) {
+        String errMessage = NLS.bind(
+                DialogMessages.FailedToLoadWorkbook_message, path);
+        final boolean[] ret = new boolean[1];
+        SafeRunner.run(new SafeRunnable(errMessage) {
+            public void run() throws Exception {
+                window.getActivePage().openEditor(
+                        MME.createFileEditorInput(path),
+                        MindMapUI.MINDMAP_EDITOR_ID);
+                ret[0] = true;
+            }
+        });
+        return ret[0];
+    }
+
+    /**
+     * @param path
+     */
+    private static boolean importMarkers(String path) {
+        try {
+            MarkerImpExpUtils.importMarkerPackage(path);
+
+            Display display = Display.getCurrent();
+            if (display != null) {
+                display.asyncExec(new Runnable() {
+                    public void run() {
+                        PrefUtils
+                                .openPrefDialog(null, MarkerManagerPrefPage.ID);
+                    }
+                });
+            }
+            return true;
+        } catch (IOException e) {
+        }
+        return false;
+    }
 }

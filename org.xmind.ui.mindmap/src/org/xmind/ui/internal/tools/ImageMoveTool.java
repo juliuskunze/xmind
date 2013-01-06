@@ -17,8 +17,12 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Layer;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jface.util.Util;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Cursor;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.xmind.gef.GEF;
 import org.xmind.gef.Request;
 import org.xmind.gef.draw2d.SizeableImageFigure;
@@ -46,8 +50,24 @@ public class ImageMoveTool extends DummyMoveTool {
     protected IFigure createDummy() {
         Layer layer = getTargetViewer().getLayer(GEF.LAYER_PRESENTATION);
         if (layer != null) {
-            SizeableImageFigure dummy = new SizeableImageFigure(
-                    ((IImagePart) getSource()).getImage());
+            Image sourceImage = ((IImagePart) getSource()).getImage();
+            Rectangle sourceBounds = getSource().getFigure().getBounds();
+            Image image = new Image(sourceImage.getDevice(),
+                    sourceBounds.width, sourceBounds.height);
+            GC gc = new GC(image);
+            try {
+                gc.setAntialias(SWT.ON);
+                org.eclipse.swt.graphics.Rectangle sourceImageSize = sourceImage
+                        .getBounds();
+                org.eclipse.swt.graphics.Rectangle imageSize = image
+                        .getBounds();
+                gc.drawImage(sourceImage, 0, 0, sourceImageSize.width,
+                        sourceImageSize.height, 0, 0, imageSize.width,
+                        imageSize.height);
+            } finally {
+                gc.dispose();
+            }
+            SizeableImageFigure dummy = new SizeableImageFigure(image);
             dummy.setStretched(true);
             dummy.setConstrained(false);
             dummy.setBounds(getSource().getFigure().getBounds());
@@ -56,6 +76,16 @@ public class ImageMoveTool extends DummyMoveTool {
             return dummy;
         }
         return null;
+    }
+
+    @Override
+    protected void destroyDummy(IFigure dummy) {
+        if (dummy instanceof SizeableImageFigure) {
+            Image image = ((SizeableImageFigure) dummy).getImage();
+            ((SizeableImageFigure) dummy).setImage(null);
+            image.dispose();
+        }
+        super.destroyDummy(dummy);
     }
 
     protected void onMoving(Point currentPos, MouseDragEvent me) {

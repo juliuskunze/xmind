@@ -32,20 +32,19 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.xmind.core.ITopic;
 import org.xmind.gef.GEF;
-import org.xmind.gef.IViewer;
 import org.xmind.gef.draw2d.RotatableWrapLabel;
 import org.xmind.gef.draw2d.SizeableImageFigure;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.part.IRequestHandler;
 import org.xmind.gef.policy.NullEditPolicy;
 import org.xmind.gef.service.IFeedback;
-import org.xmind.gef.service.IImageRegistryService;
 import org.xmind.gef.ui.actions.IActionRegistry;
 import org.xmind.ui.internal.decorators.IconTipDecorator;
 import org.xmind.ui.mindmap.IIconTipPart;
 import org.xmind.ui.mindmap.ISelectionFeedbackHelper;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.resources.FontUtils;
+import org.xmind.ui.resources.ImageReference;
 
 public class IconTipPart extends MindMapPartBase implements IIconTipPart,
         IPropertyChangeListener {
@@ -56,13 +55,7 @@ public class IconTipPart extends MindMapPartBase implements IIconTipPart,
 
     private String actionId;
 
-    private ImageDescriptor imageDescriptor;
-
-    private Image image;
-
-    private boolean imageCreatable = true;
-
-    private boolean imageNeedsDispose = false;
+    private ImageReference imageRef = null;
 
     public IconTipPart() {
         setDecorator(IconTipDecorator.getInstance());
@@ -77,10 +70,9 @@ public class IconTipPart extends MindMapPartBase implements IIconTipPart,
     }
 
     public Image getImage() {
-        if (image == null && imageCreatable) {
-            image = createImage();
-        }
-        return image;
+        if (imageRef != null && !imageRef.isDisposed())
+            return imageRef.getImage();
+        return null;
     }
 
     public SizeableImageFigure getImageFigure() {
@@ -139,6 +131,7 @@ public class IconTipPart extends MindMapPartBase implements IIconTipPart,
             registerAction(action);
         if (action != null)
             action.addPropertyChangeListener(this);
+        updateImage();
     }
 
     private void unregisterAction(String actionId, IAction action) {
@@ -169,43 +162,27 @@ public class IconTipPart extends MindMapPartBase implements IIconTipPart,
         actionRegistry.addAction(action);
     }
 
-    private Image createImage() {
-        IViewer viewer = getSite().getViewer();
-        ImageDescriptor descriptor = getImageDescriptor();
-        if (viewer != null) {
-            IImageRegistryService service = (IImageRegistryService) viewer
-                    .getService(IImageRegistryService.class);
-            if (service != null) {
-                return service.getImage(descriptor, false, this);
+    private void updateImage() {
+        ImageDescriptor oldImageDescriptor = imageRef == null ? null : imageRef
+                .getImageDescriptor();
+        ImageDescriptor newImageDescriptor = action == null ? null : action
+                .getImageDescriptor();
+        if (oldImageDescriptor != newImageDescriptor
+                && (oldImageDescriptor == null || !oldImageDescriptor
+                        .equals(newImageDescriptor))) {
+            if (imageRef != null) {
+                imageRef.dispose();
             }
+            imageRef = newImageDescriptor == null ? null : new ImageReference(
+                    newImageDescriptor, false);
         }
-        imageNeedsDispose = true;
-        return descriptor == null ? null : descriptor.createImage(false,
-                Display.getCurrent());
-    }
-
-    public ImageDescriptor getImageDescriptor() {
-        if (imageDescriptor == null) {
-            imageDescriptor = action == null ? null : action
-                    .getImageDescriptor();
-        }
-        return imageDescriptor;
     }
 
     protected void onDeactivated() {
-        imageCreatable = false;
-        IViewer viewer = getSite().getViewer();
-        if (viewer != null) {
-            IImageRegistryService service = (IImageRegistryService) viewer
-                    .getService(IImageRegistryService.class);
-            if (service != null) {
-                service.decreaseRef(getImageDescriptor(), this);
-            }
+        if (imageRef != null) {
+            imageRef.dispose();
+            imageRef = null;
         }
-        if (image != null && imageNeedsDispose) {
-            image.dispose();
-        }
-        image = null;
         super.onDeactivated();
     }
 
@@ -270,8 +247,8 @@ public class IconTipPart extends MindMapPartBase implements IIconTipPart,
 
     protected void declareEditPolicies(IRequestHandler reqHandler) {
         super.declareEditPolicies(reqHandler);
-        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE,
+                NullEditPolicy.getInstance());
     }
 
     protected IFeedback createFeedback() {
@@ -288,187 +265,9 @@ public class IconTipPart extends MindMapPartBase implements IIconTipPart,
                 || IAction.TOOL_TIP_TEXT.equals(property)) {
             updateToolTip();
         } else if (IAction.IMAGE.equals(property)) {
-            image = null;
-            imageDescriptor = null;
+            updateImage();
             update();
         }
     }
 
-//    private ICacheManager cache = null;
-//
-//    private ImageDescriptor imageDescriptor = null;
-//
-//    private Image image = null;
-//
-//    private IconTipContributionDescriptor contributionDescriptor = null;
-//
-//    private IIconTipContribution contribution = null;
-//
-//    private boolean imageCreatedByContribution = false;
-//
-//
-//    public void setContributionDescriptor(
-//            IconTipContributionDescriptor contributionDescriptor) {
-//        this.contributionDescriptor = contributionDescriptor;
-//    }
-//
-//    public IconTipContributionDescriptor getContributionDescriptor() {
-//        return contributionDescriptor;
-//    }
-//
-//    public IIconTipContribution getContribution() {
-//        if (contribution != null)
-//            return contribution;
-//
-//        if (contributionDescriptor == null)
-//            return NullIconTipContribution.getInstance();
-//
-//        contribution = contributionDescriptor.getContribution();
-//        return contribution;
-//    }
-//
-////    public IIconTipContribution getAdvisor() {
-////        return contribution;
-////    }
-////
-////    public void setAdvisor(IIconTipContribution advisor) {
-////        this.contribution = advisor;
-////    }
-//
-//
-//    public void setParent(IPart parent) {
-//        if (getParent() instanceof TopicPart) {
-//            ((TopicPart) getParent()).removeIconTip(this);
-//        }
-//        super.setParent(parent);
-//        if (getParent() instanceof TopicPart) {
-//            ((TopicPart) getParent()).addIconTip(this);
-//        }
-//    }
-//
-//    public Object getAdapter(Class adapter) {
-//        if (adapter == ITopic.class)
-//            return getTopic();
-//        if (adapter == Image.class)
-//            return getImage();
-//        if (adapter == ICacheManager.class)
-//            return getCacheManager();
-//        return super.getAdapter(adapter);
-//    }
-//
-//    public Image getImage() {
-//        if (image == null) {
-//            image = createImage();
-//        }
-//        return image;
-//    }
-//
-//    private Image createImage() {
-//        return createImage(imageDescriptor);
-//    }
-//
-//    private Image createImage(ImageDescriptor imageDescriptor) {
-//        imageCreatedByContribution = false;
-//        if (imageDescriptor == null)
-//            return null;
-//        Image img = getContribution().createImage(this, imageDescriptor);
-//        if (img != null) {
-//            imageCreatedByContribution = true;
-//            return img;
-//        }
-//        return imageDescriptor.createImage(false);
-//    }
-//
-//    public SizeableImageFigure getImageFigure() {
-//        return (SizeableImageFigure) super.getFigure();
-//    }
-//
-//    public void setImageDescriptor(ImageDescriptor image) {
-//        if (image == this.imageDescriptor)
-//            return;
-//        this.imageDescriptor = image;
-//        imageChanged();
-//    }
-//
-//    private void imageChanged() {
-//        releaseImage();
-//        image = createImage();
-//    }
-//
-//    private void releaseImage() {
-//        if (image != null) {
-//            releaseImage(image);
-//            image = null;
-//        }
-//    }
-//
-//    private void releaseImage(Image image) {
-//        if (imageCreatedByContribution) {
-//            getContribution().releaseImage(this, image);
-//        } else {
-//            image.dispose();
-//        }
-//        imageCreatedByContribution = false;
-//    }
-//
-//    public void updateView() {
-//        getContribution().update(this);
-//        super.updateView();
-//    }
-//
-//    protected void onActivated() {
-//        super.onActivated();
-//        getContribution().activate(this);
-//    }
-//
-//    protected void onDeactivated() {
-//        releaseImage();
-//        getContribution().deactivate(this);
-//        super.onDeactivated();
-//    }
-//
-////    protected void registerCoreEvents(ICoreEventSource source,
-////            ICoreEventRegister register) {
-////        super.registerCoreEvents(source, register);
-////        String[] types = contributionDescriptor.getUpdateTypes();
-////        for (String type : types) {
-////            register.register(type);
-////        }
-//////            contribution.registerCoreEvents(this, getTopic(), register);
-////    }
-////
-////    protected void handleModelChange(CoreEvent event) {
-////        String type = event.getType();
-////        String[] types = contributionDescriptor.getUpdateTypes();
-////        for (String t : types) {
-////            if (type.equals(t)) {
-////                update();
-////                return;
-////            }
-////        }
-////        //getContribution().handleEvent(this, event);
-//////        super.handleModelChange(event);
-////    }
-//
-//    public ImageDescriptor getImageDescriptor() {
-//        return imageDescriptor;
-//    }
-//
-//
-////    protected void uninstallPolicies(IRequestProcessor reqProc) {
-////        reqProc.uninstallPolicy(GEF.ROLE_SELECTABLE);
-////        super.uninstallPolicies(reqProc);
-////    }
-//
-//
-//    public void handleMouseClick(MouseEvent me) {
-//        getContribution().handleMouseClick(this, me);
-//    }
-//
-//    public ICacheManager getCacheManager() {
-//        if (cache == null)
-//            cache = new CacheManager(this);
-//        return cache;
-//    }
-//
 }

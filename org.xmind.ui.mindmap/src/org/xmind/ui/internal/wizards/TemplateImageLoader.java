@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.draw2d.geometry.Insets;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.graphics.Image;
@@ -153,7 +154,8 @@ public class TemplateImageLoader extends Job {
             InputStream stream = template.newStream();
             if (stream != null) {
                 try {
-                    image = loadImageFromExistingThumbnail(stream);
+                    image = loadImageFromExistingThumbnail(template.getName(),
+                            stream);
                 } catch (Throwable e) {
                     Logger.log(e, "Failed to load image: " + template.getName()); //$NON-NLS-1$
                 } finally {
@@ -186,8 +188,8 @@ public class TemplateImageLoader extends Job {
         }
     }
 
-    protected ImageDescriptor loadImageFromExistingThumbnail(InputStream stream)
-            throws IOException {
+    protected ImageDescriptor loadImageFromExistingThumbnail(
+            String templateName, InputStream stream) throws IOException {
         ZipInputStream zin = new ZipInputStream(stream);
         ZipEntry entry = zin.getNextEntry();
         while (entry != null) {
@@ -196,7 +198,11 @@ public class TemplateImageLoader extends Job {
                 try {
                     return loadImageFromThumbnail(zin);
                 } catch (Throwable e) {
-                    e.printStackTrace();
+                    Logger.log(
+                            e,
+                            NLS.bind(
+                                    "Failed to load thumbnail image from template stream: {0}", //$NON-NLS-1$
+                                    templateName));
                 }
             }
             entry = zin.getNextEntry();
@@ -204,10 +210,17 @@ public class TemplateImageLoader extends Job {
         return null;
     }
 
-    private ImageDescriptor loadImageFromThumbnail(InputStream stream) {
-        ImageLoader loader = new ImageLoader();
-        loader.load(stream);
-        return ImageDescriptor.createFromImageData(loader.data[0]);
+    private ImageDescriptor loadImageFromThumbnail(final InputStream stream) {
+        final ImageDescriptor[] imageDescriptor = new ImageDescriptor[1];
+        display.syncExec(new Runnable() {
+            public void run() {
+                final ImageLoader loader = new ImageLoader();
+                loader.load(stream);
+                imageDescriptor[0] = ImageDescriptor
+                        .createFromImageData(loader.data[0]);
+            }
+        });
+        return imageDescriptor[0];
     }
 
     protected ImageDescriptor loadImageFromThumbnailExporter(InputStream stream)
@@ -218,9 +231,15 @@ public class TemplateImageLoader extends Job {
             IWorkbook workbook = Core.getWorkbookBuilder().loadFromStorage(
                     storage);
             exporter.setSource(new MindMap(workbook.getPrimarySheet()),
-                    compositeProvider, null, null);
-            Image image = exporter.createImage();
-            return ImageDescriptor.createFromImage(image);
+                    compositeProvider, null, new Insets(40));
+            final ImageDescriptor[] imageDescriptor = new ImageDescriptor[1];
+            display.syncExec(new Runnable() {
+                public void run() {
+                    Image image = exporter.createImage();
+                    imageDescriptor[0] = ImageDescriptor.createFromImage(image);
+                }
+            });
+            return imageDescriptor[0];
         } catch (CoreException e) {
             if (e.getType() == Core.ERROR_WRONG_PASSWORD
                     || e.getType() == Core.ERROR_CANCELLATION) {

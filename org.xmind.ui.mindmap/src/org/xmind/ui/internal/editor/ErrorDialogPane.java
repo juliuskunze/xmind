@@ -24,22 +24,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import org.xmind.ui.dialogs.ErrorDetailsDialog;
 import org.xmind.ui.internal.MindMapMessages;
 
 public class ErrorDialogPane extends DialogPane {
 
-    /**
-     * 
-     */
-//    private final MindMapEditor mindMapEditor;
-
-//    /**
-//     * @param mindMapEditor
-//     */
-//    public ErrorDialogPane(MindMapEditor mindMapEditor) {
-//        this.mindMapEditor = mindMapEditor;
-//    }
-//
     private Text summaryBoard;
 
     private String summary = null;
@@ -49,6 +38,8 @@ public class ErrorDialogPane extends DialogPane {
     private long time;
 
     private String title;
+
+    private String message;
 
     @Override
     protected Control createDialogContents(Composite parent) {
@@ -129,7 +120,6 @@ public class ErrorDialogPane extends DialogPane {
 
     @Override
     protected boolean closePressed() {
-//        this.mindMapEditor.getSite().getPage().closeEditor(this.mindMapEditor, false);
         setReturnCode(CANCEL);
         close();
         return true;
@@ -145,7 +135,9 @@ public class ErrorDialogPane extends DialogPane {
         if (error == null)
             return;
 
-        new ErrorDetailsDialog(error, title, time).open();
+        new ErrorDetailsDialog(getContainer().getShell(),
+                MindMapMessages.ErrorDetailDialog_title, message, error, title,
+                time).open();
     }
 
     public void setContent(Throwable error, String title, String message,
@@ -153,6 +145,7 @@ public class ErrorDialogPane extends DialogPane {
         this.error = error;
         this.time = time;
         this.title = title;
+        this.message = message;
         this.summary = NLS.bind(
                 MindMapMessages.ErrorDialogPane_summaryBoard_text,
                 new Object[] { message, error.getClass().getName(),

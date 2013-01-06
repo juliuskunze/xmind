@@ -473,6 +473,10 @@ public class BrowserViewer implements IBrowserViewer {
         hookControl(this.composite);
     }
 
+    public int getStyle() {
+        return style;
+    }
+
     protected void hookControl(Control control) {
         control.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent e) {
@@ -1316,6 +1320,18 @@ public class BrowserViewer implements IBrowserViewer {
      */
     public boolean isMozilla() {
         return mozilla;
+    }
+
+    public BackAction getBackAction() {
+        return backAction;
+    }
+
+    public ForwardAction getForwardAction() {
+        return forwardAction;
+    }
+
+    public StopRefreshAction getStopRefreshAction() {
+        return stopRefreshAction;
     }
 
     private static Object getDefaultBusyPictures() {

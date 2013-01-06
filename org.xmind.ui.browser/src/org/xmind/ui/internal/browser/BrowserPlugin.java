@@ -72,6 +72,10 @@ public class BrowserPlugin extends AbstractUIPlugin {
         log(null, e);
     }
 
+    public static void log(String message) {
+        log(message, null);
+    }
+
     public static void log(String message, Throwable e) {
         if (message == null)
             message = ""; //$NON-NLS-1$

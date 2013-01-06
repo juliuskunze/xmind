@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="%productName" id="org.xmind.cathy.product" application="org.xmind.cathy.application" version="3.3.0.qualifier" useFeatures="true" includeLaunchers="true">
+<product name="%productName" uid="org.xmind.cathy.product" id="org.xmind.cathy.product" application="org.xmind.cathy.application" version="3.3.1.qualifier" useFeatures="true" includeLaunchers="true">
 
    <aboutInfo>
       <image path="/org.xmind.cathy/icons/about.png"/>
@@ -29,7 +29,6 @@
          <bmp/>
       </win>
    </launcher>
-
 
    <vm>
    </vm>
@@ -84,7 +83,7 @@
       <plugin id="org.eclipse.jface"/>
       <plugin id="org.eclipse.jface.databinding"/>
       <plugin id="org.eclipse.jface.text"/>
-      <plugin id="org.eclipse.nebula.widgets.ganttchart" fragment=""/>
+      <plugin id="org.eclipse.nebula.widgets.ganttchart"/>
       <plugin id="org.eclipse.osgi"/>
       <plugin id="org.eclipse.swt"/>
       <plugin id="org.eclipse.swt.cocoa.macosx" fragment="true"/>

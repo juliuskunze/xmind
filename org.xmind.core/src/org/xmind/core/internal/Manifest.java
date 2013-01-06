@@ -38,4 +38,14 @@ public abstract class Manifest implements IManifest {
         return list;
     }
 
+    public boolean deleteFileEntry(String path) {
+        IFileEntry entry = getFileEntry(path);
+        if (entry == null)
+            return false;
+        entry.increaseReference();
+        while (entry.getReferenceCount() > 0) {
+            entry.decreaseReference();
+        }
+        return true;
+    }
 }

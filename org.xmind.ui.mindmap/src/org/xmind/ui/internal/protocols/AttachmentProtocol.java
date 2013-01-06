@@ -14,26 +14,17 @@
 package org.xmind.ui.internal.protocols;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.util.SafeRunnable;
-import org.eclipse.osgi.util.NLS;
-import org.eclipse.swt.program.Program;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.xmind.core.Core;
 import org.xmind.core.IFileEntry;
 import org.xmind.core.INamed;
@@ -41,13 +32,9 @@ import org.xmind.core.ITitled;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventSource2;
-import org.xmind.core.util.FileUtils;
 import org.xmind.core.util.HyperlinkUtils;
-import org.xmind.ui.internal.MarkerImpExpUtils;
 import org.xmind.ui.internal.MindMapMessages;
-import org.xmind.ui.internal.dialogs.DialogMessages;
 import org.xmind.ui.internal.editor.MME;
-import org.xmind.ui.internal.prefs.MarkerManagerPrefPage;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.IProtocol;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -86,7 +73,7 @@ public class AttachmentProtocol implements IProtocol {
             if (!attFile.exists())
                 return;
 
-            open(attFile.getAbsolutePath());
+            MME.launch(window, attFile.getAbsolutePath(), fileName);
 
             if (workbook instanceof ICoreEventSource2) {
                 ((ICoreEventSource2) workbook).registerOnceCoreEventListener(
@@ -94,122 +81,6 @@ public class AttachmentProtocol implements IProtocol {
             }
         }
 
-        /**
-         * @param path
-         */
-        private void open(String path) {
-            String extension = FileUtils.getExtension(path);
-            if (MindMapUI.FILE_EXT_TEMPLATE.equalsIgnoreCase(extension)) {
-                if (window != null) {
-                    if (openTemplate(window, path, fileName))
-                        return;
-                }
-            } else if (MindMapUI.FILE_EXT_XMIND.equalsIgnoreCase(extension)) {
-                if (window != null) {
-                    if (openMindMap(window, path, fileName))
-                        return;
-                }
-            } else if (MindMapUI.FILE_EXT_MARKER_PACKAGE
-                    .equalsIgnoreCase(extension)) {
-                if (importMarkers(path))
-                    return;
-            }
-
-            openDocument(path, new File(path));
-        }
-
-        protected void openDocument(String path, File file) {
-            try {
-                try {
-                    openDefault(file.getCanonicalPath());
-                } catch (IOException e) {
-                    try {
-                        openDefault(path);
-                    } catch (IOException e2) {
-                        try {
-                            Program.launch(file.getCanonicalPath());
-                        } catch (IOException e3) {
-                            Program.launch(path);
-                        }
-                    }
-                }
-            } catch (InterruptedException ignore) {
-            }
-        }
-
-        private void openDefault(String path) throws IOException,
-                InterruptedException {
-            File dir = new File(System.getProperty("user.home")); //$NON-NLS-1$
-            String os = Platform.getOS();
-            if ("win32".equals(os)) { //$NON-NLS-1$
-                try {
-                    Runtime.getRuntime().exec(new String[] { "explorer.exe", //$NON-NLS-1$
-                            "\"" + path + "\"" //$NON-NLS-1$ //$NON-NLS-2$
-                    }, null, dir);
-                } catch (Throwable e) {
-                    // Reference: http://frank.zinepal.com/open-a-file-in-the-default-application-using
-                    Runtime.getRuntime().exec(new String[] { "cmd", //$NON-NLS-1$
-                            "/c", "\"" + path + "\"" }, null, dir); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                }
-            } else if ("macosx".equals(os)) { //$NON-NLS-1$
-                Runtime.getRuntime().exec(new String[] { "open", //$NON-NLS-1$
-                        path }, null, dir);
-            } else if ("linux".equals(os)) { //$NON-NLS-1$
-                // Reference: http://pastebin.com/Ka8gkxZn
-                // Thanks for Joachim Breuer for providing us this patch.
-                Runtime.getRuntime().exec(new String[] { "xdg-open", //$NON-NLS-1$
-                        path }, null, dir);
-            } else {
-                throw new FileNotFoundException();
-            }
-        }
-
-        /**
-         * @param window
-         * @param path
-         */
-        private boolean openTemplate(IWorkbenchWindow window, String path,
-                String fileName) {
-            return openMindMap(window, path, fileName);
-        }
-
-        /**
-         * @param window
-         * @param path
-         */
-        private boolean openMindMap(final IWorkbenchWindow window,
-                final String path, final String fileName) {
-            String errMessage = NLS.bind(
-                    DialogMessages.FailedToLoadWorkbook_message, path);
-            final boolean[] ret = new boolean[1];
-            SafeRunner.run(new SafeRunnable(errMessage) {
-                public void run() throws Exception {
-                    window.getActivePage().openEditor(
-                            MME.createFileEditorInput(path),
-                            MindMapUI.MINDMAP_EDITOR_ID);
-                    ret[0] = true;
-                }
-            });
-            return ret[0];
-        }
-
-        /**
-         * @param path
-         */
-        private boolean importMarkers(String path) {
-            try {
-                MarkerImpExpUtils.importMarkerPackage(path);
-                Display.getCurrent().asyncExec(new Runnable() {
-                    public void run() {
-                        PreferencesUtil.createPreferenceDialogOn(null,
-                                MarkerManagerPrefPage.ID, null, null).open();
-                    }
-                });
-                return true;
-            } catch (IOException e) {
-            }
-            return false;
-        }
     }
 
     private Map<IWorkbook, Map<String, IAction>> actions = null;

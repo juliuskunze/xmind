@@ -167,6 +167,8 @@ public abstract class DraggingTool extends GraphicalTool implements
             ended = true;
             end();
             startPos = null;
+        }
+        if (getDomain().getActiveTool() == this) {
             changeToNextTool();
         }
     }
@@ -181,6 +183,8 @@ public abstract class DraggingTool extends GraphicalTool implements
             ended = true;
             end();
             startPos = null;
+        }
+        if (getDomain().getActiveTool() == this) {
             changeToNextTool();
         }
     }

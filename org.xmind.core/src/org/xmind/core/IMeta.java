@@ -23,11 +23,28 @@ public interface IMeta extends IAdaptable, IWorkbookComponent {
 
     String THUMBNAIL = "Thumbnail"; //$NON-NLS-1$
 
-    String ORIGIN_X = THUMBNAIL + SEP + "Origin" + IMeta.SEP + "X"; //$NON-NLS-1$ //$NON-NLS-2$
+    String ORIGIN_X = THUMBNAIL + SEP + "Origin" + SEP + "X"; //$NON-NLS-1$ //$NON-NLS-2$
 
-    String ORIGIN_Y = THUMBNAIL + IMeta.SEP + "Origin" + IMeta.SEP + "Y"; //$NON-NLS-1$ //$NON-NLS-2$
+    String ORIGIN_Y = THUMBNAIL + SEP + "Origin" + SEP + "Y"; //$NON-NLS-1$ //$NON-NLS-2$
 
-    String BACKGROUND_COLOR = THUMBNAIL + IMeta.SEP + "BackgroundColor"; //$NON-NLS-1$
+    String BACKGROUND_COLOR = THUMBNAIL + SEP + "BackgroundColor"; //$NON-NLS-1$
+
+    /**
+     * Key path prefix for all configuration keys.
+     */
+    String CONFIGURATIONS = "Configurations"; //$NON-NLS-1$
+
+    /**
+     * <p>
+     * Key path for configuration of whether to save revisions automatically.
+     * <p>
+     * Values: "Yes", "No"
+     */
+    String CONFIG_AUTO_REVISION_GENERATION = CONFIGURATIONS + SEP
+            + "AutoRevisionGeneration"; //$NON-NLS-1$
+
+    String V_YES = "Yes"; //$NON-NLS-1$
+    String V_NO = "No"; //$NON-NLS-1$
 
     /**
      * 

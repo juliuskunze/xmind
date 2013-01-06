@@ -186,7 +186,7 @@ public class BackgroundWorkbookSaver {
                             workbook.getFile()));
 
             IWorkbookSaver saver = r.getWorkbookSaver();
-            if (saver != null && saver.canSaveToTarget()) {
+            if (saver != null && saver.willOverwriteTarget()) {
                 r.saveWorkbook(monitor, null, true);
             }
         }

@@ -17,6 +17,7 @@ import net.xmind.signin.IAccountInfo;
 import net.xmind.signin.IAuthenticationListener;
 import net.xmind.signin.XMindNet;
 import net.xmind.signin.internal.Messages;
+import net.xmind.workbench.internal.XMindNetWorkbench;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
@@ -118,14 +119,13 @@ public class SignInActionDelegate implements IWorkbenchWindowActionDelegate,
     }
 
     private void signOutInBrowser() {
-        XMindNet.gotoURL("http://www.xmind.net/xmind/signout2/"); //$NON-NLS-1$
+        XMindNet.gotoURL(XMindNetWorkbench.URL_SIGNOUT);
     }
 
     private void showAccount(IAccountInfo accountInfo) {
         String userID = accountInfo.getUser();
         String token = accountInfo.getAuthToken();
-        XMindNet.gotoURL("http://www.xmind.net/xmind/account/%s/%s", //$NON-NLS-1$ 
-                userID, token);
+        XMindNet.gotoURL(XMindNetWorkbench.URL_ACCOUNT, userID, token);
     }
 
     /*

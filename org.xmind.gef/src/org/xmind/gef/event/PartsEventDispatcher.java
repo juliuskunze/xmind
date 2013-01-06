@@ -48,6 +48,7 @@ import org.xmind.gef.GraphicalViewer;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.acc.IAccessible;
 import org.xmind.gef.dnd.DndData;
+import org.xmind.gef.dnd.IDndClient;
 import org.xmind.gef.dnd.IDndSupport;
 import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IGraphicalPart;
@@ -1142,12 +1143,30 @@ public class PartsEventDispatcher extends ViewerEventDispatcher implements
         IPart host = findPart(p.x, p.y);
         DragDropEvent event = DragDropEvent.createFrom(e, host, location);
         event.dndData = dndData;
+
+        IDndClient client = getDndSupport().getDndClient(dndData.clientId);
+        if (event.detail == DND.DROP_DEFAULT)
+            event.detail = event.operations;
+        if ((event.detail & DND.DROP_LINK) != 0
+                && !client.canLink(dndData.dataType, getViewer(), location,
+                        host)) {
+            event.detail &= ~DND.DROP_LINK;
+        }
+        if ((event.detail & DND.DROP_MOVE) != 0
+                && !client.canMove(dndData.dataType, getViewer(), location,
+                        host)) {
+            event.detail &= ~DND.DROP_MOVE;
+        }
+        if ((event.detail & DND.DROP_COPY) != 0
+                && !client.canCopy(dndData.dataType, getViewer(), location,
+                        host)) {
+            event.detail &= ~DND.DROP_COPY;
+        }
         return event;
     }
 
     protected void feedback(DragDropEvent de, DropTargetEvent swtEvent) {
         swtEvent.detail = de.detail;
-        //swtEvent.operations = de.operations;
         swtEvent.currentDataType = de.dndData.dataType;
         updateControl();
     }

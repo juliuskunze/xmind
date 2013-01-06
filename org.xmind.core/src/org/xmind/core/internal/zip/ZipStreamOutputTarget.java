@@ -75,7 +75,16 @@ public class ZipStreamOutputTarget implements ICloseableOutputTarget {
      * 
      */
     public ZipStreamOutputTarget(ZipOutputStream zip) {
+        this(zip, false);
+    }
+
+    public ZipStreamOutputTarget(ZipOutputStream zip, boolean compressed) {
         this.zip = zip;
+        if (compressed) {
+            zip.setLevel(ZipOutputStream.DEFLATED);
+        } else {
+            zip.setLevel(ZipOutputStream.STORED);
+        }
     }
 
     /*

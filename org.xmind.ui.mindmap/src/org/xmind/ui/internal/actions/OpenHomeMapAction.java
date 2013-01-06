@@ -7,13 +7,13 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
-import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogMessages;
 import org.xmind.ui.internal.editor.MME;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.prefs.PrefConstants;
+import org.xmind.ui.util.PrefUtils;
 
 public class OpenHomeMapAction extends Action implements IWorkbenchAction {
 
@@ -37,8 +37,8 @@ public class OpenHomeMapAction extends Action implements IWorkbenchAction {
         final String path = MindMapUIPlugin.getDefault().getPreferenceStore()
                 .getString(PrefConstants.HOME_MAP_LOCATION);
         if (path == null || "".equals(path)) {//$NON-NLS-1$
-            PreferencesUtil.createPreferenceDialogOn(window.getShell(),
-                    "org.xmind.ui.GeneralPrefPage", null, null).open(); //$NON-NLS-1$
+            PrefUtils.openPrefDialog(window.getShell(),
+                    PrefUtils.GENERAL_PREF_PAGE_ID);
             return;
         }
         String errMessage = NLS.bind(

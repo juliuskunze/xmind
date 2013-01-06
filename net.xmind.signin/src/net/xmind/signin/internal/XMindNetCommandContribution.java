@@ -13,7 +13,6 @@
  *******************************************************************************/
 package net.xmind.signin.internal;
 
-
 import org.eclipse.jface.action.IContributionManager;
 import org.xmind.ui.browser.IBrowserViewer;
 import org.xmind.ui.browser.IBrowserViewerContribution;
@@ -29,7 +28,6 @@ public class XMindNetCommandContribution implements IBrowserViewerContribution,
     public void installBrowserListeners(IBrowserViewer viewer) {
         viewer.addPropertyChangeListener(IBrowserViewer.PROPERTY_STATUS,
                 InternalXMindNet.getInstance().getCommandSupport());
-
     }
 
     public void uninstallBrowserListeners(IBrowserViewer viewer) {

@@ -138,12 +138,21 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
                 monitor.beginTask(null, 100);
 
                 monitor.subTask(WizardMessages.ImageExportPage_GeneratePreview_CreatingSourceImage);
-                MindMapImageExporter exporter = getImageExporter(display);
+                final MindMapImageExporter exporter = getImageExporter(display);
 
-                Image image;
-                try {
-                    image = exporter.createImage();
-                } catch (Throwable e) {
+                final Image[] _image = new Image[1];
+                final Throwable[] _error = new Throwable[1];
+                display.syncExec(new Runnable() {
+                    public void run() {
+                        try {
+                            _image[0] = exporter.createImage();
+                        } catch (Throwable e) {
+                            _error[0] = e;
+                        }
+                    }
+                });
+
+                if (_error[0] != null) {
                     if (generatePreviewJob == this)
                         generatePreviewJob = null;
                     asyncUpdateViewer(display, null, PreviewState.Error, false,
@@ -152,8 +161,10 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
                             IStatus.ERROR,
                             MindMapUIPlugin.PLUGIN_ID,
                             WizardMessages.ImageExportPage_GeneratePreview_CouldNotCreateSourceImage,
-                            e);
+                            _error[0]);
                 }
+
+                Image image = _image[0];
 
                 try {
                     if (monitor.isCanceled()) {

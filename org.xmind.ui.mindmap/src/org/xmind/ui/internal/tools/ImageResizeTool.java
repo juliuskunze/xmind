@@ -18,6 +18,9 @@ import org.eclipse.draw2d.Layer;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.xmind.gef.GEF;
 import org.xmind.gef.Request;
 import org.xmind.gef.draw2d.SizeableImageFigure;
@@ -64,11 +67,27 @@ public class ImageResizeTool extends FeedbackResizeTool implements ISourceTool,
         super.initFeedback(feedback);
         Layer layer = getTargetViewer().getLayer(GEF.LAYER_PRESENTATION);
         if (layer != null) {
-            feedbackImageFigure = new SizeableImageFigure(
-                    ((IImagePart) getSource()).getImage());
+            Image sourceImage = ((IImagePart) getSource()).getImage();
+            Rectangle sourceBounds = getSource().getFigure().getBounds();
+            Image image = new Image(sourceImage.getDevice(),
+                    sourceBounds.width, sourceBounds.height);
+            GC gc = new GC(image);
+            try {
+                gc.setAntialias(SWT.ON);
+                org.eclipse.swt.graphics.Rectangle sourceImageSize = sourceImage
+                        .getBounds();
+                org.eclipse.swt.graphics.Rectangle imageSize = image
+                        .getBounds();
+                gc.drawImage(sourceImage, 0, 0, sourceImageSize.width,
+                        sourceImageSize.height, 0, 0, imageSize.width,
+                        imageSize.height);
+            } finally {
+                gc.dispose();
+            }
+            feedbackImageFigure = new SizeableImageFigure(image);
             feedbackImageFigure.setStretched(true);
             feedbackImageFigure.setConstrained(false);
-            feedbackImageFigure.setBounds(getSource().getFigure().getBounds());
+            feedbackImageFigure.setBounds(sourceBounds);
             layer.add(feedbackImageFigure);
         }
     }
@@ -82,6 +101,9 @@ public class ImageResizeTool extends FeedbackResizeTool implements ISourceTool,
 
     protected void removeFeedback(IBendPointsFeedback feedback) {
         if (feedbackImageFigure != null) {
+            Image image = feedbackImageFigure.getImage();
+            feedbackImageFigure.setImage(null);
+            image.dispose();
             if (feedbackImageFigure.getParent() != null)
                 feedbackImageFigure.getParent().remove(feedbackImageFigure);
             feedbackImageFigure = null;

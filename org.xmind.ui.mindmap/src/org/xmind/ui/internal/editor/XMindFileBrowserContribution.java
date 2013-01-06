@@ -27,6 +27,7 @@ import org.xmind.ui.browser.IBrowserViewerContribution;
 import org.xmind.ui.browser.IBrowserViewerContribution2;
 import org.xmind.ui.browser.IPropertyChangingListener;
 import org.xmind.ui.browser.PropertyChangingEvent;
+import org.xmind.ui.comm.XMindCommandCenter;
 import org.xmind.ui.internal.dialogs.DialogMessages;
 import org.xmind.ui.io.DownloadJob;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -42,7 +43,8 @@ public class XMindFileBrowserContribution implements
 
         public XMindFileListener(IBrowserViewer viewer) {
             this.viewer = viewer;
-            viewer.addPropertyChangeListener(this);
+            viewer.addPropertyChangeListener(IBrowserViewer.PROPERTY_LOCATION,
+                    this);
         }
 
         /**
@@ -77,6 +79,11 @@ public class XMindFileBrowserContribution implements
             if (location == null || "about:blank".equals(location)) //$NON-NLS-1$
                 return;
 
+            if (location.startsWith("xmind:")) { //$NON-NLS-1$
+                if (XMindCommandCenter.dispatch(location)) {
+                    return;
+                }
+            }
             try {
                 URI uri = new URI(location);
                 String uriPath = uri.getPath();

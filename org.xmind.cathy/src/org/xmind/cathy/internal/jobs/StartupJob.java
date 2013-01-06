@@ -15,7 +15,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.xmind.cathy.internal.CathyPlugin;
 import org.xmind.cathy.internal.WorkbenchMessages;
 import org.xmind.ui.internal.MindMapUIPlugin;
-import org.xmind.ui.internal.dialogs.NewWorkbookWizardDialog;
+import org.xmind.ui.internal.editor.NewWorkbookEditor;
 import org.xmind.ui.internal.editor.MME;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.prefs.PrefConstants;
@@ -48,8 +48,31 @@ public class StartupJob extends Job {
 
     protected void doStartup(IProgressMonitor monitor) {
         checkAndRecoverFiles(monitor);
+
+        if (monitor.isCanceled())
+            return;
         checkAndOpenFiles(monitor);
+
+        if (monitor.isCanceled())
+            return;
+        waitForInitialFilesLoaded(monitor);
+
+        if (monitor.isCanceled())
+            return;
         openStartupMap(monitor);
+    }
+
+    /**
+     * Wait for a short while before all initial files are loaded.
+     * 
+     * @param monitor
+     */
+    protected void waitForInitialFilesLoaded(IProgressMonitor monitor) {
+        try {
+            Thread.sleep(800);
+        } catch (InterruptedException e) {
+            monitor.setCanceled(true);
+        }
     }
 
     protected void openStartupMap(IProgressMonitor monitor) {
@@ -87,7 +110,8 @@ public class StartupJob extends Job {
             public void run() {
                 IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
                 if (window != null) {
-                    NewWorkbookWizardDialog.openWizard(window, true);
+                    NewWorkbookEditor.open(window, true);
+//                    NewWorkbookWizardDialog.openWizard(window, true);
                 }
             }
         });

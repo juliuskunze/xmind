@@ -26,6 +26,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.commands.ActionHandler;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocumentListener;
@@ -34,6 +35,8 @@ import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.TextViewer;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -91,6 +94,7 @@ import org.xmind.ui.internal.findreplace.IFindReplaceOperationProvider;
 import org.xmind.ui.internal.notes.NotesFindReplaceOperationProvider;
 import org.xmind.ui.internal.notes.NotesViewer;
 import org.xmind.ui.internal.notes.RichDocumentNotesAdapter;
+import org.xmind.ui.internal.spelling.SpellingPlugin;
 import org.xmind.ui.internal.spellsupport.SpellingSupport;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.ITopicPart;
@@ -113,7 +117,7 @@ import org.xmind.ui.util.Logger;
 public class NotesView extends ViewPart implements IPartListener,
         ISelectionListener, ICoreEventListener, IDocumentListener,
         IRichDocumentListener, IContributedContentsView,
-        ISelectionChangedListener {
+        ISelectionChangedListener, IPropertyChangeListener {
 
     private static final String NOTES_EDIT_CONTEXT_ID = "org.xmind.ui.context.notes.edit"; //$NON-NLS-1$
 
@@ -419,6 +423,8 @@ public class NotesView extends ViewPart implements IPartListener,
 
     private IHandlerActivation commitHandlerActivation;
 
+    private IPreferenceStore spellingPreferences;
+
     public IWorkbenchPart getContributingPart() {
         return contributingEditor;
     }
@@ -459,6 +465,10 @@ public class NotesView extends ViewPart implements IPartListener,
     private void addSpellChecker() {
         spellingActivation = SpellingSupport.getInstance().activateSpelling(
                 viewer.getImplementation().getTextViewer());
+        spellingPreferences = SpellingPlugin.getDefault().getPreferenceStore();
+        if (spellingPreferences != null) {
+            spellingPreferences.addPropertyChangeListener(this);
+        }
     }
 
     private void createActions(IActionBars actionBars) {
@@ -547,11 +557,7 @@ public class NotesView extends ViewPart implements IPartListener,
 
     public void dispose() {
         deactivateHandlers();
-        if (spellingActivation != null) {
-            spellingActivation.getSpellingSupport().deactivateSpelling(
-                    spellingActivation);
-            spellingActivation = null;
-        }
+        removeSpellChecker();
 
         editorSelectionChanged(null);
         getSite().getPage().removePartListener(this);
@@ -583,6 +589,18 @@ public class NotesView extends ViewPart implements IPartListener,
             adapter = null;
         }
         viewer = null;
+    }
+
+    private void removeSpellChecker() {
+        if (spellingPreferences != null) {
+            spellingPreferences.removePropertyChangeListener(this);
+            spellingPreferences = null;
+        }
+        if (spellingActivation != null) {
+            spellingActivation.getSpellingSupport().deactivateSpelling(
+                    spellingActivation);
+            spellingActivation = null;
+        }
     }
 
     private void deactivateHandlers() {
@@ -960,6 +978,29 @@ public class NotesView extends ViewPart implements IPartListener,
             }
 
         });
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse
+     * .jface.util.PropertyChangeEvent)
+     */
+    public void propertyChange(PropertyChangeEvent event) {
+        if (SpellingPlugin.SPELLING_CHECK_ENABLED.equals(event.getProperty())) {
+            if (spellingActivation != null) {
+                spellingActivation.getSpellingSupport().deactivateSpelling(
+                        spellingActivation);
+                spellingActivation = null;
+            }
+            if (spellingPreferences
+                    .getBoolean(SpellingPlugin.SPELLING_CHECK_ENABLED)) {
+                spellingActivation = SpellingSupport.getInstance()
+                        .activateSpelling(
+                                viewer.getImplementation().getTextViewer());
+            }
+        }
     }
 
 }

@@ -12,21 +12,32 @@
 package net.xmind.share;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.net.HttpURLConnection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import net.xmind.share.dialog.UploaderDialog;
 import net.xmind.share.jobs.UploadJob;
+import net.xmind.share.jobs.UploadSession;
 import net.xmind.signin.IAccountInfo;
+import net.xmind.signin.IAuthenticationListener;
 import net.xmind.signin.XMindNet;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.draw2d.Layer;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.util.SafeRunnable;
-import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
@@ -38,7 +49,10 @@ import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.GEF;
+import org.xmind.ui.dialogs.ErrorDetailsDialog;
+import org.xmind.ui.dialogs.NotificationWindow;
 import org.xmind.ui.mindmap.IMindMapViewer;
+import org.xmind.ui.mindmap.MindMap;
 import org.xmind.ui.mindmap.MindMapExtractor;
 import org.xmind.ui.mindmap.MindMapImageExporter;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -69,24 +83,46 @@ public class Uploader extends JobChangeAdapter {
 
     public void upload() {
         info = new Info();
-        if (!signIn()) {
+
+        boolean prepared = false;
+        try {
+            prepared = prepare();
+        } catch (OutOfMemoryError e) {
+            XmindSharePlugin.log(e, "Failed to prepare XMind file to upload."); //$NON-NLS-1$
+            new ErrorDetailsDialog(parentShell, Messages.ErrorDialog_title,
+                    Messages.ErrorDialog_OutOfMemory_message, e,
+                    "Failed to prepare XMind file to upload.", //$NON-NLS-1$
+                    System.currentTimeMillis()).open();
+        } catch (Throwable e) {
+            XmindSharePlugin.log(e, "Failed to prepare XMind file to upload."); //$NON-NLS-1$
+            new ErrorDetailsDialog(parentShell, Messages.ErrorDialog_title,
+                    Messages.ErrorDialog_UnexpectedError_message, e,
+                    "Failed to prepare XMind file to upload.", //$NON-NLS-1$
+                    System.currentTimeMillis()).open();
+        }
+
+        if (!prepared) {
             cancel();
             return;
         }
 
+        UploadJob uploadJob = new UploadJob(info);
+        uploadJob.addJobChangeListener(this);
+        uploadJob.schedule();
+    }
+
+    private boolean prepare() throws Exception {
+        if (!signIn())
+            return false;
+
+        final Display display = parentShell.getDisplay();
         extractor = new MindMapExtractor(sourceViewer);
         workbook = extractor.extract();
-
         trimAttachments();
-        generatePreview();
+        generatePreview(display);
 
-        if (fullImage == null || origin == null) {
-            cancel();
-            MessageDialog.openError(parentShell,
-                    Messages.UploaderDialog_windowTitle,
-                    Messages.failedToGenerateThumbnail);
-            return;
-        }
+        if (fullImage == null || origin == null)
+            throw new RuntimeException(Messages.failedToGenerateThumbnail);
 
         final String mapTitle = getDefaultMapTitle();
         info.setProperty(Info.TITLE, mapTitle);
@@ -98,15 +134,13 @@ public class Uploader extends JobChangeAdapter {
 
         UploaderDialog dialog = createUploadDialog();
         int ret = dialog.open();
-        if (ret != UploaderDialog.OK) {
-            cancel();
-            return;
-        }
+        if (ret != UploaderDialog.OK)
+            return false;
 
         int x = info.getInt(Info.X, 0);
         int y = info.getInt(Info.Y, 0);
         double scale = info.getDouble(Info.SCALE, 1.0d);
-        // 300 * 180 -> 150 * 90
+        // Legacy API Change: 300 * 180 -> 150 * 90
         scale /= 2;
 
         IMeta meta = workbook.getMeta();
@@ -134,29 +168,17 @@ public class Uploader extends JobChangeAdapter {
             file = new File(tempFile);
         }
 
-        SafeRunner.run(new SafeRunnable(Messages.failedToGenerateUploadFile) {
-            public void run() throws Exception {
-                String path = file.getAbsolutePath();
-                workbook.saveTemp();
-                workbook.save(path);
-            }
-        });
+        String path = file.getAbsolutePath();
+        workbook.saveTemp();
+        workbook.save(path);
+        Uploader.validateUploadFile(path);
 
-        if (!file.exists() || !file.canRead()) {
-            // some error may have occurred and been catched
-            // by the above SafeRunner, so we simply return here
-            //cancel();
-            return;
-        }
+        if (!file.exists() || !file.canRead())
+            throw new FileNotFoundException(Messages.failedToGenerateUploadFile);
 
-        if (file != null) {
-            info.setProperty(Info.FILE, file);
-            info.setProperty(Info.WORKBOOK, workbook);
-            UploadJob uploadJob = new UploadJob(info);
-            uploadJob.addJobChangeListener(this);
-            uploadJob.schedule();
-        }
-
+        info.setProperty(Info.FILE, file);
+        info.setProperty(Info.WORKBOOK, workbook);
+        return true;
     }
 
     private String getBackgroundColor() {
@@ -185,24 +207,14 @@ public class Uploader extends JobChangeAdapter {
         return dialog;
     }
 
-    private void generatePreview() {
-        final Display display = parentShell.getDisplay();
-        BusyIndicator.showWhile(display, new Runnable() {
-            public void run() {
-                SafeRunner.run(new SafeRunnable(
-                        Messages.failedToGenerateThumbnail) {
-                    public void run() throws Exception {
-                        MindMapImageExporter exporter = new MindMapImageExporter(
-                                display);
-                        exporter.setSourceViewer(sourceViewer);
-                        exporter.setTargetWorkbook(workbook);
-                        fullImage = exporter.createImage();
-                        exporter.export(fullImage);
-                        origin = exporter.calcRelativeOrigin();
-                    }
-                });
-            }
-        });
+    private void generatePreview(Display display) {
+        MindMapImageExporter exporter = new MindMapImageExporter(display);
+//        exporter.setSourceViewer(sourceViewer);
+        exporter.setSource(new MindMap(workbook.getPrimarySheet()), null, null);
+        exporter.setTargetWorkbook(workbook);
+        fullImage = exporter.createImage();
+        exporter.export(fullImage);
+        origin = exporter.calcRelativeOrigin();
     }
 
     private void cancel() {
@@ -261,6 +273,25 @@ public class Uploader extends JobChangeAdapter {
     @Override
     public void done(final IJobChangeEvent event) {
         clearTemp();
+
+        final IStatus result = event.getResult();
+        final UploadSession session = ((UploadJob) event.getJob()).getSession();
+        runInUI(new Runnable() {
+            public void run() {
+                if (result.isOK()) {
+                    promptCompletion(session);
+                } else if (result.matches(IStatus.ERROR | IStatus.WARNING)) {
+                    promptError(session.getStatus(), result);
+                }
+            }
+        });
+    }
+
+    private void runInUI(final Runnable runnable) {
+        Display display = parentShell.getDisplay();
+        if (display == null || display.isDisposed())
+            return;
+        display.asyncExec(runnable);
     }
 
     private void trimAttachments() {
@@ -276,6 +307,124 @@ public class Uploader extends JobChangeAdapter {
                 topic.setHyperlink(null);
             }
         }
+        for (ITopic c : topic.getAllChildren()) {
+            trimAttachments(c);
+        }
+    }
+
+    private void promptCompletion(UploadSession session) {
+        final String permalink = session.getViewLink();
+        IAction viewAction = new Action() {
+            public void run() {
+                showUploadedMap(permalink);
+            }
+        };
+        viewAction.setText(Messages.UploadJob_OpenMap_message + " " //$NON-NLS-1$
+                + Messages.UploadJob_View_text);
+        new NotificationWindow(parentShell, Messages.UploadJob_OpenMap_title,
+                viewAction, null, 0).open();
+
+//        SimpleInfoPopupDialog dialog = new SimpleInfoPopupDialog(null, null,
+//                Messages.UploadJob_OpenMap_message, 0, null, viewAction);
+//        dialog.setDuration(30000);
+//        dialog.setGroupId("org.xmind.notifications"); //$NON-NLS-1$
+//        dialog.setCloseOnAction(true);
+//        dialog.popUp();
+    }
+
+    private void showUploadedMap(String url) {
+        if (url != null) {
+            XMindNet.gotoURL(true, url);
+            return;
+        }
+
+        IAccountInfo accountInfo = XMindNet.getAccountInfo();
+        if (accountInfo == null)
+            return;
+
+        String userId = accountInfo.getUser();
+        String token = accountInfo.getAuthToken();
+        XMindNet.gotoURL(true, "http://www.xmind.net/xmind/account/%s/%s/", //$NON-NLS-1$
+                userId, token);
+    }
+
+    private void promptError(int uploadStatus, IStatus error) {
+        int httpStatus = error.getCode();
+        String message = null;
+        boolean tryAgainAllowed = true;
+        if (uploadStatus == UploadSession.PREPARING) {
+            if (httpStatus == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                resignin();
+                return;
+            }
+        } else if (uploadStatus == UploadSession.UPLOADING) {
+            if (httpStatus == HttpURLConnection.HTTP_NOT_FOUND) {
+                return;
+            } else if (httpStatus == UploadSession.CODE_VERIFICATION_FAILURE) {
+                message = Messages.ErrorDialog_Unauthorized_message;
+                tryAgainAllowed = false;
+            }
+        }
+
+        if (message == null)
+            message = Messages.ErrorDialog_message;
+
+        if (tryAgainAllowed) {
+            if (MessageDialog.openQuestion(null, Messages.ErrorDialog_title,
+                    message)) {
+                retry();
+            }
+        } else {
+            MessageDialog.openError(null, Messages.ErrorDialog_title, message);
+        }
+    }
+
+    private void resignin() {
+        XMindNet.signOut();
+        XMindNet.signIn(new IAuthenticationListener() {
+            public void postSignIn(IAccountInfo accountInfo) {
+                retry();
+            }
+
+            public void postSignOut(IAccountInfo oldAccountInfo) {
+            }
+        }, false);
+    }
+
+    private void retry() {
+        runInUI(new Runnable() {
+            public void run() {
+                SafeRunner.run(new SafeRunnable() {
+                    public void run() throws Exception {
+                        new Uploader(parentShell, sourceViewer).upload();
+                    }
+                });
+            }
+        });
+    }
+
+    public static void validateUploadFile(String path)
+            throws FileValidationException {
+        Set<String> entries = new HashSet<String>();
+        try {
+            ZipInputStream zin = new ZipInputStream(new FileInputStream(path));
+            try {
+                ZipEntry e;
+                String name;
+                while ((e = zin.getNextEntry()) != null) {
+                    name = e.getName();
+                    entries.add(name);
+                }
+            } finally {
+                zin.close();
+            }
+        } catch (Throwable e) {
+            throw new FileValidationException("File Validation Failed: " //$NON-NLS-1$
+                    + e.getLocalizedMessage(), e);
+        }
+        if (!entries.contains("Thumbnails/thumbnail.png")) //$NON-NLS-1$
+            throw new FileValidationException(
+                    "File Validation Failed: missing entry 'Thumbnails/thumbnail.png'"); //$NON-NLS-1$
     }
 
 }

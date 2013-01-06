@@ -222,7 +222,12 @@ public class SheetDecorator extends Decorator {
 
         if (layer instanceof BackgroundLayer) {
             BackgroundLayer bgLayer = (BackgroundLayer) layer;
-            bgLayer.setWallpaper(getWallpaper(part, ss));
+            Pattern newWallpaper = getWallpaper(part, ss);
+            Pattern oldWallpaper = bgLayer.getWallpaper();
+            if (oldWallpaper != null) {
+                oldWallpaper.dispose();
+            }
+            bgLayer.setWallpaper(newWallpaper);
             bgLayer.setSubAlpha(getWallpaperAlpha(part, ss));
         }
     }

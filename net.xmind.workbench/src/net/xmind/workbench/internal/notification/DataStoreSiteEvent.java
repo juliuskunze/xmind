@@ -34,7 +34,7 @@ public class DataStoreSiteEvent implements ISiteEvent {
         return data.getString(ATTR_MORE_URL);
     }
 
-    public String getTitle() {
+    public String getText() {
         String value = data.getString(ATTR_TITLE);
         if (value == null) {
             value = ""; //$NON-NLS-1$
@@ -48,6 +48,22 @@ public class DataStoreSiteEvent implements ISiteEvent {
 
     public boolean isOpenExternal() {
         return data.getBoolean(ATTR_OPEN_EXTERNAL);
+    }
+
+    public String getHTML() {
+        return data.getString(ATTR_HTML);
+    }
+
+    public String getInternalUrl() {
+        return data.getString(ATTR_INTERNAL_URL);
+    }
+
+    public String getCaption() {
+        return data.getString(ATTR_CAPTION);
+    }
+
+    public int getDuration() {
+        return data.getInt(ATTR_DURATION);
     }
 
     public void setActionText(String actionText) {
@@ -66,11 +82,27 @@ public class DataStoreSiteEvent implements ISiteEvent {
         //read only, do nothing
     }
 
-    public void setTitle(String title) {
+    public void setText(String title) {
         //read only, do nothing
     }
 
     public void setPrompt(String type) {
+        //read only, do nothing
+    }
+
+    public void setHTML(String html) {
+        //read only, do nothing
+    }
+
+    public void setInternalUrl(String url) {
+        //read only, do nothing
+    }
+
+    public void setDuration(int duration) {
+        //read only, do nothing
+    }
+
+    public void setCaption(String caption) {
         //read only, do nothing
     }
 

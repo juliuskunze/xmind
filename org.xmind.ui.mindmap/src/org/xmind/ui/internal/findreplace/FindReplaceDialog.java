@@ -244,11 +244,11 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
     }
 
     protected void createContextLabel(Composite parent) {
-        contextLabel = new Label(parent, SWT.WRAP);
+        contextLabel = new Label(parent, SWT.NONE);
         contextLabel.setFont(FontUtils.getNewHeight(
                 JFaceResources.DEFAULT_FONT, 11));
-        contextLabel
-                .setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        contextLabel.setLayoutData(layoutData);
     }
 
     /**
@@ -739,7 +739,8 @@ public class FindReplaceDialog extends Dialog implements IPartListener {
             return;
 
         String contextName = operationProvider == null ? null
-                : operationProvider.getContextName();
+                : operationProvider.getContextName(contextLabel.getSize().x,
+                        contextLabel.getFont());
         if (contextName == null || "".equals(contextName)) { //$NON-NLS-1$
             contextLabel.setText(""); //$NON-NLS-1$
         } else {

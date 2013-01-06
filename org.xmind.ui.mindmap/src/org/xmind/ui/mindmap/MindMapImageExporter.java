@@ -66,7 +66,7 @@ public class MindMapImageExporter {
     private File targetFile = null;
     private IWorkbook targetWorkbook = null;
     private String targetEntryPath = null;
-    private boolean ignoreEntryEncryption = false;
+    private boolean ignoreEntryEncryption = true;
 
     /* ==== What to Clean Out After Exporting? ==== */
     private GhostShellProvider ghostShellProvider = null;
@@ -141,19 +141,19 @@ public class MindMapImageExporter {
     }
 
     public void setTargetStream(OutputStream stream) {
-        setTargets(stream, null, null, null, false);
+        setTargets(stream, null, null, null, true);
     }
 
     public void setTargetFile(File file) {
-        setTargets(null, file, null, null, false);
+        setTargets(null, file, null, null, true);
     }
 
     public void setTargetFileEntry(IWorkbook workbook, String entryPath) {
-        setTargets(null, null, workbook, entryPath, false);
+        setTargets(null, null, workbook, entryPath, true);
     }
 
     public void setTargetWorkbook(IWorkbook workbook) {
-        setTargets(null, null, workbook, null, false);
+        setTargets(null, null, workbook, null, true);
     }
 
     public void setTargetFileEntry(IWorkbook workbook, String entryPath,
@@ -227,6 +227,11 @@ public class MindMapImageExporter {
         try {
             ImageExportUtils.saveImage(image, targetStream,
                     format.getSWTFormat());
+            if (fileEntry != null) {
+                fileEntry.decreaseReference();
+                fileEntry.increaseReference();
+                fileEntry = null;
+            }
         } finally {
             cleanUpTargets();
         }
@@ -236,6 +241,11 @@ public class MindMapImageExporter {
         prepareTargetStream();
         try {
             FileUtils.transfer(sourceStream, targetStream, true);
+            if (fileEntry != null) {
+                fileEntry.decreaseReference();
+                fileEntry.increaseReference();
+                fileEntry = null;
+            }
         } finally {
             cleanUpTargets();
         }
@@ -351,11 +361,6 @@ public class MindMapImageExporter {
                 //ignore
             }
             streamToClose = null;
-        }
-        if (fileEntry != null) {
-            fileEntry.decreaseReference();
-            fileEntry.increaseReference();
-            fileEntry = null;
         }
     }
 }

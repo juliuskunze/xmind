@@ -17,10 +17,13 @@ import java.beans.PropertyChangeSupport;
 import java.io.InputStream;
 
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.IEditorInput;
 
 public interface ITemplateDescriptor {
 
     String PROP_IMAGE = "IMAGE"; //$NON-NLS-1$
+
+    String getSymbolicName();
 
     String getName();
 
@@ -31,5 +34,7 @@ public interface ITemplateDescriptor {
     void setImage(ImageDescriptor image);
 
     PropertyChangeSupport getPropertyChangeSupport();
+
+    IEditorInput createEditorInput();
 
 }

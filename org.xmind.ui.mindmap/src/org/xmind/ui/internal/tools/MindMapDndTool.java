@@ -13,19 +13,22 @@
  *******************************************************************************/
 package org.xmind.ui.internal.tools;
 
+import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
-import org.eclipse.jface.util.Util;
-import org.eclipse.swt.dnd.DND;
+import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Display;
 import org.xmind.gef.GEF;
 import org.xmind.gef.Request;
 import org.xmind.gef.draw2d.IReferencedFigure;
 import org.xmind.gef.event.DragDropEvent;
+import org.xmind.gef.event.KeyEvent;
+import org.xmind.gef.event.MouseEvent;
 import org.xmind.gef.graphicalpolicy.IStructure;
 import org.xmind.gef.part.IPart;
-import org.xmind.gef.status.IStatusListener;
-import org.xmind.gef.status.StatusEvent;
 import org.xmind.gef.tool.GraphicalTool;
 import org.xmind.ui.branch.ILockableBranchStructureExtension;
 import org.xmind.ui.branch.IMovableBranchStructureExtension;
@@ -38,7 +41,7 @@ import org.xmind.ui.tools.ITopicMoveToolHelper;
 import org.xmind.ui.tools.ParentSearchKey;
 import org.xmind.ui.tools.ParentSearcher;
 
-public class MindMapDndTool extends GraphicalTool implements IStatusListener {
+public class MindMapDndTool extends GraphicalTool {
 
     private static ITopicMoveToolHelper defaultHelper = null;
 
@@ -58,22 +61,8 @@ public class MindMapDndTool extends GraphicalTool implements IStatusListener {
 
     private Image image = null;
 
-    public MindMapDndTool() {
-        getStatus().addStatusListener(this);
-    }
-
-    private boolean acceptEvent(DragDropEvent de) {
-        if ((de.operations & DND.DROP_COPY) != 0) {
-            de.detail = DND.DROP_COPY;
-            return true;
-        } else if ((de.operations & DND.DROP_MOVE) != 0) {
-            de.detail = DND.DROP_MOVE;
-            return true;
-        } else if ((de.operations & DND.DROP_LINK) != 0) {
-            de.detail = DND.DROP_LINK;
-            return true;
-        }
-        return false;
+    protected boolean acceptEvent(DragDropEvent de) {
+        return true;
     }
 
     protected boolean handleDragStarted(DragDropEvent de) {
@@ -212,7 +201,7 @@ public class MindMapDndTool extends GraphicalTool implements IStatusListener {
 
     protected boolean handleDragDismissed(DragDropEvent de) {
         if (acceptEvent(de)) {
-            createRequest(de);
+            request = createRequest(de);
             destroyDummy();
             changeActiveTool(GEF.TOOL_DEFAULT);
             return true;
@@ -228,83 +217,117 @@ public class MindMapDndTool extends GraphicalTool implements IStatusListener {
         return findDropTarget(target.getParent());
     }
 
-    private void createRequest(DragDropEvent de) {
-        request = new Request(GEF.REQ_DROP);
+    private Request createRequest(DragDropEvent de) {
+        Request req = new Request(GEF.REQ_DROP);
         IPart target = findDropTarget(de.target);
         if (target == null) {
             target = (ISheetPart) getTargetViewer()
                     .getAdapter(ISheetPart.class);
         }
-        request.setPrimaryTarget(target);
+        req.setPrimaryTarget(target);
         ITopicPart targetTopic = targetParent == null ? null : targetParent
                 .getTopicPart();
         if (targetTopic != null) {
-            request.setParameter(GEF.PARAM_PARENT, targetTopic);
+            req.setParameter(GEF.PARAM_PARENT, targetTopic);
             int targetIndex = -1;
-            if (!isFloatMove() && targetParent != null) {
+            if (targetParent != null) {
                 targetIndex = getParentSearcher().getIndex(targetParent, key);
             }
-            request.setParameter(GEF.PARAM_INDEX, targetIndex);
+            req.setParameter(GEF.PARAM_INDEX, targetIndex);
         }
-        if (isFloatMove() || targetParent == null) {
+        if (targetParent == null) {
             Point position = getCursorPosition();
-            request.setParameter(GEF.PARAM_POSITION, position);
+            req.setParameter(GEF.PARAM_POSITION, position);
         }
-        if (isCopyMove()) {
-            request.setParameter(MindMapUI.PARAM_COPY, Boolean.TRUE);
-        }
+        req.setParameter(GEF.PARAM_DROP_OPERATION, de.detail);
         if (targetParent != null) {
             IStructure structure = targetParent.getBranchPolicy().getStructure(
                     targetParent);
             if (structure instanceof IMovableBranchStructureExtension) {
                 ((IMovableBranchStructureExtension) structure)
-                        .decorateMoveInRequest(targetParent, key, null, request);
+                        .decorateMoveInRequest(targetParent, key, null, req);
             }
         }
+        return req;
     }
 
     private void destroyDummy() {
         unlockBranchStructures(getTargetViewer().getRootPart());
-        if (helper != null) {
-            helper.deactivate(getDomain(), getTargetViewer());
-            helper = null;
+        ITopicMoveToolHelper oldHelper = this.helper;
+        BranchDummy oldDummy = this.dummy;
+        Image oldImage = this.image;
+        if (oldHelper != null) {
+            oldHelper.deactivate(getDomain(), getTargetViewer());
         }
-        if (dummy != null) {
-            dummy.dispose();
-            dummy = null;
+        if (oldDummy != null) {
+            oldDummy.dispose();
         }
-        if (image != null) {
-            image.dispose();
-            image = null;
+        if (oldImage != null) {
+            oldImage.dispose();
         }
-    }
-
-    private boolean isFloatMove() {
-        return getStatus().isStatus(GEF.ST_SHIFT_PRESSED);
-    }
-
-    private boolean isCopyMove() {
-        if (Util.isMac())
-            return getStatus().isStatus(GEF.ST_ALT_PRESSED);
-        return getStatus().isStatus(GEF.ST_CONTROL_PRESSED);
+        this.helper = null;
+        this.dummy = null;
+        this.image = null;
     }
 
     protected boolean handleDrop(DragDropEvent de) {
-        if (acceptEvent(de)) {
-            if (request != null) {
-                request.setParameter(MindMapUI.PARAM_DND_DATA, de.dndData);
-                try {
-                    getDomain().handleRequest(request);
-                } finally {
-                    request = null;
+        try {
+            if (acceptEvent(de)) {
+                final Request req = this.request;
+                if (req != null) {
+                    req.setParameter(MindMapUI.PARAM_DND_DATA, de.dndData);
+                    Display.getCurrent().asyncExec(new Runnable() {
+                        public void run() {
+                            SafeRunner.run(new SafeRunnable() {
+                                public void run() throws Exception {
+                                    BusyIndicator.showWhile(
+                                            Display.getCurrent(),
+                                            new Runnable() {
+                                                public void run() {
+                                                    getDomain().handleRequest(
+                                                            req);
+                                                }
+                                            });
+                                }
+                            });
+                        }
+                    });
+                    return true;
                 }
-                return true;
             }
+            return false;
+        } finally {
+            this.request = null;
         }
-        return false;
     }
 
-    public void statusChanged(StatusEvent event) {
+    @Override
+    protected boolean handleKeyTraversed(KeyEvent ke) {
+        if (ke.traverse == SWT.TRAVERSE_ESCAPE) {
+            destroyDummy();
+            changeActiveTool(GEF.TOOL_DEFAULT);
+            ke.consume();
+            return true;
+        }
+        return super.handleKeyTraversed(ke);
     }
 
+    private boolean mouseDown = false;
+
+    @Override
+    protected boolean handleMouseDown(MouseEvent me) {
+        mouseDown = true;
+        return super.handleMouseDown(me);
+    }
+
+    @Override
+    protected boolean handleMouseUp(MouseEvent me) {
+        if (mouseDown) {
+            mouseDown = false;
+            destroyDummy();
+            changeActiveTool(GEF.TOOL_DEFAULT);
+            return true;
+        }
+        return super.handleMouseUp(me);
+    }
 }

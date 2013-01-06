@@ -42,8 +42,8 @@ public class MarkerImpExpUtils {
     private static class ImageFileFilter implements FileFilter {
 
         public boolean accept(File pathname) {
-            if (ImageFormat.findByExtension(FileUtils.getExtension(pathname
-                    .getAbsolutePath()), null) == null)
+            if (ImageFormat.findByExtension(
+                    FileUtils.getExtension(pathname.getAbsolutePath()), null) == null)
                 return false;
 
             try {
@@ -65,7 +65,7 @@ public class MarkerImpExpUtils {
         IOutputTarget target;
         if (fileOrDirectory) {
             target = new ZipStreamOutputTarget(new ZipOutputStream(
-                    new FileOutputStream(targetPath)));
+                    new FileOutputStream(targetPath)), false);
         } else {
             target = new DirectoryOutputTarget(targetPath);
         }
@@ -91,12 +91,14 @@ public class MarkerImpExpUtils {
             throws IOException {
         try {
             if (new File(sourcePath).isDirectory()) {
-                MindMapUI.getResourceManager().getUserMarkerSheet().importFrom(
-                        createImageFilesInputSource(sourcePath),
-                        new File(sourcePath).getName());
+                MindMapUI
+                        .getResourceManager()
+                        .getUserMarkerSheet()
+                        .importFrom(createImageFilesInputSource(sourcePath),
+                                new File(sourcePath).getName());
             } else {
-                MindMapUI.getResourceManager().getUserMarkerSheet().importFrom(
-                        sourcePath);
+                MindMapUI.getResourceManager().getUserMarkerSheet()
+                        .importFrom(sourcePath);
             }
             MindMapUI.getResourceManager().saveUserMarkerSheet();
         } catch (CoreException e) {

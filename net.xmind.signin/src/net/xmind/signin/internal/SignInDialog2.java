@@ -15,7 +15,6 @@ import net.xmind.signin.ISignInDialogExtension2;
 import net.xmind.signin.XMindNet;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.httpclient.HttpStatus;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -102,7 +101,7 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
                 return Status.CANCEL_STATUS;
 
             request = new XMindNetRequest(true);
-            request.uri("/_res/token/%s", user); //$NON-NLS-1$
+            request.path("/_res/token/%s", user); //$NON-NLS-1$
             request.addParameter("user", user); //$NON-NLS-1$
             String pwdhash = hash(password);
             if (pwdhash != null) {
@@ -116,19 +115,19 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             if (monitor.isCanceled() || request.isAborted())
                 return Status.CANCEL_STATUS;
 
-            int code = request.getCode();
+            int code = request.getStatusCode();
             IDataStore data = request.getData();
-            if (code == HttpStatus.SC_OK) {
+            if (code == XMindNetRequest.HTTP_OK) {
                 if (data != null) {
                     this.data = data;
                     return Status.OK_STATUS;
                 }
                 return error(code,
                         Messages.SignInDialog_ApplicationError_message,
-                        request.getException());
-            } else if (code == XMindNetRequest.ERROR) {
+                        request.getError());
+            } else if (code == XMindNetRequest.HTTP_ERROR) {
                 return error(code, Messages.SignInDialog_NetworkError_message,
-                        request.getException());
+                        request.getError());
             } else if (code >= 400 && code < 500) {
                 return error(code, Messages.SignInDialog_RequestError_message,
                         null);

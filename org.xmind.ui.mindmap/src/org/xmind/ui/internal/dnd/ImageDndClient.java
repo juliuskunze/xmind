@@ -19,10 +19,11 @@ import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.IViewer;
-import org.xmind.gef.dnd.IDndClient;
+import org.xmind.gef.Request;
 import org.xmind.ui.internal.AttachmentImageDescriptor;
+import org.xmind.ui.util.Logger;
 
-public class ImageDndClient implements IDndClient {
+public class ImageDndClient extends MindMapDNDClientBase {
 
     private ImageTransfer transfer = ImageTransfer.getInstance();
 
@@ -48,8 +49,8 @@ public class ImageDndClient implements IDndClient {
                             String path = HyperlinkUtils
                                     .toAttachmentPath(source);
                             ImageDescriptor imageDescriptor = AttachmentImageDescriptor
-                                    .createFromEntryPath(image
-                                            .getOwnedWorkbook(), path);
+                                    .createFromEntryPath(
+                                            image.getOwnedWorkbook(), path);
                             ImageData imageData = imageDescriptor
                                     .getImageData();
                             return imageData;
@@ -61,10 +62,10 @@ public class ImageDndClient implements IDndClient {
         return null;
     }
 
-    public Object[] toViewerElements(Object transferData, IViewer viewer,
-            Object target) {
+    @Override
+    protected Object[] toViewerElements(Object transferData, Request request,
+            IWorkbook workbook, ITopic targetParent, boolean dropInParent) {
         if (transferData instanceof ImageData) {
-            IWorkbook workbook = (IWorkbook) viewer.getAdapter(IWorkbook.class);
             if (workbook != null) {
                 ImageData imageData = (ImageData) transferData;
                 ImageLoader saver = new ImageLoader();
@@ -76,13 +77,19 @@ public class ImageDndClient implements IDndClient {
                     IFileEntry entry = manifest.createAttachmentFromStream(
                             new ByteArrayInputStream(os.toByteArray()),
                             "temp.png", Core.MEDIA_TYPE_IMAGE_PNG); //$NON-NLS-1$
+                    String imageSource = HyperlinkUtils.toAttachmentURL(entry
+                            .getPath());
+                    if (targetParent != null && dropInParent) {
+                        return new Object[] { createModifyImageCommand(
+                                targetParent, imageSource, IImage.UNSPECIFIED,
+                                IImage.UNSPECIFIED, null) };
+                    }
                     ITopic topic = workbook.createTopic();
-                    topic.getImage().setSource(
-                            HyperlinkUtils.toAttachmentURL(entry.getPath()));
-                    return new Object[] { topic.getImage() };
+                    topic.getImage().setSource(imageSource);
+                    return new Object[] { topic };
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    Logger.log(e,
+                            "[ImageDndClient] Failed to create image entry."); //$NON-NLS-1$
                 }
             }
         }

@@ -161,4 +161,7 @@ public class ActionConstants {
 
     public static final String PREVIEW_REVISIONS = PREFIX + "previewRevisions"; //$NON-NLS-1$
 
+    public static final String REOPEN_WORKBOOK_MENU_ID = PREFIX
+            + "reopenWorkbook"; //$NON-NLS-1$
+
 }

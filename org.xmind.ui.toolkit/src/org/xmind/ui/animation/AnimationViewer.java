@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.PaintEvent;
@@ -284,10 +285,19 @@ public class AnimationViewer extends StructuredViewer {
         return currentFrame;
     }
 
+    public Image getCurrentImage() {
+        return currentFrame == null ? null : currentFrame.image;
+    }
+
+    public Object getCurrentElement() {
+        return currentFrame == null ? null : currentFrame.element;
+    }
+
     private void setCurrent(Frame frame) {
         if (currentFrame != frame && !canvas.isDisposed()) {
             this.currentFrame = frame;
             canvas.redraw();
+            setSelection(new StructuredSelection(frame.element));
         }
     }
 

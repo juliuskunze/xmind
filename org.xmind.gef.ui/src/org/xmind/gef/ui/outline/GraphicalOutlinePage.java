@@ -136,7 +136,10 @@ public abstract class GraphicalOutlinePage extends Page implements
         }
         if (editorTreeViewer != null) {
             if (refresh) {
-                editorTreeViewer.setInput(createEditorTreeViewerInput(editor));
+                Object newInput = createEditorTreeViewerInput(editor);
+                if (newInput != editorTreeViewer.getInput()) {
+                    editorTreeViewer.setInput(newInput);
+                }
             }
             pageBook.showPage(editorTreeViewer.getControl());
         }
@@ -162,7 +165,10 @@ public abstract class GraphicalOutlinePage extends Page implements
         }
         if (pageTreeViewer != null) {
             if (refresh) {
-                pageTreeViewer.setInput(createPageTreeViewerInput(pageInput));
+                Object newInput = createPageTreeViewerInput(pageInput);
+                if (newInput != pageTreeViewer.getInput()) {
+                    pageTreeViewer.setInput(newInput);
+                }
             }
             pageBook.showPage(pageTreeViewer.getControl());
         }

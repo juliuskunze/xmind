@@ -358,6 +358,19 @@ public class GEF {
     public static final String PARAM_FOCUS = "focus"; //$NON-NLS-1$
 
     /**
+     * Request parameter: drop operation identifier
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>{@link org.eclipse.swt.dnd.DND#DROP_NONE}</dd>
+     * <dd>{@link org.eclipse.swt.dnd.DND#DROP_COPY}</dd>
+     * <dd>{@link org.eclipse.swt.dnd.DND#DROP_MOVE}</dd>
+     * <dd>{@link org.eclipse.swt.dnd.DND#DROP_LINK}</dd>
+     * <dd>{@link org.eclipse.swt.dnd.DND#DROP_DEFAULT}</dd>
+     * </dl>
+     */
+    public static final String PARAM_DROP_OPERATION = "dropOperation"; //$NON-NLS-1$
+
+    /**
      * Result key of the traverse request to retrieve the traversable parts
      * selected by a <code>TraversablePolicy</code>.
      * 

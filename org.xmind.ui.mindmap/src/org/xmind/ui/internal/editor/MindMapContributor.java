@@ -249,7 +249,9 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
             add(cancelHyperlinkAction);
 
             add(openHyperlinkAction);
+            add(new GroupMarker("org.xmind.ui.popup.hyperlinkGroup")); //$NON-NLS-1$
             add(saveAttachmentAsAction);
+            add(new GroupMarker("org.xmind.ui.popup.attachmentGroup")); //$NON-NLS-1$
             add(new Separator());
 
             add(extendAllAction);

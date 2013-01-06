@@ -30,6 +30,10 @@ public class FileTemplateDescriptor extends AbstractTemplateDescriptor {
         return file;
     }
 
+    public String getSymbolicName() {
+        return "file:" + file.getAbsolutePath(); //$NON-NLS-1$
+    }
+
     public String getName() {
         return file.getName();
     }
@@ -59,7 +63,7 @@ public class FileTemplateDescriptor extends AbstractTemplateDescriptor {
 
     @Override
     public int hashCode() {
-        return file.hashCode();
+        return file.getAbsolutePath().hashCode();
     }
 
 }

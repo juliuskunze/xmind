@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URL;
 
 import net.xmind.signin.XMindNet;
+import net.xmind.workbench.internal.XMindNetWorkbench;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
@@ -33,8 +34,6 @@ import org.osgi.framework.Bundle;
  * 
  */
 public class HelpActionDelegate implements IWorkbenchWindowActionDelegate {
-
-    private static final String ONLINE_HELP_URL = "http://www.xmind.net/xmind/help/"; //$NON-NLS-1$
 
     private IWorkbenchWindow window;
 
@@ -82,7 +81,7 @@ public class HelpActionDelegate implements IWorkbenchWindowActionDelegate {
                 }
             }
         }
-        return ONLINE_HELP_URL;
+        return XMindNetWorkbench.URL_HELP;
     }
 
     /*

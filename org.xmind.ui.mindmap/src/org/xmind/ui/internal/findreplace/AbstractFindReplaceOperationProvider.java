@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.xmind.ui.internal.findreplace;
 
+import org.eclipse.swt.graphics.Font;
+import org.xmind.gef.draw2d.graphics.GraphicsUtils;
+
 /**
  * @author Frank Shaka
  */
@@ -154,5 +157,31 @@ public abstract class AbstractFindReplaceOperationProvider implements
      */
     public boolean understandsPatameter(int parameter) {
         return true;
+    }
+
+    protected static int computeTextWidth(String text, Font font) {
+        return GraphicsUtils.getAdvanced().getTextSize(text, font).width;
+    }
+
+    protected static String constrainText(String text, int maxWidth, Font font) {
+        if (computeTextWidth(text, font) <= maxWidth)
+            return text;
+
+        String head = text.substring(0, Math.max(0, text.length() / 2));
+        String trail = text.substring(text.length() / 2 + 1);
+        boolean cutHead = true;
+        while (head.length() > 0 && trail.length() > 0) {
+            text = head + "..." + trail; //$NON-NLS-1$
+            if (computeTextWidth(text, font) <= maxWidth)
+                return text;
+
+            if (cutHead) {
+                head = head.substring(0, head.length() - 1);
+            } else {
+                trail = trail.substring(1);
+            }
+            cutHead = !cutHead;
+        }
+        return text;
     }
 }

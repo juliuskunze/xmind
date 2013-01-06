@@ -31,6 +31,12 @@ public class ThemeTemplateDescriptor extends AbstractTemplateDescriptor {
         return theme;
     }
 
+    public String getSymbolicName() {
+        if (theme == MindMapUI.getResourceManager().getBlankTheme())
+            return "theme:blank"; //$NON-NLS-1$
+        return "theme:" + theme.getId(); //$NON-NLS-1$
+    }
+
     public String getName() {
         return theme.getName();
     }

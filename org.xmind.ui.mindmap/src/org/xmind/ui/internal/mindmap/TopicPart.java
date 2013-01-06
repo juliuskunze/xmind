@@ -265,8 +265,7 @@ public class TopicPart extends NodePart implements ITopicPart {
             }
         }
 
-        if (topic.getImage().getSource() != null
-                || ImageDownloadCenter.getInstance().isDownloading(topic)) {
+        if (topic.getImage().getSource() != null) {
             list.add(new ViewerModel(ImagePart.class, topic.getImage()));
         }
         return list.toArray();

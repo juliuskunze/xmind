@@ -22,6 +22,7 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
+            categoryId="net.xmind.ui.commands"
             description="%command.upload.description"
             id="com.xmindshare.uploader.commands.upload"
             name="%command.upload.name">

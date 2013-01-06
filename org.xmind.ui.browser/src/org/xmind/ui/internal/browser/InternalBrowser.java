@@ -92,9 +92,10 @@ public class InternalBrowser implements IBrowser {
                 part = page.openEditor(createEditorInput(url),
                         InternalBrowserEditor.BROWSER_EDITOR_ID);
             } else {
-                part = page.showView(InternalBrowserView.BROWSER_VIEW_ID);
+                part = page.showView(InternalBrowserView.BROWSER_VIEW_ID,
+                        clientId, IWorkbenchPage.VIEW_ACTIVATE);
                 if (part instanceof InternalBrowserView) {
-                    ((InternalBrowserView) part).setClientId(clientId);
+                    ((InternalBrowserView) part).changeStyle(browserStyle);
                     ((InternalBrowserView) part).openURL(url);
                 }
             }

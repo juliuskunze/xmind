@@ -328,6 +328,8 @@ public class MindMapMessages extends NLS {
 
     public static String WorkbookSaver_SaveWorkbookContent_taskName;
 
+    public static String FileStoreWorkbookAdapter_FailedToSaveWorkbook_error;
+
     public static String EditInNotesView_text;
     public static String EditInNotesView_toolTip;
 
@@ -346,6 +348,15 @@ public class MindMapMessages extends NLS {
 
     public static String Notes_FindReplaceContextPattern;
     public static String EmptyNotes_FindReplaceContextName;
+
+    public static String ReopenWorkbookMenu_text;
+    public static String ReopenWorkbookMenu_NoItemsPlaceholder_text;
+    public static String ReopenWorkbookMenu_toolTip;
+    public static String ReopenWorkbookMenu_ClearListAction_text;
+
+    public static String SaveNewRevision_text;
+
+    public static String WorkbookRevisionsPage_AutoSaveRevisionsCheck_text;
 
     static {
         // initialize resource bundle

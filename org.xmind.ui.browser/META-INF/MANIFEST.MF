@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.xmind.ui.browser;singleton:=true
-Bundle-Version: 3.3.0.qualifier
+Bundle-Version: 3.3.1.qualifier
 Bundle-Activator: org.xmind.ui.internal.browser.BrowserPlugin
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.ui,
@@ -19,6 +19,8 @@ Export-Package: org.xmind.ui.browser;
    org.eclipse.swt.widgets,
    org.eclipse.jface.dialogs,
    org.eclipse.swt.browser",
+ org.xmind.ui.comm,
  org.xmind.ui.internal.browser;x-internal:=true,
- org.xmind.ui.internal.browser.actions;x-internal:=true
+ org.xmind.ui.internal.browser.actions;x-internal:=true,
+ org.xmind.ui.internal.comm;x-internal:=true
 Bundle-Localization: plugin

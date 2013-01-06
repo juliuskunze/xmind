@@ -179,6 +179,15 @@ public class WizardMessages extends NLS {
     public static String ChooseLocationWizardPage_title;
     public static String ChooseLocationWizardPage_DecideLocationLater_text;
 
+    public static String NewWorkbookEditor_toolTip;
+    public static String NewWorkbookEditor_title;
+    public static String NewWorkbookEditor_description;
+    public static String NewWorkbookEditor_ChooseButton_text;
+    public static String NewWorkbookEditor_RecentFilesGroup_title;
+    public static String NewWorkbookEditor_OpenLocalFileLink_text;
+    public static String NewWorkbookEditor_OpenHomeMapLink_text;
+    public static String NewWorkbookEditor_OpenPreferencesLink_text;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, WizardMessages.class);
     }

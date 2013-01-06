@@ -14,6 +14,8 @@
 package org.xmind.ui.internal.mindmap;
 
 import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Shell;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.internal.TopicContextService;
@@ -45,6 +47,19 @@ public class MindMapTopicContextService extends TopicContextService {
         if (adapter == ISelectionProvider.class) {
             return page.getParentEditor().getSite().getSelectionProvider();
         }
+        if (adapter == Shell.class)
+            return page.getControl().getShell();
+        if (adapter == Control.class)
+            return getViewer().getControl();
+        Object o = getViewer().getAdapter(adapter);
+        if (o != null)
+            return o;
+        o = page.getAdapter(adapter);
+        if (o != null)
+            return o;
+        o = page.getParentEditor().getAdapter(adapter);
+        if (o != null)
+            return o;
         return null;
     }
 

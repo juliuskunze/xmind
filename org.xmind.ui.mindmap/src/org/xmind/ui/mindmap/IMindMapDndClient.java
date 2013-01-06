@@ -15,9 +15,21 @@ package org.xmind.ui.mindmap;
 
 import org.xmind.gef.Request;
 import org.xmind.gef.dnd.DndData;
+import org.xmind.gef.dnd.IDndClient;
 
+/**
+ * 
+ * @author frankshaka
+ * @deprecated See {@link IDndClient#makeDNDCommand(Object, Request)}
+ */
 public interface IMindMapDndClient {
 
+    /**
+     * @param request
+     * @param dndItem
+     * @return
+     * @deprecated
+     */
     boolean handleRequest(Request request, DndData dndItem);
 
 }

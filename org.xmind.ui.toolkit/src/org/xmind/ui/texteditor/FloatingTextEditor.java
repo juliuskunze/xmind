@@ -33,9 +33,12 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -43,18 +46,24 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Layout;
 import org.xmind.ui.viewers.ICompositeProvider;
 import org.xmind.ui.viewers.SWTUtils;
 import org.xmind.ui.viewers.SameCompositeProvider;
 
+/**
+ * A lightweight viewer observing text change using a Text as widget.
+ * 
+ * @author Frank Shaka
+ */
 public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
 
     private static int DEFAULT_STYLE = SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL
             | SWT.H_SCROLL;
 
     private class TextViewerHooker implements ISelectionChangedListener,
-            VerifyKeyListener {
+            VerifyKeyListener, TraverseListener {
 
         public void selectionChanged(SelectionChangedEvent event) {
             fireSelectionChanged(new SelectionChangedEvent(
@@ -63,6 +72,17 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
 
         public void verifyKey(VerifyEvent event) {
             handleVerifyKey(event);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.swt.events.TraverseListener#keyTraversed(org.eclipse.
+         * swt.events.TraverseEvent)
+         */
+        public void keyTraversed(TraverseEvent e) {
+            handleTraverseKey(e);
         }
 
         public void hook(ITextViewer viewer) {
@@ -76,9 +96,11 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
             if (viewer instanceof ITextViewerExtension) {
                 ((ITextViewerExtension) viewer).prependVerifyKeyListener(this);
             }
+            viewer.getTextWidget().addTraverseListener(this);
         }
 
         public void unhook(ITextViewer viewer) {
+            viewer.getTextWidget().removeTraverseListener(this);
             if (viewer instanceof ITextViewerExtension) {
                 ((ITextViewerExtension) viewer).removeVerifyKeyListener(this);
             }
@@ -381,16 +403,10 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
 
         int stateMask = event.stateMask;
         int keyCode = event.keyCode;
-        if (SWTUtils.matchKey(stateMask, keyCode, 0, SWT.ESC)) {
-            event.doit = false;
-            cancelEditing();
-        } else if (SWTUtils.matchKey(stateMask, keyCode, SWT.MOD2, SWT.CR)) {
+        if (SWTUtils.matchKey(stateMask, keyCode, SWT.MOD2, SWT.CR)) {
             if ((getEditorStyle() & SWT.MULTI) == 0) {
                 event.doit = false;
             }
-        } else if (SWTUtils.matchKey(stateMask, keyCode, 0, SWT.CR)) {
-            event.doit = false;
-            finishEditing();
         } else if (SWTUtils.matchKey(stateMask, keyCode, SWT.MOD1, 'z')) {
             event.doit = false;
             if (canDoOperation(UNDO)) {
@@ -400,6 +416,28 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
             event.doit = false;
             if (canDoOperation(REDO)) {
                 doOperation(REDO);
+            }
+        }
+    }
+
+    protected void handleTraverseKey(TraverseEvent event) {
+        if (event.detail == SWT.TRAVERSE_ESCAPE) {
+            fireTraverseKey(event, event.stateMask, SWT.ESC);
+            if (!event.doit)
+                return;
+            event.doit = false;
+            cancelEditing();
+        } else if (event.detail == SWT.TRAVERSE_RETURN) {
+            fireTraverseKey(event, event.stateMask, SWT.CR);
+            if (!event.doit)
+                return;
+            if (event.stateMask == 0) {
+                event.doit = false;
+                finishEditing();
+            } else if ((event.stateMask & SWT.MOD2) != 0) {
+                if ((getEditorStyle() & SWT.MULTI) == 0) {
+                    event.doit = false;
+                }
             }
         }
     }
@@ -623,6 +661,31 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
         if (verifyKeyListeners == null)
             return;
         verifyKeyListeners.remove(listener);
+    }
+
+    protected void fireTraverseKey(TraverseEvent te, int simState,
+            int simKeyCode) {
+        StyledText widget = (StyledText) te.widget;
+        Point selection = widget.getSelection();
+        Event e = new Event();
+        e.character = te.character;
+        e.data = te.data;
+        e.display = te.display;
+        e.doit = true;
+        e.end = selection.y;
+        e.keyCode = te.keyCode;
+        e.keyLocation = te.keyLocation;
+        e.start = selection.x;
+        e.stateMask = te.stateMask;
+        e.text = widget.getText();
+        e.time = te.time;
+        e.widget = te.widget;
+        VerifyEvent ve = new VerifyEvent(e);
+        try {
+            handleVerifyKey(ve);
+        } finally {
+            te.doit = ve.doit;
+        }
     }
 
     protected void fireVerifyKey(VerifyEvent e) {

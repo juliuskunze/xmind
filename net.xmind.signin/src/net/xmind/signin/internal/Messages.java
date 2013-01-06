@@ -46,6 +46,41 @@ public class Messages extends NLS {
     public static String Renew_text;
     public static String Renew_toolTip;
 
+    public static String XMindUpdater_Task_CheckForUpdates;
+    public static String XMindUpdater_Task_ConfirmDownloading;
+    public static String XMindUpdater_Task_ChooseSaveLocation;
+    public static String XMindUpdater_Task_Download;
+    public static String XMindUpdater_Task_DownloadProgress_with_percentage;
+    public static String XMindUpdater_Task_ConfirmInstalling;
+    public static String XMindUpdater_Task_LaunchInstaller;
+
+    public static String XMindUpdater_Error_NoXMindProductFound;
+    public static String XMindUpdater_Error_NoXMindProductVersionFound;
+    public static String XMindUpdater_Error_FailedToCheck_with_responseText;
+    public static String XMindUpdater_Error_FailedToCheck_with_responseCode;
+    public static String XMindUpdater_Error_FailedToDownload_with_errorDescription;
+    public static String XMindUpdater_Error_FailedToDownloadUnknownError;
+    public static String XMindUpdater_Error_FailedToDownloadUnknownError_with_responseCode;
+    public static String XMindUpdater_Error_InstallerExecutableNotFound_with_executablePath;
+    public static String XMindUpdater_Error_FailedToExecuteInstaller_with_errorDescription;
+    public static String XMindUpdater_Error_FailedToExecuteCommand_with_commandLine;
+
+    public static String XMindUpdater_DialogTitle;
+    public static String XMindUpdater_SaveDialogTitle;
+    public static String XMindUpdater_Dialog_NoUpdatesFound;
+    public static String XMindUpdater_Dialog_ConfirmInstalling;
+    public static String XMindUpdater_Dialog_ConfirmInstallingOnStartupCheck;
+    public static String XMindUpdater_Dialog_ConfirmClearDownload;
+    public static String XMindUpdater_Dialog_NewVersionAvailable;
+    public static String XMindUpdater_Dialog_NewVersionDetails;
+
+    public static String XMindUpdater_Action_Download_text;
+    public static String XMindUpdater_Action_ViewDetails_text;
+    public static String XMindUpdater_Action_QuitAndInstall_text;
+    public static String XMindUpdater_Action_Later_text;
+    public static String XMindUpdater_Action_Install_text;
+    public static String XMindUpdater_Action_Clear_text;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
     }

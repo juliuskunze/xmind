@@ -21,7 +21,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.ui.dialogs.PreferencesUtil;
+import org.xmind.ui.util.PrefUtils;
 
 public class AutoBackupIndicator extends ContributionItem implements
         IPropertyChangeListener, Listener {
@@ -75,7 +75,8 @@ public class AutoBackupIndicator extends ContributionItem implements
          * 
          */
         public OpenPreferencePageAction() {
-            super(WorkbenchMessages.AutoBackupIndicator_OpenPreferenceAction_text);
+            super(
+                    WorkbenchMessages.AutoBackupIndicator_OpenPreferenceAction_text);
         }
 
         /*
@@ -85,8 +86,7 @@ public class AutoBackupIndicator extends ContributionItem implements
          */
         @Override
         public void run() {
-            PreferencesUtil.createPreferenceDialogOn(null,
-                    "org.xmind.ui.GeneralPrefPage", null, null).open(); //$NON-NLS-1$
+            PrefUtils.openPrefDialog(null, PrefUtils.GENERAL_PREF_PAGE_ID);
         }
     }
 
@@ -123,8 +123,14 @@ public class AutoBackupIndicator extends ContributionItem implements
         label.addListener(SWT.MouseDown, this);
 
         menu = new MenuManager();
-        menu.add(new ChangeAutoSavePrefAction(ps, WorkbenchMessages.AutoBackupIndicator_DisableAutoSaveAction_text, DISABLED));
-        menu.add(new ChangeAutoSavePrefAction(ps, WorkbenchMessages.AutoBackupIndicator_EnableAutoSaveAction_text, ENABLED));
+        menu.add(new ChangeAutoSavePrefAction(
+                ps,
+                WorkbenchMessages.AutoBackupIndicator_DisableAutoSaveAction_text,
+                DISABLED));
+        menu.add(new ChangeAutoSavePrefAction(
+                ps,
+                WorkbenchMessages.AutoBackupIndicator_EnableAutoSaveAction_text,
+                ENABLED));
 //        menu.add(new ChangeBackupPrefAction(ps, "Enable backup", BACKUP_ENABLED));
 //        menu.add(new ChangeBackupPrefAction(ps,
 //                "Enable backup and local file saving", ALL_ENABLED));

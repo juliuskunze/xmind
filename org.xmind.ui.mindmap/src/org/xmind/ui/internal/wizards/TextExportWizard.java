@@ -14,7 +14,6 @@
 package org.xmind.ui.internal.wizards;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -78,8 +77,7 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
             protected IStatus run(IProgressMonitor monitor) {
                 monitor.beginTask(null, 100);
 
-                monitor
-                        .subTask(WizardMessages.TextExportPage_GeneratePreview_CollectingMapInfo);
+                monitor.subTask(WizardMessages.TextExportPage_GeneratePreview_CollectingMapInfo);
                 IExporter exporter = createExporter();
                 if (exporter == null) {
                     return new Status(
@@ -286,50 +284,58 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
         monitor.subTask(WizardMessages.Export_Initializing);
         IExporter exporter = createExporter();
         if (exporter == null) {
-            page
-                    .setErrorMessage(WizardMessages.TextExportPage_NoContentToExport_message);
+            page.setErrorMessage(WizardMessages.TextExportPage_NoContentToExport_message);
             throw new InterruptedException();
         }
         monitor.worked(10);
-
-        OutputStream out;
-        try {
-            out = new FileOutputStream(getTargetPath());
-        } catch (FileNotFoundException e) {
-            throw new InvocationTargetException(e);
-        }
-        out = wrapMonitor(out, monitor);
-        PrintStream ps = createPrintStream(out);
-        ((TextExporter) exporter).setPrintStream(ps);
-        if (!exporter.canStart()) {
-            page
-                    .setErrorMessage(WizardMessages.TextExportPage_NoContentToExport_message);
-            throw new InterruptedException();
-        }
 
         int total = exporter.getTotalWork();
         int worked = 0;
         int uiTotal = 88;
         int uiWorked = 0;
 
-        exporter.start(display, parentShell);
-
+        OutputStream fileOut;
         try {
-            while (exporter.hasNext()) {
-                monitor.subTask(cleanFileName(exporter.getNextName()));
-                exporter.writeNext(monitor);
+            fileOut = new FileOutputStream(getTargetPath());
+        } catch (IOException e) {
+            throw new InvocationTargetException(e);
+        }
+        try {
+            OutputStream out = wrapMonitor(fileOut, monitor);
+            try {
+                PrintStream ps = createPrintStream(out);
+                try {
+                    ((TextExporter) exporter).setPrintStream(ps);
+                    if (!exporter.canStart()) {
+                        page.setErrorMessage(WizardMessages.TextExportPage_NoContentToExport_message);
+                        throw new InterruptedException();
+                    }
 
-                worked++;
-                int newUIWorked = worked * uiTotal / total;
-                if (newUIWorked > uiWorked) {
-                    monitor.worked(newUIWorked - uiWorked);
-                    uiWorked = newUIWorked;
+                    exporter.start(display, parentShell);
+
+                    while (exporter.hasNext()) {
+                        monitor.subTask(cleanFileName(exporter.getNextName()));
+                        exporter.writeNext(monitor);
+
+                        worked++;
+                        int newUIWorked = worked * uiTotal / total;
+                        if (newUIWorked > uiWorked) {
+                            monitor.worked(newUIWorked - uiWorked);
+                            uiWorked = newUIWorked;
+                        }
+                    }
+                } finally {
+                    ps.close();
+                }
+            } finally {
+                try {
+                    out.close();
+                } catch (IOException e) {
                 }
             }
         } finally {
-            ps.close();
             try {
-                out.close();
+                fileOut.close();
             } catch (IOException e) {
             }
         }
