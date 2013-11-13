@@ -50,11 +50,15 @@ public abstract class ImageCachedLabelProvider extends LabelProvider {
     protected abstract Image createImage(Object element);
 
     public void dispose() {
+        clearCaches();
+        super.dispose();
+    }
+
+    public void clearCaches() {
         for (Object element : map.keySet().toArray()) {
             disposeImage(element);
         }
         map.clear();
-        super.dispose();
     }
 
 }

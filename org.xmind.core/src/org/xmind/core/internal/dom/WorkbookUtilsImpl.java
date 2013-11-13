@@ -415,10 +415,11 @@ public class WorkbookUtilsImpl {
                                                 this);
                                     }
                                 });
+                    } else {
+                        String targetId = data.getString(
+                                ICloneData.WORKBOOK_COMPONENTS, sourceId);
+                        clonedUrl = HyperlinkUtils.toInternalURL(targetId);
                     }
-                    String targetId = data.getString(
-                            ICloneData.WORKBOOK_COMPONENTS, sourceId);
-                    clonedUrl = HyperlinkUtils.toInternalURL(targetId);
                 } else {
                     clonedUrl = sourceUrl;
                 }
@@ -634,19 +635,27 @@ public class WorkbookUtilsImpl {
         IMarkerResource sourceResource = sourceMarker.getResource();
         if (sourceResource != null) {
             //IMarkerResource targetResource = targetMarker.getResource();
-            InputStream in = sourceResource.getInputStream();
-            if (in != null) {
-                String targetPath = ArchiveConstants.PATH_MARKERS
-                        + targetMarker.getResourcePath();
-                IFileEntry entry = targetWorkbook.getManifest()
-                        .createFileEntry(targetPath);
-                OutputStream out = entry.getOutputStream();
-                if (out != null) {
+            try {
+                InputStream is = sourceResource.getInputStream();
+                if (is != null) {
                     try {
-                        FileUtils.transfer(in, out, true);
-                    } catch (IOException e) {
+                        String targetPath = ArchiveConstants.PATH_MARKERS
+                                + targetMarker.getResourcePath();
+                        IFileEntry entry = targetWorkbook.getManifest()
+                                .createFileEntry(targetPath);
+                        OutputStream out = entry.getOutputStream();
+                        if (out != null) {
+                            FileUtils.transfer(is, out, true);
+                        }
+                    } finally {
+                        is.close();
                     }
                 }
+            } catch (IOException e) {
+                Core.getLogger().log(e,
+                        "Failed to transfer marker resource from " //$NON-NLS-1$
+                                + sourceMarker.getResourcePath() + " to " //$NON-NLS-1$
+                                + targetMarker.getResourcePath());
             }
         }
     }
@@ -896,18 +905,20 @@ public class WorkbookUtilsImpl {
         targetEntry.increaseReference();
 
         InputStream is = sourceEntry.getInputStream();
-        OutputStream os = targetEntry.getOutputStream();
-        if (is != null && os != null) {
+        if (is != null) {
             try {
-                FileUtils.transfer(is, os, true);
+                OutputStream os = targetEntry.openOutputStream();
+                try {
+                    FileUtils.transfer(is, os, true);
+                } finally {
+                    os.close();
+                }
             } catch (IOException e) {
+                Core.getLogger().log(e,
+                        "Failed to clone attachment " + sourceURL); //$NON-NLS-1$
             } finally {
                 try {
                     is.close();
-                } catch (IOException e1) {
-                }
-                try {
-                    os.close();
                 } catch (IOException e) {
                 }
             }

@@ -210,8 +210,8 @@ public class BrowserViewer implements IBrowserViewer {
                 }
                 addToHistory(event.location);
                 updateHistory();
-                firePropertyChangeEvent(PROPERTY_LOCATION, event.location,
-                        oldLocation);
+                firePropertyChangeEvent(PROPERTY_LOCATION, oldLocation,
+                        event.location);
             }
         }
 
@@ -327,12 +327,14 @@ public class BrowserViewer implements IBrowserViewer {
                 }
             }
 
-            if (!homeBusy.isAnimating() && !done)
-                setLoading(true);
-            else if (homeBusy.isAnimating() && done) // once the progress hits
-                // 100 percent, done, set
-                // busy to false
-                setLoading(false);
+            if (homeBusy != null) {
+                if (!homeBusy.isAnimating() && !done)
+                    setLoading(true);
+                else if (homeBusy.isAnimating() && done) // once the progress hits
+                    // 100 percent, done, set
+                    // busy to false
+                    setLoading(false);
+            }
 
             updateBackNextBusy();
             updateHistory();
@@ -609,23 +611,23 @@ public class BrowserViewer implements IBrowserViewer {
                 true));
 
         Browser b = null;
+//        try {
+//            // try Mozilla
+//            b = createBrowser(browserContainer, SWT.MOZILLA | SWT.BORDER);
+//            mozilla = true;
+//        } catch (SWTError e) {
+        mozilla = false;
         try {
-            // try Mozilla
-            b = createBrowser(browserContainer, SWT.MOZILLA | SWT.BORDER);
-            mozilla = true;
-        } catch (SWTError e) {
-            mozilla = false;
-            try {
-                // try default browser
-                b = createBrowser(browserContainer, SWT.NONE);
-            } catch (SWTError e2) {
-                if (e2.code != SWT.ERROR_NO_HANDLES) {
-                    return;
-                }
-                // show error text
-                errorText = new BrowserErrorText(browserContainer, this, e2);
+            // try default browser
+            b = createBrowser(browserContainer, SWT.NONE);
+        } catch (SWTError e2) {
+            if (e2.code != SWT.ERROR_NO_HANDLES) {
+                return;
             }
+            // show error text
+            errorText = new BrowserErrorText(browserContainer, this, e2);
         }
+//        }
         if (b != null) {
             this.browser = b;
         }
@@ -781,8 +783,10 @@ public class BrowserViewer implements IBrowserViewer {
     }
 
     protected void updateBackNextBusy() {
-        backAction.setEnabled(isBackEnabled());
-        forwardAction.setEnabled(isForwardEnabled());
+        if (backAction != null)
+            backAction.setEnabled(isBackEnabled());
+        if (forwardAction != null)
+            forwardAction.setEnabled(isForwardEnabled());
         if (homeBusy != null && homeBusy.getControl() != null
                 && !homeBusy.getControl().isDisposed()) {
             if (loading) {

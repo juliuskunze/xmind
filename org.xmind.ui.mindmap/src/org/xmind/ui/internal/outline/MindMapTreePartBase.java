@@ -14,6 +14,7 @@
 package org.xmind.ui.internal.outline;
 
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Widget;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
@@ -49,6 +50,17 @@ public class MindMapTreePartBase extends TreePart implements ICoreEventListener 
         if (eventRegister != null) {
             eventRegister.unregisterAll();
             eventRegister = null;
+        }
+    }
+
+    protected void runInUI(Runnable job, boolean async) {
+        Widget widget = getWidget();
+        if (widget == null || widget.isDisposed())
+            return;
+        if (async) {
+            widget.getDisplay().asyncExec(job);
+        } else {
+            widget.getDisplay().syncExec(job);
         }
     }
 

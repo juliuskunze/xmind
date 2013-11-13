@@ -79,8 +79,9 @@ public class CloneData implements ICloneData {
     }
 
     public void putString(String category, String source, String cloned) {
-        doPut(new CategorizedString(category, source), cloned);
-        fireStringCloned(category, source, cloned);
+        CategorizedString sourceObj = new CategorizedString(category, source);
+        doPut(sourceObj, cloned);
+        fireStringCloned(sourceObj, category, source, cloned);
     }
 
     public Object get(Object source) {
@@ -153,12 +154,13 @@ public class CloneData implements ICloneData {
         }
     }
 
-    private void fireStringCloned(String category, String source, String cloned) {
+    private void fireStringCloned(Object sourceObj, String category,
+            String source, String cloned) {
         if (listeners.isEmpty())
             return;
-        List<ICloneDataListener> list = listeners.get(source);
+        List<ICloneDataListener> list = listeners.get(sourceObj);
         if (list == null || list.isEmpty()) {
-            listeners.remove(source);
+            listeners.remove(sourceObj);
             return;
         }
         for (Object o : list.toArray()) {

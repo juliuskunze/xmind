@@ -84,18 +84,21 @@ import org.xmind.gef.tool.SelectTool;
 import org.xmind.ui.branch.IBranchDoubleClickSupport;
 import org.xmind.ui.branch.IBranchMoveSupport;
 import org.xmind.ui.internal.actions.GroupMarkers;
+import org.xmind.ui.internal.editor.IMESupport;
 import org.xmind.ui.internal.mindmap.IconTipPart;
 import org.xmind.ui.internal.protocols.FilePathParser;
 import org.xmind.ui.internal.protocols.FileProtocol;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.IBranchRangePart;
 import org.xmind.ui.mindmap.IDrillDownTraceService;
+import org.xmind.ui.mindmap.IIconTipPart;
 import org.xmind.ui.mindmap.IImagePart;
 import org.xmind.ui.mindmap.ILabelPart;
 import org.xmind.ui.mindmap.ILegendItemPart;
 import org.xmind.ui.mindmap.ILegendPart;
 import org.xmind.ui.mindmap.IMarkerPart;
 import org.xmind.ui.mindmap.IMindMap;
+import org.xmind.ui.mindmap.INumberingPart;
 import org.xmind.ui.mindmap.IPlusMinusPart;
 import org.xmind.ui.mindmap.IRelationshipPart;
 import org.xmind.ui.mindmap.ISheetPart;
@@ -252,7 +255,7 @@ public class MindMapSelectTool extends SelectTool {
         return false;
     }
 
-    protected boolean handleKeyDown(KeyEvent ke) {
+    protected boolean handleKeyDown(final KeyEvent ke) {
         boolean handled = super.handleKeyDown(ke);
         if (!handled) {
             int keyCode = ke.keyCode;
@@ -271,21 +274,34 @@ public class MindMapSelectTool extends SelectTool {
                     && hideQuickOpen())
                 return true;
             if (p != null && p.hasRole(GEF.ROLE_EDITABLE)) {
-                if (MindMapUtils.isTopicTextChar(ke.character)
-                        || keyCode == 229) {
-                    Request req = new Request(GEF.REQ_EDIT);
-                    req.setDomain(getDomain());
-                    req.setViewer(getTargetViewer());
-                    fillTargets(req, getTargetViewer(), false);
-                    if (req.hasTargets()) {
-                        startEditing(p, req);
-                        if (!SWTUtils.matchKey(stateMask, keyCode, 0, ' ')) {
-                            ITool activeTool = getDomain().getActiveTool();
-                            if (activeTool != this) {
-                                activeTool.keyDown(ke, getTargetViewer());
+                if (MindMapUtils.isTopicTextChar(ke.character)) {
+                    int ignoreCount = getTargetViewer().getProperties()
+                            .getInteger(IMESupport.PROP_IGNORE_KEY_DOWN, 0);
+                    if (ignoreCount > 0) {
+                        getTargetViewer().getProperties().set(
+                                IMESupport.PROP_IGNORE_KEY_DOWN,
+                                ignoreCount - 1);
+                    } else {
+                        Request req = new Request(GEF.REQ_EDIT);
+                        req.setDomain(getDomain());
+                        req.setViewer(getTargetViewer());
+                        fillTargets(req, getTargetViewer(), false);
+                        if (req.hasTargets()) {
+                            startEditing(p, req);
+                            if (ke.character != ' ') {
+                                final ITool activeTool = getDomain()
+                                        .getActiveTool();
+                                if (activeTool != this) {
+//                                    Display.getCurrent().asyncExec(
+//                                            new Runnable() {
+//                                                public void run() {
+                                    activeTool.keyDown(ke, getTargetViewer());
+//                                                }
+//                                            });
+                                }
                             }
+                            return true;
                         }
-                        return true;
                     }
                 }
             }
@@ -985,7 +1001,22 @@ public class MindMapSelectTool extends SelectTool {
     }
 
     protected void handleEditLabelRequest(Request request, IViewer viewer) {
-        handleEditRequest(fillTargets(request, viewer, false));
+        request = fillTargets(request, viewer, false);
+        List<IPart> targets = new ArrayList<IPart>(request.getTargets());
+        for (int i = 0; i < targets.size(); i++) {
+            IPart p = targets.get(i);
+            if (p instanceof IIconTipPart) {
+                targets.set(i, ((IIconTipPart) p).getTopicPart());
+            } else if (p instanceof IMarkerPart) {
+                targets.set(i, ((IMarkerPart) p).getTopicPart());
+            } else if (p instanceof IImagePart) {
+                targets.set(i, ((IImagePart) p).getTopicPart());
+            } else if (p instanceof INumberingPart) {
+                targets.set(i, ((INumberingPart) p).getTopicPart());
+            }
+        }
+        request.setTargets(targets);
+        handleEditRequest(request);
     }
 
     protected String getEditTool(IPart source, Request request) {

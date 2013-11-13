@@ -1,29 +1,38 @@
-/* ******************************************************************************
- * Copyright (c) 2006-2012 XMind Ltd. and others.
- * 
- * This file is a part of XMind 3. XMind releases 3 and
- * above are dual-licensed under the Eclipse Public License (EPL),
- * which is available at http://www.eclipse.org/legal/epl-v10.html
- * and the GNU Lesser General Public License (LGPL), 
- * which is available at http://www.gnu.org/licenses/lgpl.html
- * See http://www.xmind.net/license.html for details.
- * 
- * Contributors:
- *     XMind Ltd. - initial API and implementation
- *******************************************************************************/
+/*
+ * %W% %E%
+ *
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ */
+
 package org.xmind.core.internal.security;
 
 /**
- * @author MANGOSOFT
+ * Static methods for translating Base64 encoded strings to byte arrays and
+ * vice-versa.
  * 
+ * @author Josh Bloch
+ * @version %I%, %G%
+ * @see java.util.prefs.Preferences
+ * @since 1.4
  */
-public class Base64 {
+class Base64 {
     /**
      * Translates the specified byte array into a Base64 string as per
      * Preferences.put(byte[]).
      */
     static String byteArrayToBase64(byte[] a) {
         return byteArrayToBase64(a, false);
+    }
+
+    /**
+     * Translates the specified byte array into an "alternate representation"
+     * Base64 string. This non-standard variant uses an alphabet that does not
+     * contain the uppercase alphabetic characters, which makes it suitable for
+     * use in situations where case-folding occurs.
+     */
+    static String byteArrayToAltBase64(byte[] a) {
+        return byteArrayToBase64(a, true);
     }
 
     private static String byteArrayToBase64(byte[] a, boolean alternate) {
@@ -101,6 +110,17 @@ public class Base64 {
      */
     static byte[] base64ToByteArray(String s) {
         return base64ToByteArray(s, false);
+    }
+
+    /**
+     * Translates the specified "alternate representation" Base64 string into a
+     * byte array.
+     * 
+     * @throw IllegalArgumentException or ArrayOutOfBoundsException if
+     *        <tt>s</tt> is not a valid alternate representation Base64 string.
+     */
+    static byte[] altBase64ToByteArray(String s) {
+        return base64ToByteArray(s, true);
     }
 
     private static byte[] base64ToByteArray(String s, boolean alternate) {
@@ -193,26 +213,26 @@ public class Base64 {
             19, 21, 20, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
             40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 22, 23, 24, 25 };
 
-//    public static void main(String args[]) {
-//        int numRuns = Integer.parseInt(args[0]);
-//        int numBytes = Integer.parseInt(args[1]);
-//        java.util.Random rnd = new java.util.Random();
-//        for (int i = 0; i < numRuns; i++) {
-//            for (int j = 0; j < numBytes; j++) {
-//                byte[] arr = new byte[j];
-//                for (int k = 0; k < j; k++)
-//                    arr[k] = (byte) rnd.nextInt();
-//
-//                String s = byteArrayToBase64(arr);
-//                byte[] b = base64ToByteArray(s);
-//                if (!java.util.Arrays.equals(arr, b))
-//                    System.out.println("Dismal failure!");
-//
-////                s = byteArrayToAltBase64(arr);
-////                b = altBase64ToByteArray(s);
-////                if (!java.util.Arrays.equals(arr, b))
-////                    System.out.println("Alternate dismal failure!");
-//            }
-//        }
-//    }
+    public static void main(String args[]) {
+        int numRuns = Integer.parseInt(args[0]);
+        int numBytes = Integer.parseInt(args[1]);
+        java.util.Random rnd = new java.util.Random();
+        for (int i = 0; i < numRuns; i++) {
+            for (int j = 0; j < numBytes; j++) {
+                byte[] arr = new byte[j];
+                for (int k = 0; k < j; k++)
+                    arr[k] = (byte) rnd.nextInt();
+
+                String s = byteArrayToBase64(arr);
+                byte[] b = base64ToByteArray(s);
+                if (!java.util.Arrays.equals(arr, b))
+                    System.out.println("Dismal failure!"); //$NON-NLS-1$
+
+                s = byteArrayToAltBase64(arr);
+                b = altBase64ToByteArray(s);
+                if (!java.util.Arrays.equals(arr, b))
+                    System.out.println("Alternate dismal failure!"); //$NON-NLS-1$
+            }
+        }
+    }
 }

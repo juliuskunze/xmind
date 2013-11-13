@@ -17,6 +17,12 @@ import org.eclipse.core.expressions.PropertyTester;
 import org.eclipse.core.runtime.Assert;
 import org.xmind.core.ITopic;
 
+/**
+ * 
+ * @author frankshaka
+ * @deprecated This class has been moved <code>org.xmind.core.runtime</code>
+ *             plugin.
+ */
 public class TopicPropertyTester extends PropertyTester {
 
     private static final String P_TYPE = "type"; //$NON-NLS-1$

@@ -29,13 +29,20 @@ public class MiniBar implements IMiniBar {
     }
 
     protected IToolBarManager createToolBarManager() {
-        return new ToolBarManager(SWT.RIGHT | SWT.FLAT);
+        return new ToolBarManager(SWT.RIGHT | SWT.FLAT) {
+            public void update(boolean force) {
+                super.update(force);
+                updateMiniBar();
+            }
+        };
+    }
+
+    protected void updateMiniBar() {
     }
 
     public void updateBar() {
-        if (toolBarManager != null) {
-            toolBarManager.update(false);
-        }
+        if (toolBarManager != null)
+            toolBarManager.update(true);
     }
 
     protected boolean isEmpty() {

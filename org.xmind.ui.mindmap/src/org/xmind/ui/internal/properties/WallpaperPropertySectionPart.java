@@ -91,6 +91,8 @@ import org.xmind.ui.viewers.SliderViewer;
 
 public class WallpaperPropertySectionPart extends StyledPropertySectionPart {
 
+    private static final String LOCAL_WALLPAPER_DIALOG_PATH = "org.xmind.ui.localWallpaperDialogPath"; //$NON-NLS-1$
+
     private class SelectWallpaperDialog extends PopupDialog implements
             IOpenListener {
 
@@ -714,8 +716,8 @@ public class WallpaperPropertySectionPart extends StyledPropertySectionPart {
                 && !selectWallpaperWidget.getControl().isDisposed()) {
             if (selectWallpaperDialog == null) {
                 Control handle = selectWallpaperWidget.getControl();
-                selectWallpaperDialog = new SelectWallpaperDialog(handle
-                        .getShell(), handle);
+                selectWallpaperDialog = new SelectWallpaperDialog(
+                        handle.getShell(), handle);
             }
             selectWallpaperDialog.open();
             Shell shell = selectWallpaperDialog.getShell();
@@ -743,12 +745,23 @@ public class WallpaperPropertySectionPart extends StyledPropertySectionPart {
         FileDialog dialog = new FileDialog(selectWallpaperWidget.getControl()
                 .getShell(), SWT.OPEN | SWT.SINGLE);
         DialogUtils.makeDefaultImageSelectorDialog(dialog, true);
-        dialog.setFilterPath(getWallpapersPath());
         dialog.setText(PropertyMessages.WallpaperDialog_title);
-        String path = dialog.open();
-        if (path != null) {
-            changeWallpaper(path);
+
+        IDialogSettings settings = MindMapUIPlugin.getDefault()
+                .getDialogSettings();
+        String filterPath = settings.get(LOCAL_WALLPAPER_DIALOG_PATH);
+        if (filterPath == null || "".equals(filterPath) //$NON-NLS-1$
+                || !new File(filterPath).exists()) {
+            filterPath = getWallpapersPath();
         }
+        dialog.setFilterPath(filterPath);
+        String path = dialog.open();
+        if (path == null)
+            return;
+
+        filterPath = new File(path).getParent();
+        settings.put(LOCAL_WALLPAPER_DIALOG_PATH, filterPath);
+        changeWallpaper(path);
     }
 
     private void changeWallpaper(String path) {

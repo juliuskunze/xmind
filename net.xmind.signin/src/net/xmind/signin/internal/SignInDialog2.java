@@ -1,5 +1,6 @@
 package net.xmind.signin.internal;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -48,8 +49,6 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
 
         private String password;
 
-//        private boolean remember;
-
         private XMindNetRequest request = null;
 
         private IDataStore data;
@@ -59,7 +58,6 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             setSystem(true);
             this.user = user;
             this.password = passwrod;
-//            this.remember = remember;
         }
 
         public IDataStore getData() {
@@ -129,11 +127,21 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
                 return error(code, Messages.SignInDialog_NetworkError_message,
                         request.getError());
             } else if (code >= 400 && code < 500) {
-                return error(code, Messages.SignInDialog_RequestError_message,
-                        null);
+                try {
+                    // Self throw-catch so that we have the stack info.
+                    throw new IOException(request.getResponseText());
+                } catch (IOException err) {
+                    return error(code,
+                            Messages.SignInDialog_RequestError_message, err);
+                }
             } else {
-                return error(code, Messages.SignInDialog_ServerError_message,
-                        null);
+                try {
+                    // Self throw-catch so that we have the stack info.
+                    throw new IOException(request.getResponseText());
+                } catch (IOException err) {
+                    return error(code,
+                            Messages.SignInDialog_ServerError_message, err);
+                }
             }
         }
 
@@ -156,8 +164,6 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
     private Text nameField;
 
     private Text passwordField;
-
-    //private Button rememberCheck;
 
     private Composite messageArea;
 
@@ -192,6 +198,12 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             setShellStyle(getShellStyle() | SWT.SHEET);
         }
         setBlockOnOpen(true);
+    }
+
+    protected Control createContents(Composite parent) {
+        Control contents = super.createContents(parent);
+        updateButtons();
+        return contents;
     }
 
     @Override
@@ -289,12 +301,10 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         // Row 1:
         createNameLabel(form);
         createNameField(form);
-//        createSignUpButton(form);
 
         // Row 2:
         createPasswordLabel(form);
         createPasswordField(form);
-//        createForgotPasswordButton(form);
 
         // Row 3:
         Label emptyPlaceholder = new Label(form, SWT.NONE);
@@ -322,6 +332,7 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             public void handleEvent(Event event) {
                 data.setProperty(XMindNetAccount.USER, nameField.getText());
                 setErrorMessage(null);
+                updateButtons();
             }
         });
         nameField.addListener(SWT.FocusIn, new Listener() {
@@ -337,7 +348,6 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
                     public void run() {
                         XMindNet.gotoURL(true,
                                 "https://www.xmind.net/xmind/signup/"); //$NON-NLS-1$
-//                        close();
                     }
                 });
         link.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
@@ -359,6 +369,7 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         passwordField.addListener(SWT.Modify, new Listener() {
             public void handleEvent(Event event) {
                 setErrorMessage(null);
+                updateButtons();
             }
         });
         passwordField.addListener(SWT.FocusIn, new Listener() {
@@ -374,7 +385,6 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
                     public void run() {
                         XMindNet.gotoURL(true,
                                 "https://www.xmind.net/xmind/forgotpassword/"); //$NON-NLS-1$
-//                        close();
                     }
                 });
         link.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
@@ -483,13 +493,6 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         return extension instanceof ISignInDialogExtension2;
     }
 
-//    private void createRememberCheck(Composite parent) {
-//        rememberCheck = new Button(parent, SWT.CHECK);
-//        rememberCheck.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-//                false));
-//        rememberCheck.setText(Messages.SignInDialog_Remember_text);
-//    }
-
     private void createExtensionControls(Composite parent) {
         Composite composite = new Composite(parent, SWT.NONE);
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -563,6 +566,22 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
         }
     }
 
+    private void updateButtons() {
+        boolean hasName = nameField != null && !nameField.isDisposed()
+                && !"".equals(nameField.getText()); //$NON-NLS-1$
+        boolean hasPassword = passwordField != null
+                && !passwordField.isDisposed()
+                && !"".equals(passwordField.getText()); //$NON-NLS-1$
+        setOKEnabled(hasName && hasPassword);
+    }
+
+    private void setOKEnabled(boolean enabled) {
+        Button button = getButton(IDialogConstants.OK_ID);
+        if (button != null && !button.isDisposed()) {
+            button.setEnabled(enabled);
+        }
+    }
+
     @Override
     protected void okPressed() {
         changeButton(IDialogConstants.OK_ID, false,
@@ -590,17 +609,19 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
 
     private void startJob() {
         stopJob();
-        signInJob = new InternalSignInJob(nameField.getText(),
+        InternalSignInJob job = new InternalSignInJob(nameField.getText(),
                 passwordField.getText());
-        signInJob.addJobChangeListener(this);
-        signInJob.schedule();
+        job.addJobChangeListener(this);
+        job.schedule();
+        this.signInJob = job;
     }
 
     private void stopJob() {
-        if (signInJob != null) {
-            signInJob.removeJobChangeListener(this);
-            signInJob.cancel();
-            signInJob = null;
+        Job job = this.signInJob;
+        if (job != null) {
+            job.removeJobChangeListener(this);
+            job.cancel();
+            job = null;
         }
     }
 
@@ -611,10 +632,6 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
     public String getToken() {
         return data == null ? null : data.getProperty(XMindNetAccount.TOKEN);
     }
-
-//    public boolean shouldRemember() {
-//        return data == null ? false : data.getBoolean(SignInJob.REMEMBER);
-//    }
 
     public Properties getData() {
         return data;
@@ -681,7 +698,8 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             messageArea.setVisible(false);
             errorMessageArea.setVisible(true);
         }
-        stack.layout();
+        errorLabel.getParent().layout(true);
+        getShell().layout(true);
     }
 
 }

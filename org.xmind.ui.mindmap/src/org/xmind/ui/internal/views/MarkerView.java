@@ -43,6 +43,8 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.IEditorPart;
@@ -64,7 +66,6 @@ import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerGroup;
 import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.gef.EditDomain;
-import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
@@ -137,7 +138,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
             super();
             this.marker = marker;
             setImageDescriptor(MarkerImageDescriptor.createFromMarker(marker,
-                    32, 32));
+                    24, 24));
             setToolTipText(marker.getName());
         }
 
@@ -146,52 +147,249 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         }
 
         public void run() {
-            IViewer viewer = getCurrentViewer();
-            if (viewer != null) {
-                EditDomain domain = viewer.getEditDomain();
-                if (domain != null) {
-                    Request req = new Request(REQ_ADD_MARKER)
-                            .setViewer(viewer)
-                            .setDomain(domain)
-                            .setParameter(MindMapUI.PARAM_MARKER_ID,
-                                    marker.getId());
-                    domain.handleRequest(req);
-                    MindMapUI.getResourceManager().getRecentMarkerGroup()
-                            .addMarker(marker);
-                }
-            }
-        }
-
-        private IViewer getCurrentViewer() {
             IWorkbenchPage page = getSite().getPage();
             if (page != null) {
                 IEditorPart editor = page.getActiveEditor();
                 if (editor != null && editor instanceof IGraphicalEditor) {
-                    IGraphicalEditor ge = (IGraphicalEditor) editor;
-                    IGraphicalEditorPage gp = ge.getActivePageInstance();
+                    IGraphicalEditorPage gp = ((IGraphicalEditor) editor)
+                            .getActivePageInstance();
                     if (gp != null) {
-                        return gp.getViewer();
+                        EditDomain domain = gp.getEditDomain();
+                        if (domain != null) {
+                            Request req = new Request(REQ_ADD_MARKER)
+                                    .setViewer(gp.getViewer())
+                                    .setDomain(domain)
+                                    .setParameter(MindMapUI.PARAM_MARKER_ID,
+                                            marker.getId());
+                            domain.handleRequest(req);
+                        }
                     }
                 }
             }
-            return null;
+        }
+
+    }
+
+//    private static interface ISectionPart {
+//
+//        Control createControl(Composite parent);
+//
+//        Control getControl();
+//
+//        void refresh();
+//
+//        void dispose();
+//    }
+
+    protected class MarkerSheetPart implements ICoreEventListener {
+
+        private IMarkerSheet sheet;
+
+        private Composite composite;
+
+        private List<MarkerGroupPart> groupParts = new ArrayList<MarkerGroupPart>();
+
+        private List<Section> groupSections = new ArrayList<Section>();
+
+        private ICoreEventRegister eventRegister = null;
+
+        public MarkerSheetPart(IMarkerSheet sheet) {
+            this.sheet = sheet;
+        }
+
+        public Control getControl() {
+            return composite;
+        }
+
+        public Control createControl(Composite parent) {
+            if (composite == null) {
+                composite = createComposite(parent);
+                refresh(false);
+                installListeners();
+                composite.addDisposeListener(new DisposeListener() {
+                    public void widgetDisposed(DisposeEvent e) {
+                        dispose();
+                    }
+                });
+            }
+            return composite;
+        }
+
+        private Composite createComposite(Composite parent) {
+            Composite composite = factory.createComposite(parent, SWT.WRAP);
+//            RowLayout layout = new RowLayout(SWT.VERTICAL);
+//            layout.wrap = false;
+//            layout.fill = true;
+////            GridLayout layout = new GridLayout(1, true);
+//            layout.marginHeight = 1;
+//            layout.marginWidth = 1;
+//            layout.marginBottom = 0;
+//            layout.marginLeft = 0;
+//            layout.marginRight = 0;
+//            layout.marginTop = 0;
+////            layout.verticalSpacing = 7;
+//            layout.spacing = 7;
+            GridLayout layout = new GridLayout(1, true);
+            layout.marginHeight = 0;
+            layout.marginWidth = 0;
+            layout.marginBottom = 0;
+            layout.marginLeft = 0;
+            layout.marginRight = 0;
+            layout.marginTop = 0;
+            layout.verticalSpacing = 7;
+            composite.setLayout(layout);
+
+            return composite;
+        }
+
+        public void refresh(boolean reflow) {
+            if (composite == null || composite.isDisposed())
+                return;
+
+            composite.setRedraw(false);
+            List<IMarkerGroup> newGroups = sheet.getMarkerGroups();
+            int i;
+            for (i = 0; i < newGroups.size(); i++) {
+                IMarkerGroup group = newGroups.get(i);
+                if (i < groupParts.size()) {
+                    MarkerGroupPart part = groupParts.get(i);
+                    IMarkerGroup g = part.getMarkerGroup();
+                    if (group.equals(g)) {
+                        continue;
+                    }
+                }
+
+                MarkerGroupPart part = groupToPart.get(group);
+                if (part != null) {
+                    if (!newGroups.get(i).isHidden()) {
+                        reorderChild(part, i);
+                    }
+                } else {
+                    if (!newGroups.get(i).isHidden()) {
+                        part = createChild(group);
+                        addChild(part, i);
+                    }
+                }
+            }
+
+            Object[] toTrim = groupParts.toArray();
+            for (; i < toTrim.length; i++) {
+                removeChild((MarkerGroupPart) toTrim[i]);
+            }
+
+            composite.setRedraw(true);
+//            form.reflow(true);
+            if (reflow)
+                form.reflow(true);
+        }
+
+        public List<MarkerGroupPart> getGroupParts() {
+            return groupParts;
+        }
+
+        private void reorderChild(MarkerGroupPart part, int index) {
+            Control c = part.getControl();
+            if (c == null) {
+                c = part.createControl(composite);
+//                c.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+            }
+            groupParts.remove(part);
+            groupParts.add(index, part);
+            groupSections.remove(part.section);
+            groupSections.add(index, part.section);
+            if (index == 0) {
+                c.moveAbove(null);
+            } else {
+                MarkerGroupPart g = groupParts.get(index - 1);
+                c.moveAbove(g.getControl());
+            }
+        }
+
+        private MarkerGroupPart createChild(IMarkerGroup group) {
+            MarkerGroupPart part = new MarkerGroupPart(group, false);
+            groupToPart.put(group, part);
+            return part;
+        }
+
+        private void addChild(MarkerGroupPart part, int index) {
+            groupParts.add(index, part);
+            Control c = part.createControl(composite);
+            groupSections.add(index, part.section);
+            groupToSection.put(part.group, part.section);
+            c.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        }
+
+        private void removeChild(MarkerGroupPart part) {
+            groupParts.remove(part);
+            groupToPart.remove(part.getMarkerGroup());
+            groupSections.remove(part.section);
+            groupToSection.remove(part.getMarkerGroup());
+            part.section.dispose();
+            part.dispose();
+        }
+
+        private void installListeners() {
+            if (sheet instanceof ICoreEventSource) {
+                eventRegister = new CoreEventRegister((ICoreEventSource) sheet,
+                        this);
+                eventRegister.register(Core.MarkerGroupAdd);
+                eventRegister.register(Core.MarkerGroupRemove);
+            }
+        }
+
+        private void uninstallListeners() {
+            if (eventRegister != null)
+                eventRegister.unregisterAll();
+        }
+
+        public void dispose() {
+            uninstallListeners();
+            if (composite != null) {
+                composite.dispose();
+                composite = null;
+            }
+            for (Object o : groupParts.toArray()) {
+                MarkerGroupPart groupPart = (MarkerGroupPart) o;
+                groupToPart.remove(groupPart.getMarkerGroup());
+                groupToSection.remove(groupPart.getMarkerGroup());
+                groupPart.dispose();
+            }
+            groupParts.clear();
+            groupSections.clear();
+        }
+
+        public void handleCoreEvent(final CoreEvent event) {
+            if (composite == null || composite.isDisposed())
+                return;
+
+            composite.getDisplay().syncExec(new Runnable() {
+                public void run() {
+                    String type = event.getType();
+                    if (Core.MarkerGroupAdd.equals(type)
+                            || Core.MarkerGroupRemove.equals(type)) {
+                        refresh(true);
+                    }
+                }
+            });
         }
     }
 
-    private static interface ISectionPart {
+//        private static interface ISectionPart {
+//    
+//            Control createControl(Composite parent);
+//    
+//            Control getControl();
+//    
+//            void refresh();
+//    
+//            void dispose();
+//        }
 
-        Control createControl(Composite parent);
-
-        Control getControl();
-
-        void refresh();
-
-        void dispose();
-    }
-
-    protected class MarkerGroupPart implements ISectionPart, ICoreEventListener {
+    protected class MarkerGroupPart implements ICoreEventListener {
 
         private IMarkerGroup group;
+
+        private Section section;
 
         private boolean hasTitle;
 
@@ -214,34 +412,44 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
             return group;
         }
 
-        public Control createControl(Composite parent) {
+        public Control createControl(final Composite parent) {
             if (control == null) {
+                section = createSection(parent, group.getName(), factory);
                 if (toolbar == null) {
                     toolbar = new ToolBarManager(SWT.RIGHT | SWT.FLAT
                             | SWT.WRAP);
                 }
-                Composite c = factory.createComposite(parent);
+                Composite c = factory.createComposite(section, SWT.WRAP);
                 GridLayout layout = new GridLayout(1, true);
                 layout.marginHeight = 2;
                 layout.marginWidth = 2;
+                layout.verticalSpacing = 2;
+//                org.xmind.ui.internal.views.RowLayout layout = new org.xmind.ui.internal.views.RowLayout(
+//                        SWT.VERTICAL);
+//                layout.wrap = false;
+//                layout.fill = true;
+//                layout.spacing = 2;
+//                FillLayout layout = new FillLayout(SWT.VERTICAL);
                 c.setLayout(layout);
 
                 if (hasTitle) {
                     factory.createLabel(c, group.getName());
-                    layout.verticalSpacing = 0;
-                } else {
-                    layout.verticalSpacing = 2;
+//                    layout.verticalSpacing = 0;
+//                } else {
+//                    layout.verticalSpacing = 2;
                 }
 
-                ToolBar tb = toolbar.createControl(c);
-                GridData data = new GridData(GridData.FILL_HORIZONTAL);
-                data.widthHint = 250;
+                final ToolBar tb = toolbar.createControl(c);
+//                tb.setLayoutData(new RowData());
+                GridData data = new GridData(SWT.FILL, SWT.FILL, true, false);
+//                    data.widthHint = 40;
                 tb.setLayoutData(data);
                 addDragSource(tb);
 
-                control = c;
+                control = section;
+                section.setClient(c);
 
-                refresh();
+                refresh(false);
                 installListeners();
                 control.addDisposeListener(new DisposeListener() {
                     public void widgetDisposed(DisposeEvent e) {
@@ -294,6 +502,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
                         this);
                 eventRegister.register(Core.MarkerAdd);
                 eventRegister.register(Core.MarkerRemove);
+                eventRegister.register(Core.Name);
             }
         }
 
@@ -306,21 +515,25 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
             return control;
         }
 
-        public void refresh() {
+        public void refresh(boolean reflow) {
             if (toolbar == null || control == null || control.isDisposed())
                 return;
+            section.setText(group.getName());
 
             toolbar.removeAll();
             for (IMarker marker : group.getMarkers()) {
-                toolbar.add(new MarkerAction(marker));
+                if (!group.isHidden() && !marker.isHidden())
+                    toolbar.add(new MarkerAction(marker));
             }
             toolbar.update(false);
 
             ToolBar tb = toolbar.getControl();
             GridData data = (GridData) tb.getLayoutData();
             data.exclude = toolbar.isEmpty();
+            tb.setVisible(!toolbar.isEmpty());
 
-            form.reflow(true);
+            if (reflow)
+                form.reflow(true);
         }
 
         public void dispose() {
@@ -335,165 +548,22 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
             }
         }
 
-        public void handleCoreEvent(CoreEvent event) {
-            String type = event.getType();
-            if (Core.MarkerAdd.equals(type) || Core.MarkerRemove.equals(type)) {
-                refresh();
-            }
-        }
-
-    }
-
-    protected class MarkerSheetPart implements ISectionPart, ICoreEventListener {
-
-        private IMarkerSheet sheet;
-
-        private Composite composite;
-
-        private List<MarkerGroupPart> groupParts = new ArrayList<MarkerGroupPart>();
-
-        private ICoreEventRegister eventRegister = null;
-
-        public MarkerSheetPart(IMarkerSheet sheet) {
-            this.sheet = sheet;
-        }
-
-        public Control getControl() {
-            return composite;
-        }
-
-        public Control createControl(Composite parent) {
-            if (composite == null) {
-                composite = createComposite(parent);
-                refresh();
-                installListeners();
-                composite.addDisposeListener(new DisposeListener() {
-                    public void widgetDisposed(DisposeEvent e) {
-                        dispose();
-                    }
-                });
-            }
-            return composite;
-        }
-
-        private Composite createComposite(Composite parent) {
-            Composite composite = factory.createComposite(parent);
-            GridLayout layout = new GridLayout(1, true);
-            layout.marginHeight = 1;
-            layout.marginWidth = 1;
-            layout.verticalSpacing = 7;
-            composite.setLayout(layout);
-            return composite;
-        }
-
-        public void refresh() {
-            if (composite == null || composite.isDisposed())
+        public void handleCoreEvent(final CoreEvent event) {
+            if (control == null || control.isDisposed())
                 return;
 
-            composite.setRedraw(false);
-            List<IMarkerGroup> newGroups = sheet.getMarkerGroups();
-            int i;
-            for (i = 0; i < newGroups.size(); i++) {
-                IMarkerGroup group = newGroups.get(i);
-                if (i < groupParts.size()) {
-                    MarkerGroupPart part = groupParts.get(i);
-                    IMarkerGroup g = part.getMarkerGroup();
-                    if (group.equals(g)) {
-                        continue;
+            control.getDisplay().syncExec(new Runnable() {
+                public void run() {
+                    String type = event.getType();
+                    if (Core.MarkerAdd.equals(type)
+                            || Core.MarkerRemove.equals(type)
+                            || Core.Name.equals(type)) {
+                        refresh(true);
                     }
                 }
-
-                MarkerGroupPart part = groupToPart.get(group);
-                if (part != null) {
-                    reorderChild(part, i);
-                } else {
-                    part = createChild(group);
-                    addChild(part, i);
-                }
-            }
-
-            Object[] toTrim = groupParts.toArray();
-            for (; i < toTrim.length; i++) {
-                removeChild((MarkerGroupPart) toTrim[i]);
-            }
-
-            composite.setRedraw(true);
-            form.reflow(true);
+            });
         }
 
-        public List<MarkerGroupPart> getGroupParts() {
-            return groupParts;
-        }
-
-        private void reorderChild(MarkerGroupPart part, int index) {
-            Control c = part.getControl();
-            if (c == null) {
-                c = part.createControl(composite);
-                c.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-            }
-            groupParts.remove(part);
-            groupParts.add(index, part);
-            if (index == 0) {
-                c.moveAbove(null);
-            } else {
-                MarkerGroupPart g = groupParts.get(index - 1);
-                c.moveAbove(g.getControl());
-            }
-        }
-
-        private MarkerGroupPart createChild(IMarkerGroup group) {
-            MarkerGroupPart part = new MarkerGroupPart(group, true);
-            groupToPart.put(group, part);
-            return part;
-        }
-
-        private void addChild(MarkerGroupPart part, int index) {
-            groupParts.add(index, part);
-            Control c = part.createControl(composite);
-            c.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        }
-
-        private void removeChild(MarkerGroupPart part) {
-            groupParts.remove(part);
-            groupToPart.remove(part.getMarkerGroup());
-            part.dispose();
-        }
-
-        private void installListeners() {
-            if (sheet instanceof ICoreEventSource) {
-                eventRegister = new CoreEventRegister((ICoreEventSource) sheet,
-                        this);
-                eventRegister.register(Core.MarkerGroupAdd);
-                eventRegister.register(Core.MarkerGroupRemove);
-            }
-        }
-
-        private void uninstallListeners() {
-            if (eventRegister != null)
-                eventRegister.unregisterAll();
-        }
-
-        public void dispose() {
-            uninstallListeners();
-            if (composite != null) {
-                composite.dispose();
-                composite = null;
-            }
-            for (Object o : groupParts.toArray()) {
-                MarkerGroupPart groupPart = (MarkerGroupPart) o;
-                groupToPart.remove(groupPart.getMarkerGroup());
-                groupPart.dispose();
-            }
-            groupParts.clear();
-        }
-
-        public void handleCoreEvent(CoreEvent event) {
-            String type = event.getType();
-            if (Core.MarkerGroupAdd.equals(type)
-                    || Core.MarkerGroupRemove.equals(type)) {
-                refresh();
-            }
-        }
     }
 
     private WidgetFactory factory;
@@ -508,6 +578,8 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
 
     private Map<IMarkerGroup, MarkerGroupPart> groupToPart = new HashMap<IMarkerGroup, MarkerGroupPart>();
 
+    private Map<IMarkerGroup, Section> groupToSection = new HashMap<IMarkerGroup, Section>();
+
     private IAction showMarkerManagerAction;
 
     private IAction importMarkerAction;
@@ -516,7 +588,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
 
     public void createPartControl(Composite parent) {
         factory = new WidgetFactory(parent.getDisplay());
-        form = createForm(parent, factory);
+        form = createForm(parent);
         form.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent e) {
                 if (factory != null) {
@@ -525,15 +597,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
                 }
             }
         });
-
-        Composite composite = form.getBody();
-        composite.setLayout(new GridLayout(1, true));
-
-        createRecentSection(composite, factory);
-        createSystemSection(composite, factory);
-        createUserSection(composite, factory);
-
-        form.reflow(true);
+        fillFormContent();
 
         showMarkerManagerAction = new ShowMarkerManagerAction();
         importMarkerAction = new ImportMarkerAction();
@@ -557,8 +621,46 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
     }
 
-    private ScrolledForm createForm(Composite parent, WidgetFactory factory) {
-        return factory.createScrolledForm(parent);
+    private ScrolledForm createForm(Composite parent) {
+        ScrolledForm form = factory.createScrolledForm(parent);
+        form.setMinWidth(1);
+        return form;
+    }
+
+    private void fillFormContent() {
+        final Composite compositeformbady = form.getBody();
+        final GridLayout layout = new GridLayout(1, true);
+        layout.marginHeight = 3;
+        layout.marginWidth = 3;
+        layout.verticalSpacing = 7;
+        compositeformbady.setLayout(layout);
+
+        Control control;
+
+        control = createRecentSection(compositeformbady);
+        control.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        control = createSystemSection(compositeformbady);
+        control.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        control = createUserSection(compositeformbady);
+        control.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        form.addListener(SWT.Resize, new Listener() {
+            public void handleEvent(Event event) {
+                int width = form.getClientArea().width;
+                width -= layout.marginLeft + layout.marginRight
+                        + layout.marginWidth * 2;
+                Control[] controls = compositeformbady.getChildren();
+                for (int i = 0; i < controls.length; i++) {
+                    Control c = controls[i];
+                    ((GridData) c.getLayoutData()).widthHint = width;
+                }
+                form.reflow(true);
+            }
+        });
+
+        form.reflow(true);
     }
 
     public Object getAdapter(Class adapter) {
@@ -568,40 +670,81 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         return super.getAdapter(adapter);
     }
 
-    private void createUserSection(Composite composite, WidgetFactory factory) {
-        userPart = new MarkerSheetPart(MindMapUI.getResourceManager()
-                .getUserMarkerSheet());
-        createSection(composite, MindMapMessages.MarkerView_UserMarkers_label,
-                userPart, factory);
-    }
-
-    private void createSystemSection(Composite composite, WidgetFactory factory) {
-        systemPart = new MarkerSheetPart(MindMapUI.getResourceManager()
-                .getSystemMarkerSheet());
-        createSection(composite, MindMapMessages.MarkerView_XMindMarkers_label,
-                systemPart, factory);
-    }
-
-    private void createRecentSection(Composite composite, WidgetFactory factory) {
+    private Control createRecentSection(Composite composite) {
+//        Section section = createSection(composite,
+//                MindMapMessages.MarkerView_RecentlyUsed_label, factory);
         recentPart = new MarkerGroupPart(MindMapUI.getResourceManager()
                 .getRecentMarkerGroup(), false);
-        createSection(composite, MindMapMessages.MarkerView_RecentlyUsed_label,
-                recentPart, factory);
+        Control con = recentPart.createControl(composite);
+        return con;
+//        section.setClient(recentPart.createControl(section));
+//        return section;
     }
 
-    private void createSection(Composite parent, String title,
-            final ISectionPart part, WidgetFactory factory) {
-        Section section = factory.createSection(parent, Section.TITLE_BAR
-                | Section.TWISTIE | Section.EXPANDED | SWT.BORDER);
-        section.setText(title);
-        section.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+    private Control createSystemSection(Composite composite) {
+//        Section section = createSection(composite,
+//                MindMapMessages.MarkerView_XMindMarkers_label, factory);
+        systemPart = new MarkerSheetPart(MindMapUI.getResourceManager()
+                .getSystemMarkerSheet());
+        Control con = systemPart.createControl(composite);
+        return con;
+//        section.setClient(systemPart.createControl(section));
+//        return section;
+//        Section groupSection = null;
+//        List<IMarkerGroup> systemGroups = MindMapUI.getResourceManager()
+//                .getSystemMarkerSheet().getMarkerGroups();
+//        for (IMarkerGroup systemGroup : systemGroups) {
+//            if (!systemGroup.isHidden()) {
+//                groupSection = createSection(composite, systemGroup.getName(),
+//                        factory);
+//                MarkerGroupPart systemGroupPart = new MarkerGroupPart(
+//                        systemGroup, false);
+//                groupSection.setClient(systemGroupPart
+//                        .createControl(groupSection));
+//            }
+//        }
+//        return groupSection;
+    }
 
-        Control c = part.createControl(section);
-        section.setClient(c);
+    private Control createUserSection(Composite composite) {
+//        Section section = createSection(composite,
+//                MindMapMessages.MarkerView_UserMarkers_label, factory);
+        userPart = new MarkerSheetPart(MindMapUI.getResourceManager()
+                .getUserMarkerSheet());
+        Control con = userPart.createControl(composite);
+        return con;
+//        section.setClient(userPart.createControl(section));
+//        return section;
+//        Section groupSection = null;
+//        List<IMarkerGroup> userGroups = MindMapUI.getResourceManager()
+//                .getUserMarkerSheet().getMarkerGroups();
+//        if (userGroups != null && !userGroups.isEmpty()) {
+//            for (IMarkerGroup userGroup : userGroups) {
+//                if (userGroup != null) {
+//                    groupSection = createSection(composite,
+//                            userGroup.getName(), factory);
+//                    MarkerGroupPart userGroupPart = new MarkerGroupPart(
+//                            userGroup, false);
+//                    groupSection.setClient(userGroupPart
+//                            .createControl(groupSection));
+//                }
+//            }
+//        }
+//        return groupSection;
+    }
+
+    private Section createSection(Composite parent, String title,
+            WidgetFactory factory) {
+        Section section = factory.createSection(parent, Section.TITLE_BAR
+                | Section.TWISTIE | Section.EXPANDED | SWT.BORDER
+                | Section.NO_TITLE_FOCUS_BOX);
+        section.setText(title);
+//        section.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        return section;
     }
 
     public void setFocus() {
-        if (form != null)
+        if (form != null && !form.isDisposed())
             form.setFocus();
     }
 
@@ -617,6 +760,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         systemPart = null;
         userPart = null;
         groupToPart.clear();
+        groupToSection.clear();
     }
 
     private IStructuredSelection getCurrentSelection() {

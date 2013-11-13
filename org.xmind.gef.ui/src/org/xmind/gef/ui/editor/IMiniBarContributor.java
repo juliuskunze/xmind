@@ -13,13 +13,21 @@
  *******************************************************************************/
 package org.xmind.gef.ui.editor;
 
+import org.eclipse.core.runtime.IAdaptable;
 
-public interface IMiniBarContributor {
+public interface IMiniBarContributor extends IAdaptable {
 
     void init(IMiniBar bar, IGraphicalEditor editor);
 
     void dispose();
 
+    /**
+     * 
+     * @param page
+     * @deprecated Use
+     *             {@link IGraphicalEditor#addPageChangedListener(org.eclipse.jface.dialogs.IPageChangedListener)}
+     *             to listen to active page change events.
+     */
     void setActivePage(IGraphicalEditorPage page);
 
 }

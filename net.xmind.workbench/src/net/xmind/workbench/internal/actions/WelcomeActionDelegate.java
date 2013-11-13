@@ -1,13 +1,21 @@
 package net.xmind.workbench.internal.actions;
 
-import net.xmind.signin.IAccountInfo;
-import net.xmind.signin.XMindNet;
+import java.io.InputStream;
+import java.net.URL;
+
+import net.xmind.workbench.internal.Messages;
 import net.xmind.workbench.internal.XMindNetWorkbench;
 
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+import org.xmind.ui.internal.editor.MME;
+import org.xmind.ui.mindmap.MindMapUI;
 
 public class WelcomeActionDelegate implements IWorkbenchWindowActionDelegate {
 
@@ -40,13 +48,25 @@ public class WelcomeActionDelegate implements IWorkbenchWindowActionDelegate {
     public void run(IAction action) {
         if (window == null)
             return;
-
-        IAccountInfo accountInfo = XMindNet.getAccountInfo();
-        if (accountInfo != null) {
-            XMindNet.gotoURL(XMindNetWorkbench.URL_WELCOME_USER,
-                    accountInfo.getUser(), accountInfo.getAuthToken());
-        } else {
-            XMindNet.gotoURL(XMindNetWorkbench.URL_WELCOME);
+//
+//        IAccountInfo accountInfo = XMindNet.getAccountInfo();
+//        if (accountInfo != null) {
+//            XMindNet.gotoURL(XMindNetWorkbench.URL_WELCOME_USER,
+//                    accountInfo.getUser(), accountInfo.getAuthToken());
+//        } else {
+//            XMindNet.gotoURL(XMindNetWorkbench.URL_WELCOME);
+//        }
+        URL url = FileLocator.find(Platform
+                .getBundle(XMindNetWorkbench.PLUGIN_ID), new Path(
+                "$nl$/resource/Welcome to XMind.xmind"), null); //$NON-NLS-1$
+        try {
+            InputStream inputStream = url.openStream();
+            IEditorInput input = MME.createTemplatedEditorInput(
+                    Messages.WelcomeToXMind_editorTitle, inputStream);
+            window.getActivePage().openEditor(input,
+                    MindMapUI.MINDMAP_EDITOR_ID);
+        } catch (Exception e) {
+            XMindNetWorkbench.log(e, null);
         }
     }
 

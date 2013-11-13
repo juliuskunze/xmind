@@ -29,7 +29,13 @@ public class Messages extends NLS {
 
     public static String CheckForUpdatesJob_jobName;
 
+    public static String NewsletterSubscriptionReminder_DialogMessage;
+
+    public static String NewsletterSubscriptionReminder_DialogTitle;
+
     public static String NewsletterSubscriptionReminder_message;
+
+    public static String WelcomeToXMind_editorTitle;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);

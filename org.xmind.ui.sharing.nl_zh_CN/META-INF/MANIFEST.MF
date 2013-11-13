@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-Vendor: XMind Ltd.
+Fragment-Host: org.xmind.ui.sharing
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name: XMind Library Sharing Chinese (Simplified) Language Suppo
+ rt
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.xmind.ui.sharing.nl_zh_CN;singleton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

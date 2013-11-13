@@ -19,11 +19,13 @@ import org.xmind.ui.mindmap.MindMapUI;
 
 public enum LineWidth {
 
-    Thinnest("1pt", PropertyMessages.LineWidth_Thinnest, IMindMapImages.LINE_THINNEST), // //$NON-NLS-1$
+    Thinnest(
+            "1pt", PropertyMessages.LineWidth_Thinnest, IMindMapImages.LINE_THINNEST), // //$NON-NLS-1$
     Thin("2pt", PropertyMessages.LineWidth_Thin, IMindMapImages.LINE_THIN), // //$NON-NLS-1$
     Medium("3pt", PropertyMessages.LineWidth_Medium, IMindMapImages.LINE_MEDIUM), // //$NON-NLS-1$
     Fat("4pt", PropertyMessages.LineWdith_Fat, IMindMapImages.LINE_FAT), // //$NON-NLS-1$
-    Fattest("5pt", PropertyMessages.LineWidth_Fattest, IMindMapImages.LINE_FATTEST); //$NON-NLS-1$
+    Fattest(
+            "5pt", PropertyMessages.LineWidth_Fattest, IMindMapImages.LINE_FATTEST); //$NON-NLS-1$
 
     private String value;
 
@@ -47,6 +49,15 @@ public enum LineWidth {
 
     public ImageDescriptor getIcon() {
         return MindMapUI.getImages().get(iconName);
+    }
+
+    public static String[] getValues() {
+        LineWidth[] instances = values();
+        String[] values = new String[instances.length];
+        for (int i = 0; i < instances.length; i++) {
+            values[i] = instances[i].getValue();
+        }
+        return values;
     }
 
     public static LineWidth findByValue(String value) {

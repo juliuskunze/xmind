@@ -13,16 +13,18 @@
  *******************************************************************************/
 package net.xmind.workbench.internal;
 
-import net.xmind.signin.XMindNet;
+import java.util.regex.Pattern;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
+import net.xmind.signin.internal.XMindNetRequest;
+
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.IInputValidator;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.xmind.ui.dialogs.NotificationWindow;
 
 public class NewsletterSubscriptionReminder {
 
@@ -32,11 +34,16 @@ public class NewsletterSubscriptionReminder {
 
     private static final String KEY_NEVER_REMIND = "neverRemind"; //$NON-NLS-1$
 
-    private static final int DISPLAY_DURATION = 1000 * 60 * 5;
+//    private static final int DISPLAY_DURATION = 1000 * 60 * 5;
+
+    private static final Pattern EMAIL_PATTERN = Pattern
+            .compile("^([a-zA-Z0-9_\\-\\.\\+]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$"); //$NON-NLS-1$
 
     private static IDialogSettings SETTINGS = null;
 
     private IWorkbench workbench;
+
+    private XMindNetRequest subscribeRequest = null;
 
     public NewsletterSubscriptionReminder(IWorkbench workbench) {
         this.workbench = workbench;
@@ -45,8 +52,11 @@ public class NewsletterSubscriptionReminder {
     public void start() {
         IDialogSettings settings = getSettings();
         int launchCount = getInt(settings, KEY_LAUNCH_COUNT, 0);
-        if (launchCount >= 3 && !settings.getBoolean(KEY_NEVER_REMIND)) {
-            scheduleReminder();
+        if (launchCount >= getSysInt(
+                "net.xmind.workbench.newsletter.reminder.silenceCount", 4) //$NON-NLS-1$
+                && !settings.getBoolean(KEY_NEVER_REMIND)) {
+            show();
+            neverRemind();
         }
         if (launchCount < Integer.MAX_VALUE) {
             launchCount++;
@@ -54,42 +64,54 @@ public class NewsletterSubscriptionReminder {
         }
     }
 
-    private void scheduleReminder() {
-        Thread thread = new Thread(new Runnable() {
-            public void run() {
-                // Wait for workbench actually ready:
-                try {
-                    while (!"workbenchReady".equals(System.getProperty("org.xmind.cathy.app.status"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                        Thread.sleep(100);
-                    }
-                } catch (InterruptedException e) {
-                    return;
-                }
+//    private void scheduleReminder() {
+//        Thread thread = new Thread(new Runnable() {
+//            public void run() {
+//                // Wait for workbench actually ready:
+//                try {
+//                    while (!"workbenchReady".equals(System.getProperty("org.xmind.cathy.app.status"))) { //$NON-NLS-1$ //$NON-NLS-2$
+//                        Thread.sleep(100);
+//                    }
+//                } catch (InterruptedException e) {
+//                    return;
+//                }
+//
+//                // Give user 1 second break:
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                }
+//
+//                // Shows the reminder notification:
+//                final Display display = workbench.getDisplay();
+//                if (display != null && !display.isDisposed()) {
+//                    display.asyncExec(new Runnable() {
+//                        public void run() {
+//                            showReminder();
+//                        }
+//                    });
+//                }
+//            }
+//        }, "ShowNewsletterSubscriptionReminder"); //$NON-NLS-1$
+//        thread.setPriority(Thread.MIN_PRIORITY);
+//        thread.setDaemon(true);
+//        thread.start();
+//    }
 
-                // Wait for 10 seconds to give user a break:
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
+    public synchronized void show() {
+        if (workbench == null)
+            return;
+        final Display display = workbench.getDisplay();
+        if (display != null && !display.isDisposed()) {
+            display.syncExec(new Runnable() {
+                public void run() {
+                    doShow();
                 }
-
-                // Shows the reminder notification:
-                final Display display = workbench.getDisplay();
-                if (display != null && !display.isDisposed()) {
-                    display.asyncExec(new Runnable() {
-                        public void run() {
-                            showReminder(display);
-                        }
-                    });
-                }
-            }
-        });
-        thread.setName("ShowNewsletterSubscriptionReminder"); //$NON-NLS-1$
-        thread.setPriority(Thread.MIN_PRIORITY);
-        thread.setDaemon(true);
-        thread.start();
+            });
+        }
     }
 
-    private void showReminder(Display display) {
+    private void doShow() {
         IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
         if (window == null)
             return;
@@ -98,19 +120,71 @@ public class NewsletterSubscriptionReminder {
         if (shell == null || shell.isDisposed())
             return;
 
-        IAction action = new Action() {
+        InputDialog dialog = new InputDialog(
+                shell,
+                Messages.NewsletterSubscriptionReminder_DialogTitle,
+                Messages.NewsletterSubscriptionReminder_DialogMessage,
+                "", //$NON-NLS-1$
+                new IInputValidator() {
+                    public String isValid(String newText) {
+                        if (newText == null || "".equals(newText) //$NON-NLS-1$
+                                || !EMAIL_PATTERN.matcher(newText).matches())
+                            return ""; //$NON-NLS-1$
+                        return null;
+                    }
+                });
+        if (dialog.open() != InputDialog.OK)
+            return;
+
+        final String email = dialog.getValue();
+
+        Thread thread = new Thread(new Runnable() {
             public void run() {
-                openSubscriptionForm(shell);
+                try {
+                    subscribeRequest = new XMindNetRequest(true);
+                    subscribeRequest.debug();
+                    subscribeRequest.path("/_res/newsletter/subscribe"); //$NON-NLS-1$
+                    subscribeRequest.addParameter("email", email); //$NON-NLS-1$
+                    subscribeRequest.addParameter("source", "xmind_3.4.0"); //$NON-NLS-1$ //$NON-NLS-2$
+                    subscribeRequest.post();
+                } catch (OperationCanceledException e) {
+
+                } catch (Throwable e) {
+                    XMindNetWorkbench.log(e,
+                            "Failed to subscribe to XMind newsletter: " + email); //$NON-NLS-1$
+                } finally {
+                    subscribeRequest = null;
+                }
             }
-        };
-        action.setText(Messages.NewsletterSubscriptionReminder_message);
-        new NotificationWindow(shell, null, action, null, DISPLAY_DURATION)
-                .open();
-        neverRemind();
+        }, "SubscribeXMindNewsletter"); //$NON-NLS-1$
+        thread.setDaemon(true);
+        thread.setPriority(Thread.MIN_PRIORITY);
+        thread.start();
+
+//        IAction action = new Action() {
+//            public void run() {
+//                openSubscriptionForm(shell);
+//            }
+//        };
+//        action.setText(Messages.NewsletterSubscriptionReminder_message);
+//        new NotificationWindow(shell, null, action, null, DISPLAY_DURATION)
+//                .open();
+//        neverRemind();
     }
 
-    private void openSubscriptionForm(Shell shell) {
-        XMindNet.gotoURL(XMindNetWorkbench.URL_SUBSCRIBE_NEWSLETTER);
+//    private void openSubscriptionForm(Shell shell) {
+//        XMindNet.gotoURL(XMindNetWorkbench.URL_SUBSCRIBE_NEWSLETTER);
+//    }
+
+    private static int getSysInt(String key, int defaultValue) {
+        String value = System.getProperty(key);
+        if (value != null) {
+            try {
+                return Integer.parseInt(value, 10);
+            } catch (Throwable e) {
+            }
+        }
+        return defaultValue;
     }
 
     private static int getInt(IDialogSettings settings, String key,
@@ -132,6 +206,13 @@ public class NewsletterSubscriptionReminder {
             }
         }
         return SETTINGS;
+    }
+
+    public void stop() {
+        if (subscribeRequest != null) {
+            subscribeRequest.abort();
+            subscribeRequest = null;
+        }
     }
 
     public static void neverRemind() {

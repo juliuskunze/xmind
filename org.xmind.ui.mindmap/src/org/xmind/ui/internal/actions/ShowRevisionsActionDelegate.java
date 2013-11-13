@@ -12,6 +12,9 @@ public class ShowRevisionsActionDelegate implements IEditorActionDelegate {
 
     private IEditorPart editor;
 
+    public ShowRevisionsActionDelegate() {
+    }
+
     public void run(IAction action) {
         if (editor == null)
             return;

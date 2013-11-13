@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Require-Bundle: org.eclipse.core.runtime
+Export-Package: org.xmind.core.command,org.xmind.core.command.argument
+ s,org.xmind.core.command.binary,org.xmind.core.internal.command;x-int
+ ernal:=true
+Bundle-Vendor: XMind Ltd.
+Bundle-ActivationPolicy: lazy
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name: XMind Command
+Bundle-Localization: plugin
+Bundle-ManifestVersion: 2
+Bundle-Activator: org.xmind.core.internal.command.XMindCommandPlugin
+Bundle-SymbolicName: org.xmind.core.command;singleton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

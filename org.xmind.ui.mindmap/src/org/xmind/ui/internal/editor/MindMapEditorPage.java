@@ -25,6 +25,7 @@ import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.xmind.core.Core;
@@ -42,7 +43,7 @@ import org.xmind.gef.ISelectionStack;
 import org.xmind.gef.SelectionStack;
 import org.xmind.gef.draw2d.IRelayeredPane;
 import org.xmind.gef.draw2d.ISkylightLayer;
-import org.xmind.gef.service.CenterPresercationService;
+import org.xmind.gef.service.CenterPreservationService;
 import org.xmind.gef.service.FeedbackService;
 import org.xmind.gef.service.IAnimationService;
 import org.xmind.gef.service.IFeedbackService;
@@ -145,6 +146,8 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
 
     private UndoRedoTipsService undoService = null;
 
+    private IMESupport imeSupport = null;
+
     public void init(IGraphicalEditor parent, Object input) {
         super.init(parent, input);
         setPanelContributor(new MindMapEditorPagePanelContributor());
@@ -157,6 +160,7 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
     protected void createViewerControl(IGraphicalViewer viewer, Composite parent) {
         Control control = ((MindMapViewer) viewer).createControl(parent);
         control.addFocusListener(this);
+        imeSupport = new IMESupport(this, viewer);
     }
 
     public void updatePageTitle() {
@@ -278,9 +282,9 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
     }
 
     protected void initViewerServices(MindMapViewer viewer) {
-        CenterPresercationService centerPresercationService = new CenterPresercationService(
+        CenterPreservationService centerPresercationService = new CenterPreservationService(
                 viewer);
-        viewer.installService(CenterPresercationService.class,
+        viewer.installService(CenterPreservationService.class,
                 centerPresercationService);
         centerPresercationService.setActive(true);
 
@@ -385,12 +389,19 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
         }
     }
 
-    private void changeContext(ITool newTool) {
+    protected void changeContext(ITool newTool) {
         if (!isActive())
             return;
 
         deactivateContext();
         activateContext(newTool == null ? null : newTool.getContextId());
+    }
+
+    protected void changeContext(String contextId) {
+        if (!isActive())
+            return;
+        deactivateContext();
+        activateContext(contextId);
     }
 
     private void activateContext(String contextId) {
@@ -435,7 +446,7 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
      * .FocusEvent)
      */
     public void focusLost(FocusEvent e) {
-        changeContext(null);
+        changeContext((ITool) null);
     }
 
     protected void initPageActions(IActionRegistry actionRegistry) {
@@ -664,6 +675,10 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
     }
 
     public void dispose() {
+        if (imeSupport != null) {
+            imeSupport.dispose();
+            imeSupport = null;
+        }
         if (selectionStack != null) {
             selectionStack.setCommandStack(null);
             selectionStack.setSelectionProvider(null);
@@ -681,11 +696,15 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
         return super.getAdapter(adapter);
     }
 
-    public void handleCoreEvent(CoreEvent event) {
-        String type = event.getType();
-        if (Core.TitleText.equals(type)) {
-            updatePageTitle();
-        }
+    public void handleCoreEvent(final CoreEvent event) {
+        PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
+            public void run() {
+                String type = event.getType();
+                if (Core.TitleText.equals(type)) {
+                    updatePageTitle();
+                }
+            }
+        });
     }
 
     public Color getBackground(Object element) {

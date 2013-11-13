@@ -16,6 +16,9 @@ package org.xmind.core.internal.zip;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -27,6 +30,9 @@ import org.xmind.core.io.ICloseableOutputTarget;
  * 
  */
 public class ZipStreamOutputTarget implements ICloseableOutputTarget {
+
+    private static final boolean DEFAULT_COMPRESSED = Boolean
+            .getBoolean("org.xmind.core.workbook.compressed"); //$NON-NLS-1$
 
     private static class ZipEntryOutputStream extends FilterOutputStream {
 
@@ -59,86 +65,66 @@ public class ZipStreamOutputTarget implements ICloseableOutputTarget {
          */
         @Override
         public void close() throws IOException {
-            try {
-                ((ZipOutputStream) out).closeEntry();
-            } catch (IOException ignored) {
-            }
+            out.flush();
+            ((ZipOutputStream) out).closeEntry();
+            // Don't call out.close() to close the ZIP output stream.
         }
 
     }
 
     private ZipOutputStream zip;
 
-    private ZipEntry currentEntry;
+    private Map<String, Long> timeTable = new HashMap<String, Long>();
 
     /**
      * 
      */
     public ZipStreamOutputTarget(ZipOutputStream zip) {
-        this(zip, false);
+        this(zip, DEFAULT_COMPRESSED);
     }
 
     public ZipStreamOutputTarget(ZipOutputStream zip, boolean compressed) {
         this.zip = zip;
         if (compressed) {
-            zip.setLevel(ZipOutputStream.DEFLATED);
+            zip.setLevel(Deflater.DEFAULT_COMPRESSION);
         } else {
-            zip.setLevel(ZipOutputStream.STORED);
+            zip.setLevel(Deflater.NO_COMPRESSION);
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xmind.core.io.IOutputTarget#close()
-     */
-    public void close() {
-        try {
-            zip.flush();
-            zip.close();
-            return;
-        } catch (IOException e) {
-            Core.getLogger().log(e);
-        }
+    public void setEntryTime(String entryName, long time) {
+        timeTable.put(entryName, Long.valueOf(time));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xmind.core.io.IOutputTarget#getEntryStream(java.lang.String)
-     */
     public OutputStream getEntryStream(String entryName) {
         try {
-            this.currentEntry = new ZipEntry(entryName);
-            zip.putNextEntry(currentEntry);
-            return new ZipEntryOutputStream(zip);
+            return openEntryStream(entryName);
         } catch (IOException e) {
             Core.getLogger().log(e);
             return null;
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xmind.core.io.IOutputTarget#isEntryAvaialble(java.lang.String)
-     */
+    public OutputStream openEntryStream(String entryName) throws IOException {
+        ZipEntry entry = new ZipEntry(entryName);
+
+        Long time = timeTable.remove(entryName);
+        if (time != null) {
+            entry.setTime(time.longValue());
+        }
+
+        zip.putNextEntry(entry);
+        return new ZipEntryOutputStream(zip);
+    }
+
     public boolean isEntryAvaialble(String entryName) {
         return zip != null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xmind.core.io.IOutputTarget#setEntryTime(java.lang.String, long)
-     */
-    public void setEntryTime(String entryName, long time) {
-        if (entryName != null) {
-            if (currentEntry != null
-                    && currentEntry.getName().equals(entryName)) {
-                currentEntry.setTime(time);
-            }
-        }
+    public void close() throws IOException {
+        zip.finish();
+        zip.flush();
+        zip.close();
     }
 
 }

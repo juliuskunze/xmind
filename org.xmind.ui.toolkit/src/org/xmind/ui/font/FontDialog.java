@@ -59,7 +59,6 @@ import org.xmind.ui.color.PaletteContents;
 import org.xmind.ui.color.PaletteItem;
 import org.xmind.ui.color.PaletteViewer;
 import org.xmind.ui.resources.FontUtils;
-import org.xmind.ui.resources.FontUtils.IFontNameListCallback;
 import org.xmind.ui.viewers.ISliderContentProvider;
 import org.xmind.ui.viewers.SliderViewer;
 
@@ -204,21 +203,24 @@ public class FontDialog extends Dialog implements IFontChooser {
         Group fontGroup = new Group(p, SWT.NONE);
         fontGroup.setText(Messages.FamilyGroup_text);
         GridLayoutFactory.swtDefaults().applyTo(fontGroup);
-        GridDataFactory.fillDefaults().hint(DEFAULT_GROUP_WIDTH,
-                DEFAULT_GROUP_HEIGHT).applyTo(fontGroup);
+        GridDataFactory.fillDefaults()
+                .hint(DEFAULT_GROUP_WIDTH, DEFAULT_GROUP_HEIGHT)
+                .applyTo(fontGroup);
         createFontControl(fontGroup);
 
         Group sizeGroup = new Group(p, SWT.NONE);
         sizeGroup.setText(Messages.HeightGroup_text);
 //        GridLayoutFactory.swtDefaults().applyTo( sizeGroup );
-        GridDataFactory.fillDefaults().hint(DEFAULT_GROUP_WIDTH,
-                DEFAULT_GROUP_HEIGHT).applyTo(sizeGroup);
+        GridDataFactory.fillDefaults()
+                .hint(DEFAULT_GROUP_WIDTH, DEFAULT_GROUP_HEIGHT)
+                .applyTo(sizeGroup);
         createSizeControl(sizeGroup);
 
         Composite typeComposite = new Composite(p, SWT.NONE);
         GridLayoutFactory.swtDefaults().margins(0, 0).applyTo(typeComposite);
-        GridDataFactory.fillDefaults().hint(DEFAULT_GROUP_WIDTH,
-                DEFAULT_GROUP_HEIGHT).applyTo(typeComposite);
+        GridDataFactory.fillDefaults()
+                .hint(DEFAULT_GROUP_WIDTH, DEFAULT_GROUP_HEIGHT)
+                .applyTo(typeComposite);
 
         Group typeGroup = new Group(typeComposite, SWT.NONE);
         typeGroup.setText(Messages.TypeGroup_text);
@@ -369,13 +371,15 @@ public class FontDialog extends Dialog implements IFontChooser {
                 24, 36, 48, 56, 64, 72));
 
         int listWidthHint = Util.isMac() ? SWT.DEFAULT : 40;
-        GridDataFactory.fillDefaults().grab(false, true).hint(listWidthHint,
-                SWT.DEFAULT).applyTo(sizeList.getControl());
+        GridDataFactory.fillDefaults().grab(false, true)
+                .hint(listWidthHint, SWT.DEFAULT)
+                .applyTo(sizeList.getControl());
 
         sizeScale = new SliderViewer(parent, SWT.VERTICAL);
         int scaleWidthHint = Util.isMac() ? SWT.DEFAULT : 20;
-        GridDataFactory.fillDefaults().grab(false, true).hint(scaleWidthHint,
-                SWT.DEFAULT).applyTo(sizeScale.getControl());
+        GridDataFactory.fillDefaults().grab(false, true)
+                .hint(scaleWidthHint, SWT.DEFAULT)
+                .applyTo(sizeScale.getControl());
 
         sizeScale.setContentProvider(new ISliderContentProvider() {
 
@@ -420,36 +424,51 @@ public class FontDialog extends Dialog implements IFontChooser {
 //                new PatternFilter());
         fontTree = new FilteredTree(parent, SWT.FULL_SELECTION,
                 new PatternFilter(), true);
-        fontTree.setEnabled(false);
         fontTree.getViewer().setContentProvider(new TreeArrayContentProvider());
-        FontUtils.fetchAvailableFontNames(parent.getDisplay(),
-                new IFontNameListCallback() {
-                    public void setAvailableFontNames(List<String> fontNames) {
-                        if (fontTree.isDisposed())
-                            return;
-                        fontTree.setEnabled(true);
-                        fontTree.getViewer().setInput(fontNames);
-                        setFontName(getFontName());
-                        fontTree.getViewer().addSelectionChangedListener(
-                                new ISelectionChangedListener() {
-                                    public void selectionChanged(
-                                            SelectionChangedEvent event) {
-                                        IStructuredSelection sel = (IStructuredSelection) event
-                                                .getSelection();
-                                        if (sel.isEmpty()) {
-                                            setFontName(null);
-                                        } else {
-                                            setFontName((String) sel
-                                                    .getFirstElement());
-                                        }
-                                        fireFontChanged();
-                                    }
-
-                                });
+        fontTree.getViewer().setInput(FontUtils.getAvailableFontNames());
+        setFontName(getFontName());
+        fontTree.getViewer().addSelectionChangedListener(
+                new ISelectionChangedListener() {
+                    public void selectionChanged(SelectionChangedEvent event) {
+                        IStructuredSelection sel = (IStructuredSelection) event
+                                .getSelection();
+                        if (sel.isEmpty()) {
+                            setFontName(null);
+                        } else {
+                            setFontName((String) sel.getFirstElement());
+                        }
+                        fireFontChanged();
                     }
 
                 });
-//        fontTree.getViewer().setInput(FontUtils.getAvailableFontNames());
+//        fontTree.setEnabled(false);
+//        FontUtils.fetchAvailableFontNames(parent.getDisplay(),
+//                new IFontNameListCallback() {
+//                    public void setAvailableFontNames(List<String> fontNames) {
+//                        if (fontTree.isDisposed())
+//                            return;
+//                        fontTree.setEnabled(true);
+//                        fontTree.getViewer().setInput(fontNames);
+//                        setFontName(getFontName());
+//                        fontTree.getViewer().addSelectionChangedListener(
+//                                new ISelectionChangedListener() {
+//                                    public void selectionChanged(
+//                                            SelectionChangedEvent event) {
+//                                        IStructuredSelection sel = (IStructuredSelection) event
+//                                                .getSelection();
+//                                        if (sel.isEmpty()) {
+//                                            setFontName(null);
+//                                        } else {
+//                                            setFontName((String) sel
+//                                                    .getFirstElement());
+//                                        }
+//                                        fireFontChanged();
+//                                    }
+//
+//                                });
+//                    }
+//
+//                });
         GridDataFactory.fillDefaults().grab(true, true).hint(150, SWT.DEFAULT)
                 .applyTo(fontTree);
     }
@@ -647,12 +666,12 @@ public class FontDialog extends Dialog implements IFontChooser {
             }
         }
         if (sizeList != null && !sizeList.getControl().isDisposed()) {
-            sizeList.setSelection(new StructuredSelection(Integer
-                    .valueOf(fontHeight)), true);
+            sizeList.setSelection(
+                    new StructuredSelection(Integer.valueOf(fontHeight)), true);
         }
         if (sizeScale != null && !sizeScale.getControl().isDisposed()) {
-            sizeScale.setSelection(new StructuredSelection(Integer
-                    .valueOf(fontHeight)), true);
+            sizeScale.setSelection(
+                    new StructuredSelection(Integer.valueOf(fontHeight)), true);
         }
     }
 

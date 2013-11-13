@@ -15,10 +15,12 @@ package net.xmind.signin.internal;
 
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.util.SafeRunnable;
+import org.xmind.core.command.Command;
+import org.xmind.core.command.CommandJob;
+import org.xmind.core.command.ICommand;
 import org.xmind.ui.browser.BrowserSupport;
 import org.xmind.ui.browser.IBrowser;
 import org.xmind.ui.browser.IBrowserSupport;
-import org.xmind.ui.comm.XMindCommandCenter;
 import org.xmind.ui.internal.browser.BrowserUtil;
 
 public class XMindNetNavigator {
@@ -33,25 +35,27 @@ public class XMindNetNavigator {
 
     public void gotoURL(boolean external, String urlPattern, Object... values) {
         final String url = EncodingUtils.format(urlPattern, values);
-        if (url.startsWith("xmind:")) {//$NON-NLS-1$
-            XMindCommandCenter.dispatch(url);
-            return;
-        }
-        final IBrowser browser;
-        if (external) {
-            browser = BrowserSupport.getInstance().createBrowser(
-                    IBrowserSupport.AS_EXTERNAL, EXTERNAL_BROWSER_ID);
+        ICommand command = Command.parseURI(url);
+        if (command != null) {
+            new CommandJob(command, null).schedule();
         } else {
-            browser = BrowserSupport.getInstance().createBrowser(
-                    IBrowserSupport.AS_EDITOR | IBrowserSupport.NO_LOCATION_BAR
-                            | IBrowserSupport.NO_EXTRA_CONTRIBUTIONS,
-                    BROWSER_ID);
-        }
-        SafeRunner.run(new SafeRunnable() {
-            public void run() throws Exception {
-                browser.openURL(BrowserUtil.makeRedirectURL(url));
+            final IBrowser browser;
+            if (external) {
+                browser = BrowserSupport.getInstance().createBrowser(
+                        IBrowserSupport.AS_EXTERNAL, EXTERNAL_BROWSER_ID);
+            } else {
+                browser = BrowserSupport.getInstance().createBrowser(
+                        IBrowserSupport.AS_EDITOR
+                                | IBrowserSupport.NO_LOCATION_BAR
+                                | IBrowserSupport.NO_EXTRA_CONTRIBUTIONS,
+                        BROWSER_ID);
             }
-        });
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    browser.openURL(BrowserUtil.makeRedirectURL(url));
+                }
+            });
+        }
     }
 
 }

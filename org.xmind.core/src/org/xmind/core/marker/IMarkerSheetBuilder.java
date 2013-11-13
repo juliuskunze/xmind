@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 import org.xmind.core.CoreException;
+import org.xmind.core.util.IPropertiesProvider;
 
 public interface IMarkerSheetBuilder {
 
@@ -60,6 +61,8 @@ public interface IMarkerSheetBuilder {
      * @param sheet
      * @throws IOException
      * @throws CoreException
+     * @deprecated Use {@link IPropertiesProvider} adapted from this marker
+     *             sheet
      */
     void loadProperties(InputStream stream, IMarkerSheet sheet)
             throws IOException, CoreException;

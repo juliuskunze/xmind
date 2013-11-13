@@ -13,10 +13,11 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.ActionContributionItem;
+import org.eclipse.jface.action.ContributionManager;
 import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IStatusLineManager;
@@ -24,13 +25,19 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.util.Util;
+import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
+import org.eclipse.ui.internal.IWorkbenchHelpContextIds;
+import org.eclipse.ui.internal.handlers.IActionCommandMappingService;
 import org.eclipse.ui.internal.provisional.application.IActionBarConfigurer2;
+import org.eclipse.ui.menus.CommandContributionItem;
+import org.eclipse.ui.menus.CommandContributionItemParameter;
+import org.eclipse.ui.menus.IMenuService;
 import org.xmind.cathy.internal.actions.HelpAction;
 import org.xmind.cathy.internal.actions.ShowKeyAssistAction;
 import org.xmind.ui.internal.actions.ActionConstants;
@@ -47,6 +54,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
     // them
     // in the fill methods. This ensures that the actions aren't recreated
     // when fillActionBars is called with FILL_PROXY.
+
+    private IWorkbenchWindow window;
 
     private IWorkbenchAction newWizardAction;
 
@@ -76,27 +85,13 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
     private IWorkbenchAction redoAction;
 
-    private IWorkbenchAction copyAction;
-
-    private IWorkbenchAction cutAction;
-
-    private IWorkbenchAction pasteAction;
-
-    private IWorkbenchAction deleteAction;
-
-    private IWorkbenchAction selectAllAction;
-
     private IWorkbenchAction renameAction;
 
     private IWorkbenchAction openPreferencesAction;
 
-    private IWorkbenchAction printAction;
-
     private IWorkbenchAction findAction;
 
     private IWorkbenchAction helpAction;
-
-//    private IWorkbenchAction updateAction;
 
     private IWorkbenchAction aboutAction;
 
@@ -106,10 +101,13 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
     private SaveActionUpdater saveActionUpdater;
 
-//    private NewMenu newMenu;
-
     public CathyWorkbenchActionBuilder(IActionBarConfigurer configurer) {
         super(configurer);
+        this.window = configurer.getWindowConfigurer().getWindow();
+    }
+
+    public IWorkbenchWindow getWindow() {
+        return window;
     }
 
     protected void makeActions(final IWorkbenchWindow window) {
@@ -120,9 +118,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         // Registering also provides automatic disposal of the actions when
         // the window is closed.
 
-//        this.newMenu = new NewMenu(window);
-//        register(newMenu.getNewWorkbookAction());
-//        register(newMenu.getNewFromTemplateAction());
         newWizardAction = new NewWorkbookWizardAction(window);
         register(newWizardAction);
 
@@ -165,42 +160,20 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         redoAction = ActionFactory.REDO.create(window);
         register(redoAction);
 
-        copyAction = ActionFactory.COPY.create(window);
-        register(copyAction);
-
-        cutAction = ActionFactory.CUT.create(window);
-        register(cutAction);
-
-        pasteAction = ActionFactory.PASTE.create(window);
-        register(pasteAction);
-
-        deleteAction = ActionFactory.DELETE.create(window);
-        register(deleteAction);
-
-        selectAllAction = ActionFactory.SELECT_ALL.create(window);
-        register(selectAllAction);
-
         renameAction = ActionFactory.RENAME.create(window);
         register(renameAction);
 
         openPreferencesAction = ActionFactory.PREFERENCES.create(window);
         register(openPreferencesAction);
 
-        printAction = ActionFactory.PRINT.create(window);
-        register(printAction);
-
         findAction = ActionFactory.FIND.create(window);
         register(findAction);
 
-//        reopenEditors = ContributionItemFactory.REOPEN_EDITORS.create(window);
         reopenEditors = new ReopenWorkbookMenu(window);
 
         // For Help Menu:
         helpAction = new HelpAction("org.xmind.ui.help", window); //$NON-NLS-1$
         register(helpAction);
-
-//        updateAction = new UpdateAction("org.xmind.ui.update", window); //$NON-NLS-1$
-//        register(updateAction);
 
         aboutAction = ActionFactory.ABOUT.create(window);
         register(aboutAction);
@@ -220,10 +193,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         super.dispose();
     }
 
-    private static boolean isPro() {
-        return Platform.getBundle("org.xmind.meggy") != null; //$NON-NLS-1$
-    }
-
     protected void fillMenuBar(IMenuManager menuBar) {
         menuBar.add(createFileMenu());
         menuBar.add(createEditMenu());
@@ -236,14 +205,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
                 IWorkbenchActionConstants.M_FILE);
         menu.add(new GroupMarker(IWorkbenchActionConstants.FILE_START));
 
-//        String newText = MindMapMessages.NewWorkbook_text;
-//        String newId = ActionFactory.NEW.getId();
-//        MenuManager newMenu = new MenuManager(newText, newId);
-//        newMenu.setActionDefinitionId("org.eclipse.ui.file.newQuickMenu"); //$NON-NLS-1$
-//        newMenu.add(new Separator(newId));
-//        newMenu.add(this.newMenu);
-//        newMenu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-//        menu.add(newMenu);
         menu.add(newWizardAction);
         menu.add(newBlankAction);
 
@@ -269,7 +230,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new GroupMarker(IWorkbenchActionConstants.SAVE_EXT));
         menu.add(new Separator());
 
-        menu.add(printAction);
+        menu.add(getPrintItem());
         menu.add(new GroupMarker(IWorkbenchActionConstants.PRINT_EXT));
         menu.add(new Separator());
 
@@ -301,16 +262,16 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new GroupMarker(IWorkbenchActionConstants.UNDO_EXT));
         menu.add(new Separator());
 
-        menu.add(cutAction);
-        menu.add(copyAction);
-        menu.add(pasteAction);
+        menu.add(getCutItem());
+        menu.add(getCopyItem());
+        menu.add(getPasteItem());
         menu.add(new GroupMarker(IWorkbenchActionConstants.CUT_EXT));
         menu.add(new Separator());
 
-        menu.add(deleteAction);
+        menu.add(getDeleteItem());
         menu.add(new Separator());
 
-        menu.add(selectAllAction);
+        menu.add(getSelectAllItem());
         menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
         menu.add(new Separator());
 
@@ -349,13 +310,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new Separator("group.tools")); //$NON-NLS-1$
         menu.add(new Separator("group.updates")); //$NON-NLS-1$
 
-//        if (!CathyPlugin.getDistributionId().startsWith("vindy")) { //$NON-NLS-1$
-//            menu.add(updateAction);
-//        }
-
-        if (!isPro()) {
-            menu.add(new GroupMarker("group.upgrade")); //$NON-NLS-1$
-        }
         menu.add(new GroupMarker(IWorkbenchActionConstants.HELP_END));
         menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
@@ -385,7 +339,7 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         fileBar.add(new GroupMarker(IWorkbenchActionConstants.SAVE_GROUP));
         fileBar.add(saveAction);
         fileBar.add(new GroupMarker(IWorkbenchActionConstants.SAVE_EXT));
-        fileBar.add(printAction);
+        fileBar.add(getPrintItem());
         fileBar.add(new GroupMarker(IWorkbenchActionConstants.PRINT_EXT));
         fileBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
         coolBar.add(actionBarConfigurer.createToolBarContributionItem(fileBar,
@@ -404,11 +358,15 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         coolBar.add(new GroupMarker(ActionConstants.GROUP_EDIT));
 
         IToolBarManager editBar = actionBarConfigurer.createToolBarManager();
-        editBar.add(cutAction);
-        editBar.add(copyAction);
+        editBar.add(getCutItem());
+        editBar.add(getCopyItem());
+//        editBar.add(cutAction);
+//        editBar.add(copyAction);
         editBar.add(new GroupMarker(IWorkbenchActionConstants.CUT_EXT));
-        editBar.add(pasteAction);
-        editBar.add(deleteAction);
+        editBar.add(getPasteItem());
+        editBar.add(getDeleteItem());
+//        editBar.add(pasteAction);
+//        editBar.add(deleteAction);
         editBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
         coolBar.add(actionBarConfigurer.createToolBarContributionItem(editBar,
                 ActionConstants.TOOLBAR_EDIT));
@@ -417,23 +375,6 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
         coolBar.add(new GroupMarker(IWorkbenchActionConstants.GROUP_EDITOR));
     }
-
-//    @Override
-//    protected void fillStatusLine(IStatusLineManager statusLine) {
-//        super.fillStatusLine(statusLine);
-//        Bundle signInBundle = Platform.getBundle("net.xmind.signin"); //$NON-NLS-1$
-//        if (signInBundle != null) {
-//            try {
-//                Class<?> clazz = signInBundle
-//                        .loadClass("net.xmind.signin.internal.AccountStatusContribution"); //$NON-NLS-1$
-//                IContributionItem xmindAccountContribution = (IContributionItem) clazz
-//                        .newInstance();
-//                statusLine.add(xmindAccountContribution); //$NON-NLS-1$
-//            } catch (Exception e) {
-//                //ignore
-//            }
-//        }
-//    }
 
     /*
      * (non-Javadoc)
@@ -445,9 +386,100 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
     @Override
     protected void fillStatusLine(IStatusLineManager statusLine) {
         super.fillStatusLine(statusLine);
-        AutoBackupIndicator item = new AutoBackupIndicator();
-        statusLine.add(item);
+
+        if (statusLine instanceof ContributionManager) {
+            IMenuService ms = (IMenuService) getActionBarConfigurer()
+                    .getWindowConfigurer().getWindow()
+                    .getService(IMenuService.class);
+            if (ms != null) {
+                ms.populateContributionManager(
+                        (ContributionManager) statusLine,
+                        "toolbar:org.xmind.ui.statusbar"); //$NON-NLS-1$
+            }
+        }
+
         statusLine.update(true);
     }
 
+    private IContributionItem getCutItem() {
+        return getItem(ActionFactory.CUT.getId(),
+                ActionFactory.CUT.getCommandId(), ISharedImages.IMG_TOOL_CUT,
+                ISharedImages.IMG_TOOL_CUT_DISABLED,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_cut,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_cutToolTip,
+                null);
+    }
+
+    private IContributionItem getCopyItem() {
+        return getItem(
+                ActionFactory.COPY.getId(),
+                ActionFactory.COPY.getCommandId(),
+                ISharedImages.IMG_TOOL_COPY,
+                ISharedImages.IMG_TOOL_COPY_DISABLED,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_copy,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_copyToolTip,
+                null);
+    }
+
+    private IContributionItem getPasteItem() {
+        return getItem(
+                ActionFactory.PASTE.getId(),
+                ActionFactory.PASTE.getCommandId(),
+                ISharedImages.IMG_TOOL_PASTE,
+                ISharedImages.IMG_TOOL_PASTE_DISABLED,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_paste,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_pasteToolTip,
+                null);
+    }
+
+    private IContributionItem getSelectAllItem() {
+        return getItem(
+                ActionFactory.SELECT_ALL.getId(),
+                ActionFactory.SELECT_ALL.getCommandId(),
+                null,
+                null,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_selectAll,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_selectAllToolTip,
+                null);
+    }
+
+    private IContributionItem getDeleteItem() {
+        return getItem(
+                ActionFactory.DELETE.getId(),
+                ActionFactory.DELETE.getCommandId(),
+                ISharedImages.IMG_TOOL_DELETE,
+                ISharedImages.IMG_TOOL_DELETE_DISABLED,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_delete,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_deleteToolTip,
+                IWorkbenchHelpContextIds.DELETE_RETARGET_ACTION);
+    }
+
+    private IContributionItem getPrintItem() {
+        return getItem(
+                ActionFactory.PRINT.getId(),
+                ActionFactory.PRINT.getCommandId(),
+                ISharedImages.IMG_ETOOL_PRINT_EDIT,
+                ISharedImages.IMG_ETOOL_PRINT_EDIT_DISABLED,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_print,
+                org.eclipse.ui.internal.WorkbenchMessages.Workbench_printToolTip,
+                null);
+    }
+
+    private IContributionItem getItem(String actionId, String commandId,
+            String image, String disabledImage, String label, String tooltip,
+            String helpContextId) {
+        ISharedImages sharedImages = getWindow().getWorkbench()
+                .getSharedImages();
+
+        IActionCommandMappingService acms = (IActionCommandMappingService) getWindow()
+                .getService(IActionCommandMappingService.class);
+        acms.map(actionId, commandId);
+
+        CommandContributionItemParameter commandParm = new CommandContributionItemParameter(
+                getWindow(), actionId, commandId, null,
+                sharedImages.getImageDescriptor(image),
+                sharedImages.getImageDescriptor(disabledImage), null, label,
+                null, tooltip, CommandContributionItem.STYLE_PUSH, null, false);
+        return new CommandContributionItem(commandParm);
+    }
 }

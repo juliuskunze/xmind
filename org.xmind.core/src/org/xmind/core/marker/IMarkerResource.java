@@ -13,8 +13,10 @@
  *******************************************************************************/
 package org.xmind.core.marker;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 public interface IMarkerResource {
 
@@ -23,5 +25,15 @@ public interface IMarkerResource {
     InputStream getInputStream();
 
     OutputStream getOutputStream();
+
+    InputStream openInputStream() throws IOException;
+
+    OutputStream openOutputStream() throws IOException;
+
+    List<IMarkerVariation> getVariations();
+
+    InputStream getInputStream(IMarkerVariation variation);
+
+    OutputStream getOutputStream(IMarkerVariation variation);
 
 }

@@ -22,7 +22,7 @@ public class DOMConstants {
     // =========================
     //   ATTRIBUTES
     // -------------------------
-
+    public static final String ATTR_HIDDEN = "hidden"; //$NON-NLS-1$
     public static final String ATTR_ALGORITHM_NAME = "algorithm-name"; //$NON-NLS-1$
     public static final String ATTR_ALIGN = "align"; //$NON-NLS-1$
     public static final String ATTR_AMOUNT = "amount"; //$NON-NLS-1$

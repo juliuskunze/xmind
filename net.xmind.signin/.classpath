@@ -5,6 +5,7 @@
 		<accessrules>
 			<accessrule kind="accessible" pattern="org/xmind/ui/internal/browser/**"/>
 			<accessrule kind="accessible" pattern="net/xmind/entry/internal/**"/>
+			<accessrule kind="accessible" pattern="org/xmind/ui/internal/statushandlers/**"/>
 		</accessrules>
 	</classpathentry>
 	<classpathentry excluding="**/.svn" kind="src" path="src"/>

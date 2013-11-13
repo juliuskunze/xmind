@@ -13,10 +13,13 @@
  *******************************************************************************/
 package org.xmind.ui.internal.actions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.xmind.core.ISheet;
 import org.xmind.core.IWorkbook;
+import org.xmind.gef.command.Command;
+import org.xmind.gef.command.CompoundCommand;
 import org.xmind.gef.ui.actions.EditorAction;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
@@ -50,17 +53,16 @@ public class DeleteOtherSheetsAction extends EditorAction {
         if (activeSheet != null) {
             IWorkbook workbook = activeSheet.getOwnedWorkbook();
             List<ISheet> sheets = workbook.getSheets();
+            List<Command> commands = new ArrayList<Command>(sheets.size() - 1);
             for (ISheet sheet : sheets) {
                 if (activeSheet.equals(sheet))
                     continue;
-                saveAndRunDeleteOtherSheetCommand(sheet);
+                commands.add(new DeleteSheetCommand(sheet));
             }
+
+            saveAndRun(new CompoundCommand(CommandMessages.Command_DeleteSheet,
+                    commands));
         }
     }
 
-    private void saveAndRunDeleteOtherSheetCommand(ISheet sheet) {
-        DeleteSheetCommand command = new DeleteSheetCommand(sheet);
-        command.setLabel(CommandMessages.Command_DeleteSheet);
-        saveAndRun(command);
-    }
 }

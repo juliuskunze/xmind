@@ -189,7 +189,7 @@ public abstract class FloatingTextEditTool extends EditTool {
 
     private ICommandStackDelegate oldDelegate = null;
 
-    private boolean focusOnStart = true;
+    private boolean focusOnRequest = true;
 
     public FloatingTextEditTool() {
         this(false);
@@ -241,13 +241,22 @@ public abstract class FloatingTextEditTool extends EditTool {
 
     @Override
     protected void handleEditRequest(Request request) {
-        focusOnStart = !request.hasParameter(GEF.PARAM_FOCUS)
+        focusOnRequest = !request.hasParameter(GEF.PARAM_FOCUS)
                 || request.isParameter(GEF.PARAM_FOCUS);
         super.handleEditRequest(request);
         if (getDomain().getActiveTool() == this) {
-            Object param = request.getParameter(GEF.PARAM_TEXT_SELECTION);
-            if (param instanceof ITextSelection) {
-                setTextSelection((ITextSelection) param);
+            Object text = request.getParameter(GEF.PARAM_TEXT);
+            if (text instanceof String) {
+                if (editor != null && !editor.isClosed()) {
+                    editor.replaceText((String) text);
+                }
+            }
+            Object selection = request.getParameter(GEF.PARAM_TEXT_SELECTION);
+            if (selection instanceof ITextSelection) {
+                setTextSelection((ITextSelection) selection);
+            }
+            if (focusOnRequest && editor != null && !editor.isClosed()) {
+                editor.setFocus();
             }
         }
     }
@@ -301,7 +310,7 @@ public abstract class FloatingTextEditTool extends EditTool {
     protected boolean openEditor(FloatingTextEditor editor, IDocument document) {
         boolean wasOpen = !editor.isClosed();
         editor.setInput(document);
-        boolean isOpen = editor.open(focusOnStart);
+        boolean isOpen = editor.open(false);
         if (isOpen) {
             if (editor.canDoOperation(ITextOperationTarget.SELECT_ALL)) {
                 editor.doOperation(ITextOperationTarget.SELECT_ALL);

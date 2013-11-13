@@ -88,7 +88,7 @@
       </startup>
    </extension>
    <extension
-         point="org.xmind.ui.browser.xmindCommandHandlers">
+         point="org.xmind.core.command.handlers">
       <handler
             class="net.xmind.workbench.internal.CheckForUpdatesCommandHandler"
             id="org.xmind.ui.xmindCommandHandler.checkForUpdates"

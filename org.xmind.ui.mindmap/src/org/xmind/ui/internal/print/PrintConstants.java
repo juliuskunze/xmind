@@ -22,6 +22,8 @@ public class PrintConstants {
 
     public static final String PRINT_DIALOG_ID = "org.xmind.ui.PrintDialog"; //$NON-NLS-1$
 
+    public static final String CONTENTWHOLE = "contentWholeWorkbook"; //$NON-NLS-1$
+
     public static final String NO_BACKGROUND = "noBackground"; //$NON-NLS-1$
 
     public static final String NO_BORDER = "noBorder"; //$NON-NLS-1$

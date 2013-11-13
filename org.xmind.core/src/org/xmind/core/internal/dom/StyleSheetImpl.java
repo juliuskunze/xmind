@@ -43,10 +43,11 @@ import org.xmind.core.internal.event.CoreEventSupport;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.style.IStyleSheet;
 import org.xmind.core.util.DOMUtils;
+import org.xmind.core.util.IPropertiesProvider;
 import org.xmind.core.util.Property;
 
 public class StyleSheetImpl extends StyleSheet implements
-        INodeAdaptableFactory, ICoreEventSource {
+        INodeAdaptableFactory, ICoreEventSource, IPropertiesProvider {
 
     private Document implementation;
 
@@ -77,18 +78,20 @@ public class StyleSheetImpl extends StyleSheet implements
     }
 
     public Object getAdapter(Class adapter) {
-        if (adapter == Document.class || adapter == Node.class)
-            return implementation;
         if (adapter == ElementRegistry.class)
             return getElementRegistry();
         if (adapter == ICoreEventSupport.class)
             return getCoreEventSupport();
+        if (adapter == IPropertiesProvider.class)
+            return this;
         if (adapter == Properties.class)
             return getProperties();
         if (adapter == INodeAdaptableFactory.class)
             return this;
         if (adapter == INodeAdaptableProvider.class)
             return getNodeAdaptableProvider();
+        if (adapter == Document.class || adapter == Node.class)
+            return implementation;
         return super.getAdapter(adapter);
     }
 
@@ -244,11 +247,11 @@ public class StyleSheetImpl extends StyleSheet implements
         return DOMUtils.toString(implementation);
     }
 
-    protected Properties getProperties() {
+    public Properties getProperties() {
         return properties;
     }
 
-    protected void setProperties(Properties properties) {
+    public void setProperties(Properties properties) {
         this.properties = properties;
     }
 

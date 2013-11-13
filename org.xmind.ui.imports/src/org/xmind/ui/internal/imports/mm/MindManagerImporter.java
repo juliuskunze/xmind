@@ -48,6 +48,7 @@ import org.xmind.core.IImage;
 import org.xmind.core.IImageSpan;
 import org.xmind.core.ILegend;
 import org.xmind.core.INotes;
+import org.xmind.core.INumbering;
 import org.xmind.core.IParagraph;
 import org.xmind.core.IPlainNotesContent;
 import org.xmind.core.IRelationship;
@@ -109,6 +110,7 @@ public class MindManagerImporter extends MindMapImporter implements
         public void loadFrom(Element element) throws InterruptedException {
             checkInterrupted();
             String tagName = DOMUtils.getLocalName(element.getTagName());
+
             if ("br".equalsIgnoreCase(tagName)) { //$NON-NLS-1$
                 addParagraph();
                 return;
@@ -598,10 +600,9 @@ public class MindManagerImporter extends MindMapImporter implements
             String uri = loadUri(bgImgEle);
             if (uri != null) {
                 IFileEntry entry = loadAttachment(null, uri, "*.png"); //$NON-NLS-1$
-                if (entry != null) {
+                if (entry != null && entry.getSize() > 0) {
                     registerStyle(sheet, Styles.Background,
                             HyperlinkUtils.toAttachmentURL(entry.getPath()));
-
                     int transparency = NumberUtils.safeParseInt(
                             att(bgImgEle, "Transparency"), -1); //$NON-NLS-1$
                     if (transparency >= 0) {
@@ -944,7 +945,7 @@ public class MindManagerImporter extends MindMapImporter implements
             rel.setEnd2Id(endId);
         }
 
-        if (!autoRouting) {
+        if (!autoRouting || connEle != null) {
             String cx = att(connEle, "CX"); //$NON-NLS-1$
             String cy = att(connEle, "CY"); //$NON-NLS-1$
             if (cx != null && cy != null) {
@@ -1003,6 +1004,7 @@ public class MindManagerImporter extends MindMapImporter implements
         loadLabels(topicEle, topic);
         loadNotes(topicEle, topic);
         loadTask(topicEle, topic);
+        loadNumbering(topicEle, topic);
 
         loadSubTopics(topicEle, topic);
         loadDetachedSubTopics(topicEle, topic);
@@ -1060,20 +1062,20 @@ public class MindManagerImporter extends MindMapImporter implements
         String growthDir = att(ele, "SubTopicsGrowthDirection"); //$NON-NLS-1$
         if (umCenter.equals(align) && umHorizontal.equals(growth)) {
             if (umLeftAndRight.equals(growthDir))
-                return "org.xmind.ui.map"; //$NON-NLS-1$
+                return "org.xmind.ui.map.clockwise"; //$NON-NLS-1$
             if (umRight.equals(growthDir))
-                return "org.xmind.ui.logic-chart.right"; //$NON-NLS-1$
+                return "org.xmind.ui.logic.right"; //$NON-NLS-1$
             if (umLeft.equals(growthDir))
-                return "org.xmind.ui.logic-chart.left"; //$NON-NLS-1$
+                return "org.xmind.ui.logic.left"; //$NON-NLS-1$
         } else if (umVertical.equals(growth)
                 && umMiddle.equals(att(ele, "SubTopicsVerticalAlignment"))) { //$NON-NLS-1$
             String vgd = att(ele, "SubTopicsVerticalGrowthDirection"); //$NON-NLS-1$
-            if (umDown.equals(vgd))
+            if (umDown.equals(vgd) || umUpAndDown.equals(vgd))
                 return "org.xmind.ui.org-chart.down"; //$NON-NLS-1$
             if (umUp.equals(vgd))
                 return "org.xmind.ui.org-chart.up"; //$NON-NLS-1$
         } else if (umBottom.equals(align) && umHorizontal.equals(growth)) {
-            if (umRight.equals(growthDir))
+            if (umRight.equals(growthDir) || umLeftAndRight.equals(growthDir))
                 return "org.xmind.ui.tree.right"; //$NON-NLS-1$
             if (umLeft.equals(growthDir))
                 return "org.xmind.ui.tree.left"; //$NON-NLS-1$
@@ -1183,6 +1185,12 @@ public class MindManagerImporter extends MindMapImporter implements
     private void loadLineStyle(Element parentEle, IStyled host)
             throws InterruptedException {
         checkInterrupted();
+        Element lineColor = child(parentEle, "ap:Color"); //$NON-NLS-1$
+        if (lineColor != null) {
+            String color = "#" + att(lineColor, "LineColor").substring(2); //$NON-NLS-1$//$NON-NLS-2$
+            registerStyle(host, Styles.LineColor, color);
+        }
+
         Element lineStyleEle = child(parentEle, "ap:LineStyle"); //$NON-NLS-1$
         if (lineStyleEle == null)
             return;
@@ -1244,9 +1252,117 @@ public class MindManagerImporter extends MindMapImporter implements
         }
     }
 
+    private final static String NUMBER_FORMAT_NONE = "org.xmind.numbering.none"; //$NON-NLS-1$
+
+    private final static String NUMBER_FORMAT_ARABIC = "org.xmind.numbering.arabic"; //$NON-NLS-1$
+
+    private final static String NUMBER_FORMAT_ROMAN = "org.xmind.numbering.roman"; //$NON-NLS-1$
+
+    private final static String NUMBER_FORMAT_LOWERCASE = "org.xmind.numbering.lowercase"; //$NON-NLS-1$
+
+    private final static String NUMBER_FORMAT_UPPERCASE = "org.xmind.numbering.uppercase"; //$NON-NLS-1$
+
+    private Map<ITopic, Element> numberingEles;
+
+    private void loadNumbering(Element topicEle, ITopic topic) {
+        Element numberingEle = findNumberingEle(topicEle, topic);
+        if (numberingEle == null)
+            return;
+
+        int maxDepth = getMaxDepth(numberingEle);
+        int topicDepth = getTopicDepth(topic);
+        String numberFormat = getNumberFormat(numberingEle, topicDepth);
+        String prefix = getNumberingPrefix(numberingEle, topicDepth);
+        INumbering numbering = topic.getNumbering();
+
+        if ((maxDepth - topicDepth) >= 0)
+            numbering.setFormat(numberFormat);
+        else
+            numbering.setFormat(NUMBER_FORMAT_NONE);
+
+        if (topicDepth == 1)
+            numbering.setPrependsParentNumbers(false);
+        numbering.setPrefix(prefix);
+    }
+
+    private String getNumberFormat(Element numberingEle, int depth) {
+        int formatIndex = (depth - 1) * 2;
+        String numbering = att(numberingEle, "cst1:Numbering"); //$NON-NLS-1$
+        if (formatIndex < 0 || (formatIndex + 1) > numbering.length())
+            return NUMBER_FORMAT_NONE;
+
+        String numberFormat = numbering.substring(formatIndex, formatIndex + 1);
+        if (numberFormat.equals("1")) //$NON-NLS-1$
+            return NUMBER_FORMAT_ARABIC;
+        if (numberFormat.equals("I") || numberFormat.equals("i")) //$NON-NLS-1$ //$NON-NLS-2$
+            return NUMBER_FORMAT_ROMAN;
+        if (numberFormat.equals("A")) //$NON-NLS-1$
+            return NUMBER_FORMAT_UPPERCASE;
+        if (numberFormat.equals("a")) //$NON-NLS-1$
+            return NUMBER_FORMAT_LOWERCASE;
+        return NUMBER_FORMAT_NONE;
+    }
+
+    private String getNumberingPrefix(Element numberingEle, int topicDepth) {
+        String preFix = att(numberingEle, "cst0:Level" + topicDepth + "Text"); //$NON-NLS-1$ //$NON-NLS-2$
+        return preFix == null ? "" : preFix; //$NON-NLS-1$
+    }
+
+    private int getMaxDepth(Element numberingEle) {
+        String depth = att(numberingEle, "cst1:Depth"); //$NON-NLS-1$
+        return Integer.parseInt(depth == null ? "1" //$NON-NLS-1$
+                : depth);
+    }
+
+    private int getTopicDepth(ITopic topic) {
+        if (numberingEles == null)
+            return 0;
+
+        int topicDepth = 1;
+        while (topic != null) {
+            Element numberingEle = numberingEles.get(topic);
+            if (numberingEle != null)
+                return topicDepth;
+            topic = topic.getParent();
+            topicDepth++;
+        }
+        return 0;
+    }
+
+    private Element findNumberingEle(Element topicEle, ITopic topic) {
+        if (topicEle == null)
+            return null;
+
+        Element numberingEle = child(topicEle, "cor:Custom"); //$NON-NLS-1$
+        if (numberingEle != null) {
+            if (numberingEles == null)
+                numberingEles = new HashMap<ITopic, Element>();
+            numberingEles.put(topic, numberingEle);
+            return numberingEle;
+        }
+        return findParentNumbering(topic);
+    }
+
+    private Element findParentNumbering(ITopic topic) {
+        if (numberingEles == null)
+            return null;
+
+        int topicDepth = 1;
+        while (topic.getParent() != null) {
+            topic = topic.getParent();
+            Element numberingEle = numberingEles.get(topic);
+            if (numberingEle != null
+                    && (getMaxDepth(numberingEle) >= topicDepth))
+                return numberingEle;
+            topicDepth++;
+        }
+        return null;
+    }
+
     private void loadNotes(Element topicEle, ITopic topic)
             throws InterruptedException {
         checkInterrupted();
+
         Element notesGroupEle = child(topicEle, "ap:NotesGroup"); //$NON-NLS-1$
         if (notesGroupEle == null)
             return;
@@ -1260,11 +1376,13 @@ public class MindManagerImporter extends MindMapImporter implements
 
         Element notesXhtmlDataEle = child(notesGroupEle, "ap:NotesXhtmlData"); //$NON-NLS-1$
         if (notesXhtmlDataEle != null) {
+            String bookmarks = getBookmarks(topicEle, topic);
+
             String plain = att(notesXhtmlDataEle, "PreviewPlainText"); //$NON-NLS-1$
             if (plain != null) {
                 IPlainNotesContent content = (IPlainNotesContent) getTargetWorkbook()
                         .createNotesContent(INotes.PLAIN);
-                content.setTextContent(plain);
+                content.setTextContent(bookmarks + plain);
                 topic.getNotes().setContent(INotes.PLAIN, content);
             }
 
@@ -1272,21 +1390,36 @@ public class MindManagerImporter extends MindMapImporter implements
             if (htmlEle != null) {
                 IHtmlNotesContent content = (IHtmlNotesContent) getTargetWorkbook()
                         .createNotesContent(INotes.HTML);
-                loadHtmlNotes(htmlEle, content);
+                loadHtmlNotes(htmlEle, content, bookmarks);
                 topic.getNotes().setContent(INotes.HTML, content);
             }
         }
     }
 
-    private void loadHtmlNotes(Element htmlEle, IHtmlNotesContent content)
-            throws InterruptedException {
-        new NotesImporter(content).loadFrom(htmlEle);
+    private void loadHtmlNotes(Element htmlEle, IHtmlNotesContent content,
+            String bookmarks) throws InterruptedException {
+        NotesImporter notesImporter = new NotesImporter(content);
+        notesImporter.addText(bookmarks);
+        notesImporter.loadFrom(htmlEle);
     }
 
     private void loadImageAtt(String imgUri, String uri)
             throws InterruptedException {
         checkInterrupted();
         loadAttachment(null, uri, "*.png"); //$NON-NLS-1$
+    }
+
+    private String getBookmarks(Element topicEle, ITopic topic) {
+        Element bookmarkEle = child(topicEle, "ap:Bookmark"); //$NON-NLS-1$
+        if (bookmarkEle == null)
+            return ""; //$NON-NLS-1$
+
+        String bookmarkName = att(bookmarkEle, "Name"); //$NON-NLS-1$
+        if (bookmarkName != null) {
+            return bookmarkName + '\r';
+        }
+
+        return ""; //$NON-NLS-1$
     }
 
     private void loadLabels(Element topicEle, ITopic topic)
@@ -1335,6 +1468,14 @@ public class MindManagerImporter extends MindMapImporter implements
             if (markerId != null) {
                 topic.addMarker(markerId);
             }
+        }
+    }
+
+    @SuppressWarnings("nls")
+    private void addCheckPoint(ITopicExtensionElement content,
+            String hasCheckPoint) {
+        if (hasCheckPoint != null && hasCheckPoint.equals("true")) {
+            content.setAttribute("check-point", "true");
         }
     }
 
@@ -1496,7 +1637,7 @@ public class MindManagerImporter extends MindMapImporter implements
     }
 
     private static String parseImageAlign(String position) {
-        return getMapping("imageAlignment", position, IImage.LEFT); //$NON-NLS-1$
+        return getMapping("imageAlignment", position, IImage.RIGHT); //$NON-NLS-1$
     }
 
     private static String loadUri(Element ele) {
@@ -1586,6 +1727,10 @@ public class MindManagerImporter extends MindMapImporter implements
         String resources = att(taskEle, "Resources"); //$NON-NLS-1$
         if (resources != null) {
             String[] resourceArray = resources.split("; "); //$NON-NLS-1$
+            taskContent = ensureTaskContent(topic, taskContent);
+            taskContent.deleteChildren("assigned-to");//$NON-NLS-1$
+            ITopicExtensionElement ele = taskContent.createChild("assigned-to"); //$NON-NLS-1$
+            ele.setTextContent(resources);
             for (String resource : resourceArray) {
                 topic.addLabel(NLS.bind(
                         ImportMessages.MindManagerImporter_ResourceLabel,
@@ -1626,6 +1771,8 @@ public class MindManagerImporter extends MindMapImporter implements
                     durationLabel));
         }
 
+        addCheckPoint(ensureTaskContent(topic, taskContent),
+                att(taskEle, "Milestone")); //$NON-NLS-1$
     }
 
     private static ITopicExtensionElement ensureTaskContent(ITopic topic,

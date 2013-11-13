@@ -29,82 +29,34 @@ import org.xmind.core.IChecksumStream;
 public class ChecksumInputStream extends FilterInputStream implements
         IChecksumStream {
 
-//    private MessageDigest digest;
     private Digest digest;
+
+    private String checksum = null;
 
     public ChecksumInputStream(InputStream in) throws CoreException {
         super(in);
-//        this.digest = createDigest();
         this.digest = new MD5Digest();
     }
 
-    /**
-     * @return
-     * @throws CoreException
-     * 
-     */
-//    private MD5Digest createDigest() throws CoreException {
-////        return CryptedStream.createChecksumDigest();
-//        return new MD5Digest();
-//    }
-    @Override
     public int read() throws IOException {
         int b = super.read();
         digest.update((byte) b);
-//        by = new byte[digest.getDigestSize()];
         return b;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.io.FilterInputStream#read(byte[], int, int)
-     */
-    @Override
     public int read(byte[] b, int off, int len) throws IOException {
         int num = super.read(b, off, len);
         digest.update(b, off, num);
         return num;
     }
 
-    /*
-     * @see org.xmind.core.IChecksumStream#getChecksum()
-     */
     public String getChecksum() {
-        byte[] by = new byte[digest.getDigestSize()];
-        digest.doFinal(by, 0);
-        return Base64.byteArrayToBase64(by);
-//        return Base65.byteArrayToBase64(digest.digest());
+        if (this.checksum == null) {
+            // Generate checksum:
+            byte[] checksumBytes = new byte[digest.getDigestSize()];
+            digest.doFinal(checksumBytes, 0);
+            this.checksum = Base64.byteArrayToBase64(checksumBytes);
+        }
+        return this.checksum;
     }
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see java.io.FilterInputStream#read(byte[])
-//     */
-//    @Override
-//    public int read(byte[] b) throws IOException {
-//        int num = super.read(b);
-//        digest.update(b, 0, num);
-//        return num;
-//    }
-
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see java.lang.Object#finalize()
-//     */
-//    @Override
-//    protected void finalize() throws Throwable {
-//        super.finalize();
-//    }
-//
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see java.io.FilterInputStream#close()
-//     */
-//    @Override
-//    public void close() throws IOException {
-//        super.close();
-//    }
 }

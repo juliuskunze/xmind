@@ -96,7 +96,7 @@ public abstract class RangeFeedback extends AbstractBendPointsFeedback {
         border.setBounds(clientBounds);
     }
 
-    private int[] getBendPointOrientations() {
+    protected int[] getBendPointOrientations() {
         IBranchPart branch = host.getOwnedBranch();
         if (branch != null) {
             IStructure sa = branch.getBranchPolicy().getStructure(branch);

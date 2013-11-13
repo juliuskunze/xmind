@@ -13,20 +13,27 @@
  *******************************************************************************/
 package net.xmind.workbench.internal;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
-import org.xmind.ui.comm.IXMindCommand;
-import org.xmind.ui.comm.IXMindCommandHandler;
+import org.xmind.core.command.ICommand;
+import org.xmind.core.command.ICommandHandler;
 
-public class CheckForUpdatesCommandHandler implements IXMindCommandHandler {
+public class CheckForUpdatesCommandHandler implements ICommandHandler {
 
-    public boolean handleXMindCommand(IXMindCommand command, String... matches) {
+    public CheckForUpdatesCommandHandler() {
+    }
+
+    public IStatus execute(IProgressMonitor monitor, ICommand command,
+            String[] matches) {
         IWorkbench workbench = PlatformUI.getWorkbench();
         if (workbench != null) {
             new CheckForUpdatesJob(workbench).schedule();
-            return true;
+            return Status.OK_STATUS;
         }
-        return false;
+        return null;
     }
 
 }

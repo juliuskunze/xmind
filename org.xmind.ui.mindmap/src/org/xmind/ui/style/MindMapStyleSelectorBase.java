@@ -44,16 +44,16 @@ public abstract class MindMapStyleSelectorBase extends AbstractStyleSelector {
             String familyName, String key,
             IStyleValueProvider defaultValueProvider) {
         String value = null;
+        value = getThemeStyleValue(part, familyName, key);
+        if (isValidValue(part, key, value))
+            return value;
+
         if (defaultValueProvider != null) {
             value = defaultValueProvider.getValue(part, key);
             if (isValidValue(part, key, value)
                     || defaultValueProvider.isKeyInteresting(part, key))
                 return value;
         }
-        value = getThemeStyleValue(part, familyName, key);
-        if (isValidValue(part, key, value))
-            return value;
-
         value = getDefaultStyleValue(part, familyName, key,
                 defaultValueProvider);
         if (isValidValue(part, key, value))
@@ -86,8 +86,8 @@ public abstract class MindMapStyleSelectorBase extends AbstractStyleSelector {
     }
 
     protected IStyle getDefaultStyle(IGraphicalPart part, String familyName) {
-        return MindMapUI.getResourceManager().getDefaultStyleSheet().findStyle(
-                familyName);
+        return MindMapUI.getResourceManager().getDefaultStyleSheet()
+                .findStyle(familyName);
     }
 
     private IStyle getThemeStyle(IGraphicalPart part, String familyName) {

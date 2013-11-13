@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.ui.mindmap;
 
+import org.eclipse.swt.widgets.Display;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
@@ -45,8 +46,12 @@ public abstract class AbstractIconTipContributor implements IIconTipContributor 
             if (topic instanceof ICoreEventSource) {
                 ICoreEventRegister register = new CoreEventRegister(
                         (ICoreEventSource) topic, new ICoreEventListener() {
-                            public void handleCoreEvent(CoreEvent event) {
-                                handleTopicEvent(topicPart, event);
+                            public void handleCoreEvent(final CoreEvent event) {
+                                Display.getDefault().syncExec(new Runnable() {
+                                    public void run() {
+                                        handleTopicEvent(topicPart, event);
+                                    }
+                                });
                             }
                         });
                 registerTopicEvent(topicPart, topic, register);

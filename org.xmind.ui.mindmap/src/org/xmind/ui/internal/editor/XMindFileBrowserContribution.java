@@ -21,13 +21,15 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.xmind.core.command.Command;
+import org.xmind.core.command.CommandJob;
+import org.xmind.core.command.ICommand;
 import org.xmind.core.util.FileUtils;
 import org.xmind.ui.browser.IBrowserViewer;
 import org.xmind.ui.browser.IBrowserViewerContribution;
 import org.xmind.ui.browser.IBrowserViewerContribution2;
 import org.xmind.ui.browser.IPropertyChangingListener;
 import org.xmind.ui.browser.PropertyChangingEvent;
-import org.xmind.ui.comm.XMindCommandCenter;
 import org.xmind.ui.internal.dialogs.DialogMessages;
 import org.xmind.ui.io.DownloadJob;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -79,21 +81,22 @@ public class XMindFileBrowserContribution implements
             if (location == null || "about:blank".equals(location)) //$NON-NLS-1$
                 return;
 
-            if (location.startsWith("xmind:")) { //$NON-NLS-1$
-                if (XMindCommandCenter.dispatch(location)) {
-                    return;
+            final ICommand command = Command.parseURI(location);
+            if (command != null) {
+                new CommandJob(command, null).schedule();
+            } else {
+                try {
+                    URI uri = new URI(location);
+                    String uriPath = uri.getPath();
+                    if (uriPath != null
+                            && uriPath.endsWith(MindMapUI.FILE_EXT_XMIND)) {
+                        downloadAndOpen(location,
+                                FileUtils.getFileName(uriPath));
+                        event.doit = false;
+                    }
+                } catch (Throwable e) {
+                    Logger.log(e);
                 }
-            }
-            try {
-                URI uri = new URI(location);
-                String uriPath = uri.getPath();
-                if (uriPath != null
-                        && uriPath.endsWith(MindMapUI.FILE_EXT_XMIND)) {
-                    downloadAndOpen(location, FileUtils.getFileName(uriPath));
-                    event.doit = false;
-                }
-            } catch (Throwable e) {
-                Logger.log(e);
             }
         }
 
@@ -132,7 +135,7 @@ public class XMindFileBrowserContribution implements
                  */
                 @Override
                 public void done(IJobChangeEvent event) {
-                    if (event.getResult().getCode() == DownloadJob.SUCCESS) {
+                    if (event.getResult().isOK()) {
                         if (rename(tempPath, path)) {
                             openFile(path);
                         }

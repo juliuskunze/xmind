@@ -19,6 +19,7 @@ import java.util.Arrays;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISaveablePart;
 import org.xmind.core.Core;
@@ -82,7 +83,7 @@ public class SaveSheetAsAction extends Action {
 
         SafeRunner.run(new SafeRunnable() {
             public void run() throws Exception {
-                IEditorPart newEditor = page.getParentEditor().getSite()
+                final IEditorPart newEditor = page.getParentEditor().getSite()
                         .getPage()
                         .openEditor(MME.createLoadedEditorInput(newWorkbook),
                         //new WorkbookEditorInput(newWorkbook, null, true),
@@ -95,7 +96,11 @@ public class SaveSheetAsAction extends Action {
                                     ICoreEventListener.NULL);
                 }
                 if (newEditor != null && newEditor instanceof ISaveablePart) {
-                    ((ISaveablePart) newEditor).doSaveAs();
+                    Display.getCurrent().timerExec(500, new Runnable() {
+                        public void run() {
+                            ((ISaveablePart) newEditor).doSaveAs();
+                        }
+                    });
                 }
             }
         });

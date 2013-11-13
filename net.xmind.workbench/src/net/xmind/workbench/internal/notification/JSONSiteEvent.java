@@ -11,27 +11,27 @@ public class JSONSiteEvent implements ISiteEvent {
     }
 
     public String getActionText() {
-        return json.optString(ATTR_ACTION_TEXT, null);
+        return getString(json, ATTR_ACTION_TEXT, null);
     }
 
     public String getEventUrl() {
-        return json.optString(ATTR_EVENT_URL, "http://www.xmind.net"); //$NON-NLS-1$
+        return getString(json, ATTR_EVENT_URL, "http://www.xmind.net"); //$NON-NLS-1$
     }
 
     public String getId() {
-        return json.optString(ATTR_ID, "0"); //$NON-NLS-1$
+        return getString(json, ATTR_ID, "0"); //$NON-NLS-1$
     }
 
     public String getMoreUrl() {
-        return json.optString(ATTR_MORE_URL, null);
+        return getString(json, ATTR_MORE_URL, null);
     }
 
     public String getText() {
-        return json.optString(ATTR_TITLE, ""); //$NON-NLS-1$
+        return getString(json, ATTR_TITLE, ""); //$NON-NLS-1$
     }
 
     public String getPrompt() {
-        return json.optString(ATTR_PROMPT, null);
+        return getString(json, ATTR_PROMPT, null);
     }
 
     public boolean isOpenExternal() {
@@ -39,15 +39,15 @@ public class JSONSiteEvent implements ISiteEvent {
     }
 
     public String getHTML() {
-        return json.optString(ATTR_HTML, null);
+        return getString(json, ATTR_HTML, null);
     }
 
     public String getInternalUrl() {
-        return json.optString(ATTR_INTERNAL_URL, null);
+        return getString(json, ATTR_INTERNAL_URL, null);
     }
 
     public String getCaption() {
-        return json.optString(ATTR_CAPTION, null);
+        return getString(json, ATTR_CAPTION, null);
     }
 
     public int getDuration() {
@@ -92,6 +92,13 @@ public class JSONSiteEvent implements ISiteEvent {
 
     public void setDuration(int duration) {
         //read only, do nothing
+    }
+
+    private static String getString(JSONObject json, String key,
+            String defaultValue) {
+        Object o = json.opt(key);
+        return o == null || JSONObject.NULL.equals(o) ? defaultValue : o
+                .toString();
     }
 
 }

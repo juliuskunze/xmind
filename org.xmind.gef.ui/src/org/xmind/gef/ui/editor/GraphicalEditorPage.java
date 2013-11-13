@@ -25,7 +25,6 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IEditorActionBarContributor;
 import org.xmind.gef.Disposable;
 import org.xmind.gef.EditDomain;
@@ -237,11 +236,7 @@ public abstract class GraphicalEditorPage extends Disposable implements
             initContentPopupMenu(contentPopupMenu);
             registerContentPopupMenu(menuId, contentPopupMenu);
         }
-        Menu menu = contentPopupMenu.getMenu();
-        if (menu == null || menu.isDisposed()) {
-            menu = contentPopupMenu.createContextMenu(control);
-        }
-        control.setMenu(menu);
+        control.setMenu(contentPopupMenu.createContextMenu(control));
     }
 
     protected void registerContentPopupMenu(String menuId, MenuManager menu) {

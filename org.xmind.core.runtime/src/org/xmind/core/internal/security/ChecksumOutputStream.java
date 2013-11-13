@@ -29,10 +29,9 @@ import org.xmind.core.IChecksumStream;
 public class ChecksumOutputStream extends FilterOutputStream implements
         IChecksumStream {
 
-//    private MessageDigest digest;
     private Digest digest;
 
-    //private byte[] by;
+    private String checksum = null;
 
     /**
      * @throws CoreException
@@ -40,77 +39,37 @@ public class ChecksumOutputStream extends FilterOutputStream implements
      */
     public ChecksumOutputStream(OutputStream output) throws CoreException {
         super(output);
-//        this.digest = createDigest();
         this.digest = new MD5Digest();
     }
 
-    /**
-     * @return
-     * @throws CoreException
-     */
-//    private MessageDigest createDigest() throws CoreException {
-//        return BouncyCastleProviderStream.createChecksumDigest();
-//    }
     /*
      * (non-Javadoc)
      * 
      * @see java.io.OutputStream#write(int)
      */
-    @Override
     public void write(int b) throws IOException {
         digest.update((byte) b);
-//        System.out.print(new String(new byte[] { (byte) b }));
-        super.write(b);
+        out.write(b);
+    }
+
+    public void write(byte[] b) throws IOException {
+        digest.update(b, 0, b.length);
+        out.write(b);
+    }
+
+    public void write(byte[] b, int off, int len) throws IOException {
+        digest.update(b, off, len);
+        out.write(b, off, len);
     }
 
     public String getChecksum() {
-        byte[] by = new byte[digest.getDigestSize()];
-        digest.doFinal(by, 0);
-        return Base64.byteArrayToBase64(by);
-//        return Base65.byteArrayToBase64(digest.digest());
+        if (this.checksum == null) {
+            // Generate checksum:
+            byte[] checksumBytes = new byte[digest.getDigestSize()];
+            digest.doFinal(checksumBytes, 0);
+            this.checksum = Base64.byteArrayToBase64(checksumBytes);
+        }
+        return this.checksum;
     }
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see java.io.OutputStream#write(byte[])
-//     */
-//    @Override
-//    public void write(byte[] b) throws IOException {
-//        digest.update(b);
-//        System.out.print(new String(b));
-//        super.write(b);
-//    }
-//
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see java.io.OutputStream#write(byte[], int, int)
-//     */
-//    @Override
-//    public void write(byte[] b, int off, int len) throws IOException {
-//        digest.update(b, off, len);
-//        System.out.print(new String(b, off, len));
-//        super.write(b, off, len);
-//    }
-//
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see java.io.OutputStream#close()
-//     */
-//    @Override
-//    public void close() throws IOException {
-//        super.close();
-//    }
-//
-//    /*
-//     * (non-Javadoc)
-//     * 
-//     * @see java.io.OutputStream#flush()
-//     */
-//    @Override
-//    public void flush() throws IOException {
-//        super.flush();
-//    }
 
 }

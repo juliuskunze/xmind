@@ -153,6 +153,11 @@ public class TopicTitleEditTool extends TitleEditTool {
                         || control.isDisposed())
                     return;
 
+                if (control.getBounds().width > 500) {
+                    width = 500;
+                    widthChanged = true;
+                    getHelper().setPrefWidth(width);
+                }
                 Rectangle bounds = new Rectangle(control.getBounds());
                 Point loc = getTargetViewer().computeToLayer(
                         bounds.getLocation(), false);

@@ -13,11 +13,18 @@
  *******************************************************************************/
 package org.xmind.core.marker;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class AbstractMarkerResource implements IMarkerResource {
 
     private String mainPath;
 
     private IMarker marker;
+
+    private List<IMarkerVariation> variations = null;
 
     public AbstractMarkerResource(IMarker marker) {
         this(marker, null);
@@ -48,6 +55,25 @@ public abstract class AbstractMarkerResource implements IMarkerResource {
 
     protected String getMainPath() {
         return mainPath;
+    }
+
+    public synchronized List<IMarkerVariation> getVariations() {
+        if (variations == null) {
+            variations = new ArrayList<IMarkerVariation>();
+            loadVariations(variations);
+        }
+        return variations;
+    }
+
+    protected void loadVariations(List<IMarkerVariation> variations) {
+    }
+
+    public InputStream getInputStream(IMarkerVariation variation) {
+        return getInputStream();
+    }
+
+    public OutputStream getOutputStream(IMarkerVariation variation) {
+        return getOutputStream();
     }
 
     public boolean equals(Object obj) {

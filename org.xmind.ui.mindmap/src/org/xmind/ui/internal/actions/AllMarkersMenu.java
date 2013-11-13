@@ -80,14 +80,17 @@ public class AllMarkersMenu extends MenuManager {
         for (final IMarkerGroup group : sheet.getMarkerGroups()) {
             MenuManager groupMenu = new MenuManager(group.getName(), "#" //$NON-NLS-1$
                     + group.getId());
-            fillGroup(group, groupMenu);
-            menu.add(groupMenu);
+            if (!group.isHidden()) {
+                fillGroup(group, groupMenu);
+                menu.add(groupMenu);
+            }
         }
     }
 
     private void fillGroup(IMarkerGroup group, IMenuManager menu) {
         for (IMarker marker : group.getMarkers()) {
-            menu.add(new MarkerAction(marker));
+            if (!marker.isHidden())
+                menu.add(new MarkerAction(marker));
         }
     }
 }

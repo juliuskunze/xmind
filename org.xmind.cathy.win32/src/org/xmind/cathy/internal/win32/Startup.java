@@ -28,7 +28,7 @@ public class Startup implements IStartup {
     public void earlyStartup() {
         final IWorkbench workbench = PlatformUI.getWorkbench();
         final Display display = workbench.getDisplay();
-        display.asyncExec(new Runnable() {
+        display.syncExec(new Runnable() {
             public void run() {
                 IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
                 if (window != null) {

@@ -48,6 +48,14 @@ public class ImportMessages extends NLS {
     public static String FreeMindImportPage_description;
     public static String FreeMindImportPage_FilterName;
 
+    public static String WorkbookImportPage_FilterName;
+
+    public static String WorkbookImportPage_title;
+
+    public static String WorkbookImportWizard_windowTitle;
+    public static String WorkbookImportPage_description;
+    public static String WorkbookImportPage_NoTargetWorkbookWarning;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, ImportMessages.class);
     }

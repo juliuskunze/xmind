@@ -71,6 +71,7 @@ import org.xmind.ui.internal.actions.AllowOverlapsAction;
 import org.xmind.ui.internal.actions.DropDownInsertImageAction;
 import org.xmind.ui.internal.actions.FindReplaceAction;
 import org.xmind.ui.internal.actions.GroupMarkers;
+import org.xmind.ui.internal.actions.ImportFromWorkbookAction;
 import org.xmind.ui.internal.actions.MindMapViewsMenu;
 import org.xmind.ui.internal.actions.RenameSheetAction;
 import org.xmind.ui.internal.actions.SaveSheetAsAction;
@@ -954,6 +955,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         menu.add(new GroupMarker("additions3")); //$NON-NLS-1$
         menu.add(new Separator());
         menu.add(new GroupMarker("additions4")); //$NON-NLS-1$
+        menu.add(new ImportFromWorkbookAction());
         menu.add(new Separator());
         menu.add(new GroupMarker("additions5")); //$NON-NLS-1$
         menu.add(new Separator());

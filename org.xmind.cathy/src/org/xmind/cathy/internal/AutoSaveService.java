@@ -45,7 +45,7 @@ public class AutoSaveService implements IStartup, IWorkbenchListener,
         IPreferenceStore ps = CathyPlugin.getDefault().getPreferenceStore();
         boolean enabled = ps.getBoolean(CathyPlugin.AUTO_SAVE_ENABLED);
         int intervals = ps.getInt(CathyPlugin.AUTO_SAVE_INTERVALS) * 60000;
-        BackgroundWorkbookSaver.getInstance().runWith(intervals, enabled);
+        BackgroundWorkbookSaver.getInstance().reset(intervals, enabled);
     }
 
     /*

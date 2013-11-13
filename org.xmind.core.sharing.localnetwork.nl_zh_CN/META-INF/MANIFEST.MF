@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-Vendor: XMind Ltd.
+Fragment-Host: org.xmind.core.sharing.localnetwork
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name: Local Area Network Sharing Chinese (Simplified) Language 
+ Support
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.xmind.core.sharing.localnetwork.nl_zh_CN;sing
+ leton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

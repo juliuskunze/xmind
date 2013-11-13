@@ -81,8 +81,10 @@ public class URLDndClient extends MindMapDNDClientBase {
     }
 
     private boolean isImageURL(URI uri) {
-        return ImageFormat.findByExtension(
-                FileUtils.getExtension(uri.getPath()), null) != null;
+        String path = uri.getPath();
+        if (path == null)
+            return false;
+        return ImageFormat.findByExtension(FileUtils.getExtension(path), null) != null;
     }
 
     @Override

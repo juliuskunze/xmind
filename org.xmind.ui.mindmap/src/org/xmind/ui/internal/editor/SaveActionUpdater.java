@@ -18,6 +18,7 @@ import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.IPropertyListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.internal.WorkbenchMessages;
 import org.xmind.core.Core;
@@ -125,10 +126,15 @@ public class SaveActionUpdater implements IPartListener, IPropertyListener,
         }
     }
 
-    public void handleCoreEvent(CoreEvent event) {
-        if (IMeta.CONFIG_AUTO_REVISION_GENERATION.equals(event.getTarget())) {
-            updateText();
-        }
+    public void handleCoreEvent(final CoreEvent event) {
+        PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
+            public void run() {
+                if (IMeta.CONFIG_AUTO_REVISION_GENERATION.equals(event
+                        .getTarget())) {
+                    updateText();
+                }
+            }
+        });
     }
 
 }

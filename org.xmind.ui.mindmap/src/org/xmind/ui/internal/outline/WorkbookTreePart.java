@@ -43,7 +43,11 @@ public class WorkbookTreePart extends MindMapTreePartBase {
         String type = event.getType();
         if (Core.SheetAdd.equals(type) || Core.SheetRemove.equals(type)
                 || Core.SheetMove.equals(type)) {
-            refresh();
+            runInUI(new Runnable() {
+                public void run() {
+                    refresh();
+                }
+            }, false);
         } else {
             super.handleCoreEvent(event);
         }

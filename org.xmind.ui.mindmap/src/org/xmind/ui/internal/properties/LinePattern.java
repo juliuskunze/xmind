@@ -20,12 +20,16 @@ import org.xmind.ui.style.Styles;
 
 public enum LinePattern {
 
-    Solid(Styles.LINE_PATTERN_SOLID, PropertyMessages.LinePattern_Solid, IMindMapImages.PATTERN_SOLID), //
-    Dash(Styles.LINE_PATTERN_DASH, PropertyMessages.LinePattern_Dash, IMindMapImages.PATTERN_DASH), //
-    Dot(Styles.LINE_PATTERN_DOT, PropertyMessages.LinePattern_Dot, IMindMapImages.PATTERN_DOT), //
+    Solid(Styles.LINE_PATTERN_SOLID, PropertyMessages.LinePattern_Solid,
+            IMindMapImages.PATTERN_SOLID), //
+    Dash(Styles.LINE_PATTERN_DASH, PropertyMessages.LinePattern_Dash,
+            IMindMapImages.PATTERN_DASH), //
+    Dot(Styles.LINE_PATTERN_DOT, PropertyMessages.LinePattern_Dot,
+            IMindMapImages.PATTERN_DOT), //
     DashDot(Styles.LINE_PATTERN_DASH_DOT, PropertyMessages.LinePattern_DashDot,
             IMindMapImages.PATTERN_DASHDOT), //
-    DashDotDot(Styles.LINE_PATTERN_DASH_DOT_DOT, PropertyMessages.LinePattern_DashDotDot,
+    DashDotDot(Styles.LINE_PATTERN_DASH_DOT_DOT,
+            PropertyMessages.LinePattern_DashDotDot,
             IMindMapImages.PATTERN_DASHDOTDOT);
 
     private String value;
@@ -50,6 +54,15 @@ public enum LinePattern {
 
     public ImageDescriptor getIcon() {
         return MindMapUI.getImages().get(iconName);
+    }
+
+    public static String[] getValues() {
+        LinePattern[] instances = values();
+        String[] values = new String[instances.length];
+        for (int i = 0; i < instances.length; i++) {
+            values[i] = instances[i].getValue();
+        }
+        return values;
     }
 
     public static LinePattern findByValue(String value) {

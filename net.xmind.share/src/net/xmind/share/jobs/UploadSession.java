@@ -164,7 +164,8 @@ public class UploadSession {
         if (code == XMindNetRequest.HTTP_OK && data != null) {
             String sessionId = data.getString("session"); //$NON-NLS-1$
             if (sessionId == null)
-                return error(XMindNetRequest.HTTP_INTERNAL_ERROR);
+                return error(XMindNetRequest.HTTP_INTERNAL_ERROR,
+                        request.getResponseText());
             this.sessionId = sessionId;
             this.permalink = data.getString("url"); //$NON-NLS-1$
             String mapname = data.getString("mapname"); //$NON-NLS-1$
@@ -176,7 +177,7 @@ public class UploadSession {
             return ok();
         }
 
-        return error(code, request.getError());
+        return error(code, request.getError(), request.getResponseText());
     }
 
     /**
@@ -226,7 +227,7 @@ public class UploadSession {
         if (code == XMindNetRequest.HTTP_OK)
             return ok();
 
-        return error(code, request.getError());
+        return error(code, request.getError(), request.getResponseText());
 
     }
 
@@ -282,9 +283,11 @@ public class UploadSession {
             if (status != null) {
                 debug("[upload][progress] status=%s", status); //$NON-NLS-1$
                 if ("forbidden".equals(status)) { //$NON-NLS-1$
-                    return error(CODE_VERIFICATION_FAILURE);
+                    return error(CODE_VERIFICATION_FAILURE,
+                            request.getResponseText());
                 } else if ("error".equals(status)) { //$NON-NLS-1$
-                    return error(XMindNetRequest.HTTP_INTERNAL_ERROR);
+                    return error(XMindNetRequest.HTTP_INTERNAL_ERROR,
+                            request.getResponseText());
                 } else if ("finished".equals(status)) { //$NON-NLS-1$
                     setStatus(COMPLETED);
                     return ok();
@@ -294,7 +297,7 @@ public class UploadSession {
             return ok();
         }
 
-        return error(code, request.getError());
+        return error(code, request.getError(), request.getResponseText());
     }
 
     /**
@@ -350,7 +353,7 @@ public class UploadSession {
             return ok();
         }
 
-        return error(code, request.getError());
+        return error(code, request.getError(), request.getResponseText());
     }
 
     private void setStatus(int status) {
@@ -363,24 +366,25 @@ public class UploadSession {
         return termination;
     }
 
-    private IStatus error(int code) {
-        return error(code, null);
+    private IStatus error(int code, String message) {
+        return error(code, null, message);
     }
 
-    private IStatus error(int code, Throwable error) {
-        setError(code, error);
+    private IStatus error(int code, Throwable error, String message) {
+        setError(code, error, message);
         return termination;
     }
 
-    private void setError(int code, Throwable err) {
+    private void setError(int code, Throwable err, String message) {
         if (hasError() || status == COMPLETED || status == CANCELED)
             return;
-        termination = createTermination(code, err);
+        termination = createTermination(code, err, message);
     }
 
-    private static IStatus createTermination(int code, Throwable err) {
+    private static IStatus createTermination(int code, Throwable err,
+            String message) {
         return new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID, code,
-                null, err);
+                message, err);
     }
 
     private static void debug(String message, Object... values) {

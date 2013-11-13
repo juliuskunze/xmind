@@ -55,6 +55,7 @@ import org.xmind.ui.decorations.IDecorationDescriptor;
 import org.xmind.ui.decorations.IDecorationManager;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.properties.DecorationLabelProvider;
 import org.xmind.ui.properties.StyledPropertySectionPart;
 import org.xmind.ui.style.Styles;
 import org.xmind.ui.viewers.MComboViewer;

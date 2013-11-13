@@ -13,48 +13,133 @@
  *******************************************************************************/
 package org.xmind.ui.internal.views;
 
+import org.eclipse.core.commands.Command;
+import org.eclipse.core.commands.IParameter;
+import org.eclipse.core.commands.Parameterization;
+import org.eclipse.core.commands.ParameterizedCommand;
+import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.jface.action.GroupMarker;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
-import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.IEditorPart;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.IContributedContentsView;
 import org.eclipse.ui.part.ViewPart;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.style.IStyleSheet;
-import org.xmind.gef.EditDomain;
-import org.xmind.gef.IGraphicalViewer;
-import org.xmind.gef.Request;
-import org.xmind.gef.ui.editor.IGraphicalEditor;
-import org.xmind.gef.ui.editor.IGraphicalEditorPage;
+import org.xmind.ui.internal.handlers.IMindMapCommandConstants;
 import org.xmind.ui.mindmap.MindMapUI;
 
+/**
+ * View tool bar, dropdown menu, popup menu groups:
+ * <ol>
+ * <li><code>group.file</code></li>
+ * <li><code>group.open</code></li>
+ * <li><code>group.showIn</code></li>
+ * <li><code>group.edit</code></li>
+ * <li><code>group.reorganize</code></li>
+ * <li><code>group.generate</code></li>
+ * <li><code>additions</code></li>
+ * <li><code>group.properties</code></li>
+ * </ol>
+ * 
+ * @author Frank Shaka
+ */
 public class StylesView extends ViewPart implements IContributedContentsView {
+
+    private static final String GROUP_FILE = IWorkbenchActionConstants.GROUP_FILE;
+
+    private static final String GROUP_OPEN = "group.open"; //$NON-NLS-1$
+
+    private static final String GROUP_SHOW_IN = IWorkbenchActionConstants.GROUP_SHOW_IN;
+
+    private static final String GROUP_EDIT = "group.edit"; //$NON-NLS-1$
+
+    private static final String GROUP_REORGANIZE = IWorkbenchActionConstants.GROUP_REORGANIZE;
+
+    private static final String GROUP_GENERATE = "group.generate"; //$NON-NLS-1$
+
+    private static final String GROUP_PROPERTIES = "group.properties"; //$NON-NLS-1$
 
     private StylesViewer viewer;
 
+    private MenuManager contextMenu;
+
     public void createPartControl(Composite parent) {
-        StackLayout layout = new StackLayout();
-        parent.setLayout(layout);
-        viewer = new StylesViewer(parent);
-        viewer.setInput(new IStyleSheet[] {
-                MindMapUI.getResourceManager().getSystemStyleSheet(),
-                MindMapUI.getResourceManager().getUserStyleSheet() });
+        viewer = new StylesViewer();
         viewer.addOpenListener(new IOpenListener() {
             public void open(OpenEvent event) {
                 IStructuredSelection selection = (IStructuredSelection) event
                         .getSelection();
                 Object element = selection.getFirstElement();
                 if (element instanceof IStyle) {
-                    changeStyle((IStyle) element);
+                    applyStyle((IStyle) element);
                 }
             }
         });
-        layout.topControl = viewer.getControl();
+        viewer.createControl(parent, SWT.NONE);
+
+        contextMenu = new MenuManager("#PopupMenu"); //$NON-NLS-1$
+        configurePopupMenu(contextMenu);
+        viewer.getControl().setMenu(
+                contextMenu.createContextMenu(viewer.getControl()));
+        getSite().registerContextMenu(contextMenu, viewer);
+
+        IActionBars actionBars = getViewSite().getActionBars();
+        configureToolBar(actionBars.getToolBarManager());
+        configureMenu(actionBars.getMenuManager());
+        actionBars.updateActionBars();
 
         getSite().setSelectionProvider(viewer);
+
+        viewer.setInput(new IStyleSheet[] {
+                MindMapUI.getResourceManager().getSystemStyleSheet(),
+                MindMapUI.getResourceManager().getUserStyleSheet() });
+    }
+
+    protected void configureToolBar(IToolBarManager toolBar) {
+        toolBar.add(new Separator(GROUP_FILE));
+        toolBar.add(new Separator(GROUP_OPEN));
+        toolBar.add(new GroupMarker(GROUP_SHOW_IN));
+        toolBar.add(new Separator(GROUP_EDIT));
+        toolBar.add(new Separator(GROUP_REORGANIZE));
+        toolBar.add(new Separator(GROUP_GENERATE));
+        toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+        toolBar.add(new Separator(GROUP_PROPERTIES));
+    }
+
+    protected void configureMenu(IMenuManager menu) {
+        menu.add(new Separator(GROUP_FILE));
+        menu.add(new Separator(GROUP_OPEN));
+        menu.add(new GroupMarker(GROUP_SHOW_IN));
+        menu.add(new Separator(GROUP_EDIT));
+        menu.add(new Separator(GROUP_REORGANIZE));
+        menu.add(new Separator(GROUP_GENERATE));
+        menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+        menu.add(new Separator(GROUP_PROPERTIES));
+    }
+
+    protected void configurePopupMenu(MenuManager menu) {
+        menu.add(new Separator(GROUP_FILE));
+        menu.add(new Separator(GROUP_OPEN));
+        menu.add(new GroupMarker(GROUP_SHOW_IN));
+        menu.add(new Separator(GROUP_EDIT));
+        menu.add(new Separator(GROUP_REORGANIZE));
+        menu.add(new Separator(GROUP_GENERATE));
+        menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+        menu.add(new Separator(GROUP_PROPERTIES));
     }
 
     public StylesViewer getViewer() {
@@ -68,42 +153,68 @@ public class StylesView extends ViewPart implements IContributedContentsView {
     }
 
     public void dispose() {
+        if (contextMenu != null) {
+            contextMenu.dispose();
+            contextMenu = null;
+        }
+        if (viewer != null) {
+            Control control = viewer.getControl();
+            if (control != null) {
+                control.dispose();
+            }
+            viewer = null;
+        }
         super.dispose();
-        viewer = null;
     }
 
     public IWorkbenchPart getContributingPart() {
         return getSite().getPage().getActiveEditor();
     }
 
+    @SuppressWarnings("unchecked")
     public Object getAdapter(Class adapter) {
         if (adapter == IContributedContentsView.class) {
             return this;
+        } else if (adapter.isAssignableFrom(StylesViewer.class)) {
+            return viewer;
         }
         return super.getAdapter(adapter);
     }
 
-    private void changeStyle(IStyle style) {
-        IEditorPart activeEditor = getSite().getPage().getActiveEditor();
-        if (!(activeEditor instanceof IGraphicalEditor))
+    private void applyStyle(IStyle style) {
+        if (style == null)
             return;
 
-        IGraphicalEditor editor = (IGraphicalEditor) activeEditor;
-        IGraphicalEditorPage page = editor.getActivePageInstance();
-        if (page == null)
+        final ICommandService cs = (ICommandService) getSite().getService(
+                ICommandService.class);
+        final IHandlerService hs = (IHandlerService) getSite().getService(
+                IHandlerService.class);
+        if (cs == null || hs == null)
             return;
 
-        IGraphicalViewer viewer = page.getViewer();
-        if (viewer == null)
+        final Command command = cs
+                .getCommand(IMindMapCommandConstants.STYLE_APPLY);
+        if (command == null || !command.isDefined() || !command.isEnabled()
+                || !command.isHandled())
             return;
 
-        EditDomain editDomain = page.getEditDomain();
-        if (editDomain == null)
+        final String resourceURI = MindMapUI.getResourceManager()
+                .toResourceURI(style);
+        if (resourceURI == null)
             return;
 
-        editDomain.handleRequest(new Request(MindMapUI.REQ_MODIFY_STYLE)
-                .setViewer(viewer)
-                .setParameter(MindMapUI.PARAM_RESOURCE, style));
+        SafeRunner.run(new SafeRunnable() {
+            public void run() throws Exception {
+                IParameter resourceURIParam = command
+                        .getParameter(IMindMapCommandConstants.RESOURCE_URI);
+                if (resourceURIParam == null)
+                    return;
+
+                hs.executeCommand(new ParameterizedCommand(command,
+                        new Parameterization[] { new Parameterization(
+                                resourceURIParam, resourceURI) }), null);
+            }
+        });
     }
 
 }

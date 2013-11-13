@@ -33,6 +33,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
@@ -78,6 +79,22 @@ public class UploaderDialog extends TitleAreaDialog implements
         if (id == OK)
             label = Messages.UploaderDialog_Upload_text;
         return super.createButton(parent, id, label, defaultButton);
+    }
+
+    protected void createButtonsForButtonBar(Composite parent) {
+        ((GridLayout) parent.getLayout()).numColumns++;
+        ((GridLayout) parent.getLayout()).makeColumnsEqualWidth = false;
+
+        Label informLable = new Label(parent, SWT.WRAP | SWT.LEFT);
+        informLable
+                .setText(Messages.UploaderDialog_containUnupload_text);
+        informLable.setVisible(false);
+        if (getInfo().getBoolean(Info.TRIMMED)) {
+            informLable.setVisible(true);
+        }
+
+        super.createButtonsForButtonBar(parent);
+
     }
 
     protected void configureShell(Shell newShell) {
@@ -135,6 +152,14 @@ public class UploaderDialog extends TitleAreaDialog implements
         addPage("org.xmind.ui.uploader.thumbnail", new ThumbnailUploaderPage()); //$NON-NLS-1$
     }
 
+    public void create() {
+        super.create();
+//        if (getInfo().getBoolean(Info.TRIMMED)) {
+//            setMessage(Messages.UploaderDialog_CreateError_Text,
+//                    IMessageProvider.WARNING);
+//        }
+    }
+
     protected Control createDialogArea(Composite parent) {
         Composite composite = (Composite) super.createDialogArea(parent);
 
@@ -175,6 +200,8 @@ public class UploaderDialog extends TitleAreaDialog implements
 
         setTitle(Messages.UploaderDialog_title);
         setMessage(Messages.UploaderDialog_message);
+        if ((Boolean) getInfo().getProperty(Info.MULTISHEETS))
+            setMessage(Messages.UploaderDialog_uploadOneSheet_message);
         return composite;
     }
 
@@ -234,6 +261,21 @@ public class UploaderDialog extends TitleAreaDialog implements
                 getInfo().getString(Info.PRIVACY, Info.PRIVACY_PUBLIC));
         getDialogSettings().put(Info.DOWNLOADABLE,
                 getInfo().getString(Info.DOWNLOADABLE, Info.DOWNLOADABLE_YES));
+//        if (getInfo().getBoolean(Info.TRIMMED)) {
+//            String message = Messages.UploaderDialog_OKPressedError_Text;
+//            MessageDialog confirmDialog = new MessageDialog(
+//                    getShell(),
+//                    IDialogConstants.COMMON_TITLE,
+//                    null,
+//                    message,
+//                    MessageDialog.WARNING,
+//                    new String[] {
+//                            org.eclipse.jface.dialogs.IDialogConstants.OK_LABEL,
+//                            org.eclipse.jface.dialogs.IDialogConstants.CANCEL_LABEL },
+//                    0);
+//            if (confirmDialog.open() != 0)
+//                return;
+//        }
         super.okPressed();
     }
 

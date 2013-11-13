@@ -54,9 +54,9 @@ public class ShadowedLayer extends Layer {
         if (!isEnabled() || isPressed())
             return;
         shadowBorder.setHorizontalShadowDepth(-Math.abs(shadowBorder
-                .getHorizontalDepth()));
+                .getHorizontalShadowDepth()));
         shadowBorder.setVerticalShadowDepth(-Math.abs(shadowBorder
-                .getVerticalDepth()));
+                .getVerticalShadowDepth()));
         shadowBorder.hideShadow();
         pressed = true;
         revalidate();
@@ -67,9 +67,9 @@ public class ShadowedLayer extends Layer {
         if (!isEnabled() || !isPressed())
             return;
         shadowBorder.setHorizontalShadowDepth(Math.abs(shadowBorder
-                .getHorizontalDepth()));
+                .getHorizontalShadowDepth()));
         shadowBorder.setVerticalShadowDepth(Math.abs(shadowBorder
-                .getVerticalDepth()));
+                .getVerticalShadowDepth()));
         shadowBorder.showShadow();
         pressed = false;
         revalidate();
@@ -166,11 +166,11 @@ public class ShadowedLayer extends Layer {
     }
 
     public Dimension getShadowDepths() {
-        return shadowBorder.getDepths();
+        return shadowBorder.getShadowDepths();
     }
 
     public int getHorizontalShadowDepth() {
-        return shadowBorder.getHorizontalDepth();
+        return shadowBorder.getHorizontalShadowDepth();
     }
 
     public int getShadowAlpha() {
@@ -182,7 +182,7 @@ public class ShadowedLayer extends Layer {
     }
 
     public int getVerticalShadowDepth() {
-        return shadowBorder.getVerticalDepth();
+        return shadowBorder.getVerticalShadowDepth();
     }
 
     public void hideShadow() {
@@ -206,19 +206,19 @@ public class ShadowedLayer extends Layer {
         repaint();
     }
 
-    public void setDepths(int depth) {
+    public void setShadowDepths(int depth) {
         shadowBorder.setShadowDepths(depth);
         revalidate();
         repaint();
     }
 
-    public void setDepths(Dimension depths) {
+    public void setShadowDepths(Dimension depths) {
         shadowBorder.setShadowDepths(depths);
         revalidate();
         repaint();
     }
 
-    public void setHorizontalDepth(int depth) {
+    public void setHorizontalShadowDepth(int depth) {
         shadowBorder.setHorizontalShadowDepth(depth);
         revalidate();
         repaint();
@@ -240,7 +240,7 @@ public class ShadowedLayer extends Layer {
         repaint();
     }
 
-    public void setVerticalDepth(int depth) {
+    public void setVerticalShadowDepth(int depth) {
         shadowBorder.setVerticalShadowDepth(depth);
         revalidate();
         repaint();

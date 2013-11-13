@@ -7,6 +7,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbench;
@@ -14,11 +15,10 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.xmind.cathy.internal.CathyPlugin;
 import org.xmind.cathy.internal.WorkbenchMessages;
-import org.xmind.ui.internal.MindMapUIPlugin;
-import org.xmind.ui.internal.editor.NewWorkbookEditor;
+import org.xmind.ui.internal.actions.OpenHomeMapAction;
 import org.xmind.ui.internal.editor.MME;
+import org.xmind.ui.internal.editor.NewWorkbookEditor;
 import org.xmind.ui.mindmap.MindMapUI;
-import org.xmind.ui.prefs.PrefConstants;
 
 public class StartupJob extends Job {
 
@@ -27,6 +27,7 @@ public class StartupJob extends Job {
     public StartupJob(IWorkbench workbench, boolean showProgress) {
         super(WorkbenchMessages.StartupJob_jobName);
         this.workbench = workbench;
+        setUser(showProgress);
         setSystem(!showProgress);
     }
 
@@ -63,7 +64,10 @@ public class StartupJob extends Job {
     }
 
     /**
-     * Wait for a short while before all initial files are loaded.
+     * Wait for a short while before initial files are loaded. On Mac OS X,
+     * files opened by double clicking or 'open' command are passed to Eclipse
+     * RCP via <code>SWT.OpenDocument</code> event which comes a slight later
+     * than workbench startup.
      * 
      * @param monitor
      */
@@ -81,18 +85,25 @@ public class StartupJob extends Job {
                     .getInt(CathyPlugin.STARTUP_ACTION);
             if (action == CathyPlugin.STARTUP_ACTION_HOME) {
                 monitor.subTask(WorkbenchMessages.StartupJob_OpenHomeMap);
-                final String location = MindMapUIPlugin.getDefault()
-                        .getPreferenceStore()
-                        .getString(PrefConstants.HOME_MAP_LOCATION);
-                if (location == null || "".equals(location)) { //$NON-NLS-1$
-                    // do nothing
-                } else {
-                    SafeRunner.run(new SafeRunnable() {
-                        public void run() throws Exception {
-                            openEditor(MME.createFileEditorInput(location));
-                        }
-                    });
-                }
+                SafeRunner.run(new SafeRunnable() {
+                    public void run() throws Exception {
+                        workbench.getDisplay().syncExec(new Runnable() {
+                            public void run() {
+                                IWorkbenchWindow window = workbench
+                                        .getActiveWorkbenchWindow();
+                                if (window != null) {
+                                    final IWorkbenchPage page = window
+                                            .getActivePage();
+                                    Shell shell = window.getShell();
+                                    if (page != null) {
+                                        OpenHomeMapAction.openHomeMap(shell,
+                                                page);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
             } else if (action == CathyPlugin.STARTUP_ACTION_BLANK) {
                 monitor.subTask(WorkbenchMessages.StartupJob_OpenBlankMap);
                 openBlankMap();
@@ -110,7 +121,7 @@ public class StartupJob extends Job {
             public void run() {
                 IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
                 if (window != null) {
-                    NewWorkbookEditor.open(window, true);
+                    NewWorkbookEditor.showIn(window);
 //                    NewWorkbookWizardDialog.openWizard(window, true);
                 }
             }
@@ -144,6 +155,8 @@ public class StartupJob extends Job {
      */
     protected void checkAndRecoverFiles(IProgressMonitor monitor) {
         Job subJob = new CheckRecoverFilesJob(workbench);
+        subJob.setUser(isUser());
+        subJob.setSystem(isSystem());
         subJob.setProgressGroup(monitor, 1);
         subJob.schedule();
         try {
@@ -154,6 +167,8 @@ public class StartupJob extends Job {
 
     protected void checkAndOpenFiles(IProgressMonitor monitor) {
         Job subJob = new CheckOpenFilesJob(workbench);
+        subJob.setUser(isUser());
+        subJob.setSystem(isSystem());
         subJob.setProgressGroup(monitor, 1);
         subJob.schedule();
         try {

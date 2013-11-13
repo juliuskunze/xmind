@@ -52,10 +52,18 @@ public class SheetTreePart extends MindMapTreePartBase {
     public void handleCoreEvent(CoreEvent event) {
         String type = event.getType();
         if (Core.TitleText.equals(type)) {
-            update();
+            runInUI(new Runnable() {
+                public void run() {
+                    update();
+                }
+            }, false);
         } else if (Core.RelationshipAdd.equals(type)
                 || Core.RelationshipRemove.equals(type)) {
-            refresh();
+            runInUI(new Runnable() {
+                public void run() {
+                    refresh();
+                }
+            }, false);
         } else {
             super.handleCoreEvent(event);
         }

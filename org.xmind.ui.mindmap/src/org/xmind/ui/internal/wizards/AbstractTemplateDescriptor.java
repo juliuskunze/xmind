@@ -16,6 +16,7 @@ package org.xmind.ui.internal.wizards;
 import java.beans.PropertyChangeSupport;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -59,17 +60,26 @@ public abstract class AbstractTemplateDescriptor implements ITemplateDescriptor 
     private InputStream removeRevisions(InputStream stream) {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try {
-            FileUtils.extractZipStream(stream, new ZipStreamOutputTarget(
-                    new ZipOutputStream(buffer), false),
-                    new IFileEntryFilter() {
-                        public boolean select(String path, String mediaType,
-                                boolean isDirectory) {
-                            return !path
-                                    .startsWith(ArchiveConstants.PATH_REVISIONS);
-                        }
-                    });
+            ZipOutputStream zip = new ZipOutputStream(buffer);
+            try {
+                FileUtils.extractZipStream(stream, new ZipStreamOutputTarget(
+                        zip), new IFileEntryFilter() {
+                    public boolean select(String path, String mediaType,
+                            boolean isDirectory) {
+                        return !path
+                                .startsWith(ArchiveConstants.PATH_REVISIONS);
+                    }
+                });
+            } finally {
+                zip.close();
+            }
         } catch (Exception e) {
             return newStream();
+        } finally {
+            try {
+                buffer.close();
+            } catch (IOException e) {
+            }
         }
         return new ByteArrayInputStream(buffer.toByteArray());
     }

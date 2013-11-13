@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.core.internal.zip;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -93,6 +94,18 @@ public class ZipFileInputSource implements IInputSource {
             Core.getLogger().log(e);
         }
         return null;
+    }
+
+    public InputStream openEntryStream(String entryName) throws IOException {
+        ZipEntry entry = zipFile.getEntry(entryName);
+        if (entry == null)
+            throw new FileNotFoundException(entryName);
+        return zipFile.getInputStream(entry);
+    }
+
+    public boolean isEntryAvailable(String entryName) {
+        ZipEntry entry = zipFile.getEntry(entryName);
+        return entry != null && !entry.isDirectory();
     }
 
     public void closeZipFile() {

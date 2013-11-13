@@ -16,14 +16,41 @@ package org.xmind.core.io;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.xmind.core.Core;
-import org.xmind.core.util.FileUtils;
 
 public class DirectoryOutputTarget implements IOutputTarget {
 
+    private class TimedFileOutputStream extends FileOutputStream {
+
+        private String entryName;
+
+        private File file;
+
+        public TimedFileOutputStream(String entryName, File file)
+                throws FileNotFoundException {
+            super(file);
+            this.entryName = entryName;
+            this.file = file;
+        }
+
+        public void close() throws IOException {
+            super.close();
+            Long time = timeTable.remove(entryName);
+            if (time != null) {
+                file.setLastModified(time.longValue());
+            }
+        }
+
+    }
+
     private File dir;
+
+    private Map<String, Long> timeTable = new HashMap<String, Long>();
 
     public DirectoryOutputTarget(String path) {
         this.dir = new File(path);
@@ -38,33 +65,34 @@ public class DirectoryOutputTarget implements IOutputTarget {
             return null;
 
         try {
-            File file = new File(dir, entryName);
-            FileUtils.ensureFileParent(file);
-            return new FileOutputStream(file);
-        } catch (FileNotFoundException e) {
+            return openEntryStream(entryName);
+        } catch (IOException e) {
             Core.getLogger().log(e,
-                    "Failed to get entry output stream: " + entryName); //$NON-NLS-1$
+                    "Failed to get entry output stream for file: " //$NON-NLS-1$
+                            + new File(dir, entryName).getPath());
+            return null;
         }
-        return null;
+    }
+
+    public OutputStream openEntryStream(String entryName) throws IOException {
+        File file = new File(dir, entryName);
+        File parent = file.getParentFile();
+        if (!parent.exists()) {
+            parent.mkdirs();
+        }
+        return new TimedFileOutputStream(entryName, file);
     }
 
     public boolean isEntryAvaialble(String entryName) {
-        return isAvailable();
+        return isAvailable() && !new File(dir, entryName).isDirectory();
     }
 
     public boolean isAvailable() {
-        FileUtils.ensureDirectory(dir);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
         return dir.exists() && dir.isDirectory();
     }
-
-//    public boolean closeEntryStream(String entryPath, OutputStream stream) {
-//        try {
-//            stream.close();
-//            return true;
-//        } catch (IOException e) {
-//        }
-//        return false;
-//    }
 
     /*
      * (non-Javadoc)
@@ -72,6 +100,7 @@ public class DirectoryOutputTarget implements IOutputTarget {
      * @see org.xmind.core.io.IOutputTarget#setEntryTime(java.lang.String, long)
      */
     public void setEntryTime(String entryName, long time) {
+        timeTable.put(entryName, Long.valueOf(time));
         File f = new File(dir, entryName);
         if (f.exists()) {
             f.setLastModified(time);

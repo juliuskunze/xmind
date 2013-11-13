@@ -123,8 +123,8 @@ public class RelationshipPart extends ConnectionPart implements
 
     protected void declareEditPolicies(IRequestHandler reqHandler) {
         super.declareEditPolicies(reqHandler);
-        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE,
+                NullEditPolicy.getInstance());
         reqHandler.installEditPolicy(GEF.ROLE_MOVABLE,
                 MindMapUI.POLICY_RELATIONSHIP_MOVABLE);
         reqHandler.installEditPolicy(GEF.ROLE_EDITABLE,

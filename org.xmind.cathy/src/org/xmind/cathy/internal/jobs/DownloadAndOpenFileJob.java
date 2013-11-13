@@ -91,6 +91,7 @@ public class DownloadAndOpenFileJob extends Job {
         DownloadJob downloadJob = new DownloadJob(
                 WorkbenchMessages.DownloadAndOpenFileJob_DownloadJob_jobName,
                 url, tempFile.getAbsolutePath(), MindMapUI.PLUGIN_ID);
+        downloadJob.setUser(true);
         downloadJob.schedule();
         try {
             downloadJob.join();

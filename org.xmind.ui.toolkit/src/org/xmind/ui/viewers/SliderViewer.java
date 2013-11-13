@@ -351,9 +351,9 @@ public class SliderViewer extends ContentViewer implements
                                 && (mouseDrag || mouseDown)) {
                             selectionChangedDuringDragging = true;
                         }
-                        if (!selectionChangedDuringDragging) {
-                            firePostSelectionChanged();
-                        }
+//                        if (!selectionChangedDuringDragging) {
+//                            firePostSelectionChanged();
+//                        }
                         break;
                     case SWT.MouseDoubleClick:
                         mouseDown = false;
@@ -466,7 +466,7 @@ public class SliderViewer extends ContentViewer implements
     protected double calcNewPortionCanvas(int x, int y) {
         Rectangle r = slotFigure.getBounds();
         if (vertical) {
-            return ((y - r.y) * 1.0d) / r.height;
+            return ((r.y + r.height - y) * 1.0d) / r.height;
         } else {
             return ((x - r.x) * 1.0d) / r.width;
         }
@@ -479,7 +479,7 @@ public class SliderViewer extends ContentViewer implements
     protected void layoutFigures(FigureCanvas fc) {
         Rectangle r = new Rectangle(fc.getViewport().getClientArea());
         if (vertical)
-            r.transpose();
+            transpose(r);
         Dimension size = blockFigure.getPreferredSize();
         Rectangle b = new Rectangle(r.x + size.width / 2, r.y
                 + (r.height - SLOT_HEIGHT) / 2, r.width - size.width,
@@ -489,11 +489,20 @@ public class SliderViewer extends ContentViewer implements
         Rectangle b2 = new Rectangle(x - size.width / 2, y - size.height / 2,
                 size.width, size.height);
         if (vertical) {
-            b.transpose();
-            b2.transpose();
+            transpose(b);
+            transpose(b2);
         }
         slotFigure.setBounds(b);
         blockFigure.setBounds(b2);
+    }
+
+    private static void transpose(Rectangle r) {
+        int temp = r.x;
+        r.x = -r.y - r.height;
+        r.y = -temp - r.width;
+        temp = r.width;
+        r.width = r.height;
+        r.height = temp;
     }
 
     protected boolean receives(int x, int y) {

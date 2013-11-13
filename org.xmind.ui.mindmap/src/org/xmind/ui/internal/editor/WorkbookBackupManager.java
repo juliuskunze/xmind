@@ -14,151 +14,148 @@
 package org.xmind.ui.internal.editor;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.xmind.ui.util.Logger;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.IJobChangeListener;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.xmind.ui.internal.MindMapUIPlugin;
 
-public class WorkbookBackupManager {
+public class WorkbookBackupManager implements ISchedulingRule {
 
-    private class WorkbookBackupWorker implements Runnable {
+    private class WorkbookBackupWorker extends Job {
 
         private WorkbookRef ref;
 
-        private Object previousBackup;
+        private IWorkbookBackup backup = null;
 
-        private Object backup = null;
-
-        private IProgressMonitor monitor = new NullProgressMonitor();
-
-        public WorkbookBackupWorker(WorkbookRef ref, Object previousBackup) {
+        public WorkbookBackupWorker(WorkbookRef ref) {
+            super("WorkbookBackupWorker-" + ref.getKey().toString()); //$NON-NLS-1$
             this.ref = ref;
-            this.previousBackup = previousBackup;
         }
 
-        public void start() {
-            Thread thread = new Thread(this);
-            thread.setName("WorkbookBackupWorker-" + ref.getKey().toString()); //$NON-NLS-1$
-            thread.setDaemon(true);
-            thread.setPriority(Thread.MIN_PRIORITY);
-            thread.start();
+        public WorkbookRef getRef() {
+            return ref;
         }
 
-        public void cancel() {
-            monitor.setCanceled(true);
+        public IWorkbookBackup getBackup() {
+            return backup;
         }
 
-        public void run() {
+        protected IStatus run(IProgressMonitor monitor) {
             try {
-                IWorkbookBackupMaker backupper = ref.getWorkbookBackupMaker();
+                IWorkbookBackupFactory backupper = ref
+                        .getWorkbookBackupFactory();
                 if (backupper != null) {
-                    backup = backupper.backup(monitor, previousBackup);
+                    backup = backupper.createWorkbookBackup(monitor,
+                            backups.get(ref));
                 }
             } catch (Throwable e) {
-                Logger.log(e);
-                notifyBackupCanceled(ref);
-            } finally {
-                if (monitor.isCanceled()) {
-                    notifyBackupCanceled(ref);
-                } else {
-                    notifyBackupFinish(ref, backup);
-                }
+                return new Status(IStatus.WARNING, MindMapUIPlugin.PLUGIN_ID,
+                        "Failed to make backup for workbook: " //$NON-NLS-1$
+                                + ref.getKey().toString(), e);
             }
+            if (monitor.isCanceled())
+                return Status.CANCEL_STATUS;
+            return Status.OK_STATUS;
         }
 
     }
 
     private static final WorkbookBackupManager instance = new WorkbookBackupManager();
 
-    private Map<WorkbookRef, Object> backups = new HashMap<WorkbookRef, Object>();
+    private Map<WorkbookRef, IWorkbookBackup> backups = new HashMap<WorkbookRef, IWorkbookBackup>();
 
     private Map<WorkbookRef, WorkbookBackupWorker> workers = new HashMap<WorkbookRef, WorkbookBackupWorker>();
 
-    private Queue<WorkbookBackupWorker> queue = new LinkedList<WorkbookBackupWorker>();
-
-    private WorkbookBackupWorker working = null;
+    private IJobChangeListener workerListener = new JobChangeAdapter() {
+        public void done(IJobChangeEvent event) {
+            handleWorkerDone((WorkbookBackupWorker) event.getJob(),
+                    event.getResult());
+        }
+    };
 
     private WorkbookBackupManager() {
+    }
+
+    private WorkbookBackupWorker createWorker(WorkbookRef ref) {
+        WorkbookBackupWorker worker = new WorkbookBackupWorker(ref);
+        worker.setRule(this);
+        worker.setSystem(true);
+        worker.setPriority(Job.SHORT);
+        worker.addJobChangeListener(workerListener);
+        workers.put(ref, worker);
+        worker.schedule();
+        return worker;
+    }
+
+    private void handleWorkerDone(WorkbookBackupWorker worker, IStatus result) {
+        if (result.isOK()) {
+            IWorkbookBackup newBackup = worker.getBackup();
+            IWorkbookBackup oldBackup = backups.put(worker.getRef(), newBackup);
+            if (oldBackup != null && !oldBackup.equals(newBackup)) {
+                oldBackup.dispose();
+            }
+        }
+        workers.remove(worker.getRef());
     }
 
     public synchronized void addWorkbook(WorkbookRef ref) {
         if (backups.containsKey(ref))
             return;
 
-        backups.put(ref, null);
-        WorkbookBackupWorker worker = new WorkbookBackupWorker(ref, null);
-        workers.put(ref, worker);
-        schedule(worker);
+        IWorkbookBackup oldBackup = backups.put(ref, null);
+        if (oldBackup != null) {
+            oldBackup.dispose();
+        }
+        createWorker(ref);
     }
 
     public synchronized void removeWorkbook(WorkbookRef ref) {
         if (!backups.containsKey(ref))
             return;
 
-        backups.remove(ref);
+        IWorkbookBackup backup = backups.remove(ref);
+        if (backup != null) {
+            backup.dispose();
+        }
         WorkbookBackupWorker worker = workers.remove(ref);
         if (worker != null) {
             worker.cancel();
-            queue.remove(worker);
         }
     }
 
-    public Object ensureBackedUp(WorkbookRef ref) {
+    public synchronized IWorkbookBackup ensureBackedUp(WorkbookRef ref,
+            IProgressMonitor monitor) {
         if (!workers.containsKey(ref)) {
-            WorkbookBackupWorker worker = new WorkbookBackupWorker(ref,
-                    backups.get(ref));
-            workers.put(ref, worker);
-            schedule(worker);
+            createWorker(ref);
         }
-        while (workers.containsKey(ref)) {
-            try {
+        try {
+            while (workers.containsKey(ref)) {
+                if (monitor.isCanceled())
+                    break;
                 Thread.sleep(1);
-            } catch (InterruptedException e) {
-                break;
             }
+        } catch (InterruptedException e) {
         }
         return backups.get(ref);
     }
 
-    private void schedule(WorkbookBackupWorker worker) {
-        if (working != null) {
-            queue.offer(worker);
-        } else {
-            working = worker;
-            worker.start();
-        }
-    }
-
-    private void notifyBackupCanceled(WorkbookRef ref) {
-        WorkbookBackupWorker worker = workers.remove(ref);
-        if (worker != null) {
-            worker.cancel();
-            queue.remove(worker);
-        }
-        pollQueue();
-    }
-
-    private void notifyBackupFinish(WorkbookRef ref, Object backup) {
-        backups.put(ref, backup);
-        WorkbookBackupWorker worker = workers.remove(ref);
-        if (worker != null) {
-            queue.remove(worker);
-        }
-        pollQueue();
-    }
-
-    private void pollQueue() {
-        working = queue.poll();
-        if (working != null) {
-            working.start();
-        }
-    }
-
     public static WorkbookBackupManager getInstance() {
         return instance;
+    }
+
+    public boolean contains(ISchedulingRule rule) {
+        return rule == this;
+    }
+
+    public boolean isConflicting(ISchedulingRule rule) {
+        return rule == this;
     }
 
 }

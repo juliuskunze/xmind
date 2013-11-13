@@ -14,11 +14,8 @@
 package org.xmind.ui.internal.protocols;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.eclipse.core.runtime.Platform;
 
 /**
  * 
@@ -34,10 +31,24 @@ public class FilePathParser {
 
     private static final String PATH_SEP = "/"; //$NON-NLS-1$
 
+    private static final String PARENT_DIR = ".."; //$NON-NLS-1$
+
+    private static final String SAME_DIR = "."; //$NON-NLS-1$
+
+    private static final String PARENT_DIR_SEP = PARENT_DIR + SEP;
+
+    private static final String SAME_DIR_SEP = SAME_DIR + SEP;
+
+    public static final String ABSTRACT_FILE_BASE = System
+            .getProperty("user.home"); //$NON-NLS-1$
+
     private static final String WIN_NETWORK_PATH_PREFIX = "\\\\"; //$NON-NLS-1$
 
-    private static final boolean isWindows = Platform.OS_WIN32.equals(Platform
-            .getOS());
+    static Boolean IS_WINDOWS = null;
+
+    public static boolean isFileURI(String uri) {
+        return uri != null && uri.startsWith(FILE_PROTOCOL);
+    }
 
     public static String toPath(String uri) {
         if (uri == null)
@@ -48,12 +59,12 @@ public class FilePathParser {
         }
         String path;
         if (uri.startsWith(FILE_PROTOCOL))
-            path = uri.substring(5);
+            path = uri.substring(FILE_PROTOCOL.length());
         else
             path = uri;
         if (path.startsWith(PROTOCOL_SEP))
             path = path.substring(2);
-        if (isWindows && path.startsWith(PATH_SEP)) {
+        if (isWindows() && path.startsWith(PATH_SEP)) {
             path = path.substring(1);
         }
         return path;
@@ -62,65 +73,126 @@ public class FilePathParser {
     public static String toURI(String path, boolean relative) {
         if (path == null)
             return null;
-        if (isWindows)
+        if (isWindows())
             return encode(FILE_PROTOCOL + path, true);
         return encode(relative ? FILE_PROTOCOL + path : FILE_PROTOCOL
                 + PROTOCOL_SEP + path, true);
     }
 
     public static boolean isPathRelative(String path) {
-        return !(isWindows && path.startsWith(WIN_NETWORK_PATH_PREFIX))
+        return !(isWindows() && path.startsWith(WIN_NETWORK_PATH_PREFIX))
                 && !new File(path).isAbsolute();
     }
 
-    private static List<File> getRoutine(File file, List<File> routine) {
-        File parent = file.getParentFile();
-        if (parent != null) {
-            routine.add(0, parent);
-            return getRoutine(parent, routine);
+    private static List<String> calculateRoutine(File file) {
+        ArrayList<String> routine = new ArrayList<String>();
+        String name;
+        while (file != null) {
+            name = file.getName();
+            if (name == null || "".equals(name)) { //$NON-NLS-1$
+                // A root directory may have no name, so we add its whole path:
+                name = file.getPath();
+            }
+            routine.add(0, name);
+            file = file.getParentFile();
         }
         return routine;
     }
 
-    private static int findStart(List<File> r1, List<File> r2) {
-        int start;
-        for (start = 0; start < r1.size() && start < r2.size(); start++) {
-            if (!r1.get(start).equals(r2.get(start)))
-                break;
-        }
-        return start;
-    }
-
     public static String toRelativePath(String base, String absolutePath) {
-        if (isWindows && absolutePath.startsWith(WIN_NETWORK_PATH_PREFIX))
-            return absolutePath;
-        File file = new File(absolutePath);
-        File baseFile = new File(base);
-        List<File> routine = getRoutine(file, new ArrayList<File>());
-        List<File> baseRoutine = new ArrayList<File>();
-        baseRoutine.add(baseFile);
-        baseRoutine = getRoutine(baseFile, baseRoutine);
-        int start = findStart(routine, baseRoutine);
-        StringBuilder sb = new StringBuilder(20);
-        String sep = SEP;
-        for (int i = start; i < baseRoutine.size(); i++) {
-            sb.append(".."); //$NON-NLS-1$
-            sb.append(sep);
+        if (absolutePath.equals(base))
+            return SAME_DIR;
+
+        List<String> baseRoutine = calculateRoutine(new File(base));
+        List<String> absRoutine = calculateRoutine(new File(absolutePath));
+
+        // Calculate the segment number of the common root:
+        int start = 0;
+        while (start < absRoutine.size() && start < baseRoutine.size()
+                && absRoutine.get(start).equals(baseRoutine.get(start))) {
+            start++;
         }
-        for (int i = start; i < routine.size(); i++) {
-            sb.append(routine.get(i).getName());
-            sb.append(sep);
+        if (start == absRoutine.size())
+            // Absolute path equals base:
+            return SAME_DIR;
+
+        StringBuilder builder = new StringBuilder();
+        if (start < baseRoutine.size()) {
+            for (int i = start; i < baseRoutine.size(); i++) {
+                builder.append(PARENT_DIR);
+                builder.append(SEP);
+            }
         }
-        sb.append(file.getName());
-        return sb.toString();
+        for (int i = start; i < absRoutine.size(); i++) {
+            builder.append(absRoutine.get(i));
+            if (i < absRoutine.size() - 1) {
+                builder.append(SEP);
+            }
+        }
+        return builder.toString();
+
+//        File file = new File(absolutePath);
+//        List<File> routine = new ArrayList<File>();
+//        routine = getRoutine(file, routine);
+//
+//        File baseFile = new File(base);
+//        List<File> baseRoutine = new ArrayList<File>();
+//        baseRoutine.add(baseFile);
+//        baseRoutine = getRoutine(baseFile, baseRoutine);
+//        int start = findStart(routine, baseRoutine);
+//        StringBuilder sb = new StringBuilder(20);
+//        String sep = SEP;
+//        for (int i = start; i < baseRoutine.size(); i++) {
+//            sb.append(".."); //$NON-NLS-1$
+//            sb.append(sep);
+//        }
+//        if (start == 0 && isWindows && !absolutePath.startsWith(SEP)) {
+//            return sb.toString() + new File(absolutePath).getAbsolutePath();
+//        } else {
+//            for (int i = start; i < routine.size(); i++) {
+//                sb.append(routine.get(i).getName());
+//                sb.append(sep);
+//            }
+//            sb.append(file.getName());
+//        }
+//        return sb.toString();
     }
 
     public static String toAbsolutePath(String base, String relativePath) {
-        try {
-            return new File(base, relativePath).getCanonicalPath();
-        } catch (IOException e) {
-            return new File(base, relativePath).getAbsolutePath();
+        File file = new File(base);
+        while (!"".equals(relativePath)) { //$NON-NLS-1$
+            if (relativePath.startsWith(PARENT_DIR_SEP)) {
+                if (file != null)
+                    file = file.getParentFile();
+                relativePath = relativePath.substring(PARENT_DIR_SEP.length());
+            } else if (relativePath.startsWith(SAME_DIR_SEP)) {
+                relativePath = relativePath.substring(SAME_DIR_SEP.length());
+            } else {
+                int sepIndex = relativePath.indexOf(SEP);
+                if (sepIndex < 0) {
+                    if (file == null)
+                        return relativePath;
+                    return new File(file, relativePath).getPath();
+                } else {
+                    if (file == null) {
+                        file = new File(relativePath.substring(0, sepIndex));
+                    } else {
+                        file = new File(file, relativePath.substring(0,
+                                sepIndex));
+                    }
+                    relativePath = relativePath.substring(sepIndex
+                            + SEP.length());
+                }
+            }
         }
+        if (file == null)
+            return ""; //$NON-NLS-1$
+        return file.getPath();
+//        try {
+//            return new File(base, relativePath).getCanonicalPath();
+//        } catch (IOException e) {
+//            return new File(base, relativePath).getAbsolutePath();
+//        }
     }
 
     /*
@@ -343,14 +415,40 @@ public class FilePathParser {
         return -1;
     }
 
+    private static boolean isWindows() {
+        if (IS_WINDOWS == null) {
+            // Use reflection to obtain platform information to make it 
+            // easy for testing.
+            //
+            // Original code:
+            //
+            // IS_WINDOWS = Platform.OS_WIN32.equals(Platform.getOS());
+            //
+            try {
+                Class<?> platformClass = Class
+                        .forName("org.eclipse.core.runtime.Platform"); //$NON-NLS-1$
+                String os = (String) platformClass.getDeclaredMethod("getOS") //$NON-NLS-1$
+                        .invoke(null);
+                String os_win32 = (String) platformClass.getDeclaredField(
+                        "OS_WIN32").get(null); //$NON-NLS-1$
+                if (os_win32 != null && os != null) {
+                    IS_WINDOWS = Boolean.valueOf(os_win32.equals(os));
+                }
+            } catch (Throwable e) {
+            }
+            if (IS_WINDOWS == null)
+                IS_WINDOWS = Boolean.FALSE;
+        }
+        return IS_WINDOWS.booleanValue();
+    }
+
     @SuppressWarnings("nls")
     public static void main(String[] args) {
-        String base = "/Applications/Utilities/Console.app/Contents/info.plist";
-        String absolutePath = "/Users/frankshaka/Desktop/a.xmind";
+        String absolutePath = "C:/bb/11/11/11/11/11";
+        String base = "C:/bb/˧/a/meta";
         String relativePath = toRelativePath(base, absolutePath);
         System.out.println(relativePath);
         System.out.println(isPathRelative(relativePath));
         System.out.println(toAbsolutePath(base, relativePath));
     }
-
 }

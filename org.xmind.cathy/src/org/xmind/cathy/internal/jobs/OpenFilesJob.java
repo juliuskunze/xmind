@@ -31,8 +31,10 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbench;
 import org.xmind.cathy.internal.WorkbenchMessages;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.command.Command;
+import org.xmind.core.command.CommandJob;
+import org.xmind.core.command.ICommand;
 import org.xmind.core.util.FileUtils;
-import org.xmind.ui.comm.XMindCommandCenter;
 import org.xmind.ui.internal.MarkerImpExpUtils;
 import org.xmind.ui.internal.editor.MME;
 import org.xmind.ui.internal.editor.WorkbookEditorInput;
@@ -173,8 +175,9 @@ public class OpenFilesJob extends AbstractCheckFilesJob {
      */
     protected IEditorInput createEditorInput(String fileName,
             IProgressMonitor monitor) throws Exception {
-        if (fileName.startsWith("xmind:")) { //$NON-NLS-1$
-            XMindCommandCenter.dispatch(fileName);
+        final ICommand command = Command.parseURI(fileName);
+        if (command != null) {
+            new CommandJob(command, null).schedule();
             return null;
         }
 

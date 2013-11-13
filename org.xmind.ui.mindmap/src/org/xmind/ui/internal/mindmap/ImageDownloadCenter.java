@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.draw2d.geometry.Dimension;
@@ -142,13 +143,13 @@ public class ImageDownloadCenter {
         protected void doDone(IJobChangeEvent event) {
             job = null;
             processes.remove(topic);
-            int code = event.getResult().getCode();
-            if (code == DownloadJob.SUCCESS) {
+            int code = event.getResult().getSeverity();
+            if (code == IStatus.OK) {
                 onSuccess();
-            } else if (code == DownloadJob.FAILED) {
-                onFailed();
-            } else if (code == DownloadJob.CANCELED) {
+            } else if (code == IStatus.CANCEL) {
                 onCancel();
+            } else {
+                onFailed();
             }
             tempFile.delete();
         }

@@ -40,11 +40,9 @@ import org.xml.sax.SAXParseException;
 public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
         ErrorHandler {
 
-//    private DocumentBuilder documentCreator = null;
-//
-//    private DocumentBuilder documentLoader = null;
-
     private IEncryptionHandler defaultEncryptionHandler = null;
+
+    private DocumentBuilderFactory documentBuilderFactory = null;
 
     /*
      * (non-Javadoc)
@@ -53,46 +51,44 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
      * org.xmind.core.IWorkbookBuilder#setDefaultEncryptionHandler(org.xmind
      * .core.IEncryptionHandler)
      */
-    public void setDefaultEncryptionHandler(IEncryptionHandler encryptionHandler) {
+    public synchronized void setDefaultEncryptionHandler(
+            IEncryptionHandler encryptionHandler) {
         if (this.defaultEncryptionHandler != null)
             return;
 
         this.defaultEncryptionHandler = encryptionHandler;
     }
 
-    private DocumentBuilder getDocumentCreator() {
-//        if (documentCreator == null) {
-        try {
+    private synchronized DocumentBuilderFactory getDocumentBuilderFactory() {
+        if (documentBuilderFactory == null) {
             DocumentBuilderFactory factory = DocumentBuilderFactory
                     .newInstance();
+            factory.setAttribute(
+                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+                    Boolean.TRUE);
             factory.setNamespaceAware(true);
-//                documentCreator = factory.newDocumentBuilder();
-            return factory.newDocumentBuilder();
+            documentBuilderFactory = factory;
+        }
+        return documentBuilderFactory;
+    }
+
+    private DocumentBuilder getDocumentCreator() {
+        try {
+            return getDocumentBuilderFactory().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
             throw new IllegalStateException(e);
         }
-//        }
-//        return documentCreator;
     }
 
     public DocumentBuilder getDocumentLoader() throws CoreException {
-//        if (documentLoader == null) {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setAttribute(
-                "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                Boolean.TRUE);
-        factory.setNamespaceAware(true);
         try {
-//                documentLoader = factory.newDocumentBuilder();
-            DocumentBuilder loader = factory.newDocumentBuilder();
+            DocumentBuilder loader = getDocumentBuilderFactory()
+                    .newDocumentBuilder();
             loader.setErrorHandler(this);
             return loader;
         } catch (ParserConfigurationException e) {
             throw new CoreException(Core.ERROR_FAIL_ACCESS_XML_PARSER, e);
         }
-//            documentLoader.setErrorHandler(this);
-//        }
-//        return documentLoader;
     }
 
     public IWorkbook createWorkbook() {

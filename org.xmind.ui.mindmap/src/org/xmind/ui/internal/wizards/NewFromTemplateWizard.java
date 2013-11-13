@@ -130,8 +130,8 @@ public class NewFromTemplateWizard extends Wizard implements INewWizard {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try {
             FileUtils.extractZipStream(templateStream,
-                    new ZipStreamOutputTarget(new ZipOutputStream(buffer),
-                            false), new IFileEntryFilter() {
+                    new ZipStreamOutputTarget(new ZipOutputStream(buffer)),
+                    new IFileEntryFilter() {
                         public boolean select(String path, String mediaType,
                                 boolean isDirectory) {
                             return !path

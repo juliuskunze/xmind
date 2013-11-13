@@ -272,11 +272,18 @@ public class GraphicalViewer extends AbstractViewer implements IGraphicalViewer 
         center(area.getCenter());
     }
 
-    public void center(Point center) {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.gef.IGraphicalViewer#center(int, int)
+     */
+    public void center(int x, int y) {
         Rectangle clientArea = getViewport().getClientArea();
-        int x = center.x - clientArea.width / 2;
-        int y = center.y - clientArea.height / 2;
-        scrollTo(x, y);
+        scrollTo(x - clientArea.width / 2, y - clientArea.height / 2);
+    }
+
+    public void center(Point center) {
+        center(center.x, center.y);
     }
 
     public void scrollToX(int x) {

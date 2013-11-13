@@ -17,6 +17,10 @@ public class Messages extends NLS {
 
     private static final String BUNDLE_NAME = "net.xmind.share.messages"; //$NON-NLS-1$
 
+    public static String UploaderDialog_containUnupload_text;
+
+    public static String UploaderDialog_CreateError_Text;
+
     public static String UploaderDialog_windowTitle;
     public static String UploaderDialog_title;
     public static String UploaderDialog_message;
@@ -32,6 +36,8 @@ public class Messages extends NLS {
     public static String UploaderDialog_Privacy_prompt;
     public static String UploaderDialog_LanguageChannel_label;
 
+    public static String UploaderDialog_OKPressedError_Text;
+
     public static String UploaderDialog_Privacy_Public_title;
     public static String UploaderDialog_Privacy_Public_description;
     public static String UploaderDialog_Privacy_Private_title;
@@ -44,6 +50,8 @@ public class Messages extends NLS {
 
     public static String UploaderDialog_ThumbnailPage_title;
     public static String UploaderDialog_Thumbnail_description;
+
+    public static String UploaderDialog_uploadOneSheet_message;
 
     public static String UploadJob_name;
     public static String UploadJob_Task_Prepare;

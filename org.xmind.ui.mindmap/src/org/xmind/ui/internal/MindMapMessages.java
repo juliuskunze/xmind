@@ -82,6 +82,10 @@ public class MindMapMessages extends NLS {
     public static String DeleteSheet_toolTip;
 
     public static String DeleteSingleRevisionCommand_label;
+
+    public static String DeleteStyleHandler_DeleteStytles;
+
+    public static String DeleteStyleHandler_DeleteStytlesConfirm;
     public static String Delete_OtherSheets_text;
     public static String Delete_OtherSheets_toolTip;
 
@@ -102,6 +106,7 @@ public class MindMapMessages extends NLS {
     public static String Extend_toolTip;
     public static String ExtendAll_text;
     public static String ExtendAll_toolTip;
+
     public static String FileProtocol_OpenFile_text;
 
     public static String FileProtocol_OpenFolder_text;
@@ -137,9 +142,13 @@ public class MindMapMessages extends NLS {
     public static String Markers_text;
     public static String ModifyHyperlink_text;
     public static String ModifyHyperlink_toolTip;
+    public static String ImportWorkbook_text;
+    public static String ImportWorkbook_toolTip;
 
     public static String EncryptDialog_title;
     public static String EncryteDialog_label_message;
+    public static String ErrorDetailDialog_ReportProblem;
+
     public static String ErrorDetailDialog_title;
     public static String Finish_button_text;
     public static String EncryptDialogPane_board_message;
@@ -149,6 +158,8 @@ public class MindMapMessages extends NLS {
     public static String EncryptDialogPane_newpassword_text;
     public static String EncryptDialogPane_confirm_text;
     public static String EncryptDialogPane_detailsButton_label;
+    public static String ErrorDeteilDialog_ReportProblemMessage;
+
     public static String ErrorDialogPane_summaryBoard_text;
     public static String LoadWorkbookJob_retrive_password_message;
     public static String LoadWorkbookJob_firstTry_message;
@@ -157,6 +168,16 @@ public class MindMapMessages extends NLS {
     public static String LoadWorkbookJob_errorDialog_title;
     public static String LoadWorkbookJob_errorDialog_message;
     public static String MindMapEditor_partInitException_message;
+
+    public static String MindMapEditor_ReportLabel;
+
+    public static String MindMapEditor_ReportProblem;
+
+    public static String MindMapEditor_SaveAsLabel;
+
+    public static String MindMapEditor_SaveWorkbookErrorMessage;
+
+    public static String MindMapEditor_SaveWorkbookErrorMessageAndReport;
 
     public static String NotesHyperlinkDialog_display_text;
     public static String NotesHyperlinkDialog_hyperlinkReference_text;
@@ -174,6 +195,10 @@ public class MindMapMessages extends NLS {
     public static String OpenWorkbook_toolTip;
     public static String OpenHomeMap_text;
     public static String OpenHomeMap_toolTip;
+
+    public static String OpenHomeMapAction_HomeMapMissingMessage;
+
+    public static String OpenHomeMapAction_LaterOperationButton;
     public static String OpenHyperlink_text;
     public static String OpenHyperlink_toolTip;
     public static String RenameSheet_text;
@@ -315,6 +340,16 @@ public class MindMapMessages extends NLS {
 //    public static String TryPro_InstallDialog_title;
 
     public static String WorkbookEditorInput_name;
+
+    public static String WorkbookHistoryItem_FileMissingMessage;
+
+    public static String WorkbookImportWizard_ImportWorkbook_Title;
+
+    public static String WorkbookImportWizard_ImportXmindMap_Title;
+
+    public static String WorkbookImportWizard_NeedSaveWorkbookMessage;
+
+    public static String WorkbookImportWizard_NoTargetWorkbookMessage;
 
     public static String WorkbookSavedIncorrectly_error;
 

@@ -515,6 +515,10 @@ public class FreeMindImporter extends MindMapImporter implements
             if (src.startsWith("../../../../")) { //$NON-NLS-1$
                 String path = src.substring("../../../../".length()); //$NON-NLS-1$
                 loadImage(topic, path);
+            } else {
+                String path = getSourcePath().substring(0,
+                        getSourcePath().lastIndexOf("\\") + 1) + src;//$NON-NLS-1$
+                loadImage(topic, path);
             }
         } else if ("p".equalsIgnoreCase(tagName) //$NON-NLS-1$
                 || "li".equalsIgnoreCase(tagName)) { //$NON-NLS-1$

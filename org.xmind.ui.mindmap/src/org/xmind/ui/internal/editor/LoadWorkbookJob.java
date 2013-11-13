@@ -77,8 +77,8 @@ public class LoadWorkbookJob extends Job implements IEncryptionHandler {
             try {
                 workbookRef.loadWorkbook(storage, this, monitor);
             } catch (Throwable e) {
-                if (e instanceof CoreException) {
-                    CoreException coreEx = (CoreException) e;
+                CoreException coreEx = getCoreException(e);
+                if (coreEx != null) {
                     int errType = coreEx.getType();
                     if (errType == Core.ERROR_CANCELLATION) {
                         return Status.CANCEL_STATUS;
@@ -109,6 +109,14 @@ public class LoadWorkbookJob extends Job implements IEncryptionHandler {
         }
 
         return Status.OK_STATUS;
+    }
+
+    private CoreException getCoreException(Throwable e) {
+        if (e == null)
+            return null;
+        if (e instanceof CoreException)
+            return (CoreException) e;
+        return getCoreException(e.getCause());
     }
 
     public String retrievePassword() throws CoreException {

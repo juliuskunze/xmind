@@ -276,7 +276,7 @@ public class MindMapTemplateManager {
                     is.close();
                 }
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
         }
         return null;
     }

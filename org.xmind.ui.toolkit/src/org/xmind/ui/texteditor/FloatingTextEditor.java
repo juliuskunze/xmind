@@ -212,7 +212,7 @@ public class FloatingTextEditor extends Viewer implements ITextOperationTarget {
         return true;
     }
 
-    protected void setFocus() {
+    public void setFocus() {
         if (textViewer != null && !textViewer.getTextWidget().isDisposed()) {
             textViewer.getTextWidget().setFocus();
         } else if (control != null && !control.isDisposed()) {

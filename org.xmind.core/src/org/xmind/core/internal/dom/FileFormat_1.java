@@ -211,16 +211,13 @@ public class FileFormat_1 extends FileFormat {
         try {
             InputStream in = getInputStream(source, entryPath);
             if (in != null) {
+                long time = source.getEntryTime(entryPath);
+                if (time >= 0) {
+                    target.setEntryTime(entryPath, time);
+                }
                 OutputStream out = getOutputStream(target, entryPath);
                 if (out != null) {
-                    try {
-                        FileUtils.transfer(in, out, true);
-                    } finally {
-                        long time = source.getEntryTime(entryPath);
-                        if (time >= 0) {
-                            target.setEntryTime(entryPath, time);
-                        }
-                    }
+                    FileUtils.transfer(in, out, true);
                 }
             }
         } catch (IOException e) {
@@ -415,12 +412,17 @@ public class FileFormat_1 extends FileFormat {
             IFileEntry entry = findAttachmentEntry(attId,
                     workbook.getManifest());
             if (entry != null) {
-                InputStream is = entry.getInputStream();
-                String path = entry.getPath();
                 try {
-                    IFileEntry fileEntry = workbook.getManifest()
-                            .createAttachmentFromStream(is, path);
-                    return HyperlinkUtils.toAttachmentURL(fileEntry.getPath());
+                    InputStream is = entry.getInputStream();
+                    try {
+                        String path = entry.getPath();
+                        IFileEntry fileEntry = workbook.getManifest()
+                                .createAttachmentFromStream(is, path);
+                        return HyperlinkUtils.toAttachmentURL(fileEntry
+                                .getPath());
+                    } finally {
+                        is.close();
+                    }
                 } catch (IOException e) {
                 }
             }

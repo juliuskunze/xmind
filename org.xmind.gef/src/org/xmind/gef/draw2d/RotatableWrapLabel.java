@@ -29,7 +29,6 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Display;
-import org.xmind.gef.GEF;
 import org.xmind.gef.draw2d.geometry.PrecisionDimension;
 import org.xmind.gef.draw2d.geometry.PrecisionInsets;
 import org.xmind.gef.draw2d.geometry.PrecisionPoint;
@@ -76,7 +75,7 @@ public class RotatableWrapLabel extends Figure implements ITextFigure,
 
     private int align = PositionConstants.LEFT;
 
-    private int renderStyle = ADVANCED;
+    private int renderStyle = NORMAL;
 
     private int lineSpacing = -1;
 
@@ -863,7 +862,7 @@ public class RotatableWrapLabel extends Figure implements ITextFigure,
     }
 
     protected boolean isNormalRenderStyle() {
-        return renderStyle == NORMAL || !GEF.isTextPathSupported();
+        return renderStyle == NORMAL;
     }
 
     /**

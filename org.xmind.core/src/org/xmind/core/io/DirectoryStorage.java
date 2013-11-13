@@ -16,7 +16,6 @@ package org.xmind.core.io;
 import java.io.File;
 import java.io.FileFilter;
 
-import org.xmind.core.CoreException;
 import org.xmind.core.util.FileUtils;
 
 /**
@@ -58,7 +57,7 @@ public class DirectoryStorage implements IStorage {
      * 
      * @see org.xmind.core.io.IRandomAccessArchive#getInputSource()
      */
-    public IInputSource getInputSource() throws CoreException {
+    public IInputSource getInputSource() {
         return new DirectoryInputSource(dir, filter);
     }
 
@@ -76,7 +75,7 @@ public class DirectoryStorage implements IStorage {
      * 
      * @see org.xmind.core.io.IRandomAccessArchive#getOutputTarget()
      */
-    public IOutputTarget getOutputTarget() throws CoreException {
+    public IOutputTarget getOutputTarget() {
         return new DirectoryOutputTarget(dir);
     }
 

@@ -240,6 +240,12 @@ public class XMindNetRequest {
      */
     public static final int HTTP_VERSION = HttpURLConnection.HTTP_VERSION;
 
+    private static final boolean DEBUG_ALL = Activator.getDefault()
+            .isDebugging("/debug/requests/all"); //$NON-NLS-1$
+
+    private static final boolean DEBUG_TO_STDOUT = DEBUG_ALL
+            || Activator.getDefault().isDebugging("/debug/requests/stdout"); //$NON-NLS-1$
+
     private static final String DEFAULT_DOMAIN = "www.xmind.net"; //$NON-NLS-1$
 
     private static final String HEAD = "HEAD"; //$NON-NLS-1$
@@ -521,7 +527,7 @@ public class XMindNetRequest {
             if (part.value instanceof File) {
                 return (int) ((File) part.value).length();
             }
-            return toAsciiBytes(part.getEncodedValue()).length;
+            return toAsciiBytes(part.getValue()).length;
         }
 
         private static void writePartData(OutputStream stream, NamedValue part)
@@ -529,7 +535,7 @@ public class XMindNetRequest {
             if (part.value instanceof File) {
                 writeFromFile(stream, (File) part.value);
             } else {
-                writeFromText(stream, part.getEncodedValue());
+                writeFromText(stream, part.getValue());
             }
         }
 
@@ -591,8 +597,8 @@ public class XMindNetRequest {
 
     private List<IRequestStatusChangeListener> statusChangeListeners = new ArrayList<IRequestStatusChangeListener>();
 
-    private boolean debugging = System
-            .getProperty("org.xmind.debug.httprequests") != null; //$NON-NLS-1$
+    private boolean debugging = DEBUG_ALL
+            || System.getProperty("org.xmind.debug.httprequests") != null; //$NON-NLS-1$
 
     private long totalBytes = 0;
 
@@ -740,9 +746,9 @@ public class XMindNetRequest {
 
     public void abort() {
         this.aborted = true;
-        Thread thread = this.runningThread;
-        if (thread != null) {
-            thread.interrupt();
+        Thread theThread = this.runningThread;
+        if (theThread != null) {
+            theThread.interrupt();
         }
     }
 
@@ -819,37 +825,54 @@ public class XMindNetRequest {
                 throw new IllegalStateException(
                         "Invalid HTTP Request: no method specified"); //$NON-NLS-1$
 
-            String uri = getURI();
+            final String uri = getURI();
             if (uri == null)
                 throw new IllegalStateException(
                         "Invalid HTTP Request: no URI/path specified"); //$NON-NLS-1$
 
-            RequestWriter writer = createRequestWriter();
+            final RequestWriter writer = createRequestWriter();
             if (isAborted())
                 return this;
 
-            this.error = null;
+            Thread thread = new Thread(new Runnable() {
+                public void run() {
+                    executeInDaemonThread(uri, writer);
+                }
+            }, "XMindNetRequestConnection:" + uri); //$NON-NLS-1$
+            thread.setDaemon(true);
+            thread.setPriority((Thread.MIN_PRIORITY + Thread.NORM_PRIORITY) / 2);
+            thread.start();
             try {
-                if (isAborted())
-                    return this;
-                debug("HTTP Request: (Prepared) %s %s\r\n%s", method, uri, requestHeaders); //$NON-NLS-1$
-                send(uri, writer);
-                if (isAborted())
-                    return this;
-            } catch (OperationCanceledException e) {
-                debug("HTTP Request: (Aborted) %s %s", method, uri); //$NON-NLS-1$
-                if (!isAborted()) {
-                    abort();
-                }
-            } catch (Throwable e) {
-                if (!isAborted()) {
-                    this.error = e;
-                    debug("HTTP Request: (Error: %s) %s %s", e, method, uri); //$NON-NLS-1$
-                }
+                thread.join();
+            } catch (InterruptedException e) {
+                // probably aborted by user
             }
+
             return this;
         } finally {
             runningThread = null;
+        }
+    }
+
+    private void executeInDaemonThread(String uri, RequestWriter writer) {
+        error = null;
+        try {
+            if (isAborted())
+                return;
+            debug("HTTP Request: (Prepared) %s %s\r\n%s", method, uri, requestHeaders); //$NON-NLS-1$
+            send(uri, writer);
+            if (isAborted())
+                return;
+        } catch (OperationCanceledException e) {
+            debug("HTTP Request: (Aborted) %s %s", method, uri); //$NON-NLS-1$
+            if (!isAborted()) {
+                abort();
+            }
+        } catch (Throwable e) {
+            if (!isAborted()) {
+                error = e;
+                debug("HTTP Request: (Error: %s) %s %s", e, method, uri); //$NON-NLS-1$
+            }
         }
     }
 
@@ -980,7 +1003,7 @@ public class XMindNetRequest {
     }
 
     private String getClientId() {
-        return "xmind_v3.3.1"; //$NON-NLS-1$
+        return "xmind_v3.4.0"; //$NON-NLS-1$
     }
 
     protected void writeHeader(URLConnection connection, String key,
@@ -1212,6 +1235,10 @@ public class XMindNetRequest {
     protected void debug(String format, Object... values) {
         if (!debugging)
             return;
-        Activator.log(String.format(format, values));
+        if (DEBUG_TO_STDOUT) {
+            System.out.println(String.format(format, values));
+        } else {
+            Activator.log(String.format(format, values));
+        }
     }
 }

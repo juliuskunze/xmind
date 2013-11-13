@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.core.internal.dom;
 
+import static org.xmind.core.internal.dom.DOMConstants.ATTR_HIDDEN;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_ID;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_NAME;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_RESOURCE;
@@ -114,6 +115,15 @@ public class MarkerImpl extends Marker implements ICoreEventSource {
 
     public String getId() {
         return implementation.getAttribute(ATTR_ID);
+    }
+
+    public boolean isHidden() {
+        return Boolean.parseBoolean(implementation.getAttribute(ATTR_HIDDEN));
+    }
+
+    public void setHidden(boolean hidden) {
+        DOMUtils.setAttribute(implementation, ATTR_HIDDEN,
+                Boolean.toString(hidden));
     }
 
     public ICoreEventRegistration registerCoreEventListener(String type,

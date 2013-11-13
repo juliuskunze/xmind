@@ -23,15 +23,18 @@ import org.eclipse.ui.PlatformUI;
 public class XMindNetWorkbenchServiceCenter implements IStartup,
         IWorkbenchListener {
 
-    private IWorkbench workbench;
+    private static XMindNetWorkbenchServiceCenter INSTANCE = null;
 
     private SiteEventNotificationService eventService = null;
 
+    private NewsletterSubscriptionReminder newsletterSubscriptionReminder = null;
+
     public void earlyStartup() {
-        this.workbench = PlatformUI.getWorkbench();
-        if (this.workbench != null) {
-            startServices();
-            this.workbench.addWorkbenchListener(this);
+        INSTANCE = this;
+        IWorkbench workbench = PlatformUI.getWorkbench();
+        if (workbench != null) {
+            startServices(workbench);
+            workbench.addWorkbenchListener(this);
         }
     }
 
@@ -41,21 +44,41 @@ public class XMindNetWorkbenchServiceCenter implements IStartup,
 
     public void postShutdown(IWorkbench workbench) {
         stopServices();
+        INSTANCE = null;
     }
 
-    private void startServices() {
+    private void startServices(IWorkbench workbench) {
         if (eventService == null) {
             eventService = new SiteEventNotificationService(workbench);
         }
         eventService.start();
-        new NewsletterSubscriptionReminder(workbench).start();
+        newsletterSubscriptionReminder = new NewsletterSubscriptionReminder(
+                workbench);
+        newsletterSubscriptionReminder.start();
     }
 
     private void stopServices() {
+        if (newsletterSubscriptionReminder != null) {
+            newsletterSubscriptionReminder.stop();
+            newsletterSubscriptionReminder = null;
+        }
         if (eventService != null) {
             eventService.shutdown();
             eventService = null;
         }
+    }
+
+    public static SiteEventNotificationService getSiteEventNotificationService() {
+        return INSTANCE == null ? null : INSTANCE.eventService;
+    }
+
+    public static NewsletterSubscriptionReminder getNewsletterSubscriptionReminder() {
+        return INSTANCE == null ? null
+                : INSTANCE.newsletterSubscriptionReminder;
+    }
+
+    public static XMindNetWorkbenchServiceCenter getInstance() {
+        return INSTANCE;
     }
 
 }

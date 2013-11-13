@@ -14,6 +14,8 @@
 package org.xmind.ui.internal.mindmap;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +31,10 @@ import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
 import org.xmind.core.event.ICoreEventSource;
+import org.xmind.core.marker.IMarker;
+import org.xmind.core.marker.IMarkerGroup;
 import org.xmind.core.marker.IMarkerRef;
+import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.draw2d.IAnchor;
@@ -69,6 +74,72 @@ import org.xmind.ui.util.MindMapUtils;
  * @author MANGOSOFT
  */
 public class TopicPart extends NodePart implements ITopicPart {
+
+    private static Comparator<IMarkerRef> MARKER_REF_COMPARATOR = new Comparator<IMarkerRef>() {
+
+        public int compare(IMarkerRef p, IMarkerRef q) {
+            IMarker pMarker = p.getMarker();
+            IMarker qMarker = q.getMarker();
+            if (pMarker == null && qMarker == null)
+                return 0;
+
+            IMarkerSheet pSheet;
+            List<IMarkerGroup> grouplist;
+            IMarkerGroup pMarkerGroup;
+
+            if (qMarker == null && pMarker != null) {
+                pSheet = pMarker.getOwnedSheet();
+                grouplist = pSheet.getMarkerGroups();
+                pMarkerGroup = pMarker.getParent();
+                return -10000 - 2000 + grouplist.indexOf(pMarkerGroup) * 100
+                        + pMarkerGroup.getMarkers().indexOf(pMarker);
+            }
+
+            IMarkerSheet qSheet;
+            IMarkerGroup qMarkerGroup;
+
+            if (pMarker == null && qMarker != null) {
+                qSheet = qMarker.getOwnedSheet();
+                grouplist = qSheet.getMarkerGroups();
+                qMarkerGroup = qMarker.getParent();
+                return 10000 + 2000 - grouplist.indexOf(qMarkerGroup) * 100
+                        - qMarkerGroup.getMarkers().indexOf(qMarker);
+            }
+            pSheet = pMarker.getOwnedSheet();
+            qSheet = qMarker.getOwnedSheet();
+
+            grouplist = pSheet.getMarkerGroups();
+            pMarkerGroup = pMarker.getParent();
+            qMarkerGroup = qMarker.getParent();
+            if (pSheet.equals(qSheet)) {
+                if (pMarkerGroup.equals(qMarkerGroup)) {
+                    List<IMarker> nosingle = pMarkerGroup.getMarkers();
+                    return nosingle.indexOf(pMarker)
+                            - nosingle.indexOf(qMarker);
+                }
+                return (grouplist.indexOf(pMarkerGroup) - grouplist
+                        .indexOf(qMarkerGroup))
+                        * 100
+                        + pMarkerGroup.getMarkers().indexOf(pMarker)
+                        - qMarkerGroup.getMarkers().indexOf(qMarker);
+            } else {
+                if (MindMapUI.getResourceManager().getSystemMarkerSheet()
+                        .equals(pSheet))
+                    return -2000
+                            + (grouplist.indexOf(pMarkerGroup) - qSheet
+                                    .getMarkerGroups().indexOf(qMarkerGroup))
+                            * 100 + pMarkerGroup.getMarkers().indexOf(pMarker)
+                            - qMarkerGroup.getMarkers().indexOf(qMarker);
+                return 2000
+                        + (grouplist.indexOf(pMarkerGroup) - qSheet
+                                .getMarkerGroups().indexOf(qMarkerGroup)) * 100
+                        + pMarkerGroup.getMarkers().indexOf(pMarker)
+                        - qMarkerGroup.getMarkers().indexOf(qMarker);
+
+            }
+
+        }
+    };
 
     private ITitleTextPart title = null;
 
@@ -258,17 +329,25 @@ public class TopicPart extends NodePart implements ITopicPart {
 
         addIconTips(topic, list);
 
-        Set<IMarkerRef> markerRefs = topic.getMarkerRefs();
-        if (!markerRefs.isEmpty()) {
-            for (IMarkerRef ref : markerRefs) {
-                list.add(new ViewerModel(MarkerPart.class, ref));
-            }
-        }
+        addMarkers(topic, list);
 
         if (topic.getImage().getSource() != null) {
             list.add(new ViewerModel(ImagePart.class, topic.getImage()));
         }
         return list.toArray();
+    }
+
+    private void addMarkers(ITopic topic, List<Object> list) {
+        Set<IMarkerRef> markerRefs = topic.getMarkerRefs();
+        if (markerRefs.isEmpty())
+            return;
+        List<IMarkerRef> markerRefsToSort = new ArrayList<IMarkerRef>(
+                markerRefs);
+        Collections.sort(markerRefsToSort, MARKER_REF_COMPARATOR);
+        for (IMarkerRef ref : markerRefsToSort) {
+            list.add(new ViewerModel(MarkerPart.class, ref));
+        }
+
     }
 
     private void addIconTips(ITopic topic, List<Object> list) {

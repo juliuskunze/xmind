@@ -60,6 +60,7 @@ import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.contexts.IContextActivation;
@@ -383,7 +384,11 @@ public class NotesView extends ViewPart implements IPartListener,
     private class SaveNotesJob implements ICoreEventListener {
 
         public void handleCoreEvent(CoreEvent event) {
-            saveNotes();
+            PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
+                public void run() {
+                    saveNotes();
+                }
+            });
         }
 
     }
@@ -873,11 +878,15 @@ public class NotesView extends ViewPart implements IPartListener,
         return null;
     }
 
-    public void handleCoreEvent(CoreEvent event) {
-        String eventType = event.getType();
-        if (Core.TopicNotes.equals(eventType)) {
-            handleNotesChanged();
-        }
+    public void handleCoreEvent(final CoreEvent event) {
+        PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
+            public void run() {
+                String eventType = event.getType();
+                if (Core.TopicNotes.equals(eventType)) {
+                    handleNotesChanged();
+                }
+            }
+        });
     }
 
     private void handleNotesChanged() {

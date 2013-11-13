@@ -13,8 +13,12 @@
  *******************************************************************************/
 package org.xmind.ui.internal.mindmap;
 
+import java.util.List;
+
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Rectangle;
+import org.xmind.core.IBoundary;
+import org.xmind.core.ITopic;
 import org.xmind.gef.ZoomManager;
 
 public class BoundaryFeedback extends RangeFeedback {
@@ -50,4 +54,16 @@ public class BoundaryFeedback extends RangeFeedback {
         return getHost().getFigure().getBounds();
     }
 
+    protected int[] getBendPointOrientations() {
+        IBoundary boundary = ((BoundaryPart) decoration.getHost())
+                .getBoundary();
+        List<ITopic> enclosingTopics = boundary.getEnclosingTopics();
+        if (enclosingTopics.isEmpty())
+            return new int[] {};
+//        for (ITopic topic : enclosingTopics) {
+//            if (!topic.isAttached())
+//                return new int[] {};
+//        }
+        return super.getBendPointOrientations();
+    }
 }

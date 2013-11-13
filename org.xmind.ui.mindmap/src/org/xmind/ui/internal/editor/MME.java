@@ -13,7 +13,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
@@ -207,12 +206,15 @@ public class MME {
     }
 
     public static File getFile(Object input) {
-        IFileStore fileStore = getFileStore(input);
+        File file = (File) getAdapter(input, File.class);
+        if (file != null)
+            return file;
+
+        IFileStore fileStore = (IFileStore) getAdapter(input, IFileStore.class);
         if (fileStore != null) {
-            try {
-                return fileStore.toLocalFile(0, new NullProgressMonitor());
-            } catch (CoreException ignore) {
-            }
+            URI uri = fileStore.toURI();
+            if ("file".equals(uri.getScheme())) //$NON-NLS-1$
+                return new File(uri);
         }
         return null;
     }
@@ -235,6 +237,8 @@ public class MME {
     }
 
     static Object getAdapter(Object adaptable, Class adapterType) {
+        if (adapterType.isInstance(adaptable))
+            return adaptable;
         if (adaptable instanceof IAdaptable) {
             return ((IAdaptable) adaptable).getAdapter(adapterType);
         }

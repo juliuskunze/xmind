@@ -15,17 +15,22 @@ package org.xmind.ui.viewers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.IColorProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
@@ -36,10 +41,10 @@ import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
 import org.eclipse.ui.forms.widgets.Section;
@@ -47,28 +52,24 @@ import org.xmind.ui.forms.WidgetFactory;
 
 public abstract class CategorizedViewer extends StructuredViewer {
 
-    private List<Object> categories = new ArrayList<Object>();
+    public static final Object DEFAULT_CATEGORY = new String(Messages.CategorizedViewer_UnknownCategory);
+
+    private static final Object[] EMPTY_ARRAY = new Object[0];
+
+    private static final List<Object> EMPTY_LIST = Collections.emptyList();
+
+    private Object[] categories = EMPTY_ARRAY;
 
     private Map<Object, List<Object>> categorizedElements = new HashMap<Object, List<Object>>();
 
-    private List<Composite> sections = new ArrayList<Composite>();
+    private Map<Object, Section> sections = new HashMap<Object, Section>();
 
     private ScrolledForm container = null;
 
     private WidgetFactory factory;
 
     private int sectionStyle = Section.TITLE_BAR | Section.TWISTIE
-            | Section.EXPANDED;
-
-    private Listener sectionContentListener = new Listener() {
-
-        public void handleEvent(Event event) {
-            if (event.type == SWT.MouseWheel) {
-                scroll(event);
-            }
-        }
-
-    };
+            | Section.EXPANDED | Section.NO_TITLE_FOCUS_BOX;
 
     public int getSectionStyle() {
         return sectionStyle;
@@ -78,7 +79,7 @@ public abstract class CategorizedViewer extends StructuredViewer {
         this.sectionStyle = sectionStyle;
     }
 
-    protected Composite getContainer() {
+    protected ScrolledForm getContainer() {
         return container;
     }
 
@@ -89,37 +90,44 @@ public abstract class CategorizedViewer extends StructuredViewer {
 
     private ScrolledForm createContainer(Composite parent, int style) {
         if (factory == null)
-            factory = new WidgetFactory(parent.getDisplay());
-        ScrolledForm form = factory.createScrolledForm(parent);
-        configureForm(form);
-        hookForm(form);
-        return form;
+            factory = createWidgetFactory(parent.getDisplay());
+        ScrolledForm container = factory.createScrolledForm(parent);
+        configureContainer(container);
+        return container;
     }
 
-    private void configureForm(ScrolledForm form) {
-        form.getBody().setLayout(createFormLayout());
-        form.setMinWidth(1);
+    protected WidgetFactory createWidgetFactory(Display display) {
+        return new WidgetFactory(display);
     }
 
-    private void hookForm(ScrolledForm form) {
-        Listener eventHandler = new Listener() {
+    protected WidgetFactory getWidgetFactory() {
+        return factory;
+    }
+
+    protected void configureContainer(ScrolledForm container) {
+        container.getBody().setLayout(createFormLayout());
+        container.setMinWidth(1);
+    }
+
+    protected Layout createFormLayout() {
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginWidth = 3;
+        layout.marginHeight = 3;
+        return layout;
+    }
+
+    protected void hookControl(Control control) {
+        super.hookControl(control);
+        control.addListener(SWT.Resize, new Listener() {
             public void handleEvent(Event event) {
                 relayout();
             }
-        };
-        form.addListener(SWT.Resize, eventHandler);
-    }
-
-    private Layout createFormLayout() {
-        RowLayout layout = new RowLayout(SWT.VERTICAL);
-        layout.wrap = false;
-        layout.fill = true;
-        return layout;
+        });
     }
 
     private void relayout() {
         int width = getContainer().getClientArea().width;
-        for (Composite section : sections) {
+        for (Section section : sections.values()) {
             resetWidth(width, section);
         }
         container.reflow(true);
@@ -130,25 +138,33 @@ public abstract class CategorizedViewer extends StructuredViewer {
         if (ld instanceof GridData) {
             GridData gd = (GridData) ld;
             GridLayout gl = (GridLayout) control.getParent().getLayout();
-            gd.widthHint = width - gl.marginWidth - gl.marginLeft
+            gd.widthHint = width - gl.marginWidth * 2 - gl.marginLeft
                     - gl.marginRight;
         } else if (ld instanceof RowData) {
             RowData rd = (RowData) ld;
             RowLayout rl = (RowLayout) control.getParent().getLayout();
-            rd.width = width - rl.marginWidth - rl.marginLeft - rl.marginRight;
+            rd.width = width - rl.marginWidth * 2 - rl.marginLeft
+                    - rl.marginRight;
         }
     }
 
     protected List<Object> getCategories() {
-        return categories;
+        return Arrays.asList(categories);
     }
 
     protected List<Object> getElements(Object category) {
-        return categorizedElements.get(category);
+        List<Object> elements = categorizedElements.get(category);
+        if (elements == null)
+            return EMPTY_LIST;
+        return Collections.unmodifiableList(elements);
+    }
+
+    protected boolean hasCategory(Object category) {
+        return categorizedElements.containsKey(category);
     }
 
     protected Composite getSection(Object category) {
-        return sections.get(categories.indexOf(category));
+        return sections.get(category);
     }
 
     protected Widget doFindInputItem(Object element) {
@@ -156,159 +172,234 @@ public abstract class CategorizedViewer extends StructuredViewer {
     }
 
     protected Widget doFindItem(Object element) {
-        if (getCategories().contains(element))
+        if (hasCategory(element))
             return getSection(element);
         return getControl();
     }
 
     protected void inputChanged(Object input, Object oldInput) {
         super.inputChanged(input, oldInput);
-        Map<Object, Boolean> expansionStates = new HashMap<Object, Boolean>();
-        for (Object category : getCategories()) {
-            Composite section = getSection(category);
-            if (section instanceof Section) {
-                expansionStates.put(category, ((Section) section).isExpanded());
-            }
-        }
+        refresh(true);
+    }
 
-        rebuildMap(getSortedChildren(input));
-        if (getContainer() != null && !getContainer().isDisposed()) {
-            refreshControls();
+    protected void internalRefresh(Object element) {
+        internalRefresh(element, true);
+    }
+
+    protected void internalRefresh(Object element, boolean updateLabels) {
+        if (element == getInput()) {
+            Map<Object, Boolean> expansionStates = new HashMap<Object, Boolean>();
+            for (Object category : getCategories()) {
+                Boolean exp = getExpanded(category);
+                if (exp != null) {
+                    expansionStates.put(category, exp);
+                }
+            }
+            rebuildMap();
+            refreshSections();
             for (Object category : getCategories()) {
                 Boolean exp = expansionStates.get(category);
                 if (exp != null) {
-                    Composite section = getSection(category);
-                    if (section instanceof Section) {
-                        ((Section) section).setExpanded(exp);
-                    }
+                    setExpanded(category, exp.booleanValue());
                 }
             }
-            relayout();
-        }
-    }
-
-    private void rebuildMap(Object[] elements) {
-        clearMap();
-        for (Object element : elements) {
-            addElement(element);
-        }
-        Object[] array = null;
-        ViewerFilter[] filters = getFilters();
-        if (filters != null && filters.length > 0) {
-            array = categories.toArray();
-            for (ViewerFilter f : filters) {
-                array = f.filter(this, getInput(), array);
+            if (getContainer() != null && !getContainer().isDisposed()) {
+                relayout();
+            }
+        } else if (hasCategory(element)) {
+            rebuildMapForCategory(element);
+            if (updateLabels)
+                updateSection(element, getSection(element));
+            refreshSectionContent(getSectionContent(element), element, null);
+        } else {
+            Object category = getCategory(element);
+            if (category != null && hasCategory(category)) {
+                refreshSectionContent(getSectionContent(category), category,
+                        element);
             }
         }
-        if (getSorter() != null) {
-            if (array == null)
-                array = categories.toArray();
-            getSorter().sort(this, array);
+    }
+
+    public Boolean getExpanded(Object category) {
+        Composite section = getSection(category);
+        if (section instanceof Section) {
+            return Boolean.valueOf(((Section) section).isExpanded());
         }
-        if (array != null) {
-            categories = new ArrayList<Object>(Arrays.asList(array));
+        return null;
+    }
+
+    public void setExpanded(Object category, boolean expanded) {
+        Composite section = getSection(category);
+        if (section instanceof Section) {
+            ((Section) section).setExpanded(expanded);
         }
     }
 
-    private void clearMap() {
-        categories.clear();
+    public void setAllExpanded(boolean expanded) {
+        for (Section section : sections.values()) {
+            section.setExpanded(expanded);
+        }
+    }
+
+    private void rebuildMap() {
         categorizedElements.clear();
-    }
-
-    private void addElement(Object element) {
-        Object category = getCategory(element);
-        if (category == null)
-            return;
-
-        List<Object> list = categorizedElements.get(category);
-        if (list == null) {
-            list = new ArrayList<Object>();
-            categorizedElements.put(category, list);
-            categories.add(category);
+        if (getContentProvider() instanceof ITreeContentProvider) {
+            categories = getSortedChildren(getInput());
+            for (int i = 0; i < categories.length; i++) {
+                Object category = categories[i];
+                Object[] children = ((ITreeContentProvider) getContentProvider())
+                        .getChildren(category);
+                ViewerFilter[] filters = getFilters();
+                if (filters != null && filters.length > 0) {
+                    for (ViewerFilter f : filters) {
+                        Object[] filteredChildren = f.filter(this, getInput(),
+                                children);
+                        if (filteredChildren != null)
+                            children = filteredChildren;
+                    }
+                }
+                if (getSorter() != null) {
+                    getSorter().sort(this, children);
+                }
+                categorizedElements.put(category, Arrays.asList(children));
+            }
+        } else if (getContentProvider() instanceof ICategorizedContentProvider) {
+            Object[] elements = getSortedChildren(getInput());
+            List<Object> rawCategories = new ArrayList<Object>(elements.length);
+            for (Object element : elements) {
+                Object category = getCategory(element);
+                List<Object> list = categorizedElements.get(category);
+                if (list == null) {
+                    list = new ArrayList<Object>(elements.length);
+                    categorizedElements.put(category, list);
+                    rawCategories.add(category);
+                }
+                list.add(element);
+            }
+            categories = rawCategories.toArray();
+            ViewerFilter[] filters = getFilters();
+            if (filters != null && filters.length > 0) {
+                for (ViewerFilter f : filters) {
+                    Object[] filteredCategories = f.filter(this, getInput(),
+                            categories);
+                    if (filteredCategories != null)
+                        categories = filteredCategories;
+                }
+            }
+            if (getSorter() != null) {
+                getSorter().sort(this, categories);
+            }
         }
-        list.add(element);
     }
 
-    private Object getCategory(Object element) {
+    private void rebuildMapForCategory(Object category) {
+        if (getContentProvider() instanceof ITreeContentProvider) {
+            Object[] children = ((ITreeContentProvider) getContentProvider())
+                    .getChildren(category);
+            ViewerFilter[] filters = getFilters();
+            if (filters != null && filters.length > 0) {
+                for (ViewerFilter f : filters) {
+                    Object[] filteredChildren = f.filter(this, getInput(),
+                            children);
+                    if (filteredChildren != null)
+                        children = filteredChildren;
+                }
+            }
+            if (getSorter() != null) {
+                getSorter().sort(this, children);
+            }
+            categorizedElements.put(category, Arrays.asList(children));
+        } else if (getContentProvider() instanceof ICategorizedContentProvider) {
+            Object[] elements = getSortedChildren(getInput());
+            List<Object> elementsInCategory = new ArrayList<Object>(
+                    elements.length);
+            for (Object element : elements) {
+                if (getCategory(element).equals(category)) {
+                    elementsInCategory.add(element);
+                }
+            }
+            categorizedElements.put(category, elementsInCategory);
+        }
+    }
+
+    protected Object getCategory(Object element) {
         Object category = null;
         if (getContentProvider() instanceof ICategorizedContentProvider) {
             category = ((ICategorizedContentProvider) getContentProvider())
                     .getCategory(element);
+        } else if (getContentProvider() instanceof ITreeContentProvider) {
+            category = ((ITreeContentProvider) getContentProvider())
+                    .getParent(element);
         }
-        return category;
+        if (category != null)
+            return category;
+        return DEFAULT_CATEGORY;
     }
 
-    protected void refreshControls() {
+    private void refreshSections() {
+        if (getContainer() == null || getContainer().isDisposed())
+            return;
+
         getContainer().setRedraw(false);
+        try {
+            Set<Section> sectionsToRemove = new HashSet<Section>(
+                    sections.values());
+            Section lastSection = null;
 
-        for (Composite section : sections) {
-            section.dispose();
-        }
-        sections.clear();
-
-        Composite parent = container.getBody();
-        for (Object category : categories) {
-            Composite section = createSection(parent, category);
-            hookSection(section);
-            sections.add(section);
-        }
-
-        getContainer().setRedraw(true);
-    }
-
-    protected void hookSection(Composite section) {
-    }
-
-    private void scroll(Event event) {
-        if (container != null && !container.isDisposed()) {
-            Point origin = container.getOrigin();
-            int count = event.count;
-            ScrollBar vBar = container.getVerticalBar();
-            if (vBar != null && !vBar.isDisposed() && vBar.isVisible()
-                    && vBar.isEnabled()) {
-                int increment = vBar.getIncrement();
-                int delta = count * increment;
-                origin.y -= delta;
-            } else {
-                ScrollBar hBar = container.getHorizontalBar();
-                if (hBar != null && !hBar.isDisposed() && hBar.isVisible()
-                        && hBar.isEnabled()) {
-                    int increment = hBar.getIncrement();
-                    int delta = count * increment;
-                    origin.x -= delta;
+            Composite parent = container.getBody();
+            for (int i = 0; i < categories.length; i++) {
+                Object category = categories[i];
+                Section section = sections.get(category);
+                if (section == null) {
+                    section = createSection(parent, category);
+                    sections.put(category, section);
                 }
+                updateSection(category, section);
+                refreshSectionContent(section.getClient(), category, null);
+                section.moveBelow(lastSection);
+                lastSection = section;
+                sectionsToRemove.remove(section);
             }
-            container.setOrigin(origin);
+
+            for (Section section : sectionsToRemove) {
+                disposeSection(section);
+            }
+        } finally {
+            if (getContainer() != null && !getContainer().isDisposed()) {
+                getContainer().setRedraw(true);
+            }
         }
     }
 
-    private Composite createSection(Composite parent, Object category) {
+    private void disposeSection(Section section) {
+        Object category = section.getData();
+        sections.remove(category);
+        disposeSectionContent(section, category);
+        section.setMenu(null);
+        section.dispose();
+    }
+
+    private Section createSection(Composite parent, Object category) {
         Section section = factory.createSection(parent, getSectionStyle());
-        section.setLayoutData(getSectionLayoutData());
+        section.setData(category);
+        section.setLayoutData(getSectionLayoutData(section, category));
 
-        updateSection(category, section);
-
-        Composite client = factory.createComposite(section, SWT.WRAP);
-        client.setBackground(parent.getBackground());
-        section.setClient(client);
-
-        StackLayout layout = new StackLayout();
-        client.setLayout(layout);
-
-        Control content = createSectionContent(client, category,
-                getElements(category));
-        layout.topControl = content;
-        hookSectionContent(content);
+        Control content = createSectionContent(section, category);
+        Assert.isNotNull(content);
+        section.setClient(content);
 
         return section;
     }
 
-    protected void hookSectionContent(Control content) {
-        content.addListener(SWT.MouseWheel, sectionContentListener);
+    protected Object getSectionLayoutData(Section section, Object category) {
+        return new GridData(SWT.FILL, SWT.FILL, true, false);
     }
 
-    private Object getSectionLayoutData() {
-        return new RowData();
+    private Control getSectionContent(Object category) {
+        Composite section = getSection(category);
+        if (section instanceof Section && !section.isDisposed())
+            return ((Section) section).getClient();
+        return null;
     }
 
     protected String getText(Object element) {
@@ -339,16 +430,8 @@ public abstract class CategorizedViewer extends StructuredViewer {
         return null;
     }
 
-    protected Control createSectionContent(Composite parent, Object category,
-            List<Object> elements) {
-        Composite content = factory.createComposite(parent, SWT.WRAP);
-        content.setBackground(parent.getBackground());
-        content.setLayout(new GridLayout(1, true));
-        return content;
-    }
-
     protected void doUpdateItem(Widget item, Object element, boolean fullMap) {
-        if (getCategories().contains(element)) {
+        if (hasCategory(element)) {
             updateSection(element, getSection(element));
         }
     }
@@ -371,30 +454,30 @@ public abstract class CategorizedViewer extends StructuredViewer {
         }
     }
 
-    protected void internalRefresh(Object element) {
-        if (getCategories().contains(element))
-            updateSection(element, getSection(element));
-    }
-
     public void reveal(Object element) {
-        Object category = getCategory(element);
-        reveal(category, element);
+        if (hasCategory(element)) {
+            reveal(element, null);
+        } else {
+            Object category = getCategory(element);
+            reveal(category, element);
+        }
     }
 
     protected void reveal(Object category, Object element) {
         Composite section = getSection(category);
-        if (section != null && section instanceof Section) {
-            ((Section) section).setExpanded(true);
-            Point loc = section.toDisplay(0, 0);
+        if (section != null && !section.isDisposed()) {
+            if (section instanceof Section) {
+                ((Section) section).setExpanded(true);
+            }
+            Point loc = Display.getCurrent().map(section, getContainer(), 0, 0);
             reveal(loc.x, loc.y);
         }
     }
 
     protected void reveal(int x, int y) {
-        Point loc = container.toControl(x, y);
         Point origin = container.getOrigin();
-        origin.x += loc.x;
-        origin.y += loc.y;
+        origin.x += x;
+        origin.y += y;
         container.setOrigin(origin);
     }
 
@@ -410,8 +493,6 @@ public abstract class CategorizedViewer extends StructuredViewer {
         return list;
     }
 
-    protected abstract void fillSelection(Object category, List selection);
-
     protected void setSelectionToWidget(List l, boolean reveal) {
     }
 
@@ -419,19 +500,48 @@ public abstract class CategorizedViewer extends StructuredViewer {
         for (Object category : getCategories()) {
             setSelectionToCategory(category, selection, reveal);
         }
+        if (reveal) {
+            Object element = ((IStructuredSelection) getSelection())
+                    .getFirstElement();
+            if (element != null) {
+                reveal(element);
+            }
+        }
     }
 
-    protected abstract void setSelectionToCategory(Object category,
-            ISelection selection, boolean reveal);
-
     protected void handleDispose(DisposeEvent event) {
+        super.handleDispose(event);
         sections.clear();
-        clearMap();
+        categories = EMPTY_ARRAY;
+        categorizedElements.clear();
         if (factory != null) {
             factory.dispose();
             factory = null;
         }
-        super.handleDispose(event);
     }
+
+    public void setFocus() {
+        for (Object category : getCategories()) {
+            Composite section = getSection(category);
+            if (section instanceof Section) {
+                if (((Section) section).getClient().setFocus())
+                    return;
+            }
+        }
+    }
+
+    protected abstract Control createSectionContent(Composite parent,
+            Object category);
+
+    protected abstract void disposeSectionContent(Composite section,
+            Object category);
+
+    protected abstract void refreshSectionContent(Control content,
+            Object category, Object element);
+
+    protected abstract void fillSelection(Object category, List selection);
+
+    protected abstract void setSelectionToCategory(Object category,
+            ISelection selection, boolean reveal);
 
 }

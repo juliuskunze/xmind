@@ -19,27 +19,36 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
-import org.xmind.ui.dialogs.ErrorDetailsDialog;
+import org.eclipse.ui.statushandlers.StatusAdapter;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.xmind.ui.internal.MindMapMessages;
+import org.xmind.ui.internal.statushandlers.RuntimeErrorDialog;
+import org.xmind.ui.internal.statushandlers.StatusDetails;
 
 public class ErrorDialogPane extends DialogPane {
 
+    private final StatusAdapter error;
+
+    private final String summary;
+
     private Text summaryBoard;
 
-    private String summary = null;
-
-    private Throwable error;
-
-    private long time;
-
-    private String title;
-
-    private String message;
+    public ErrorDialogPane(StatusAdapter error) {
+        this.error = error;
+        Throwable cause = StatusDetails.getRootCause(error.getStatus()
+                .getException());
+        if (cause == null)
+            cause = new UnknownError();
+        this.summary = NLS
+                .bind(MindMapMessages.ErrorDialogPane_summaryBoard_text,
+                        new Object[] { error.getStatus().getMessage(),
+                                cause.getClass().getName(),
+                                cause.getLocalizedMessage() });
+    }
 
     @Override
     protected Control createDialogContents(Composite parent) {
@@ -132,35 +141,11 @@ public class ErrorDialogPane extends DialogPane {
     }
 
     private void showDetails() {
-        if (error == null)
-            return;
-
-        new ErrorDetailsDialog(getContainer().getShell(),
-                MindMapMessages.ErrorDetailDialog_title, message, error, title,
-                time).open();
+        error.setProperty(RuntimeErrorDialog.SHOW_DETAILS_ON_CREATE,
+                Boolean.TRUE);
+        StatusManager.getManager().handle(error, StatusManager.SHOW);
     }
 
-    public void setContent(Throwable error, String title, String message,
-            long time) {
-        this.error = error;
-        this.time = time;
-        this.title = title;
-        this.message = message;
-        this.summary = NLS.bind(
-                MindMapMessages.ErrorDialogPane_summaryBoard_text,
-                new Object[] { message, error.getClass().getName(),
-                        error.getLocalizedMessage() });
-        if (summaryBoard != null && !summaryBoard.isDisposed()) {
-            summaryBoard.setText(summary);
-        }
-        Button detailsButton = getButton(IDialogConstants.OK_ID);
-        if (detailsButton != null) {
-            detailsButton.setEnabled(error != null);
-        }
-        relayout();
-    }
-
-    @Override
     protected void escapeKeyPressed() {
         triggerButton(IDialogConstants.CLOSE_ID);
     }

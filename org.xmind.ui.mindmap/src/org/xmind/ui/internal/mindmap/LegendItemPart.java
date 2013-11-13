@@ -13,11 +13,16 @@
  *******************************************************************************/
 package org.xmind.ui.internal.mindmap;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.xmind.core.marker.IMarker;
 import org.xmind.gef.GEF;
+import org.xmind.gef.IGraphicalViewer;
+import org.xmind.gef.draw2d.RotatableWrapLabel;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.part.IRequestHandler;
 import org.xmind.gef.policy.NullEditPolicy;
@@ -28,7 +33,8 @@ import org.xmind.ui.mindmap.ILegendPart;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.MarkerImageDescriptor;
 
-public class LegendItemPart extends MindMapPartBase implements ILegendItemPart {
+public class LegendItemPart extends MindMapPartBase implements ILegendItemPart,
+        PropertyChangeListener {
 
     private ImageDescriptor icon = null;
 
@@ -41,7 +47,11 @@ public class LegendItemPart extends MindMapPartBase implements ILegendItemPart {
     }
 
     protected IFigure createFigure() {
-        return new LegendItemFigure();
+        boolean useAdvancedRenderer = getSite().getViewer().getProperties()
+                .getBoolean(IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, false);
+        return new LegendItemFigure(
+                useAdvancedRenderer ? RotatableWrapLabel.ADVANCED
+                        : RotatableWrapLabel.NORMAL);
     }
 
     public void setParent(IPart parent) {
@@ -93,7 +103,21 @@ public class LegendItemPart extends MindMapPartBase implements ILegendItemPart {
         return icon.createImage(false);
     }
 
+    protected void onActivated() {
+        super.onActivated();
+        getSite()
+                .getViewer()
+                .getProperties()
+                .addPropertyChangeListener(
+                        IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, this);
+    }
+
     protected void onDeactivated() {
+        getSite()
+                .getViewer()
+                .getProperties()
+                .removePropertyChangeListener(
+                        IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, this);
         deactivated = true;
         if (image != null) {
             image.dispose();
@@ -106,9 +130,18 @@ public class LegendItemPart extends MindMapPartBase implements ILegendItemPart {
         super.declareEditPolicies(reqHandler);
         reqHandler.installEditPolicy(GEF.ROLE_MOVABLE,
                 MindMapUI.POLICY_LEGEND_MOVABLE);
-        reqHandler.installEditPolicy(GEF.ROLE_EDITABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_EDITABLE,
+                NullEditPolicy.getInstance());
         reqHandler.installEditPolicy(GEF.ROLE_MODIFIABLE,
                 MindMapUI.POLICY_LEGEND_ITEM_MODIFIABLE);
     }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+        boolean useAdvancedRenderer = getSite().getViewer().getProperties()
+                .getBoolean(IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, false);
+        ((LegendItemFigure) getFigure())
+                .setTextRenderStyle(useAdvancedRenderer ? RotatableWrapLabel.ADVANCED
+                        : RotatableWrapLabel.NORMAL);
+    }
+
 }

@@ -21,8 +21,6 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-
 import org.w3c.dom.Document;
 import org.xmind.core.Core;
 import org.xmind.core.CoreException;
@@ -42,7 +40,6 @@ import org.xmind.core.io.IOutputTarget;
 import org.xmind.core.io.IStorage;
 import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.core.style.IStyleSheet;
-import org.xmind.core.util.FileUtils;
 
 /**
  * @author frankshaka
@@ -73,17 +70,17 @@ public class WorkbookLoader extends XMLLoader {
     /**
      * 
      */
-    private WorkbookImpl workbook;
+    private WorkbookImpl workbook = null;
 
     /**
      * 
      */
-    private Set<String> loadedEntries;
+    private Set<String> loadedEntries = new HashSet<String>();
 
     /**
      * 
      */
-    private ManifestImpl manifest;
+    private ManifestImpl manifest = null;
 
     /**
      * 
@@ -93,7 +90,12 @@ public class WorkbookLoader extends XMLLoader {
     /**
      * 
      */
-    private String password;
+    private String password = null;
+
+    /**
+     * Byte buffer for transfering entries.
+     */
+    private byte[] byteBuffer = new byte[4096];
 
     /**
      * 
@@ -120,7 +122,6 @@ public class WorkbookLoader extends XMLLoader {
     }
 
     public IWorkbook load() throws IOException, CoreException {
-        loadedEntries = null;
         password = null;
         manifest = null;
         try {
@@ -128,7 +129,6 @@ public class WorkbookLoader extends XMLLoader {
         } finally {
             manifest = null;
             password = null;
-            loadedEntries = null;
         }
         return workbook;
     }
@@ -216,75 +216,68 @@ public class WorkbookLoader extends XMLLoader {
 
         if (!source.equals(storage.getInputSource())) {
             IOutputTarget target = storage.getOutputTarget();
-            copyAll(source, target);
+            IManifest manifest = workbook.getManifest();
+            for (IFileEntry entry : manifest.getFileEntries()) {
+                if (!entry.isDirectory()) {
+                    String entryPath = entry.getPath();
+                    if (shouldLoadEntry(entryPath)) {
+                        copyEntry(source, target, entryPath);
+                        markLoaded(entryPath);
+                    }
+                }
+            }
         } else {
             // Prefetch all file entries:
             workbook.getManifest().getFileEntries();
         }
     }
 
-    private void copyAll(IInputSource source, IOutputTarget target)
-            throws CoreException {
-        IManifest manifest = workbook.getManifest();
-        for (IFileEntry entry : manifest.getFileEntries()) {
-            if (!entry.isDirectory()) {
-                String entryPath = entry.getPath();
-                if (entryPath != null && !"".equals(entryPath) //$NON-NLS-1$
-                        && !hasBeenLoaded(entryPath)) {
-                    copyEntry(source, target, entryPath);
-                    markLoaded(entryPath);
-                }
-            }
-        }
+    private boolean shouldLoadEntry(String entryPath) {
+        return entryPath != null && !"".equals(entryPath) //$NON-NLS-1$
+                && !hasBeenLoaded(entryPath);
     }
 
     private void copyEntry(IInputSource source, IOutputTarget target,
-            String entryPath) throws CoreException {
+            String entryPath) throws IOException, CoreException {
+        InputStream in = getInputStream(source, entryPath);
+        if (in == null)
+            return;
+
         try {
-            InputStream in = getInputStream(source, entryPath);
-            if (in != null) {
-                OutputStream out = getOutputStream(target, entryPath);
-                if (out != null) {
-                    try {
-                        FileUtils.transfer(in, out, true);
-                    } finally {
-                        long time = source.getEntryTime(entryPath);
-                        if (time >= 0) {
-                            target.setEntryTime(entryPath, time);
-                        }
-                        Exception e2 = checkChecksum(source, entryPath, in,
-                                null);
-                        if (e2 instanceof CoreException) {
-                            throw (CoreException) e2;
-                        }
-                    }
+            long time = source.getEntryTime(entryPath);
+            if (time >= 0)
+                target.setEntryTime(entryPath, time);
+            OutputStream out = getOutputStream(target, entryPath);
+            try {
+                int numBytes;
+                while ((numBytes = in.read(byteBuffer)) > 0) {
+                    out.write(byteBuffer, 0, numBytes);
                 }
+                if (!verifyChecksum(source, entryPath, in))
+                    throw new CoreException(Core.ERROR_WRONG_PASSWORD);
+            } finally {
+                out.close();
             }
-        } catch (IOException e) {
-            Core.getLogger().log(e);
-        } catch (CoreException e) {
-            if (e.getType() == Core.ERROR_WRONG_PASSWORD
-                    || e.getType() == Core.ERROR_CANCELLATION)
-                throw e;
-            Core.getLogger().log(e);
+
+        } finally {
+            in.close();
         }
     }
 
-    private OutputStream getOutputStream(IOutputTarget target, String entryPath) {
+    private OutputStream getOutputStream(IOutputTarget target, String entryPath)
+            throws IOException {
         if (!target.isEntryAvaialble(entryPath))
             return null;
 
-        return target.getEntryStream(entryPath);
+        return target.openEntryStream(entryPath);
     }
 
     private void markLoaded(String entryPath) {
-        if (loadedEntries == null)
-            loadedEntries = new HashSet<String>();
         loadedEntries.add(entryPath);
     }
 
     private boolean hasBeenLoaded(String entryPath) {
-        return loadedEntries != null && loadedEntries.contains(entryPath);
+        return loadedEntries.contains(entryPath);
     }
 
     private void initWorkbook() throws IOException, CoreException {
@@ -379,68 +372,54 @@ public class WorkbookLoader extends XMLLoader {
      */
     protected Document doLoadXMLFile(IInputSource source, String entryPath)
             throws IOException, CoreException {
+        InputStream stream = getInputStream(source, entryPath);
+        if (stream == null)
+            throw new CoreException(Core.ERROR_NO_SUCH_ENTRY, entryPath);
+
+        Document doc;
         try {
-            InputStream stream = getInputStream(source, entryPath);
-            if (stream == null) {
-                throw new CoreException(Core.ERROR_NO_SUCH_ENTRY, entryPath);
-            }
-
-            Document doc;
-            try {
-                DocumentBuilder loader = builder.getDocumentLoader();
-                doc = loader.parse(stream);
-            } catch (Throwable e) {
-                Exception e2 = checkChecksum(source, entryPath, stream,
-                        new CoreException(Core.ERROR_FAIL_PARSING_XML, e));
-                if (e2 instanceof IOException)
-                    throw (IOException) e2;
-                throw (CoreException) e2;
-            } finally {
-                stream.close();
-            }
-
-            Exception ex = checkChecksum(source, entryPath, stream, null);
-            if (ex instanceof CoreException)
-                throw (CoreException) ex;
-
-            return doc;
+            doc = builder.getDocumentLoader().parse(stream);
+        } catch (Throwable error) {
+            if (!verifyChecksum(source, entryPath, stream))
+                throw new CoreException(Core.ERROR_WRONG_PASSWORD, error);
+            if (error instanceof IOException)
+                throw (IOException) error;
+            if (error instanceof CoreException)
+                throw (CoreException) error;
+            throw new CoreException(Core.ERROR_FAIL_PARSING_XML, error);
         } finally {
-            markLoaded(entryPath);
+            stream.close();
         }
+
+        if (!verifyChecksum(source, entryPath, stream))
+            throw new CoreException(Core.ERROR_WRONG_PASSWORD);
+
+        markLoaded(entryPath);
+
+        return doc;
     }
 
-    private Exception checkChecksum(IInputSource source, String entryName,
-            InputStream stream, Throwable ex) {
+    private boolean verifyChecksum(IInputSource source, String entryName,
+            InputStream stream) throws IOException, CoreException {
         if (stream instanceof IChecksumStream) {
             if (manifest == null) {
-                throw new InternalError("Manifest should not be encrypted"); //$NON-NLS-1$
+                throw new IllegalStateException(
+                        "Manifest should not be encrypted"); //$NON-NLS-1$
             }
             IEncryptionData encData = manifest.getEncryptionData(entryName);
             if (encData != null) {
                 String expectedChecksum = encData.getChecksum();
                 if (expectedChecksum != null) {
                     String actualChecksum;
-                    try {
-                        actualChecksum = ((IChecksumStream) stream)
-                                .getChecksum();
-                        if (actualChecksum == null
-                                || !expectedChecksum.equals(actualChecksum)) {
-                            if (ex == null)
-                                return new CoreException(
-                                        Core.ERROR_WRONG_PASSWORD);
-                            return new CoreException(Core.ERROR_WRONG_PASSWORD,
-                                    ex);
-                        }
-                    } catch (IOException e) {
+                    actualChecksum = ((IChecksumStream) stream).getChecksum();
+                    if (actualChecksum == null
+                            || !expectedChecksum.equals(actualChecksum)) {
+                        return false;
                     }
                 }
             }
         }
-        if (ex == null)
-            return null;
-        if (ex instanceof IOException)
-            return (IOException) ex;
-        return new CoreException(Core.ERROR_FAIL_PARSING_XML, ex);
+        return true;
     }
 
     public Document createDocument() {

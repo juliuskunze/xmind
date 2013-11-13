@@ -51,11 +51,11 @@ public class GroupMarkers extends ContributionItem {
             this.topic = topic;
             this.sourceMarkerId = sourceMarkerId;
             this.targetMarkerId = targetMarkerId;
-            setText(topic.getOwnedSheet().getLegend().getMarkerDescription(
-                    targetMarkerId));
-            setImageDescriptor(MarkerImageDescriptor.createFromMarker(topic
-                    .getOwnedWorkbook().getMarkerSheet().findMarker(
-                            targetMarkerId)));
+            setText(topic.getOwnedSheet().getLegend()
+                    .getMarkerDescription(targetMarkerId));
+            setImageDescriptor(MarkerImageDescriptor.createFromMarker(
+                    topic.getOwnedWorkbook().getMarkerSheet()
+                            .findMarker(targetMarkerId), 16, 16));
             boolean sameMarker = sourceMarkerId.equals(targetMarkerId);
             setEnabled(!sameMarker);
             setChecked(sameMarker);
@@ -127,12 +127,14 @@ public class GroupMarkers extends ContributionItem {
                 .findMarker(sourceMarkerId);
         if (sourceMarker != null) {
             IMarkerGroup group = sourceMarker.getParent();
-            if (group != null) {
+            if (!group.isHidden() && group != null) {
                 for (IMarker marker : group.getMarkers()) {
-                    String targetMarkerId = marker.getId();
-                    new ActionContributionItem(new ReplaceMarkerAction(topic,
-                            sourceMarkerId, targetMarkerId))
-                            .fill(menu, index++);
+                    if (!marker.isHidden()) {
+                        String targetMarkerId = marker.getId();
+                        new ActionContributionItem(new ReplaceMarkerAction(
+                                topic, sourceMarkerId, targetMarkerId)).fill(
+                                menu, index++);
+                    }
                 }
             }
         }

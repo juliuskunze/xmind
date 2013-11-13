@@ -36,13 +36,12 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.ui.IEditorActionBarContributor;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.EditorPart;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
@@ -151,6 +150,8 @@ public abstract class GraphicalEditor extends EditorPart implements
 
     private ICommandStack commandStack = null;
 
+    private IMiniBar miniBar = null;
+
     private IMiniBarContributor miniBarContributor = null;
 
     private IActionRegistry actionRegistry = null;
@@ -176,8 +177,12 @@ public abstract class GraphicalEditor extends EditorPart implements
             throws PartInitException {
         setSite(site);
         setInput(input);
-        site.setSelectionProvider(new MultiPageSelectionProvider());
+        site.setSelectionProvider(createSelectionProvider());
         setCommandStack(createCommandStack());
+    }
+
+    protected ISelectionProvider createSelectionProvider() {
+        return new MultiPageSelectionProvider();
     }
 
     protected Object findOwnedInput(ISelection selection) {
@@ -187,13 +192,6 @@ public abstract class GraphicalEditor extends EditorPart implements
     protected Composite getContainer() {
         return container;
     }
-
-//  protected void init() {
-//  getSite().setSelectionProvider(createSelectionProvider());
-//  initCommandStack();
-//  installModelListener();
-//  initEditorActions(getActionRegistry());
-//}
 
     protected IPageContainerPresentation getContainerPresentation() {
         return containerPresentation;
@@ -211,22 +209,12 @@ public abstract class GraphicalEditor extends EditorPart implements
         Composite containerParent = createContainerParent(parent);
         this.container = containerPresentation.createContainer(containerParent);
         createEditorContents();
-//        createInitialPages();
     }
 
     protected void createEditorContents() {
         createMiniBar();
         createPageContextMenu(getContainer());
     }
-
-//    protected abstract void createPages();
-
-//    protected void createInitialPages() {
-//        createPages();
-//        if (getPageCount() > 0) {
-//            setActivePage(0);
-//        }
-//    }
 
     protected IPageContainerPresentation createContainerPresentation() {
         return new TabFolderContainerPresentation();
@@ -261,7 +249,6 @@ public abstract class GraphicalEditor extends EditorPart implements
         Assert.isNotNull(page.getViewer());
         Assert.isNotNull(page.getViewer().getControl());
         addPageControl(page.getControl());
-        //createContentPopupMenuForPage(page, page.getViewer().getControl());
     }
 
     private void addPageControl(Control pageControl) {
@@ -294,30 +281,8 @@ public abstract class GraphicalEditor extends EditorPart implements
             }
             registerPagePopupMenu(menuId, pagePopupMenu);
         }
-        Menu menu = pagePopupMenu.getMenu();
-        if (menu == null || menu.isDisposed()) {
-            menu = pagePopupMenu.createContextMenu(container);
-//            container.addListener(SWT.MouseDown, new Listener() {
-//                public void handleEvent(Event event) {
-//                    handleMouseDownOnContainer(container, event.x, event.y);
-//                }
-//            });
-        }
-        container.setMenu(menu);
+        container.setMenu(pagePopupMenu.createContextMenu(container));
     }
-
-//    protected void handleMouseDownOnContainer(Composite container, int x, int y) {
-//        if (containerPresentation == null || pageInputSelectionProvider == null)
-//            return;
-//
-//        int selectedPage = containerPresentation.findPage(container, x, y);
-//        if (pageInputSelectionProvider != null) {
-//            if (selectedPage != this.activePageIndex) {
-//                pageInputSelectionProvider.firePageChanged();
-//            }
-////            pageSelectionProvider.setSelectedPage(selectedPage);
-//        }
-//    }
 
     protected void registerPagePopupMenu(String menuId, MenuManager menu) {
         getSite().registerContextMenu(menuId, menu,
@@ -388,22 +353,6 @@ public abstract class GraphicalEditor extends EditorPart implements
         return getCommandStack() != null && getCommandStack().isDirty();
     }
 
-//    /**
-//     * @return
-//     */
-//    protected ISelectionProvider createSelectionProvider() {
-//        return new DelegatedSelectionProvider();
-//    }
-//
-//    protected void initCommandStack() {
-//        setCommandStack(createCommandStack());
-//    }
-
-//    protected void initEditorActions(IActionRegistry actionRegistry) {
-//    }
-//
-//    protected abstract void createPages();
-
     /**
      * Creates the mini bar on the part control.
      * <p>
@@ -418,21 +367,24 @@ public abstract class GraphicalEditor extends EditorPart implements
         if (!(getContainer() instanceof CTabFolder))
             return;
 
-        MiniBar miniBar = new MiniBar() {
-            public void updateBar() {
-                super.updateBar();
-                ToolBar control = ((ToolBarManager) getToolBarManager())
-                        .getControl();
-                if (control != null && !control.isDisposed()) {
-                    CTabFolder tabFolder = (CTabFolder) getContainer();
-                    updateMiniBarControl(tabFolder, control);
-                }
-
+        miniBar = new MiniBar() {
+            protected void updateMiniBar() {
+                super.updateMiniBar();
+                GraphicalEditor.this.updateMiniBar(miniBar);
             }
         };
         initializeMiniBar(miniBar);
-        if (!miniBar.isEmpty()) {
+        if (!((MiniBar) miniBar).isEmpty()) {
             createMiniBarControl(miniBar, (CTabFolder) getContainer());
+        }
+    }
+
+    protected void updateMiniBar(IMiniBar miniBar) {
+        ToolBar control = ((ToolBarManager) miniBar.getToolBarManager())
+                .getControl();
+        if (control != null && !control.isDisposed()) {
+            CTabFolder tabFolder = (CTabFolder) getContainer();
+            updateMiniBarControl(tabFolder, control);
         }
     }
 
@@ -459,8 +411,17 @@ public abstract class GraphicalEditor extends EditorPart implements
     }
 
     private void updateMiniBarControl(CTabFolder tabFolder, Control barControl) {
+        // Cache the original height of tab headers:
+        Integer normalHeight = ((Integer) tabFolder
+                .getData("org.xmind.gef.tabFolder.normalHeight")); //$NON-NLS-1$
+        if (normalHeight == null) {
+            normalHeight = Integer.valueOf(tabFolder.getTabHeight());
+            tabFolder.setData("org.xmind.gef.tabFolder.normalHeight", //$NON-NLS-1$
+                    normalHeight);
+        }
+
         int tabHeight = barControl.computeSize(SWT.DEFAULT, SWT.DEFAULT).y;
-        tabHeight = Math.max(tabHeight, tabFolder.getTabHeight());
+        tabHeight = Math.max(tabHeight, normalHeight.intValue());
         tabFolder.setTabHeight(tabHeight);
         tabFolder.setTopRight(barControl, SWT.RIGHT);
     }
@@ -487,7 +448,7 @@ public abstract class GraphicalEditor extends EditorPart implements
     public void handleCommandStackEvent(CommandStackEvent event) {
         if ((event.getStatus() & GEF.CS_POST_MASK) != 0
                 || event.getStatus() == GEF.CS_UPDATED) {
-            Display.getCurrent().asyncExec(new Runnable() {
+            PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
                 public void run() {
                     fireDirty();
                 }
@@ -542,6 +503,8 @@ public abstract class GraphicalEditor extends EditorPart implements
             return getCommandStack();
         if (adapter == IActionRegistry.class)
             return getActionRegistry();
+        if (adapter == IMiniBar.class)
+            return miniBar;
         if (adapter == IMiniBarContributor.class)
             return getMiniBarContributor();
         if (adapter == IGlobalActionHandlerService.class) {
@@ -561,18 +524,6 @@ public abstract class GraphicalEditor extends EditorPart implements
         }
         return super.getAdapter(adapter);
     }
-
-//    /**
-//     * 
-//     */
-//    protected void installModelListener() {
-//    }
-//
-//    /**
-//     * 
-//     */
-//    protected void uninstallModelListener() {
-//    }
 
     public Object getSelectedPage() {
         return getActivePageInstance();
@@ -613,6 +564,7 @@ public abstract class GraphicalEditor extends EditorPart implements
         firePropertyChange(PROP_DIRTY);
     }
 
+    @SuppressWarnings("deprecation")
     protected void handlePageChange(int newPageIndex) {
         boolean wasFocused = false;
         IGraphicalEditorPage oldActivePage = getPage(activePageIndex);
@@ -639,10 +591,6 @@ public abstract class GraphicalEditor extends EditorPart implements
         }
 
         ISelectionProvider selectionProvider = getSite().getSelectionProvider();
-//        if (selectionProvider instanceof MultiGraphicalPageSelectionProvider) {
-//            ((MultiGraphicalPageSelectionProvider) selectionProvider)
-//                    .setActivePage(activePage);
-//        }
         if (selectionProvider instanceof IDelegatedSelectionProvider) {
             ((IDelegatedSelectionProvider) selectionProvider)
                     .setDelegate(activePage == null ? null : activePage
@@ -763,8 +711,6 @@ public abstract class GraphicalEditor extends EditorPart implements
             pagePopupMenu.dispose();
             pagePopupMenu = null;
         }
-
-//        uninstallModelListener();
 
         if (commandStack != null && !commandStack.isDisposed()) {
             disposeCommandStack(commandStack);

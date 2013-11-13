@@ -71,12 +71,26 @@ public class ImageDndClient extends MindMapDNDClientBase {
                 ImageLoader saver = new ImageLoader();
                 saver.data = new ImageData[] { imageData };
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
-                saver.save(os, SWT.IMAGE_PNG);
+                try {
+                    saver.save(os, SWT.IMAGE_PNG);
+                } finally {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                    }
+                }
+                byte[] imageDataInBytes = os.toByteArray();
                 IManifest manifest = workbook.getManifest();
                 try {
-                    IFileEntry entry = manifest.createAttachmentFromStream(
-                            new ByteArrayInputStream(os.toByteArray()),
-                            "temp.png", Core.MEDIA_TYPE_IMAGE_PNG); //$NON-NLS-1$
+                    ByteArrayInputStream is = new ByteArrayInputStream(
+                            imageDataInBytes);
+                    IFileEntry entry;
+                    try {
+                        entry = manifest.createAttachmentFromStream(is,
+                                "temp.png", Core.MEDIA_TYPE_IMAGE_PNG); //$NON-NLS-1$
+                    } finally {
+                        is.close();
+                    }
                     String imageSource = HyperlinkUtils.toAttachmentURL(entry
                             .getPath());
                     if (targetParent != null && dropInParent) {

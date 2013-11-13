@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,10 +57,14 @@ public class OpenDocumentQueue {
     }
 
     public void enqueue(String path) {
-        synchronized (this) {
-            files.add(path);
+        if (new File(path).exists()) {
+            synchronized (this) {
+                files.add(path);
+            }
+            CathyPlugin.log("Path queued to be opened: " + path); //$NON-NLS-1$
+        } else {
+            CathyPlugin.log("Non-existing path skipped: " + path); //$NON-NLS-1$
         }
-        CathyPlugin.log("Path queued to be opened: " + path); //$NON-NLS-1$
     }
 
     public String[] drain() {

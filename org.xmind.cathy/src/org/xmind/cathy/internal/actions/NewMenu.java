@@ -183,7 +183,7 @@ public class NewMenu extends BaseNewWizardMenu {
                     is.close();
                 }
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
         }
         return null;
     }

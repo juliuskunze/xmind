@@ -11,11 +11,11 @@
             type="org.xmind.ui.mindmap.IBranchPart">
       </propertyTester>
       <propertyTester
-            class="org.xmind.ui.internal.mindmap.TopicPropertyTester"
-            id="org.xmind.ui.propertyTester.topic"
-            namespace="org.xmind.ui.topic"
-            properties="type,structureClass"
-            type="org.xmind.core.ITopic">
+            class="org.xmind.ui.internal.StyleSheetPropertyTester"
+            id="org.xmind.ui.propertyTester.styleSheet"
+            namespace="org.xmind.ui.resource.styleSheet"
+            properties="type"
+            type="org.xmind.core.style.IStyleSheet">
       </propertyTester>
    </extension>
 

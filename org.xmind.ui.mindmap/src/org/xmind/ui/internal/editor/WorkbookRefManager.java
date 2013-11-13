@@ -13,12 +13,14 @@
  *******************************************************************************/
 package org.xmind.ui.internal.editor;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,6 +39,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.XMLMemento;
 import org.xmind.core.Core;
 import org.xmind.core.IWorkbook;
+import org.xmind.core.internal.InternalCore;
 import org.xmind.core.internal.dom.WorkbookImpl;
 import org.xmind.gef.command.CommandStack;
 import org.xmind.ui.internal.MindMapUIPlugin;
@@ -62,20 +65,19 @@ public class WorkbookRefManager implements IWorkbookRefManager {
 
     private class AutoHibernateHandler implements Runnable {
 
-        private Thread thread;
-
         public void run() {
-            thread = Thread.currentThread();
+            final Thread thread = Thread.currentThread();
+            long delay = getAutoHibernateIntervals();
             try {
-                Thread.sleep(getAutoHibernateIntervals());
+                Thread.sleep(delay);
             } catch (InterruptedException e) {
             }
 
-            while (!isCanceled()) {
+            while (autoHibernateThread == thread) {
 
                 hibernateAll();
 
-                if (isCanceled())
+                if (autoHibernateThread != thread)
                     break;
 
                 try {
@@ -83,10 +85,6 @@ public class WorkbookRefManager implements IWorkbookRefManager {
                 } catch (InterruptedException e) {
                 }
             }
-        }
-
-        protected boolean isCanceled() {
-            return autoHibernateThread != thread;
         }
 
     }
@@ -291,33 +289,45 @@ public class WorkbookRefManager implements IWorkbookRefManager {
     }
 
     protected void saveSession() {
-        XMLMemento memento = XMLMemento.createWriteRoot(TAG_OPENED_EDITORS);
-        for (WorkbookRef ref : registry.values()) {
-            IWorkbook workbook = ref.getWorkbook();
-            if (workbook != null) {
-                try {
-                    workbook.saveTemp();
-                } catch (Throwable e) {
+        try {
+            XMLMemento memento = XMLMemento.createWriteRoot(TAG_OPENED_EDITORS);
+            for (WorkbookRef ref : registry.values()) {
+                IWorkbook workbook = ref.getWorkbook();
+                if (workbook != null) {
+                    Object key = ref.getKey();
+                    try {
+                        workbook.saveTemp();
+                    } catch (Throwable e) {
+                        Logger.log(
+                                e,
+                                "WorkbookRefManager: Error occurred while saving workbook to a temporary location in background: " //$NON-NLS-1$
+                                        + key.toString());
+                    }
+                    if (InternalCore.DEBUG_WORKBOOK_SAVE)
+                        Logger.log("WorkbookRefManager: Finished saving opened workbook " //$NON-NLS-1$
+                                + ref.getKey().toString()
+                                + " to its temp location."); //$NON-NLS-1$
+                    IMemento editorMem = memento.createChild(TAG_OPENED_EDITOR);
+                    if (key instanceof IEditorInput) {
+                        saveEditorInput(editorMem, (IEditorInput) key);
+                    }
+                    saveTempLocation(editorMem, workbook.getTempLocation());
+                    editorMem.putBoolean(ATTR_SKIP_REVISIONS,
+                            ((WorkbookImpl) workbook)
+                                    .isSkipRevisionsWhenSaving());
                 }
-                Object key = ref.getKey();
-                IMemento editorMem = memento.createChild(TAG_OPENED_EDITOR);
-                if (key instanceof IEditorInput) {
-                    saveEditorInput(editorMem, (IEditorInput) key);
-                }
-                saveTempLocation(editorMem, workbook.getTempLocation());
-                editorMem.putBoolean(ATTR_SKIP_REVISIONS,
-                        ((WorkbookImpl) workbook).isSkipRevisionsWhenSaving());
             }
-        }
-        if (memento != null) {
+            File sf = getSessionFile();
+            Writer writer = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(sf), "utf-8"), 1024); //$NON-NLS-1$
             try {
-                memento.save(new OutputStreamWriter(new FileOutputStream(
-                        getSessionFile()), "utf-8")); //$NON-NLS-1$
-            } catch (IOException e) {
-                Logger.log(e, "Failed to save session log."); //$NON-NLS-1$
+                memento.save(writer);
+            } finally {
+                writer.close();
             }
-        } else {
-            getSessionFile().delete();
+        } catch (Throwable e) {
+            Logger.log(e,
+                    "WorkbookRefManager: Error occurred while saving opened workbook session info."); //$NON-NLS-1$
         }
     }
 

@@ -15,13 +15,19 @@ package org.xmind.ui.internal.mindmap;
 
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Label;
+import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.swt.graphics.Image;
+import org.xmind.core.Core;
 import org.xmind.core.ITopic;
+import org.xmind.core.event.CoreEvent;
+import org.xmind.core.event.ICoreEventRegister;
+import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerRef;
 import org.xmind.gef.GEF;
 import org.xmind.gef.draw2d.SizeableImageFigure;
+import org.xmind.gef.graphicalpolicy.IStyleSelector;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.part.IRequestHandler;
 import org.xmind.gef.policy.NullEditPolicy;
@@ -31,11 +37,15 @@ import org.xmind.ui.mindmap.ISelectionFeedbackHelper;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.resources.ImageReference;
+import org.xmind.ui.style.StyleUtils;
+import org.xmind.ui.style.TextStyleData;
 import org.xmind.ui.util.MarkerImageDescriptor;
 
 public class MarkerPart extends MindMapPartBase implements IMarkerPart {
 
     private ImageReference imageRef = null;
+
+    private Dimension preferredSize = null;
 
     public MarkerPart() {
         setDecorator(MarkerDecorator.getInstance());
@@ -93,6 +103,7 @@ public class MarkerPart extends MindMapPartBase implements IMarkerPart {
             ((TopicPart) getParent()).removeMarker(this);
         }
         super.setParent(parent);
+        updateMarker();
         if (getParent() instanceof TopicPart) {
             ((TopicPart) getParent()).addMarker(this);
         }
@@ -115,9 +126,7 @@ public class MarkerPart extends MindMapPartBase implements IMarkerPart {
     @Override
     public void setModel(Object model) {
         super.setModel(model);
-        this.imageRef = new ImageReference(
-                MarkerImageDescriptor.createFromMarkerRef(getMarkerRef()),
-                false);
+        this.imageRef = createImageReference();
     }
 
     /*
@@ -164,6 +173,64 @@ public class MarkerPart extends MindMapPartBase implements IMarkerPart {
 
     protected ISelectionFeedbackHelper createSelectionFeedbackHelper() {
         return new SelectionFeedbackHelper();
+    }
+
+    @Override
+    protected void installModelListeners() {
+        super.installModelListeners();
+        ITopic topic = getMarkerRef().getParent();
+        if (topic instanceof ICoreEventSource) {
+            registerCoreEvents((ICoreEventSource) topic);
+        }
+    }
+
+    protected void registerCoreEvents(ICoreEventSource source,
+            ICoreEventRegister register) {
+        super.registerCoreEvents(source, register);
+        register.register(Core.Style);
+    }
+
+    public void handleCoreEvent(CoreEvent event) {
+        String type = event.getType();
+        if (Core.Style.equals(type)) {
+            updateMarker();
+        }
+    }
+
+    private void updateMarker() {
+        if (imageRef != null) {
+            imageRef.dispose();
+        }
+        imageRef = createImageReference();
+        update();
+    }
+
+    private ImageReference createImageReference() {
+        preferredSize = calculatePreferredSize();
+        int hintSize = preferredSize == null ? -1 : preferredSize.width;
+        return new ImageReference(MarkerImageDescriptor.createFromMarkerRef(
+                getMarkerRef(), hintSize, hintSize), false);
+    }
+
+    private Dimension calculatePreferredSize() {
+        ITopicPart tp = getTopicPart();
+        if (tp == null)
+            return null;
+        IStyleSelector ss = (IStyleSelector) tp
+                .getAdapter(IStyleSelector.class);
+        TextStyleData data = StyleUtils.getTextStyleData(tp, ss, null);
+        int fontSize = data.height;
+        if (fontSize < 13) {
+            return new Dimension(16, 16);
+        } else if (fontSize >= 13 && fontSize < 25) {
+            return new Dimension(24, 24);
+        } else {
+            return new Dimension(32, 32);
+        }
+    }
+
+    public Dimension getPreferredSize() {
+        return preferredSize;
     }
 
 }

@@ -29,7 +29,7 @@
 		</style>
 		<style id="STY-sel19yziapwg" name="%void" type="topic">
 			<topic-properties
-				shape-class="org.xmind.topicShape.noBorder" svg:fill="$none$" />
+				shape-class="org.xmind.topicShape.noBorder" svg:fill="none" />
 		</style>
 		<style id="STY-cfcs8uhsczht" name="%decision" type="topic">
 			<topic-properties line-color="#808080" line-width="1pt"

@@ -1,18 +1,17 @@
 Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: %pluginName
-Bundle-SymbolicName: org.xmind.ui.imports;singleton:=true
-Bundle-Version: 3.3.1.qualifier
-Bundle-Activator: org.xmind.ui.internal.imports.ImportPlugin
+Require-Bundle: org.eclipse.ui,org.eclipse.core.runtime,org.xmind.ui.t
+ oolkit,org.xmind.ui,org.xmind.core.io
+Export-Package: org.xmind.ui.internal.imports;x-internal:=true,org.xmi
+ nd.ui.internal.imports.freemind;x-internal:=true,org.xmind.ui.interna
+ l.imports.mm;x-internal:=true
 Bundle-Vendor: %providerName
-Require-Bundle: org.eclipse.ui,
- org.eclipse.core.runtime,
- org.xmind.ui.toolkit,
- org.xmind.ui,
- org.xmind.core.io
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
-Export-Package: org.xmind.ui.internal.imports;x-internal:=true,
- org.xmind.ui.internal.imports.freemind;x-internal:=true,
- org.xmind.ui.internal.imports.mm;x-internal:=true
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name: %pluginName
 Bundle-Localization: plugin
+Bundle-ManifestVersion: 2
+Bundle-Activator: org.xmind.ui.internal.imports.ImportPlugin
+Bundle-SymbolicName: org.xmind.ui.imports;singleton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

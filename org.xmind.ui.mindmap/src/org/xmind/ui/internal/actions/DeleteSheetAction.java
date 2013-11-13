@@ -42,7 +42,7 @@ public class DeleteSheetAction extends EditorAction {
                 }
             }
 
-            if (sheet != null) {
+            if (sheet != null && sheet.getParent().getSheets().size() > 1) {
                 saveAndRunDeleteSheetCommand(sheet);
             }
         }

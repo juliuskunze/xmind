@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
+import java.io.File;
+
 import net.xmind.signin.ILicenseInfo;
 import net.xmind.signin.ILicenseListener;
 import net.xmind.signin.XMindNet;
@@ -20,6 +22,7 @@ import net.xmind.signin.XMindNet;
 import org.eclipse.jface.action.CoolBarManager;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
@@ -35,7 +38,11 @@ import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 import org.eclipse.ui.internal.WorkbenchWindow;
+import org.eclipse.ui.internal.tweaklets.TitlePathUpdater;
+import org.eclipse.ui.internal.tweaklets.Tweaklets;
 import org.xmind.cathy.internal.jobs.CheckOpenFilesJob;
+import org.xmind.ui.internal.editor.MME;
+import org.xmind.ui.internal.editor.NewWorkbookEditor;
 import org.xmind.ui.internal.workbench.Util;
 
 public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
@@ -45,8 +52,14 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
 
     private IWorkbenchPartReference activePartRef = null;
 
+    private boolean checkingNewWorkbookEditor = false;
+
+    private TitlePathUpdater titlePathUpdater;
+
     public CathyWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer) {
         super(configurer);
+        this.titlePathUpdater = (TitlePathUpdater) Tweaklets
+                .get(TitlePathUpdater.KEY);
     }
 
     public ActionBarAdvisor createActionBarAdvisor(
@@ -95,9 +108,9 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
     }
 
     public void licenseVerified(ILicenseInfo info) {
-        if ((info.getType() & ILicenseInfo.VALID_PRO_LICENSE) != 0) {
+        if ((info.getType() & ILicenseInfo.VALID_PRO_LICENSE_KEY) != 0) {
             licenseName = "Pro"; //$NON-NLS-1$
-        } else if ((info.getType() & ILicenseInfo.VALID_PLUS_LICENSE) != 0) {
+        } else if ((info.getType() & ILicenseInfo.VALID_PLUS_LICENSE_KEY) != 0) {
             licenseName = "Plus"; //$NON-NLS-1$
         } else if ((info.getType() & ILicenseInfo.VALID_PRO_SUBSCRIPTION) != 0) {
             licenseName = "Pro"; //$NON-NLS-1$
@@ -127,6 +140,9 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
             partRef.removePropertyListener(this);
         }
         updateWindowTitle();
+        if (partRef instanceof IEditorReference) {
+            checkNewWorkbookEditor();
+        }
     }
 
     public void partDeactivated(IWorkbenchPartReference partRef) {
@@ -141,6 +157,10 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
     }
 
     public void partOpened(IWorkbenchPartReference partRef) {
+        if (partRef instanceof IEditorReference
+                && !NewWorkbookEditor.EDITOR_ID.equals(partRef.getId())) {
+            checkNewWorkbookEditor();
+        }
     }
 
     public void partVisible(IWorkbenchPartReference partRef) {
@@ -168,7 +188,7 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
         StringBuffer sb = new StringBuffer(20);
         sb.append(WorkbenchMessages.AppWindowTitle);
         if (licenseName != null) {
-            sb.append(" "); //$NON-NLS-1$
+            sb.append(' ');
             sb.append(licenseName);
         }
         IWorkbenchPage page = window.getActivePage();
@@ -176,26 +196,77 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
             IEditorPart editor = page.getActiveEditor();
             if (editor != null) {
                 sb.append(" - "); //$NON-NLS-1$
-                IEditorInput input = editor.getEditorInput();
-                if (input != null
-                        && !editor.getClass().toString()
-                                .contains("org.xmind.ui.internal.browser")) { //$NON-NLS-1$
-                    String text = input.getToolTipText();
-                    if (text != null) {
-                        sb.append(text);
-                    } else {
-                        sb.append(editor.getTitle());
-                    }
-                } else {
-                    sb.append(editor.getTitle());
+                String text = editor.getClass().toString()
+                        .contains("org.xmind.ui.internal.browser") ? null //$NON-NLS-1$
+                        : editor.getTitleToolTip();
+                if (text == null) {
+                    text = editor.getTitle();
                 }
+                sb.append(text);
             }
         }
         configurer.setTitle(sb.toString());
+
+        if (titlePathUpdater != null) {
+            titlePathUpdater.updateTitlePath(shell, computeTitlePath(page));
+        }
+    }
+
+    private String computeTitlePath(IWorkbenchPage page) {
+        IEditorPart activeEditor = page.getActiveEditor();
+        if (activeEditor != null) {
+            IEditorInput editorInput = activeEditor.getEditorInput();
+            if (editorInput != null) {
+                File file = MME.getFile(editorInput);
+                if (file != null)
+                    return file.getAbsolutePath();
+            }
+        }
+        return null;
     }
 
     public void propertyChanged(Object source, int propId) {
         updateWindowTitle();
+    }
+
+    private void checkNewWorkbookEditor() {
+        if (checkingNewWorkbookEditor)
+            return;
+        checkingNewWorkbookEditor = true;
+        Display.getCurrent().asyncExec(new Runnable() {
+            public void run() {
+                try {
+                    IWorkbenchWindow window = getWindowConfigurer().getWindow();
+                    Shell shell = window.getShell();
+                    if (shell == null || shell.isDisposed())
+                        return;
+
+                    IWorkbenchPage page = window.getActivePage();
+                    if (page == null)
+                        return;
+
+                    int numEditors = 0;
+                    IEditorReference[] editors = page.getEditorReferences();
+                    for (int i = 0; i < editors.length; i++) {
+                        IEditorReference editor = editors[i];
+                        if (!NewWorkbookEditor.EDITOR_ID.equals(editor.getId())) {
+                            numEditors++;
+                        }
+                    }
+
+                    if (numEditors > 0) {
+                        // Has normal editors, hide NewWorkbookEditor:
+                        NewWorkbookEditor.hideFrom(window);
+                    } else {
+                        // No normal editors, show NewWorkbookEditor:
+                        NewWorkbookEditor.showIn(window);
+                    }
+
+                } finally {
+                    checkingNewWorkbookEditor = false;
+                }
+            }
+        });
     }
 
 }

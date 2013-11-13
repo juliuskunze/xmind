@@ -2,15 +2,16 @@ package org.xmind.cathy.internal;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
-import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.StatusLineLayoutData;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.util.Util;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Point;
@@ -21,18 +22,16 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.ui.menus.WorkbenchWindowControlContribution;
+import org.xmind.ui.resources.FontUtils;
 import org.xmind.ui.util.PrefUtils;
 
-public class AutoBackupIndicator extends ContributionItem implements
-        IPropertyChangeListener, Listener {
+public class AutoBackupIndicator extends WorkbenchWindowControlContribution
+        implements IPropertyChangeListener, Listener {
 
     private static final int DISABLED = 1;
 
     private static final int ENABLED = 2;
-
-//    private static final int BACKUP_ENABLED = 2;
-//
-//    private static final int ALL_ENABLED = 3;
 
     private class ChangeAutoSavePrefAction extends Action {
         private IPreferenceStore ps;
@@ -90,36 +89,38 @@ public class AutoBackupIndicator extends ContributionItem implements
         }
     }
 
+    private Control control;
+
     private Label label;
 
     private MenuManager menu;
 
     private IPreferenceStore ps;
 
-//    private int lastEnabledValue = 0;
-
     public AutoBackupIndicator() {
-        super("org.xmind.ui.AutoSaveIndicator"); //$NON-NLS-1$
+        super("org.xmind.ui.status.AutoSaveIndicator"); //$NON-NLS-1$
     }
 
     protected Control createControl(Composite parent) {
         ps = CathyPlugin.getDefault().getPreferenceStore();
 
         Composite composite = new Composite(parent, SWT.NONE);
-        GridLayout gridLayout = new GridLayout(2, false);
-        gridLayout.marginWidth = 3;
-        gridLayout.marginHeight = 0;
-        gridLayout.verticalSpacing = 0;
-        gridLayout.horizontalSpacing = 4;
-        composite.setLayout(gridLayout);
+        GridLayout layout = new GridLayout(2, false);
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        layout.verticalSpacing = 0;
+        layout.horizontalSpacing = 4;
+        composite.setLayout(layout);
 
         Label sep = new Label(composite, SWT.SEPARATOR | SWT.VERTICAL);
         sep.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, true));
 
-        label = new Label(composite, SWT.NONE);
+        label = new Label(composite, SWT.CENTER);
         label.setText(WorkbenchMessages.AutoBackupIndicator_AutoSaveDisabled_label);
+        label.setFont(FontUtils.getRelativeHeight(JFaceResources.DEFAULT_FONT,
+                Util.isMac() ? -2 : -1));
         label.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
-        label.setCursor(parent.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+        label.setCursor(label.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
         label.addListener(SWT.MouseDown, this);
 
         menu = new MenuManager();
@@ -131,25 +132,19 @@ public class AutoBackupIndicator extends ContributionItem implements
                 ps,
                 WorkbenchMessages.AutoBackupIndicator_EnableAutoSaveAction_text,
                 ENABLED));
-//        menu.add(new ChangeBackupPrefAction(ps, "Enable backup", BACKUP_ENABLED));
-//        menu.add(new ChangeBackupPrefAction(ps,
-//                "Enable backup and local file saving", ALL_ENABLED));
         menu.add(new Separator());
         menu.add(new OpenPreferencePageAction());
         menu.createContextMenu(label);
         label.setMenu(menu.getMenu());
 
-        Point size = label.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        Point size2 = sep.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        updateEnablement();
 
-        StatusLineLayoutData data = new StatusLineLayoutData();
-        data.widthHint = size.x + size2.x + 10;
-        data.heightHint = Math.max(size.y, size2.y);
-        composite.setLayoutData(data);
+        composite.setLayoutData(new StatusLineLayoutData());
 
-        update();
+        ps.removePropertyChangeListener(this);
         ps.addPropertyChangeListener(this);
 
+        this.control = composite;
         return composite;
     }
 
@@ -176,17 +171,36 @@ public class AutoBackupIndicator extends ContributionItem implements
             return;
 
         if (id == null || CathyPlugin.AUTO_SAVE_ENABLED.equals(id)) {
-            int value = getValue();
-            if (value == ENABLED) {
-                label.setText(WorkbenchMessages.AutoBackupIndicator_AutoSaveEnabled_label);
-                int intervals = ps.getInt(CathyPlugin.AUTO_SAVE_INTERVALS);
-                label.setToolTipText(NLS.bind(
-                        WorkbenchMessages.AutoSave_label2, intervals));
-            } else {
-                label.setText(WorkbenchMessages.AutoBackupIndicator_AutoSaveDisabled_label);
-                label.setToolTipText(WorkbenchMessages.AutoBackupIndicator_AutoSaveDisabled_description);
-            }
+            updateEnablement();
+            updateSize();
+        }
+    }
 
+    private void updateSize() {
+        if (control == null || control.isDisposed())
+            return;
+
+        Point oldSize = control.getSize();
+        control.pack(true);
+        Point newSize = control.getSize();
+        if (oldSize.equals(newSize))
+            return;
+
+        control.getParent().layout(true, true);
+    }
+
+    private void updateEnablement() {
+        int value = getValue();
+        if (value == ENABLED) {
+            label.setText(WorkbenchMessages.AutoBackupIndicator_AutoSaveEnabled_label);
+            int intervals = ps.getInt(CathyPlugin.AUTO_SAVE_INTERVALS);
+            label.setToolTipText(NLS.bind(WorkbenchMessages.AutoSave_label2,
+                    intervals));
+        } else {
+            label.setText(WorkbenchMessages.AutoBackupIndicator_AutoSaveDisabled_label);
+            label.setToolTipText(WorkbenchMessages.AutoBackupIndicator_AutoSaveDisabled_description);
+        }
+        if (menu != null) {
             for (IContributionItem item : menu.getItems()) {
                 if (item instanceof ActionContributionItem) {
                     IAction action = ((ActionContributionItem) item)
@@ -203,17 +217,6 @@ public class AutoBackupIndicator extends ContributionItem implements
     private int getValue() {
         return ps.getBoolean(CathyPlugin.AUTO_SAVE_ENABLED) ? ENABLED
                 : DISABLED;
-//        boolean backupEnabled = !ps
-//                .getBoolean(CathyPlugin.AUTO_SAVE_REVISIONS_DISABLED);
-//        int value;
-//        if (backupEnabled && ps.getBoolean(CathyPlugin.AUTO_SAVE_ENABLED)) {
-//            value = ALL_ENABLED;
-//        } else if (backupEnabled) {
-//            value = BACKUP_ENABLED;
-//        } else {
-//            value = DISABLED;
-//        }
-//        return value;
     }
 
     /*
@@ -223,6 +226,15 @@ public class AutoBackupIndicator extends ContributionItem implements
      */
     @Override
     public void dispose() {
+        if (label != null) {
+            label.dispose();
+            label = null;
+        }
+        control = null;
+        if (menu != null) {
+            menu.dispose();
+            menu = null;
+        }
         if (ps != null) {
             ps.removePropertyChangeListener(this);
             ps = null;
@@ -234,23 +246,17 @@ public class AutoBackupIndicator extends ContributionItem implements
      * (non-Javadoc)
      * 
      * @see
-     * org.eclipse.jface.action.ContributionItem#fill(org.eclipse.swt.widgets
-     * .Composite)
-     */
-    @Override
-    public void fill(Composite parent) {
-        createControl(parent);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
      * org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse
      * .jface.util.PropertyChangeEvent)
      */
-    public void propertyChange(PropertyChangeEvent event) {
-        update(event.getProperty());
+    public void propertyChange(final PropertyChangeEvent event) {
+        if (control == null || control.isDisposed())
+            return;
+        control.getDisplay().asyncExec(new Runnable() {
+            public void run() {
+                update(event.getProperty());
+            }
+        });
     }
 
     /*
@@ -267,44 +273,16 @@ public class AutoBackupIndicator extends ContributionItem implements
                     public void run() {
                         Point loc = label.getParent().toDisplay(event.x,
                                 event.y);
+                        updateEnablement();
                         menu.getMenu().setLocation(loc);
                         menu.getMenu().setVisible(true);
-//                        changeStatus();
                     }
                 });
             }
         }
     }
 
-//    /**
-//     * 
-//     */
-//    private void changeStatus() {
-//        int value = getValue();
-//        int newValue;
-//        if (value == DISABLED) {
-//            if (lastEnabledValue == 0) {
-//                newValue = BACKUP_ENABLED;
-//            } else {
-//                newValue = lastEnabledValue;
-//            }
-//        } else {
-//            newValue = DISABLED;
-//        }
-//        changeStatus(newValue);
-//    }
-
     private void changeStatus(int value) {
         ps.setValue(CathyPlugin.AUTO_SAVE_ENABLED, value == ENABLED);
-//        if (value == DISABLED) {
-//            ps.setValue(CathyPlugin.AUTO_SAVE_REVISIONS_DISABLED, true);
-//            ps.setValue(CathyPlugin.AUTO_SAVE_ENABLED, false);
-//        } else if (value == BACKUP_ENABLED) {
-//            ps.setValue(CathyPlugin.AUTO_SAVE_REVISIONS_DISABLED, false);
-//            ps.setValue(CathyPlugin.AUTO_SAVE_ENABLED, false);
-//        } else {
-//            ps.setValue(CathyPlugin.AUTO_SAVE_REVISIONS_DISABLED, false);
-//            ps.setValue(CathyPlugin.AUTO_SAVE_ENABLED, true);
-//        }
     }
 }

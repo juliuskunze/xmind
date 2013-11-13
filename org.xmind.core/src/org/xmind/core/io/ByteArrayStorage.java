@@ -15,20 +15,23 @@ package org.xmind.core.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.xmind.core.CoreException;
 
 /**
  * @author frankshaka
  * 
  */
 public class ByteArrayStorage implements IStorage {
+
+    private static Collection<String> NO_ENTRIES = Collections.emptyList();
 
     protected class ByteArrayInputSource implements IInputSource {
 
@@ -38,8 +41,12 @@ public class ByteArrayStorage implements IStorage {
          * @see org.xmind.core.io.IInputSource#getEntries()
          */
         public Iterator<String> getEntries() {
-            return dataTable == null ? NO_ENTRIES : dataTable.keySet()
-                    .iterator();
+            return dataTable == null ? NO_ENTRIES.iterator() : dataTable
+                    .keySet().iterator();
+        }
+
+        public boolean isEntryAvailable(String entryName) {
+            return dataTable.get(entryName) != null;
         }
 
         /*
@@ -55,6 +62,13 @@ public class ByteArrayStorage implements IStorage {
                 }
             }
             return null;
+        }
+
+        public InputStream openEntryStream(String entryName) throws IOException {
+            InputStream stream = getEntryStream(entryName);
+            if (stream == null)
+                throw new FileNotFoundException(entryName);
+            return stream;
         }
 
         /*
@@ -89,28 +103,10 @@ public class ByteArrayStorage implements IStorage {
         /*
          * (non-Javadoc)
          * 
-         * @see org.xmind.core.io.IInputSource#getName()
-         */
-        public String getName() {
-            return ByteArrayStorage.this.getName();
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
          * @see org.xmind.core.io.IInputSource#hasEntry(java.lang.String)
          */
         public boolean hasEntry(String entryName) {
             return dataTable != null && dataTable.containsKey(entryName);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.xmind.core.io.IInputSource#open()
-         */
-        public boolean open() {
-            return dataTable != null && !dataTable.isEmpty();
         }
 
     }
@@ -148,7 +144,11 @@ public class ByteArrayStorage implements IStorage {
             public void close() throws IOException {
                 super.close();
                 pushBytes();
-                setEntryTime(entryName, System.currentTimeMillis());
+                synchronized (ByteArrayOutputTarget.this) {
+                    if (timeTable == null || !timeTable.containsKey(entryName)) {
+                        setEntryTime(entryName, System.currentTimeMillis());
+                    }
+                }
             }
 
             /**
@@ -169,9 +169,12 @@ public class ByteArrayStorage implements IStorage {
          * @see org.xmind.core.io.IOutputTarget#getEntryStream(java.lang.String)
          */
         public OutputStream getEntryStream(String entryName) {
-            if (entryName != null)
-                return new ByteArrayOutputStream2(entryName);
-            return null;
+            return new ByteArrayOutputStream2(entryName);
+        }
+
+        public OutputStream openEntryStream(String entryName)
+                throws IOException {
+            return new ByteArrayOutputStream2(entryName);
         }
 
         /*
@@ -187,22 +190,15 @@ public class ByteArrayStorage implements IStorage {
         /*
          * (non-Javadoc)
          * 
-         * @see org.xmind.core.io.IOutputTarget#open()
-         */
-        public boolean open() {
-            return true;
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
          * @see org.xmind.core.io.IOutputTarget#setEntryTime(long)
          */
         public void setEntryTime(String entryName, long time) {
-            if (timeTable == null) {
-                timeTable = new HashMap<String, Long>();
+            synchronized (this) {
+                if (timeTable == null) {
+                    timeTable = new HashMap<String, Long>();
+                }
+                timeTable.put(entryName, time);
             }
-            timeTable.put(entryName, time);
         }
 
     }
@@ -225,7 +221,7 @@ public class ByteArrayStorage implements IStorage {
      * 
      * @see org.xmind.core.io.IArchive#getInputSource()
      */
-    public IInputSource getInputSource() throws CoreException {
+    public IInputSource getInputSource() {
         return new ByteArrayInputSource();
     }
 
@@ -243,7 +239,7 @@ public class ByteArrayStorage implements IStorage {
      * 
      * @see org.xmind.core.io.IArchive#getOutputTarget()
      */
-    public IOutputTarget getOutputTarget() throws CoreException {
+    public IOutputTarget getOutputTarget() {
         return new ByteArrayOutputTarget();
     }
 

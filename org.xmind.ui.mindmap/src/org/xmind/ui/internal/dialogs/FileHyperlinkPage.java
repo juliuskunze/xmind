@@ -40,9 +40,9 @@ import org.xmind.ui.internal.protocols.FilePathParser;
  */
 public class FileHyperlinkPage extends HyperlinkPage implements Listener {
 
-    private IEditorPart editor;
+//    private IEditorPart editor;
 
-    private String basePath;
+    private String basePath = null;
 
     private String path;
 
@@ -68,19 +68,19 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
 
     private boolean warningFileNotExists = false;
 
-    private boolean warningRelative = false;
+//    private boolean warningRelative = false;
 
     public FileHyperlinkPage() {
     }
 
     public void init(IEditorPart editor, IStructuredSelection selection) {
-        this.editor = editor;
+//        this.editor = editor;
         File workbookFile = MME.getFile(editor.getEditorInput());
         if (workbookFile != null) {
             this.basePath = workbookFile.getParent();
-        } else {
-            this.basePath = null;
         }
+        if (this.basePath == null)
+            this.basePath = FilePathParser.ABSTRACT_FILE_BASE;
     }
 
     public void createControl(Composite parent) {
@@ -210,30 +210,30 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
                     .setText(file == null ? "" : file.getAbsolutePath()); //$NON-NLS-1$
         }
         warningFileNotExists = (file != null && !file.exists());
-        warningRelative = (relative && basePath == null);
+//        warningRelative = (relative && basePath == null);
         updateWarningMessage();
         super.setValue(computeURI());
         setCanFinish(getValue() != null);
     }
 
-    @Override
-    public boolean tryFinish() {
-        if (file != null && relative) {
-            if (basePath == null) {
-                editor.doSaveAs();
-                File newFilePath = MME.getFile(editor.getEditorInput());
-                if (newFilePath == null)
-                    return false;
-                basePath = newFilePath.getParent();
-                String relativePath = FilePathParser.toRelativePath(basePath,
-                        file.getAbsolutePath());
-                if (relativePath != null) {
-                    super.setValue(FilePathParser.toURI(relativePath, relative));
-                }
-            }
-        }
-        return super.tryFinish();
-    }
+//    @Override
+//    public boolean tryFinish() {
+//        if (file != null && relative) {
+//            if (basePath == null) {
+//                editor.doSaveAs();
+//                File newFilePath = MME.getFile(editor.getEditorInput());
+//                if (newFilePath == null)
+//                    return false;
+//                basePath = newFilePath.getParent();
+//                String relativePath = FilePathParser.toRelativePath(basePath,
+//                        file.getAbsolutePath());
+//                if (relativePath != null) {
+//                    super.setValue(FilePathParser.toURI(relativePath, relative));
+//                }
+//            }
+//        }
+//        return super.tryFinish();
+//    }
 
     public void handleEvent(Event event) {
         if (event.widget == pathInput) {
@@ -282,35 +282,32 @@ public class FileHyperlinkPage extends HyperlinkPage implements Listener {
         this.relative = path == null ? false : FilePathParser
                 .isPathRelative(path);
         this.file = path == null ? null
-                : (relative && basePath != null ? new File(
-                        FilePathParser.toAbsolutePath(basePath, path))
-                        : new File(path));
+                : (relative ? new File(FilePathParser.toAbsolutePath(basePath,
+                        path)) : new File(path));
         update();
     }
 
     protected void setFile(String fullPath) {
         this.file = fullPath == null || "".equals(fullPath) ? null : new File(fullPath); //$NON-NLS-1$
-        this.path = this.file == null ? null
-                : (relative && basePath != null ? FilePathParser
-                        .toRelativePath(basePath, fullPath) : fullPath);
+        this.path = this.file == null ? null : (relative ? FilePathParser
+                .toRelativePath(basePath, fullPath) : fullPath);
         update();
     }
 
     protected void setRelative(boolean relative) {
         this.relative = relative;
-        if (basePath != null) {
-            this.path = this.file == null ? null : (relative ? FilePathParser
-                    .toRelativePath(basePath, file.getAbsolutePath()) : file
-                    .getAbsolutePath());
-        }
+//        if (basePath != null) {
+        this.path = this.file == null ? null : (relative ? FilePathParser
+                .toRelativePath(basePath, file.getAbsolutePath()) : file
+                .getAbsolutePath());
+//        }
         update();
     }
 
     private void updateWarningMessage() {
         setMessage(
                 warningFileNotExists ? DialogMessages.FileHyperlinkPage_FileNotExists_message
-                        : (warningRelative ? DialogMessages.FileHyperlinkPage_RelativeWarning_message
-                                : null), WARNING);
+                        : null, WARNING);
     }
 
     private String computeURI() {

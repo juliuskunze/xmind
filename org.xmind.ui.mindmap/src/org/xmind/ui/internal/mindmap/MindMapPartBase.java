@@ -14,6 +14,8 @@
 package org.xmind.ui.internal.mindmap;
 
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
@@ -34,7 +36,7 @@ import org.xmind.ui.mindmap.ISelectionFeedbackHelper;
 import org.xmind.ui.util.MindMapUtils;
 
 public abstract class MindMapPartBase extends GraphicalEditPart implements
-        IAnimatablePart, ICoreEventListener {
+        IAnimatablePart {
 
     private ICoreEventRegister eventRegister = null;
 
@@ -78,16 +80,53 @@ public abstract class MindMapPartBase extends GraphicalEditPart implements
         Object m = getRealModel();
         if (m instanceof ICoreEventSource) {
             ICoreEventSource source = (ICoreEventSource) m;
-            eventRegister = new CoreEventRegister(source, this);
-            registerCoreEvents(source, eventRegister);
+            registerCoreEvents(source);
         }
+    }
+
+    protected void registerCoreEvents(ICoreEventSource source) {
+        if (eventRegister == null)
+            eventRegister = new CoreEventRegister(source,
+                    getCoreEventListener(source));
+        registerCoreEvents(source, eventRegister);
+    }
+
+    protected ICoreEventListener getCoreEventListener(ICoreEventSource source) {
+        final MindMapPartBase handler = this;
+        return new ICoreEventListener() {
+            public void handleCoreEvent(final CoreEvent event) {
+                runInUI(new Runnable() {
+                    public void run() {
+                        handler.handleCoreEvent(event);
+                    }
+                });
+            }
+        };
     }
 
     protected void registerCoreEvents(ICoreEventSource source,
             ICoreEventRegister register) {
     }
 
-    public void handleCoreEvent(CoreEvent event) {
+    protected void handleCoreEvent(CoreEvent event) {
+    }
+
+    protected void runInUI(Runnable job) {
+        runInUI(job, false);
+    }
+
+    protected void runInUI(Runnable job, boolean async) {
+        Shell shell = getSite().getShell();
+        if (shell == null || shell.isDisposed())
+            return;
+        Display display = shell.getDisplay();
+        if (display == null || display.isDisposed())
+            return;
+        if (async) {
+            display.asyncExec(job);
+        } else {
+            display.syncExec(job);
+        }
     }
 
     protected void uninstallModelListeners() {

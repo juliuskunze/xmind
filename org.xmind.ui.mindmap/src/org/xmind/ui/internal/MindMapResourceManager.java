@@ -23,12 +23,14 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.Bundle;
 import org.xmind.core.Core;
+import org.xmind.core.IAdaptable;
 import org.xmind.core.IManifest;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.IWorkbookBuilder;
@@ -37,6 +39,7 @@ import org.xmind.core.event.ICoreEventRegistration;
 import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.event.ICoreEventSupport;
 import org.xmind.core.internal.MarkerGroup;
+import org.xmind.core.internal.MarkerVariation;
 import org.xmind.core.internal.dom.StyleSheetImpl;
 import org.xmind.core.internal.event.CoreEventSupport;
 import org.xmind.core.internal.zip.ArchiveConstants;
@@ -46,9 +49,11 @@ import org.xmind.core.marker.IMarkerGroup;
 import org.xmind.core.marker.IMarkerResource;
 import org.xmind.core.marker.IMarkerResourceProvider;
 import org.xmind.core.marker.IMarkerSheet;
+import org.xmind.core.marker.IMarkerVariation;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.style.IStyleSheet;
 import org.xmind.core.util.FileUtils;
+import org.xmind.core.util.IPropertiesProvider;
 import org.xmind.ui.mindmap.IResourceManager;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.prefs.PrefConstants;
@@ -105,7 +110,11 @@ public class MindMapResourceManager implements IResourceManager {
         }
 
         public InputStream getInputStream() {
-            URL url = getURL();
+            return getInputStreamForPath(getFullPath());
+        }
+
+        private InputStream getInputStreamForPath(String fullPath) {
+            URL url = find(fullPath);
             if (url == null)
                 return null;
 
@@ -120,8 +129,41 @@ public class MindMapResourceManager implements IResourceManager {
             return null;
         }
 
-        private URL getURL() {
-            return find(getFullPath());
+        public InputStream openInputStream() throws IOException {
+            URL url = find(getFullPath());
+            if (url == null)
+                throw new FileNotFoundException(getFullPath());
+            return url.openStream();
+        }
+
+        public OutputStream openOutputStream() throws IOException {
+            throw new FileNotFoundException("System marker is read only."); //$NON-NLS-1$
+        }
+
+        @Override
+        protected void loadVariations(List<IMarkerVariation> variations) {
+
+            IMarkerVariation v = new MarkerVariation("@16", 16, 16); //$NON-NLS-1$
+            if (find(v.getVariedPath(getFullPath())) != null)
+                variations.add(v);
+
+            v = new MarkerVariation("@24", 24, 24); //$NON-NLS-1$
+            if (find(v.getVariedPath(getFullPath())) != null)
+                variations.add(v);
+
+            v = new MarkerVariation("@32", 32, 32); //$NON-NLS-1$
+            if (find(v.getVariedPath(getFullPath())) != null)
+                variations.add(v);
+        }
+
+        @Override
+        public InputStream getInputStream(IMarkerVariation variation) {
+            return getInputStreamForPath(variation.getVariedPath(getFullPath()));
+        }
+
+        @Override
+        public OutputStream getOutputStream(IMarkerVariation variation) {
+            return null;
         }
 
         @Override
@@ -154,10 +196,7 @@ public class MindMapResourceManager implements IResourceManager {
         }
 
         private File getFile() {
-            String path = Core.getWorkspace().getAbsolutePath(getFullPath());
-            if (path == null)
-                return null;
-            return new File(path);
+            return new File(Core.getWorkspace().getAbsolutePath(getFullPath()));
         }
 
         public InputStream getInputStream() {
@@ -180,6 +219,14 @@ public class MindMapResourceManager implements IResourceManager {
             return null;
         }
 
+        public InputStream openInputStream() throws IOException {
+            return new FileInputStream(getFile());
+        }
+
+        public OutputStream openOutputStream() throws IOException {
+            return new FileOutputStream(getFile());
+        }
+
         @Override
         public boolean equals(Object obj) {
             if (obj == this)
@@ -196,7 +243,7 @@ public class MindMapResourceManager implements IResourceManager {
 
         public static final RecentMarkerGroup instance = new RecentMarkerGroup();
 
-        private static final int CAPACITY = 6;
+        private static final int CAPACITY = 20;
 
         private List<IMarker> markers = new ArrayList<IMarker>(CAPACITY);
 
@@ -239,7 +286,19 @@ public class MindMapResourceManager implements IResourceManager {
             return false;
         }
 
+        public boolean isHidden() {
+            return false;
+        }
+
+        public void setHidden(boolean hidden) {
+
+        }
+
         public void removeMarker(IMarker marker) {
+            if (!markers.contains(marker))
+                return;
+            markers.remove(marker);
+            eventSupport.dispatchTargetChange(this, Core.MarkerRemove, marker);
         }
 
         public void setName(String name) {
@@ -306,27 +365,7 @@ public class MindMapResourceManager implements IResourceManager {
             try {
                 IMarkerSheet sheet = Core.getMarkerSheetBuilder().loadFromURL(
                         url, new SystemMarkerResourceProvider());
-                URL propUrl = find(PATH_MARKERS, MARKER_SHEET, EXT_PROPERTIES);
-                if (propUrl != null) {
-                    try {
-                        InputStream propStream = propUrl.openStream();
-                        if (propStream != null) {
-                            try {
-                                Core.getMarkerSheetBuilder().loadProperties(
-                                        propStream, sheet);
-                            } finally {
-                                try {
-                                    propStream.close();
-                                } catch (IOException e) {
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        Logger.log(e,
-                                "Failed to load system marker properties: " //$NON-NLS-1$
-                                        + propUrl);
-                    }
-                }
+                loadPropertiesFor(sheet, PATH_MARKERS, MARKER_SHEET);
                 return sheet;
             } catch (Exception e) {
                 Logger.log(e, "Failed to load system marker from: " + url); //$NON-NLS-1$
@@ -423,26 +462,7 @@ public class MindMapResourceManager implements IResourceManager {
             try {
                 IStyleSheet sheet = Core.getStyleSheetBuilder()
                         .loadFromUrl(url);
-                URL propUrl = find(PATH_STYLES, STYLES, EXT_PROPERTIES);
-                if (propUrl != null) {
-                    try {
-                        InputStream propStream = propUrl.openStream();
-                        if (propStream != null) {
-                            try {
-                                Core.getStyleSheetBuilder().loadProperties(
-                                        propStream, sheet);
-                            } finally {
-                                try {
-                                    propStream.close();
-                                } catch (IOException e) {
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        Logger.log(e, "Failed to load saved style properties: " //$NON-NLS-1$
-                                + propUrl);
-                    }
-                }
+                loadPropertiesFor(sheet, PATH_STYLES, STYLES);
                 return sheet;
             } catch (Exception e) {
                 Logger.log(e, "Falied to load saved styles: " + url); //$NON-NLS-1$
@@ -538,8 +558,8 @@ public class MindMapResourceManager implements IResourceManager {
         if (theme == null)
             id = null;
         this.defaultTheme = theme;
-        MindMapUIPlugin.getDefault().getPreferenceStore().setValue(
-                PrefConstants.DEFUALT_THEME, id);
+        MindMapUIPlugin.getDefault().getPreferenceStore()
+                .setValue(PrefConstants.DEFUALT_THEME, id);
     }
 
     public IStyleSheet getSystemThemeSheet() {
@@ -555,26 +575,7 @@ public class MindMapResourceManager implements IResourceManager {
             try {
                 IStyleSheet sheet = Core.getStyleSheetBuilder()
                         .loadFromUrl(url);
-                URL propUrl = find(PATH_STYLES, THEMES, EXT_PROPERTIES);
-                if (propUrl != null) {
-                    try {
-                        InputStream propStream = propUrl.openStream();
-                        if (propStream != null) {
-                            try {
-                                Core.getStyleSheetBuilder().loadProperties(
-                                        propStream, sheet);
-                            } finally {
-                                try {
-                                    propStream.close();
-                                } catch (IOException e) {
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        Logger.log(e, "Failed to load theme properties: " //$NON-NLS-1$
-                                + propUrl);
-                    }
-                }
+                loadPropertiesFor(sheet, PATH_STYLES, THEMES);
                 return sheet;
             } catch (Exception e) {
                 Logger.log(e, "Falied to load system themes: " + url); //$NON-NLS-1$
@@ -639,6 +640,220 @@ public class MindMapResourceManager implements IResourceManager {
     private static URL find(String mainPath, String prefix, String suffix) {
         return ResourceFinder.findResource(MindMapUI.PLUGIN_ID, mainPath,
                 prefix, suffix);
+    }
+
+    private static void loadPropertiesFor(IAdaptable resourceManager,
+            String mainPath, String propertiesFilePrefix) {
+        IPropertiesProvider propertiesProvider = (IPropertiesProvider) resourceManager
+                .getAdapter(IPropertiesProvider.class);
+        if (propertiesProvider == null)
+            return;
+
+        Properties defaultProperties = new Properties();
+        URL defaultPropertiesURL = FileLocator.find(
+                Platform.getBundle(MindMapUI.PLUGIN_ID), new Path(mainPath
+                        + propertiesFilePrefix + EXT_PROPERTIES), null);
+        if (defaultPropertiesURL != null) {
+            try {
+                InputStream stream = defaultPropertiesURL.openStream();
+                try {
+                    defaultProperties.load(stream);
+                } finally {
+                    stream.close();
+                }
+            } catch (IOException e) {
+                Logger.log(e, "Failed to load default properties file from: " //$NON-NLS-1$
+                        + mainPath + propertiesFilePrefix + EXT_PROPERTIES);
+            }
+        }
+
+        Properties properties = new Properties(defaultProperties);
+        URL propertiesURL = find(mainPath, propertiesFilePrefix, EXT_PROPERTIES);
+        if (propertiesURL != null) {
+            try {
+                InputStream stream = propertiesURL.openStream();
+                try {
+                    properties.load(stream);
+                } finally {
+                    stream.close();
+                }
+            } catch (IOException e) {
+                Logger.log(e,
+                        "Failed to load locale-specific properties file from: " //$NON-NLS-1$
+                                + mainPath
+                                + propertiesFilePrefix
+                                + EXT_PROPERTIES);
+            }
+        }
+
+        propertiesProvider.setProperties(properties);
+    }
+
+    private static final String SCHEMA_MARKER = "marker"; //$NON-NLS-1$
+    private static final String SCHEMA_STYLE = "style"; //$NON-NLS-1$
+    private static final String SCHEMA_THEME = "theme"; //$NON-NLS-1$
+    private static final String CATEGORY_SYSTEM = "system"; //$NON-NLS-1$
+    private static final String CATEGORY_USER = "user"; //$NON-NLS-1$
+    private static final String CATEGORY_DEFAULT = "default"; //$NON-NLS-1$
+    private static final String GROUP_ANY = "any"; //$NON-NLS-1$
+    private static final String ID_BLANK = "blank"; //$NON-NLS-1$
+    private static final String ID_DEFAULT = "__default__"; //$NON-NLS-1$
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.xmind.ui.mindmap.IResourceManager#findResource(java.lang.String)
+     */
+    public Object findResource(String uri) {
+        if (uri == null)
+            return null;
+
+        int sep = uri.indexOf(':');
+        if (sep < 0)
+            return null;
+
+        String schema = uri.substring(0, sep);
+        String path = uri.substring(sep + 1);
+        String[] segments = path.split("/"); //$NON-NLS-1$
+        if (segments.length == 0)
+            // Not possible to happen:
+            return null;
+
+        String category = segments[0];
+        if (SCHEMA_MARKER.equals(schema)) {
+            // marker:
+            IMarkerSheet markerSheet = findMarkerSheet(category);
+            if (markerSheet == null || segments.length == 1)
+                return markerSheet;
+            String groupId = segments[1];
+            boolean anyGroup = GROUP_ANY.equals(groupId);
+            IMarkerGroup markerGroup = anyGroup ? null : markerSheet
+                    .findMarkerGroup(groupId);
+            if (segments.length == 2)
+                return markerGroup;
+            String markerId = segments[2];
+            if (markerGroup == null)
+                return anyGroup ? markerSheet.findMarker(markerId) : null;
+            return markerGroup.getMarker(markerId);
+        } else if (SCHEMA_STYLE.equals(schema)) {
+            // style:
+            IStyleSheet styleSheet = findStyleSheet(category);
+            if (styleSheet == null || segments.length == 1)
+                return styleSheet;
+            String styleId = segments[1];
+            return styleSheet.findStyle(styleId);
+        } else if (SCHEMA_THEME.equals(schema)) {
+            // theme:
+            IStyleSheet themeSheet = findThemeSheet(category);
+            if (themeSheet == null || segments.length == 1)
+                return themeSheet;
+            String styleId = segments[1];
+            if (themeSheet == getSystemThemeSheet()) {
+                if (ID_BLANK.equals(styleId))
+                    return getBlankTheme();
+                if (ID_DEFAULT.equals(styleId))
+                    return getDefaultTheme();
+            }
+            return themeSheet.findStyle(styleId);
+        }
+
+        return null;
+    }
+
+    private IMarkerSheet findMarkerSheet(String category) {
+        if (CATEGORY_SYSTEM.equals(category)) {
+            return getSystemMarkerSheet();
+        } else if (CATEGORY_USER.equals(category)) {
+            return getUserMarkerSheet();
+        } else {
+            return null;
+        }
+    }
+
+    private IStyleSheet findStyleSheet(String category) {
+        if (CATEGORY_DEFAULT.equals(category))
+            return getDefaultStyleSheet();
+        if (CATEGORY_SYSTEM.equals(category))
+            return getSystemStyleSheet();
+        if (CATEGORY_USER.equals(category))
+            return getUserStyleSheet();
+        return null;
+    }
+
+    private IStyleSheet findThemeSheet(String category) {
+        if (CATEGORY_SYSTEM.equals(category))
+            return getSystemThemeSheet();
+        if (CATEGORY_USER.equals(category))
+            return getUserThemeSheet();
+        return null;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.xmind.ui.mindmap.IResourceManager#toResourceURI(java.lang.Object)
+     */
+    public String toResourceURI(Object resource) {
+        if (resource instanceof IMarkerSheet) {
+            if (resource == getSystemMarkerSheet())
+                return "marker:system"; //$NON-NLS-1$
+            if (resource == getUserMarkerSheet())
+                return "marker:user"; //$NON-NLS-1$
+            return null;
+        }
+        if (resource instanceof IMarkerGroup) {
+            IMarkerGroup markerGroup = (IMarkerGroup) resource;
+            IMarkerSheet markerSheet = markerGroup.getParent();
+            if (markerSheet == getSystemMarkerSheet())
+                return "marker:system/" + markerGroup.getId(); //$NON-NLS-1$
+            if (markerSheet == getUserMarkerSheet())
+                return "marker:user/" + markerGroup.getId(); //$NON-NLS-1$
+            return null;
+        }
+        if (resource instanceof IMarker) {
+            IMarker marker = (IMarker) resource;
+            IMarkerGroup markerGroup = marker.getParent();
+            if (markerGroup == null)
+                return null;
+            IMarkerSheet markerSheet = markerGroup.getParent();
+            if (markerSheet == getSystemMarkerSheet())
+                return "marker:system/" + markerGroup.getId() + "/" //$NON-NLS-1$ //$NON-NLS-2$
+                        + marker.getId();
+            if (markerSheet == getUserMarkerSheet())
+                return "marker:user/" + markerGroup.getId() + "/" //$NON-NLS-1$ //$NON-NLS-2$
+                        + marker.getId();
+            return null;
+        }
+        if (resource instanceof IStyleSheet) {
+            if (resource == getDefaultStyleSheet())
+                return "style:default"; //$NON-NLS-1$
+            if (resource == getSystemStyleSheet())
+                return "style:system"; //$NON-NLS-1$
+            if (resource == getUserStyleSheet())
+                return "style:user"; //$NON-NLS-1$
+            if (resource == getSystemThemeSheet())
+                return "theme:system"; //$NON-NLS-1$
+            if (resource == getUserThemeSheet())
+                return "theme:user"; //$NON-NLS-1$
+        }
+        if (resource instanceof IStyle) {
+            if (resource == getBlankTheme())
+                return "theme:system/blank"; //$NON-NLS-1$
+            IStyle style = (IStyle) resource;
+            IStyleSheet styleSheet = style.getOwnedStyleSheet();
+            if (styleSheet == getDefaultStyleSheet())
+                return "style:default/" + style.getId(); //$NON-NLS-1$
+            if (styleSheet == getSystemStyleSheet())
+                return "style:system/" + style.getId(); //$NON-NLS-1$
+            if (styleSheet == getUserStyleSheet())
+                return "style:user/" + style.getId(); //$NON-NLS-1$
+            if (styleSheet == getSystemThemeSheet())
+                return "theme:system/" + style.getId(); //$NON-NLS-1$
+            if (styleSheet == getUserThemeSheet())
+                return "theme:user/" + style.getId(); //$NON-NLS-1$
+        }
+        return null;
     }
 
 }

@@ -2,9 +2,10 @@ package net.xmind.workbench.internal;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.osgi.service.debug.DebugOptions;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -71,6 +72,8 @@ public class XMindNetWorkbench extends AbstractUIPlugin {
     // The shared instance
     private static XMindNetWorkbench plugin;
 
+    private ServiceTracker<DebugOptions, DebugOptions> debugTracker = null;
+
     /**
      * The constructor
      */
@@ -97,8 +100,22 @@ public class XMindNetWorkbench extends AbstractUIPlugin {
      * )
      */
     public void stop(BundleContext context) throws Exception {
+        if (debugTracker != null) {
+            debugTracker.close();
+            debugTracker = null;
+        }
+
         plugin = null;
         super.stop(context);
+    }
+
+    private DebugOptions getDebugOptions() {
+        if (debugTracker == null) {
+            debugTracker = new ServiceTracker<DebugOptions, DebugOptions>(
+                    getBundle().getBundleContext(), DebugOptions.class, null);
+            debugTracker.open();
+        }
+        return debugTracker.getService();
     }
 
     /**
@@ -115,12 +132,17 @@ public class XMindNetWorkbench extends AbstractUIPlugin {
                 new Status(IStatus.ERROR, PLUGIN_ID, message, e));
     }
 
-    public IDialogSettings getDialogSettings(String sectionName) {
-        IDialogSettings settings = getDialogSettings();
-        IDialogSettings section = settings.getSection(sectionName);
-        if (section == null) {
-            section = settings.addNewSection(sectionName);
-        }
-        return section;
+    /**
+     * 
+     * @param option
+     *            <code>"/debug/some/option"</code>
+     * @return
+     */
+    public static boolean isDebugging(String option) {
+        DebugOptions options = getDefault().getDebugOptions();
+        if (options == null)
+            return false;
+        return options.getBooleanOption(PLUGIN_ID + option, false);
     }
+
 }

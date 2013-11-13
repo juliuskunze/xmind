@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Export-Package: org.xmind.core.command.remote.lan,org.xmind.core.inter
+ nal.command.remote.lan;x-internal:=true,org.xmind.core.internal.comma
+ nd.remote.lan.dnssd;x-internal:=true
+Bundle-ActivationPolicy: lazy
+Bundle-Name: XMind Remote Command Service Provider For Local Area Netw
+ ork
+Bundle-Localization: plugin
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Require-Bundle: org.eclipse.core.runtime,org.xmind.core.command;bundle
+ -version="[3.4.0,3.5.0)",org.xmind.core.command.remote;bundle-version
+ ="[3.4.0,3.5.0)"
+Bundle-Vendor: XMind Ltd.
+DynamicImport-Package: com.apple.dnssd
+Bundle-Version: 3.4.0.201311050558
+Bundle-ManifestVersion: 2
+Bundle-Activator: org.xmind.core.internal.command.remote.lan.LANRemote
+ CommandPlugin
+Bundle-SymbolicName: org.xmind.core.command.remote.lan;singleton:=true
+
+

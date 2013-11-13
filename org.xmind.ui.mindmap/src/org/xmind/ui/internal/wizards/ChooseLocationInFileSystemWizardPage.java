@@ -236,7 +236,12 @@ public class ChooseLocationInFileSystemWizardPage extends
         FileUtils.ensureFileParent(file);
         IWorkbook workbook = WorkbookFactory.createEmptyWorkbook();
         try {
-            workbook.save(new FileOutputStream(file));
+            FileOutputStream fout = new FileOutputStream(file);
+            try {
+                workbook.save(fout);
+            } finally {
+                fout.close();
+            }
         } catch (Exception e) {
         }
         return MME.createFileEditorInput(file);

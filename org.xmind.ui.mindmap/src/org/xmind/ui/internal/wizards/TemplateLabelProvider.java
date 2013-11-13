@@ -65,10 +65,12 @@ public class TemplateLabelProvider extends ImageCachedLabelProvider implements
                 ITemplateDescriptor.PROP_IMAGE, this);
         final LabelProviderChangedEvent imageChangedEvent = new LabelProviderChangedEvent(
                 this, template);
-        display.asyncExec(new Runnable() {
-            public void run() {
-                fireLabelProviderChanged(imageChangedEvent);
-            }
-        });
+        if (display != null && !display.isDisposed()) {
+            display.asyncExec(new Runnable() {
+                public void run() {
+                    fireLabelProviderChanged(imageChangedEvent);
+                }
+            });
+        }
     }
 }

@@ -182,6 +182,10 @@ public class PageSetupDialog extends TitleAreaDialog {
 
     private IMindMap sourceMindMap;
 
+    private Button currentMapRadio;
+
+    private Button wholeWorkbookRadio;
+
     private Button backgroundCheck;
 
     private Button borderCheck;
@@ -221,6 +225,8 @@ public class PageSetupDialog extends TitleAreaDialog {
             handleWidgetEvent(event);
         }
     };
+
+//    private IMindMap temp = getSourceMindMap();
 
 //    public PageSetupDialog(Shell parentShell, IGraphicalEditor sourceEditor,
 //            IGraphicalEditorPage sourcePge, IMindMapViewer sourceViewer,
@@ -270,6 +276,10 @@ public class PageSetupDialog extends TitleAreaDialog {
         return sourceMindMap;
     }
 
+    public IMindMap setSourceMindMap(IMindMap sourceMindMap) {
+        return this.sourceMindMap = sourceMindMap;
+    }
+
 //    public IGraphicalEditorPage getSourcePge() {
 //        return sourcePge;
 //    }
@@ -315,10 +325,29 @@ public class PageSetupDialog extends TitleAreaDialog {
         GridLayout layout = new GridLayout(1, false);
         composite.setLayout(layout);
 
+        creatContentSection(composite);
         createPageSetupSection(composite);
         createOrientationSection(composite);
         createMarginsSection(composite);
         createHeaderFooterSection(composite);
+    }
+
+    private void creatContentSection(Composite parent) {
+        Composite section = createSection(parent,
+                DialogMessages.PageSetupDialog_Content);
+
+        currentMapRadio = new Button(section, SWT.RADIO);
+        currentMapRadio.setText(DialogMessages.PageSetupDialog_CurrentMap);
+        currentMapRadio.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false));
+        hookWidget(currentMapRadio, SWT.Selection);
+
+        wholeWorkbookRadio = new Button(section, SWT.RADIO);
+        wholeWorkbookRadio
+                .setText(DialogMessages.PageSetupDialog_WholeWorkbook);
+        wholeWorkbookRadio.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false));
+        hookWidget(wholeWorkbookRadio, SWT.Selection);
     }
 
     private void createPageSetupSection(Composite parent) {
@@ -587,7 +616,7 @@ public class PageSetupDialog extends TitleAreaDialog {
         previewViewer.getZoomManager().setConstraints(0, Double.MAX_VALUE);
 
         previewViewer.getCanvas().setScrollBarVisibility(FigureCanvas.NEVER);
-        previewViewer.setInput(sourceMindMap);
+        previewViewer.setInput(getSourceMindMap());
 
 //        CenterPresercationService centerPresercationService = new CenterPresercationService(
 //                previewViewer);
@@ -732,8 +761,16 @@ public class PageSetupDialog extends TitleAreaDialog {
                 || PrintConstants.FOOTER_TEXT.equals(key);
         boolean orientationChanged = key == null
                 || PrintConstants.ORIENTATION.equals(key);
+        boolean contentChanged = key == null
+                || PrintConstants.CONTENTWHOLE.equals(key);
 
         updating = true;
+        if (contentChanged) {
+            currentMapRadio
+                    .setSelection(!getBoolean(PrintConstants.CONTENTWHOLE));
+            wholeWorkbookRadio
+                    .setSelection(getBoolean(PrintConstants.CONTENTWHOLE));
+        }
 
         if (backgroundChanged) {
             boolean showBackground = !getBoolean(PrintConstants.NO_BACKGROUND);
@@ -933,7 +970,14 @@ public class PageSetupDialog extends TitleAreaDialog {
     }
 
     private void handleWidgetEvent(Event event) {
-        if (event.widget == backgroundCheck) {
+        if (event.widget == currentMapRadio) {
+            setProperty(PrintConstants.CONTENTWHOLE,
+                    !currentMapRadio.getSelection());
+
+        } else if (event.widget == wholeWorkbookRadio) {
+            setProperty(PrintConstants.CONTENTWHOLE,
+                    wholeWorkbookRadio.getSelection());
+        } else if (event.widget == backgroundCheck) {
             setProperty(PrintConstants.NO_BACKGROUND,
                     !backgroundCheck.getSelection());
         } else if (event.widget == borderCheck) {

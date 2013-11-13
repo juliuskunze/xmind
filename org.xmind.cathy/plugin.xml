@@ -18,24 +18,26 @@
             name="%productName">
          <property
                name="windowImages"
-               value="icons/xmind.16.gif,icons/xmind.32.png,icons/xmind.48.png,icons/xmind.48.png,icons/xmind.128.png"/>
+               value="icons/xmind.16.png,icons/xmind.32.png,icons/xmind.48.png,icons/xmind.64.png,icons/xmind.128.png,icons/xmind.256.png"/>
          <property
                name="appName"
                value="%productName">
          </property>
+         <!--
          <property
                name="preferenceCustomization"
                value="plugin_customization.ini">
          </property>
+         -->
           <property
           		name="introTitle"
-          		value="Welcome to XMind 3.3"/>
+          		value="Welcome to XMind 2013"/>
           <property
           		name="introBrandingImage"
           		value="product:icons/introimage.png"/>
           <property
           		name="introBrandingImageText"
-          		value="XMind 3.3"/>
+          		value="XMind 2013"/>
 		  <property
 				name="introDescription-overview"
 				value=""/>
@@ -73,6 +75,14 @@
             name="%prefPage.keys.name">
          <keywordReference id="org.eclipse.ui.ide.keys"/>
       </page>
+      <!--
+      <page
+            name="%prefPage.appearance.name"
+            category="org.eclipse.ui.preferencePages.Workbench"
+            class="org.eclipse.ui.ExtensionFactory:colorsAndFontsPreferencePage"
+            id="org.eclipse.ui.preferencePages.ColorsAndFonts">
+      </page>
+      -->
    </extension>
    <extension
          point="org.eclipse.ui.views">
@@ -126,11 +136,29 @@
       </handler>
    </extension>
    <extension
-         point="org.xmind.ui.browser.xmindCommandHandlers">
+         point="org.xmind.core.command.handlers">
       <handler
             class="org.xmind.cathy.internal.OpenFileCommandHandler"
             id="org.xmind.ui.xmindCommandHandler.openFile"
             command="^openFile$">
       </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:org.xmind.ui.statusbar?endof=END_GROUP">
+         <control
+               class="org.xmind.cathy.internal.AutoBackupIndicator"
+               id="org.xmind.ui.status.AutoSaveIndicator">
+         </control>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.statusHandlers">
+      <statusHandlerProductBinding
+            handlerId="org.xmind.ui.statusHandler"
+            productId="org.xmind.cathy.product">
+      </statusHandlerProductBinding>
    </extension>
 </plugin>

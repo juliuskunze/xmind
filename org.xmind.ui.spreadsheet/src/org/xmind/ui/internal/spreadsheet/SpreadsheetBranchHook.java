@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.ui.internal.spreadsheet;
 
+import org.eclipse.swt.widgets.Control;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
@@ -47,10 +48,17 @@ public class SpreadsheetBranchHook implements IBranchHook, ICoreEventListener {
 
     public void handleCoreEvent(CoreEvent event) {
         if (branch != null
-                && Spreadsheet.EVENT_MODIFY_COLUMN_ORDER.equals(event
-                        .getType())) {
-            branch.getFigure().revalidate();
-            branch.getFigure().repaint();
+                && Spreadsheet.EVENT_MODIFY_COLUMN_ORDER
+                        .equals(event.getType())) {
+            Control c = branch.getSite().getViewerControl();
+            if (c != null && !c.isDisposed()) {
+                c.getDisplay().syncExec(new Runnable() {
+                    public void run() {
+                        branch.getFigure().revalidate();
+                        branch.getFigure().repaint();
+                    }
+                });
+            }
         }
     }
 

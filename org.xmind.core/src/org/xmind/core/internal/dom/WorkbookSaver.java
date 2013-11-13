@@ -34,7 +34,16 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.xmind.core.Core;
 import org.xmind.core.CoreException;
 import org.xmind.core.IAdaptable;
@@ -44,6 +53,7 @@ import org.xmind.core.IFileEntry;
 import org.xmind.core.IManifest;
 import org.xmind.core.IRevision;
 import org.xmind.core.IRevisionManager;
+import org.xmind.core.internal.InternalCore;
 import org.xmind.core.internal.security.Crypto;
 import org.xmind.core.internal.zip.ArchiveConstants;
 import org.xmind.core.internal.zip.ZipStreamOutputTarget;
@@ -54,33 +64,287 @@ import org.xmind.core.io.IOutputTarget;
 import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.core.style.IStyleSheet;
 import org.xmind.core.util.DOMUtils;
-import org.xmind.core.util.FileUtils;
 
 /**
- * @author frankshaka
+ * @author Frank Shaka
  * 
  */
 public class WorkbookSaver {
 
-    /**
-     * The workbook to save
-     */
-    private WorkbookImpl workbook;
+    private static class WorkbookSaveSession {
+
+        /**
+         * The workbook to save.
+         */
+        private final WorkbookImpl workbook;
+
+        /**
+         * The multi-entry output target to save to.
+         */
+        private final IOutputTarget target;
+
+        /**
+         * Entry paths that have been saved.
+         */
+        private Set<String> savedEntries = new HashSet<String>();
+
+        /**
+         * DOM transformer factory, lazy created.
+         */
+        private TransformerFactory transformerFactory = null;
+
+        /**
+         * Constructs a new WorkbookSaveSession.
+         * 
+         * @param workbook
+         * @param target
+         */
+        public WorkbookSaveSession(WorkbookImpl workbook, IOutputTarget target) {
+            this.workbook = workbook;
+            this.target = target;
+        }
+
+        /**
+         * The main saving process.
+         * 
+         * @throws IOException
+         * @throws CoreException
+         */
+        public synchronized void save() throws IOException, CoreException {
+            try {
+                try {
+                    saveMeta();
+                    saveContent();
+                    saveMarkerSheet();
+                    saveStyleSheet();
+                    if (!workbook.isSkipRevisionsWhenSaving()) {
+                        saveRevisions();
+                    }
+                    copyOtherStaff();
+                    saveManifest();
+                } finally {
+                    clearEncryptionData();
+                }
+            } finally {
+                if (target instanceof ICloseableOutputTarget) {
+                    ((ICloseableOutputTarget) target).close();
+                }
+            }
+        }
+
+        private void saveManifest() throws IOException, CoreException {
+            saveDOM(workbook.getManifest(), target, MANIFEST_XML);
+        }
+
+        private void saveStyleSheet() throws IOException, CoreException {
+            IStyleSheet styleSheet = workbook.getStyleSheet();
+            if (!styleSheet.isEmpty()) {
+                saveDOM(styleSheet, target, STYLES_XML);
+            }
+        }
+
+        private void saveMarkerSheet() throws IOException, CoreException {
+            IMarkerSheet markerSheet = workbook.getMarkerSheet();
+            if (!markerSheet.isEmpty()) {
+                saveDOM(markerSheet, target, PATH_MARKER_SHEET);
+            }
+        }
+
+        private void saveRevisions() throws IOException, CoreException {
+            Iterator<Element> sheets = DOMUtils.childElementIterByTag(
+                    workbook.getWorkbookElement(), TAG_SHEET);
+            while (sheets.hasNext()) {
+                Element sheetEle = sheets.next();
+                String sheetId = sheetEle.getAttribute(ATTR_ID);
+                IRevisionManager manager = workbook.getRevisionRepository()
+                        .getRevisionManager(sheetId, IRevision.SHEET);
+                String path = PATH_REVISIONS + sheetId + "/" + REVISIONS_XML; //$NON-NLS-1$
+                saveDOM(manager, target, path);
+            }
+        }
+
+        private void saveContent() throws IOException, CoreException {
+            saveDOM(workbook, target, CONTENT_XML);
+        }
+
+        private void saveMeta() throws IOException, CoreException {
+            saveDOM(workbook.getMeta(), target, META_XML);
+        }
+
+        private void copyOtherStaff() throws IOException, CoreException {
+            IInputSource source = workbook.getTempStorage().getInputSource();
+            IManifest manifest = workbook.getManifest();
+            for (IFileEntry entry : manifest.getFileEntries()) {
+                if (!entry.isDirectory()) {
+                    String entryPath = entry.getPath();
+                    if (shouldSaveEntry(entryPath)) {
+                        copyEntry(source, target, entryPath);
+                        markSaved(entryPath);
+                    }
+                }
+            }
+        }
+
+        private synchronized void copyEntry(IInputSource source,
+                IOutputTarget target, String entryPath) throws IOException,
+                CoreException {
+            InputStream in = getInputStream(source, entryPath);
+            if (in == null) {
+                Core.getLogger().log(
+                        "Save workbook: failed to copy entry, input stream not avaiable: " //$NON-NLS-1$
+                                + entryPath);
+                return; // Entry source not found.
+            }
+
+            try {
+                long time = source.getEntryTime(entryPath);
+                if (time >= 0) {
+                    target.setEntryTime(entryPath, time);
+                }
+                OutputStream out = getOutputStream(target, entryPath);
+                try {
+                    int numBytes;
+                    byte[] byteBuffer = new byte[4096];
+                    while ((numBytes = in.read(byteBuffer)) > 0) {
+                        out.write(byteBuffer, 0, numBytes);
+                    }
+                    recordChecksum(entryPath, out);
+                } finally {
+                    out.close();
+                }
+            } finally {
+                in.close();
+            }
+        }
+
+        private boolean shouldSaveEntry(String entryPath) {
+            return entryPath != null
+                    && !"".equals(entryPath) //$NON-NLS-1$
+                    && !MANIFEST_XML.equals(entryPath)
+                    && !hasBeenSaved(entryPath)
+                    && !(workbook.isSkipRevisionsWhenSaving() && entryPath
+                            .startsWith(ArchiveConstants.PATH_REVISIONS));
+        }
+
+        private void clearEncryptionData() {
+            for (IFileEntry entry : workbook.getManifest().getFileEntries()) {
+                entry.deleteEncryptionData();
+            }
+        }
+
+        private void saveDOM(IAdaptable domAdapter, IOutputTarget target,
+                String entryPath) throws IOException, CoreException {
+            Node node = (Node) domAdapter.getAdapter(Node.class);
+            if (node == null) {
+                Core.getLogger().log(
+                        "SaveWorkbook: No DOM node available for entry: " //$NON-NLS-1$
+                                + entryPath);
+                return;
+            }
+
+            if (transformerFactory == null) {
+                try {
+                    transformerFactory = TransformerFactory.newInstance();
+                } catch (TransformerFactoryConfigurationError error) {
+                    throw new CoreException(
+                            Core.ERROR_FAIL_ACCESS_XML_TRANSFORMER,
+                            "Failed to obtain XML transformer factory.", error); //$NON-NLS-1$
+                }
+            }
+
+            Transformer transformer;
+            try {
+                transformer = transformerFactory.newTransformer();
+            } catch (TransformerConfigurationException error) {
+                throw new CoreException(Core.ERROR_FAIL_ACCESS_XML_TRANSFORMER,
+                        "Failed to create XML transformer for DOM entry '" //$NON-NLS-1$
+                                + entryPath + "'.", error); //$NON-NLS-1$
+            }
+
+            OutputStream out = getOutputStream(target, entryPath);
+            try {
+                transformer.transform(new DOMSource(node),
+                        new StreamResult(out));
+            } catch (TransformerException e) {
+                throw new IOException(e.getLocalizedMessage(), e);
+            } finally {
+                out.close();
+            }
+            recordChecksum(entryPath, out);
+            markSaved(entryPath);
+        }
+
+        private void recordChecksum(String entryPath, Object checksumProvider)
+                throws IOException {
+            if (checksumProvider instanceof IChecksumStream) {
+                IEncryptionData encData = workbook.getManifest()
+                        .getEncryptionData(entryPath);
+                if (encData != null && encData.getChecksumType() != null) {
+                    String checksum = ((IChecksumStream) checksumProvider)
+                            .getChecksum();
+                    if (checksum != null) {
+                        encData.setAttribute(checksum,
+                                DOMConstants.ATTR_CHECKSUM);
+                    }
+                }
+            }
+        }
+
+        private InputStream getInputStream(IInputSource source, String entryPath) {
+            if (source.hasEntry(entryPath)) {
+                return source.getEntryStream(entryPath);
+            }
+            return null;
+        }
+
+        private OutputStream getOutputStream(IOutputTarget target,
+                String entryPath) throws IOException, CoreException {
+            OutputStream out = target.openEntryStream(entryPath);
+
+            String password = workbook.getPassword();
+            if (password == null)
+                return out;
+
+            IFileEntry entry = workbook.getManifest().getFileEntry(entryPath);
+            if (entry == null)
+                return out;
+
+            if (ignoresEncryption(entry, entryPath))
+                return out;
+
+            IEncryptionData encData = entry.createEncryptionData();
+            return Crypto.creatOutputStream(out, true, encData, password);
+        }
+
+        private boolean ignoresEncryption(IFileEntry entry, String entryPath) {
+            return MANIFEST_XML.equals(entryPath)
+                    || ((FileEntryImpl) entry).isIgnoreEncryption();
+        }
+
+        private boolean hasBeenSaved(String entryPath) {
+            return savedEntries.contains(entryPath);
+        }
+
+        private void markSaved(String entryPath) {
+            savedEntries.add(entryPath);
+        }
+
+    }
 
     /**
-     * The target to save to
+     * The workbook to save.
      */
-    private IOutputTarget target;
+    private final WorkbookImpl workbook;
+
+    /**
+     * The last target saved to.
+     */
+    private IOutputTarget lastTarget;
 
     /**
      * (Optional) The absolute path representing a ZIP file target
      */
     private String file;
-
-    /**
-     * Saved entry paths for one 'save' process
-     */
-    private Set<String> savedEntries;
 
     /**
      * Whether to skip revisions when saving.
@@ -125,8 +389,8 @@ public class WorkbookSaver {
      * @throws IOException
      * @throws CoreException
      */
-    public void save() throws IOException, CoreException {
-        save(this.target, this.file);
+    public synchronized void save() throws IOException, CoreException {
+        doSave(this.lastTarget);
     }
 
     /**
@@ -135,278 +399,57 @@ public class WorkbookSaver {
      * @throws IOException
      * @throws CoreException
      */
-    public void save(OutputStream output) throws IOException, CoreException {
-        save(new ZipStreamOutputTarget(new ZipOutputStream(output), false),
-                null);
-
-        // the target can't be reused
-        this.target = null;
-    }
-
-    public void save(String file) throws IOException, CoreException {
-        save(null, file);
-
-        // the target can't be reused
-        this.target = null;
-    }
-
-    public void save(IOutputTarget target) throws IOException, CoreException {
-        save(target, null);
-    }
-
-    /**
-     * 
-     * @param target
-     * @param file
-     * @throws IOException
-     * @throws CoreException
-     */
-    private void save(IOutputTarget target, String file) throws IOException,
+    public synchronized void save(OutputStream output) throws IOException,
             CoreException {
-        if (target == null) {
-            if (file != null) {
-                if (new File(file).isDirectory()) {
-                    target = new DirectoryOutputTarget(file);
-                } else {
-                    target = new ZipStreamOutputTarget(new ZipOutputStream(
-                            new FileOutputStream(file)), false);
+        doSave(new ZipStreamOutputTarget(new ZipOutputStream(output)));
+    }
+
+    public synchronized void save(String file) throws IOException,
+            CoreException {
+        if (new File(file).isDirectory()) {
+            doSave(new DirectoryOutputTarget(file));
+        } else {
+            FileOutputStream fout = new FileOutputStream(file);
+            try {
+                ZipOutputStream stream = new ZipOutputStream(fout);
+                try {
+                    doSave(new ZipStreamOutputTarget(stream));
+                } finally {
+                    stream.close();
                 }
+            } finally {
+                fout.close();
             }
         }
         this.file = file;
-
-        if (target == null)
-            throw new FileNotFoundException("No target to save."); //$NON-NLS-1$
-
-        try {
-            doSave(target);
-        } finally {
-            if (target instanceof ICloseableOutputTarget) {
-                ((ICloseableOutputTarget) target).close();
-            }
-        }
     }
 
-    private void doSave(IOutputTarget target) throws FileNotFoundException,
-            IOException, CoreException {
-        this.target = target;
-        this.savedEntries = null;
-        try {
-            doSave();
-        } finally {
-            try {
-                clearEncryptionData();
-            } catch (Throwable ignore) {
-            }
-            this.savedEntries = null;
-        }
+    public synchronized void save(IOutputTarget target) throws IOException,
+            CoreException {
+        doSave(target);
+        this.lastTarget = target;
     }
 
     /**
-     * The main saving process.
      * 
+     * @param target
      * @throws IOException
      * @throws CoreException
      */
-    private void doSave() throws IOException, CoreException {
-        saveMeta();
-        saveContent();
-        saveMarkerSheet();
-        saveStyleSheet();
-        if (!skipRevisions) {
-            saveRevisions();
-        }
+    private synchronized void doSave(IOutputTarget target) throws IOException,
+            CoreException {
+        if (target == null)
+            throw new FileNotFoundException("No target to save."); //$NON-NLS-1$
 
-        copyOtherStaff();
-
-        saveManifest();
-    }
-
-    private void saveManifest() throws IOException, CoreException {
-        saveDOM(workbook.getManifest(), target, MANIFEST_XML);
-    }
-
-    private void saveStyleSheet() throws IOException, CoreException {
-        IStyleSheet styleSheet = workbook.getStyleSheet();
-        if (!styleSheet.isEmpty()) {
-            saveDOM(styleSheet, target, STYLES_XML);
-        }
-    }
-
-    private void saveMarkerSheet() throws IOException, CoreException {
-        IMarkerSheet markerSheet = workbook.getMarkerSheet();
-        if (!markerSheet.isEmpty()) {
-            saveDOM(markerSheet, target, PATH_MARKER_SHEET);
-        }
-    }
-
-    private void saveRevisions() throws IOException, CoreException {
-        Iterator<Element> it = DOMUtils.childElementIterByTag(
-                workbook.getWorkbookElement(), TAG_SHEET);
-        while (it.hasNext()) {
-            Element sheetEle = it.next();
-            String sheetId = sheetEle.getAttribute(ATTR_ID);
-            IRevisionManager manager = workbook.getRevisionRepository()
-                    .getRevisionManager(sheetId, IRevision.SHEET);
-            String path = PATH_REVISIONS + sheetId + "/" + REVISIONS_XML; //$NON-NLS-1$
-            saveDOM(manager, target, path);
-        }
-    }
-
-    private void saveContent() throws IOException, CoreException {
-        saveDOM(workbook, target, CONTENT_XML);
-    }
-
-    private void saveMeta() throws IOException, CoreException {
-        saveDOM(workbook.getMeta(), target, META_XML);
-    }
-
-    private void copyOtherStaff() throws IOException, CoreException {
-        IInputSource source = workbook.getTempStorage().getInputSource();
-        copyAll(source, target);
-    }
-
-    private void copyAll(IInputSource source, IOutputTarget target) {
-        IManifest manifest = workbook.getManifest();
-        for (IFileEntry entry : manifest.getFileEntries()) {
-            if (!entry.isDirectory()) {
-                String entryPath = entry.getPath();
-                if (shouldSaveEntry(entryPath)) {
-                    copyEntry(source, target, entryPath);
-                    markSaved(entryPath);
-                }
-            }
-        }
-    }
-
-    private boolean shouldSaveEntry(String entryPath) {
-        return entryPath != null
-                && !"".equals(entryPath) //$NON-NLS-1$
-                && !ArchiveConstants.MANIFEST_XML.equals(entryPath)
-                && !hasBeenSaved(entryPath)
-                && (!skipRevisions || !entryPath
-                        .startsWith(ArchiveConstants.PATH_REVISIONS));
-    }
-
-    private void copyEntry(IInputSource source, IOutputTarget target,
-            String entryPath) {
-        try {
-            InputStream in = getInputStream(source, entryPath);
-            if (in != null) {
-                OutputStream out = getOutputStream(target, entryPath);
-                if (out != null) {
-                    try {
-                        FileUtils.transfer(in, out, true);
-                    } finally {
-                        long time = source.getEntryTime(entryPath);
-                        if (time >= 0) {
-                            target.setEntryTime(entryPath, time);
-                        }
-                        recordChecksum(entryPath, out);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            Core.getLogger().log(e);
-        } catch (CoreException e) {
-            Core.getLogger().log(e);
-        }
-    }
-
-    private InputStream getInputStream(IInputSource source, String entryPath) {
-        if (source.hasEntry(entryPath)) {
-            return source.getEntryStream(entryPath);
-        }
-        return null;
-    }
-
-    /**
-     * @param manifest
-     */
-    private void clearEncryptionData() {
-        for (IFileEntry entry : workbook.getManifest().getFileEntries()) {
-            entry.deleteEncryptionData();
-        }
-    }
-
-    private boolean hasBeenSaved(String entryPath) {
-        return savedEntries != null && savedEntries.contains(entryPath);
-    }
-
-    /**
-     * @param entryPath
-     */
-    private void markSaved(String entryPath) {
-        if (savedEntries == null)
-            savedEntries = new HashSet<String>();
-        savedEntries.add(entryPath);
-    }
-
-    /**
-     * @param domAdapter
-     * @param target
-     * @param entryPath
-     */
-    private void saveDOM(IAdaptable domAdapter, IOutputTarget target,
-            String entryPath) throws IOException, CoreException {
-        OutputStream out = getOutputStream(target, entryPath);
-        if (out != null) {
-            try {
-                DOMUtils.save(domAdapter, out, true);
-            } finally {
-                recordChecksum(entryPath, out);
-                markSaved(entryPath);
-            }
-        }
-    }
-
-    /**
-     * @param entryPath
-     * @param out
-     * @throws IOException
-     */
-    private void recordChecksum(String entryPath, Object checksumProvider)
-            throws IOException {
-        if (checksumProvider instanceof IChecksumStream) {
-            IEncryptionData encData = workbook.getManifest().getEncryptionData(
-                    entryPath);
-            if (encData != null && encData.getChecksumType() != null) {
-                String checksum = ((IChecksumStream) checksumProvider)
-                        .getChecksum();
-                if (checksum != null) {
-                    encData.setAttribute(checksum, DOMConstants.ATTR_CHECKSUM);
-                }
-            }
-        }
-    }
-
-    private OutputStream getOutputStream(IOutputTarget target, String entryPath)
-            throws CoreException {
-        if (!target.isEntryAvaialble(entryPath))
-            return null;
-
-        OutputStream out = target.getEntryStream(entryPath);
-        if (out == null)
-            return null;
-
-        String password = workbook.getPassword();
-        if (password == null)
-            return out;
-
-        IFileEntry entry = workbook.getManifest().getFileEntry(entryPath);
-        if (entry == null)
-            return out;
-
-        if (ignoresEncryption(entry, entryPath))
-            return out;
-
-        IEncryptionData encData = entry.createEncryptionData();
-        return Crypto.creatOutputStream(out, true, encData, password);
-    }
-
-    private boolean ignoresEncryption(IFileEntry entry, String entryPath) {
-        return ArchiveConstants.MANIFEST_XML.equals(entryPath)
-                || ((FileEntryImpl) entry).isIgnoreEncryption();
+        if (InternalCore.DEBUG_WORKBOOK_SAVE)
+            Core.getLogger().log(
+                    "WorkbookSaver: About to save workbook to output target " //$NON-NLS-1$
+                            + target.toString());
+        new WorkbookSaveSession(workbook, target).save();
+        if (InternalCore.DEBUG_WORKBOOK_SAVE)
+            Core.getLogger().log(
+                    "WorkbookSaver: Finished saving workbook to output target " //$NON-NLS-1$
+                            + target.toString());
     }
 
 }

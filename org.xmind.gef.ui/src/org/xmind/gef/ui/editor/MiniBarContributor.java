@@ -14,6 +14,7 @@
 package org.xmind.gef.ui.editor;
 
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.ui.IEditorPart;
 
 public class MiniBarContributor implements IMiniBarContributor {
 
@@ -21,6 +22,11 @@ public class MiniBarContributor implements IMiniBarContributor {
 
     private IGraphicalEditor editor;
 
+    /**
+     * @deprecated Use
+     *             {@link IGraphicalEditor#addPageChangedListener(org.eclipse.jface.dialogs.IPageChangedListener)}
+     *             instead.
+     */
     private IGraphicalEditorPage activePage;
 
     public void init(IMiniBar bar, IGraphicalEditor editor) {
@@ -28,12 +34,20 @@ public class MiniBarContributor implements IMiniBarContributor {
         init(bar);
     }
 
-    public void init(IMiniBar bar) {
+    protected void init(IMiniBar bar) {
         this.bar = bar;
         contributeToToolBar(bar.getToolBarManager());
     }
 
     public void dispose() {
+    }
+
+    public Object getAdapter(Class adapter) {
+        if (adapter == IMiniBar.class)
+            return bar;
+        if (adapter == IGraphicalEditor.class || adapter == IEditorPart.class)
+            return editor;
+        return null;
     }
 
     public IMiniBar getBar() {
@@ -47,6 +61,12 @@ public class MiniBarContributor implements IMiniBarContributor {
     public void contributeToToolBar(IToolBarManager toolBar) {
     }
 
+    /**
+     * 
+     * @deprecated Use
+     *             {@link IGraphicalEditor#addPageChangedListener(org.eclipse.jface.dialogs.IPageChangedListener)}
+     *             instead.
+     */
     public void setActivePage(IGraphicalEditorPage page) {
         if (page == this.activePage)
             return;
@@ -61,18 +81,46 @@ public class MiniBarContributor implements IMiniBarContributor {
         pageChanged(page);
     }
 
+    /**
+     * 
+     * @return
+     * @deprecated Use
+     *             {@link IGraphicalEditor#addPageChangedListener(org.eclipse.jface.dialogs.IPageChangedListener)}
+     *             to listen to active page change events.
+     */
     public IGraphicalEditorPage getActivePage() {
         return activePage;
     }
 
+    /**
+     * 
+     * @param page
+     * @deprecated Use
+     *             {@link IGraphicalEditor#addPageChangedListener(org.eclipse.jface.dialogs.IPageChangedListener)}
+     *             to listen to active page change events.
+     */
     protected void pageChanged(IGraphicalEditorPage page) {
 
     }
 
+    /**
+     * 
+     * @param page
+     * @deprecated Use
+     *             {@link IGraphicalEditor#addPageChangedListener(org.eclipse.jface.dialogs.IPageChangedListener)}
+     *             to listen to active page change events.
+     */
     protected void hookPage(IGraphicalEditorPage page) {
 
     }
 
+    /**
+     * 
+     * @param page
+     * @deprecated Use
+     *             {@link IGraphicalEditor#addPageChangedListener(org.eclipse.jface.dialogs.IPageChangedListener)}
+     *             to listen to active page change events.
+     */
     protected void unhookPage(IGraphicalEditorPage page) {
 
     }

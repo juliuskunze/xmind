@@ -1,0 +1,3 @@
+net.xmind.signin/debug=false
+net.xmind.signin/debug/requests/all=false
+net.xmind.signin/debug/requests/stdout=false

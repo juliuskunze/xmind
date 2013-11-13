@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.core;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
@@ -32,9 +33,53 @@ public interface IFileEntry extends IAdaptable, IWorkbookComponent {
 
     void decreaseReference();
 
+    /**
+     * Opens a new input stream for reading data from this file entry.
+     * 
+     * <p>
+     * <strong>For dianostic purpose, this method is not recommended any more.
+     * Use {@link #openInputStream()} instead to let potential I/O errors be
+     * thrown.</strong>
+     * </p>
+     * 
+     * @return an input stream for this file entry, or <code>null</code> if the
+     *         input stream is not available
+     */
     InputStream getInputStream();
 
+    /**
+     * Opens a new output stream for writing data to this file entry.
+     * 
+     * <p>
+     * <strong>For dianostic purpose, this method is not recommended any more.
+     * Use {@link #openOutputStream()} instead to let potential I/O errors be
+     * thrown.</strong>
+     * </p>
+     * 
+     * @return an output stream for this file entry, or <code>null</code> if the
+     *         output stream is not available
+     */
     OutputStream getOutputStream();
+
+    /**
+     * Opens a new input stream for reading data from this file entry.
+     * 
+     * @return an input stream for this file entry
+     * @throws IOException
+     *             if I/O error occurs, this entry is not found in storage, or
+     *             this entry is a directory
+     */
+    InputStream openInputStream() throws IOException;
+
+    /**
+     * Opens a new output stream for writing data to this file entry.
+     * 
+     * @return an output stream for this file entry
+     * @throws IOException
+     *             if I/O error occurs, or this entry is not available for
+     *             writing
+     */
+    OutputStream openOutputStream() throws IOException;
 
     boolean isDirectory();
 

@@ -68,9 +68,9 @@ public class NotificationWindow extends Window {
 
     private static final int FINAL_ALPHA = 200;
 
-    private static final int FADE_IN_DURATION = 1200;
+//    private static final int FADE_IN_DURATION = 1200;
 
-    private static final int FADE_OUT_DURATION = 260;
+//    private static final int FADE_OUT_DURATION = 260;
 
     private static final int AUTO_FADE_OUT_DURATION = 4000;
 
@@ -487,7 +487,7 @@ public class NotificationWindow extends Window {
         final Display display = newShell.getDisplay();
         newShell.setBackground(display.getSystemColor(SWT.COLOR_BLACK));
         newShell.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
-        newShell.setAlpha(0);
+        newShell.setAlpha(FINAL_ALPHA);
     }
 
     @Override
@@ -585,12 +585,17 @@ public class NotificationWindow extends Window {
 
         showing = true;
         closing = false;
-        fadeTo(FINAL_ALPHA, FADE_IN_DURATION, new Runnable() {
+        Display.getCurrent().asyncExec(new Runnable() {
             public void run() {
-                showing = false;
                 countDown(duration);
             }
         });
+//        fadeTo(FINAL_ALPHA, FADE_IN_DURATION, new Runnable() {
+//            public void run() {
+//                showing = false;
+//                countDown(duration);
+//            }
+//        });
         return OK;
     }
 
@@ -598,11 +603,12 @@ public class NotificationWindow extends Window {
         closing = true;
         hovered = false;
         showing = false;
-        fadeTo(0, FADE_OUT_DURATION, new Runnable() {
-            public void run() {
-                hardClose();
-            }
-        });
+        hardClose();
+//        fadeTo(0, FADE_OUT_DURATION, new Runnable() {
+//            public void run() {
+//                hardClose();
+//            }
+//        });
         return true;
     }
 

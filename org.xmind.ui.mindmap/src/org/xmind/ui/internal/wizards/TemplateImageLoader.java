@@ -211,6 +211,8 @@ public class TemplateImageLoader extends Job {
     }
 
     private ImageDescriptor loadImageFromThumbnail(final InputStream stream) {
+        if (display.isDisposed())
+            return null;
         final ImageDescriptor[] imageDescriptor = new ImageDescriptor[1];
         display.syncExec(new Runnable() {
             public void run() {
@@ -225,6 +227,8 @@ public class TemplateImageLoader extends Job {
 
     protected ImageDescriptor loadImageFromThumbnailExporter(InputStream stream)
             throws Exception {
+        if (display.isDisposed())
+            return null;
         IStorage storage = new ByteArrayStorage();
         FileUtils.extractZipStream(stream, storage.getOutputTarget());
         try {

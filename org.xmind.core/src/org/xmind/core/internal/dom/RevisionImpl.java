@@ -18,7 +18,6 @@ import static org.xmind.core.internal.dom.DOMConstants.ATTR_RESOURCE;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_REVISION_NUMBER;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_TIMESTAMP;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 import org.w3c.dom.Document;
@@ -131,7 +130,7 @@ public class RevisionImpl extends Revision {
             if (stream != null) {
                 try {
                     return DOMUtils.loadDocument(stream);
-                } catch (IOException e) {
+                } catch (Throwable e) {
                     Core.getLogger().log(e,
                             "Failed to load content from " + path); //$NON-NLS-1$
                 }

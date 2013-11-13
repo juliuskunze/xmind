@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IProduct;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
@@ -54,6 +55,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.xmind.ui.resources.FontUtils;
 import org.xmind.ui.viewers.FileUtils;
@@ -327,7 +329,11 @@ public class XMindUpdater {
         if (currentBuildId != null) {
             request.addParameter("buildid", currentBuildId); //$NON-NLS-1$
         }
-        request.get();
+        try {
+            request.get();
+        } catch (OperationCanceledException e) {
+            return Status.CANCEL_STATUS;
+        }
 
         if (monitor.isCanceled() || request.isAborted())
             return CANCELED;
@@ -344,7 +350,7 @@ public class XMindUpdater {
             // No updates found:
             return runInUI(monitor, new IRunnable() {
                 public IStatus run(IProgressMonitor monitor) throws Exception {
-                    MessageDialog.openInformation(null,
+                    MessageDialog.openInformation(getParentShell(),
                             Messages.XMindUpdater_DialogTitle,
                             Messages.XMindUpdater_Dialog_NoUpdatesFound);
                     return CANCELED;
@@ -388,7 +394,7 @@ public class XMindUpdater {
         monitor.subTask(Messages.XMindUpdater_Task_ConfirmDownloading);
         return runInUI(monitor, new IRunnable() {
             public IStatus run(IProgressMonitor monitor) throws Exception {
-                int code = new NewUpdateDialog(null).open();
+                int code = new NewUpdateDialog(getParentShell()).open();
                 if (code == DOWNLOAD_ID) {
                     return OK;
                 } else if (code == MORE_ID) {
@@ -420,8 +426,8 @@ public class XMindUpdater {
             monitor.subTask(Messages.XMindUpdater_Task_ChooseSaveLocation);
             IStatus fileChosen = runInUI(monitor, new IRunnable() {
                 public IStatus run(IProgressMonitor monitor) throws Exception {
-                    Shell parent = Display.getCurrent().getActiveShell();
-                    FileDialog dialog = new FileDialog(parent, SWT.SAVE);
+                    FileDialog dialog = new FileDialog(getParentShell(),
+                            SWT.SAVE);
                     dialog.setText(Messages.XMindUpdater_SaveDialogTitle);
                     dialog.setFileName(getFileName(downloadURL));
                     String path = dialog.open();
@@ -560,7 +566,7 @@ public class XMindUpdater {
         return runInUI(monitor, new IRunnable() {
             public IStatus run(IProgressMonitor monitor) throws Exception {
                 int choice = new MessageDialog(
-                        null,
+                        getParentShell(),
                         Messages.XMindUpdater_DialogTitle,
                         null,
                         Messages.XMindUpdater_Dialog_ConfirmInstalling,
@@ -777,6 +783,15 @@ public class XMindUpdater {
             final File installerFile) {
         FileUtils.show(installerFile);
         return OK;
+    }
+
+    private Shell getParentShell() {
+        if (workbench != null) {
+            IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+            if (window != null)
+                return window.getShell();
+        }
+        return Display.getCurrent().getActiveShell();
     }
 
     private static String findAppPath() {

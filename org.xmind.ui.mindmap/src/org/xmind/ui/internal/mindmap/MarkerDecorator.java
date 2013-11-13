@@ -14,6 +14,7 @@
 package org.xmind.ui.internal.mindmap;
 
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.swt.graphics.Image;
 import org.xmind.gef.draw2d.SizeableImageFigure;
 import org.xmind.gef.part.Decorator;
@@ -36,7 +37,17 @@ public class MarkerDecorator extends Decorator {
                 image = (Image) part.getAdapter(Image.class);
             }
             imgFigure.setImage(image);
-            imgFigure.setPreferredSize(imgFigure.getImageSize());
+            Dimension imageSize = imgFigure.getImageSize();
+            Dimension preferredSize = ((IMarkerPart) part).getPreferredSize();
+            if (preferredSize == null) {
+                preferredSize = imageSize;
+            } else {
+                if (preferredSize.width > imageSize.width)
+                    preferredSize.setWidth(imageSize.width);
+                if (preferredSize.height > imageSize.height)
+                    preferredSize.setHeight(imageSize.height);
+            }
+            imgFigure.setPreferredSize(preferredSize);
         }
     }
 

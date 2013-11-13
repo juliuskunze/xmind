@@ -260,6 +260,21 @@ public class Info {
      */
     public static final String FILE = "File"; //$NON-NLS-1$
 
+    /**
+     * <p>
+     * Key="Trimmed"
+     * </p>
+     * <p>
+     * Value Type: Boolean
+     * </p>
+     * <p>
+     * <b>WARNING: FOR INTERNAL USE ONLY! NOT PART OF THE METADATA.</b>
+     * </p>
+     */
+    public static final String TRIMMED = "Trimmed"; //$NON-NLS-1$
+
+    public static final String MULTISHEETS = "multiSheets"; //$NON-NLS-1$
+
     private Map<String, Object> properties = new HashMap<String, Object>();
 
     private PropertyChangeSupport support = new PropertyChangeSupport(this);

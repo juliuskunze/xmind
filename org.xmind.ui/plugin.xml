@@ -64,7 +64,7 @@
             name="%commandCategory.editMindMap.name">
       </category>
       <category
-            description="Commands for editing text"
+            description="%commandCategory.textEditor.description"
             id="org.xmind.ui.category.text.edit"
             name="%commandCategory.textEditor.name">
       </category>
@@ -439,6 +439,28 @@
             description="%command.newWorkbookDialog.description"
             id="org.xmind.ui.command.newWorkbookWizard"
             name="%command.newWorkbookDialog.name">
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.mindmap"
+            description="%command.applySelectedStyle.description"
+            id="org.xmind.ui.command.style.apply"
+            name="%command.applySelectedStyle.name">
+         <commandParameter
+               id="org.xmind.ui.resource.uri"
+               name="%commandParameter.styleURI.name"
+               optional="true">
+         </commandParameter>
+      </command>
+      <command
+            categoryId="org.xmind.ui.category.mindmap"
+            description="%command.renameSelectedStyle.description"
+            id="org.xmind.ui.command.style.rename"
+            name="%command.renameSelectedStyle.name">
+         <commandParameter
+               id="org.xmind.ui.resource.uri"
+               name="%commandParameter.styleURI.name"
+               optional="true">
+         </commandParameter>
       </command>
    </extension>
    <extension
@@ -2112,7 +2134,7 @@
                      value="org.xmind.core.ITopic">
                </instanceof>
                <test
-                     property="org.xmind.ui.topic.type"
+                     property="org.xmind.core.topic.type"
                      value="summary">
                </test>
             </and>
@@ -2129,7 +2151,7 @@
                 </instanceof>
                 <not>
                    <test
-                         property="org.xmind.ui.topic.type"
+                         property="org.xmind.core.topic.type"
                          value="summary">
                    </test>
                 </not>
@@ -2221,7 +2243,7 @@
                   value="org.xmind.core.ITopic">
              </instanceof>
              <test
-                   property="org.xmind.ui.topic.type"
+                   property="org.xmind.core.topic.type"
                    value="attached">
              </test>
              </and>
@@ -2395,30 +2417,65 @@
    <extension
          point="org.eclipse.ui.exportWizards">
       <category
+      		id="org.xmind.ui.exportWizards.document"
+      		name="%exportCategory.document.name">
+      </category>
+      <category
+      		id="org.xmind.ui.exportWizards.spreadSheet"
+      		name="%exportCategory.spreadSheet.name">
+      </category>
+      <category
+      		id="org.xmind.ui.exportWizards.presentation"
+      		name="%exportCategory.presentation.name">
+      </category>
+      <category
+      		id="org.xmind.ui.exportWizards.image"
+      		name="%exportCategory.image.name">
+      </category>
+      <category
+      		id="org.xmind.ui.exportWizards.other"
+      		name="%exportCategory.other.name">
+      </category>
+      <category
             id="org.xmind.ui.exportWizards"
             name="%exportCategory.mindmap.name">
       </category>
       <wizard
-            category="org.xmind.ui.exportWizards"
+            category="org.xmind.ui.exportWizards.image"
             class="org.xmind.ui.internal.wizards.ImageExportWizard"
             icon="icons/impexp/exportimg.png"
             id="org.xmind.ui.ImageExportWizard"
             name="%exportWizard.image.name">
       </wizard>
       <wizard
-            category="org.xmind.ui.exportWizards"
+            category="org.xmind.ui.exportWizards.document"
             class="org.xmind.ui.internal.wizards.TextExportWizard"
             icon="icons/impexp/exporttxt.png"
             id="org.xmind.ui.TextExportWizard"
             name="%exportWizard.text.name">
       </wizard>
       <wizard
-            category="org.xmind.ui.exportWizards"
+            category="org.xmind.ui.exportWizards.document"
             class="org.xmind.ui.internal.wizards.HtmlExportWizard"
             icon="icons/impexp/exporthtml.png"
             id="org.xmind.ui.HtmlExportWizard"
             name="%exportWizard.html.name">
       </wizard>
+      <wizard
+            category="org.xmind.ui.exportWizards.other"
+            class="org.xmind.ui.internal.wizards.XMind2008ExportWizard"
+            icon="icons/impexp/exportxmap.png"
+            id="org.xmind.ui.XMind2008ExportWizard"
+            name="%exportWizard.xmind2008.name">
+      </wizard>
+      <wizard
+            category="org.xmind.ui.exportWizards.other"
+            class="org.xmind.ui.internal.wizards.FreeMindExportWizard"
+            icon="icons/impexp/exportmm.png"
+            id="org.xmind.ui.FreeMindExportWizard"
+            name="FreeMind">
+      </wizard>
+      <!--
       <wizard
             category="org.xmind.ui.exportWizards"
             class="org.xmind.ui.internal.wizards.MarkerExportWizard"
@@ -2426,20 +2483,7 @@
             id="org.xmind.ui.MarkerExportWizard"
             name="%exportWizard.markerPackage.name">
       </wizard>
-      <wizard
-            category="org.xmind.ui.exportWizards"
-            class="org.xmind.ui.internal.wizards.XMind2008ExportWizard"
-            icon="icons/impexp/exportxmap.png"
-            id="org.xmind.ui.XMind2008ExportWizard"
-            name="%exportWizard.xmind2008.name">
-      </wizard>
-      <wizard
-            category="org.xmind.ui.exportWizards"
-            class="org.xmind.ui.internal.wizards.FreeMindExportWizard"
-            icon="icons/impexp/exportmm.png"
-            id="org.xmind.ui.FreeMindExportWizard"
-            name="FreeMind">
-      </wizard>
+      -->
    </extension>
    <extension
          point="org.eclipse.ui.importWizards">
@@ -2447,6 +2491,7 @@
             id="org.xmind.ui.importWizards"
             name="%importCategory.mindmap.name">
       </category>
+      <!--
       <wizard
             category="org.xmind.ui.importWizards"
             class="org.xmind.ui.internal.wizards.MarkerImportWizard"
@@ -2454,6 +2499,7 @@
             id="org.xmind.ui.MarkerImportWizard"
             name="%importWizard.markerPackage.name">
       </wizard>
+      -->
       <wizard
             category="org.xmind.ui.importWizards"
             class="org.xmind.ui.internal.wizards.XMind2008ImportWizard"
@@ -2506,6 +2552,12 @@
             class="org.xmind.ui.internal.prefs.MarkerManagerPrefPage"
             id="org.xmind.ui.MarkersPrefPage"
             name="%prefPage.markers.name">
+      </page>
+      <page
+            category="org.xmind.ui.MindMapPrefPage"
+            class="org.xmind.ui.internal.prefs.DnDPrefPage"
+            id="org.xmind.ui.DnDPrefPage"
+            name="%prefPage.DnD.name">
       </page>
    </extension>
    <extension
@@ -2592,6 +2644,13 @@
             id="org.xmind.ui.RevisionsContribution"
             targetID="org.xmind.ui.MindMapEditor">
          <action
+               class="org.xmind.ui.internal.actions.ReduceFileSizeAction"
+               id="org.xmind.ui.reduceFileSize"
+               label="%reduceFileSizeAction.label"
+               menubarPath="file/save.ext"
+               style="push">
+         </action>
+         <action
                class="org.xmind.ui.internal.actions.ShowRevisionsActionDelegate"
                icon="icons/e/revisions.gif"
                id="org.xmind.ui.viewRevisions"
@@ -2600,5 +2659,101 @@
                style="push">
          </action>
       </editorContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.themes">
+      <themeElementCategory
+            id="org.xmind.ui.theme"
+            label="%themeCategory.xmind.label">
+      </themeElementCategory>
+   </extension>
+   <extension
+         point="org.eclipse.core.expressions.definitions">
+      <definition
+            id="org.xmind.ui.expression.isModifiableStyle">
+         <adapt
+               type="org.xmind.core.style.IStyle">
+            <adapt
+                  type="org.xmind.core.style.IStyleSheet">
+               <test
+                     property="org.xmind.ui.resource.styleSheet.type"
+                     value="user">
+               </test>
+            </adapt>
+         </adapt>
+      </definition>
+      <definition
+            id="org.xmind.ui.expression.selectionContainsModifiableStyles">
+         <with
+               variable="selection">
+            <iterate
+                  ifEmpty="false"
+                  operator="or">
+               <reference
+                     definitionId="org.xmind.ui.expression.isModifiableStyle">
+               </reference>
+            </iterate>
+         </with>
+      </definition>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="org.xmind.ui.internal.handlers.DeleteStyleHandler"
+            commandId="org.eclipse.ui.edit.delete">
+         <activeWhen>
+            <reference
+                  definitionId="org.xmind.ui.expression.selectionContainsModifiableStyles">
+            </reference>
+         </activeWhen>
+      </handler>
+      <handler
+            class="org.xmind.ui.internal.handlers.ApplyStyleHandler"
+            commandId="org.xmind.ui.command.style.apply">
+         <activeWhen>
+            <with
+                  variable="activeEditorId">
+               <equals
+                     value="org.xmind.ui.MindMapEditor">
+               </equals>
+            </with>
+         </activeWhen>
+      </handler>
+      <handler
+            class="org.xmind.ui.internal.handlers.RenameStyleHandler"
+            commandId="org.xmind.ui.command.style.rename">
+         <activeWhen>
+            <reference
+                  definitionId="org.xmind.ui.expression.selectionContainsModifiableStyles">
+            </reference>
+         </activeWhen>
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.xmind.ui.StylesView?after=group.file">
+         <command
+               commandId="org.xmind.ui.command.style.apply"
+               id="org.xmind.ui.popup.StylesView.apply"
+               style="push">
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.xmind.ui.StylesView?after=group.edit">
+         <command
+               commandId="org.xmind.ui.command.style.rename"
+               id="org.xmind.ui.popup.StylesView.rename"
+               label="%command.renameSelectedStyle.inStylesViewPopupMenu.name"
+               style="push">
+         </command>
+         <command
+               commandId="org.eclipse.ui.edit.delete"
+               id="org.xmind.ui.popup.StylesView.delete"
+               style="push">
+         </command>
+      </menuContribution>
    </extension>
 </plugin>

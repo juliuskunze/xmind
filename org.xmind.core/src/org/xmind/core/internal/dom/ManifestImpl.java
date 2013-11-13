@@ -354,11 +354,18 @@ public class ManifestImpl extends Manifest {
                 String mediaType = FileUtils.getMediaType(sub);
                 IFileEntry e = createFileEntry(path, mediaType);
                 if (e != null) {
-                    OutputStream os = e.getOutputStream();
-                    if (os != null) {
-                        FileUtils.transfer(new FileInputStream(f), os);
-                    }
                     e.setTime(f.lastModified());
+                    OutputStream os = e.openOutputStream();
+                    try {
+                        FileInputStream is = new FileInputStream(f);
+                        try {
+                            FileUtils.transfer(is, os);
+                        } finally {
+                            is.close();
+                        }
+                    } finally {
+                        os.close();
+                    }
                 }
             } else if (f.isDirectory()) {
                 String path = parentPath == null ? sub + "/" : //$NON-NLS-1$
@@ -383,10 +390,12 @@ public class ManifestImpl extends Manifest {
             mediaType = FileUtils.getMediaType(sourceName);
         IFileEntry entry = createFileEntry(path, mediaType);
         if (entry != null) {
-            OutputStream os = entry.getOutputStream();
-            if (os == null)
-                throw new IOException();
-            FileUtils.transfer(stream, os);
+            OutputStream os = entry.openOutputStream();
+            try {
+                FileUtils.transfer(stream, os);
+            } finally {
+                os.close();
+            }
         }
         return entry;
     }
@@ -413,16 +422,21 @@ public class ManifestImpl extends Manifest {
 
     private void importFileEntry(String path, IFileEntry sourceEntry)
             throws IOException {
-        InputStream in = sourceEntry.getInputStream();
-        if (in != null) {
-            IFileEntry entry = createFileEntry(path, sourceEntry.getMediaType());
-            if (entry != null) {
-                OutputStream os = entry.getOutputStream();
-                if (os != null) {
-                    FileUtils.transfer(in, os);
+        InputStream is = sourceEntry.getInputStream();
+        if (is != null) {
+            try {
+                IFileEntry entry = createFileEntry(path,
+                        sourceEntry.getMediaType());
+                entry.setTime(sourceEntry.getTime());
+                OutputStream os = entry.openOutputStream();
+                try {
+                    FileUtils.transfer(is, os);
+                } finally {
+                    os.close();
                 }
+            } finally {
+                is.close();
             }
-            entry.setTime(sourceEntry.getTime());
         }
     }
 

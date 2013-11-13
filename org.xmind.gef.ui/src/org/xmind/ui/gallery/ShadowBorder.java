@@ -62,7 +62,7 @@ public class ShadowBorder extends AbstractBorder {
     /**
      * @return the depth
      */
-    public int getHorizontalDepth() {
+    public int getHorizontalShadowDepth() {
         return hDepth;
     }
 
@@ -83,14 +83,15 @@ public class ShadowBorder extends AbstractBorder {
         setVerticalShadowDepth(depths.height);
     }
 
-    public Dimension getDepths() {
-        return new Dimension(getHorizontalDepth(), getVerticalDepth());
+    public Dimension getShadowDepths() {
+        return new Dimension(getHorizontalShadowDepth(),
+                getVerticalShadowDepth());
     }
 
     /**
      * @return the vDepth
      */
-    public int getVerticalDepth() {
+    public int getVerticalShadowDepth() {
         return vDepth;
     }
 
@@ -189,13 +190,13 @@ public class ShadowBorder extends AbstractBorder {
      */
     public Insets getInsets(IFigure figure) {
         Insets ins = new Insets(getBorderWidth());
-        int hd = getHorizontalDepth();
+        int hd = getHorizontalShadowDepth();
         if (hd > 0) {
             ins.right += hd;
         } else {
             ins.left -= hd;
         }
-        int vd = getVerticalDepth();
+        int vd = getVerticalShadowDepth();
         if (vd > 0) {
             ins.bottom += vd;
         } else {
@@ -210,13 +211,13 @@ public class ShadowBorder extends AbstractBorder {
      */
     public void paint(IFigure figure, Graphics graphics, Insets insets) {
         Rectangle r = getPaintRectangle(figure, insets);
-        Rectangle c = r.getShrinked(getInsets(figure));
+        Rectangle c = r.shrink(getInsets(figure));
         int left = c.x;
         int right = c.right();
         int top = c.y;
         int bottom = c.bottom();
-        int hd = getHorizontalDepth();
-        int vd = getVerticalDepth();
+        int hd = getHorizontalShadowDepth();
+        int vd = getVerticalShadowDepth();
         int bw = getBorderWidth();
         int height = c.height + bw * 2;
         int width = c.width + bw * 2;

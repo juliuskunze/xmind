@@ -1,26 +1,19 @@
 Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: %pluginName
-Bundle-SymbolicName: org.xmind.ui.browser;singleton:=true
-Bundle-Version: 3.3.1.qualifier
-Bundle-Activator: org.xmind.ui.internal.browser.BrowserPlugin
+Require-Bundle: org.eclipse.ui,org.eclipse.core.runtime,org.xmind.ui.t
+ oolkit,org.eclipse.core.net
+Export-Package: org.xmind.ui.browser; uses:="org.eclipse.jface.action,
+   org.xmind.ui.animation,  org.eclipse.ui,  org.eclipse.swt.graphics,
+   org.eclipse.swt.widgets,  org.eclipse.jface.dialogs,  org.eclipse.s
+ wt.browser",org.xmind.ui.internal.browser;x-internal:=true,org.xmind.
+ ui.internal.browser.actions;x-internal:=true
 Bundle-Vendor: %providerName
-Require-Bundle: org.eclipse.ui,
- org.eclipse.core.runtime,
- org.xmind.ui.toolkit,
- org.eclipse.core.net
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
-Export-Package: org.xmind.ui.browser;
-  uses:="org.eclipse.jface.action,
-   org.xmind.ui.animation,
-   org.eclipse.ui,
-   org.eclipse.swt.graphics,
-   org.eclipse.swt.widgets,
-   org.eclipse.jface.dialogs,
-   org.eclipse.swt.browser",
- org.xmind.ui.comm,
- org.xmind.ui.internal.browser;x-internal:=true,
- org.xmind.ui.internal.browser.actions;x-internal:=true,
- org.xmind.ui.internal.comm;x-internal:=true
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name: %pluginName
 Bundle-Localization: plugin
+Bundle-ManifestVersion: 2
+Bundle-Activator: org.xmind.ui.internal.browser.BrowserPlugin
+Bundle-SymbolicName: org.xmind.ui.browser;singleton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

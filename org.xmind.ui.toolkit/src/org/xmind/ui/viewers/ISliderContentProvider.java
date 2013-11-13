@@ -17,17 +17,6 @@ import org.eclipse.jface.viewers.IContentProvider;
 
 public interface ISliderContentProvider extends IContentProvider {
 
-//    /**
-//     * Gets major tick values from the given input. <b>At least the minimum and
-//     * maximum values should be returned.</b> To return multiple values is
-//     * useful when the values are discrete.
-//     * 
-//     * @param input
-//     *            The input of the viewer
-//     * @return The major tick values including the minimum and maximum values
-//     */
-//    Object[] getValues(Object input);
-
     /**
      * Returns a selectable value at the specified position on the slider.
      * 

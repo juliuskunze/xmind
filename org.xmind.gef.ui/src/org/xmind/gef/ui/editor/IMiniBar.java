@@ -19,6 +19,10 @@ public interface IMiniBar {
 
     IToolBarManager getToolBarManager();
 
+    /**
+     * @deprecated Use {{@link #getToolBarManager()}'s
+     *             <code>update(boolean)</code> method to update the mini bar.
+     */
     void updateBar();
 
 }

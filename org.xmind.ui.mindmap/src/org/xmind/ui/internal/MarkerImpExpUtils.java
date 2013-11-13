@@ -65,7 +65,7 @@ public class MarkerImpExpUtils {
         IOutputTarget target;
         if (fileOrDirectory) {
             target = new ZipStreamOutputTarget(new ZipOutputStream(
-                    new FileOutputStream(targetPath)), false);
+                    new FileOutputStream(targetPath)), true);
         } else {
             target = new DirectoryOutputTarget(targetPath);
         }

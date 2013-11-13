@@ -1,6 +1,5 @@
 package org.xmind.core.internal.dom;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +65,7 @@ public class RevisionRepositoryImpl extends RevisionRepository {
         try {
             Document doc = DOMUtils.loadDocument(stream);
             return new RevisionManagerImpl(doc, ownedWorkbook, path);
-        } catch (IOException e) {
+        } catch (Throwable e) {
             Core.getLogger().log(e,
                     "Failed to load document at " + metaEntry.getPath()); //$NON-NLS-1$
         }

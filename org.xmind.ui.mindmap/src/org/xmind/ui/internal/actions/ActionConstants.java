@@ -106,11 +106,9 @@ public class ActionConstants {
 
     public static final String GROUP_FILTER = PREFIX + "group.filter"; //$NON-NLS-1$
 
-    public static final String TOOLBAR_UNDO = PREFIX
-            + "org.xmind.ui.workbench.undo"; //$NON-NLS-1$
+    public static final String TOOLBAR_UNDO = PREFIX + "workbench.undo"; //$NON-NLS-1$
 
-    public static final String TOOLBAR_EDIT = PREFIX
-            + "org.xmind.ui.workbench.edit"; //$NON-NLS-1$
+    public static final String TOOLBAR_EDIT = PREFIX + "workbench.edit"; //$NON-NLS-1$
 
     public static final String ADD_MARKER_ACTION_ID = PREFIX + "addMarker"; //$NON-NLS-1$
 
@@ -163,5 +161,7 @@ public class ActionConstants {
 
     public static final String REOPEN_WORKBOOK_MENU_ID = PREFIX
             + "reopenWorkbook"; //$NON-NLS-1$
+
+    public static final String MINI_ZOOM = PREFIX + "minibar.zoom"; //$NON-NLS-1$
 
 }

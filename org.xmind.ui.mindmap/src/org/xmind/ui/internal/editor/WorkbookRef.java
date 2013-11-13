@@ -14,11 +14,11 @@
 package org.xmind.ui.internal.editor;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -26,7 +26,6 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ui.IEditorPart;
 import org.xmind.core.Core;
-import org.xmind.core.CoreException;
 import org.xmind.core.IEncryptionHandler;
 import org.xmind.core.IMeta;
 import org.xmind.core.IRevision;
@@ -81,6 +80,8 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
 
     private boolean previewOutdated = false;
 
+    private Object ioLock = new Object();
+
     public WorkbookRef() {
         MindMapUIPlugin.getDefault().getPreferenceStore()
                 .addPropertyChangeListener(this);
@@ -106,11 +107,11 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         this.workbookSaver = workbookSaver;
     }
 
-    public IWorkbookBackupMaker getWorkbookBackupMaker() {
-        if (workbookSaver instanceof IWorkbookBackupMaker)
-            return (IWorkbookBackupMaker) workbookSaver;
-        if (workbookLoader instanceof IWorkbookBackupMaker)
-            return (IWorkbookBackupMaker) workbookLoader;
+    public IWorkbookBackupFactory getWorkbookBackupFactory() {
+        if (workbookSaver instanceof IWorkbookBackupFactory)
+            return (IWorkbookBackupFactory) workbookSaver;
+        if (workbookLoader instanceof IWorkbookBackupFactory)
+            return (IWorkbookBackupFactory) workbookLoader;
         return null;
     }
 
@@ -178,6 +179,10 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
 //        }
 //    }
 
+    public Object getIOLock() {
+        return ioLock;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -216,15 +221,17 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
     }
 
     private void closeWorkbook(IWorkbook workbook) {
-        ICoreEventSupport support = (ICoreEventSupport) workbook
-                .getAdapter(ICoreEventSupport.class);
-        if (support != null) {
-            support.dispatchTargetChange((ICoreEventSource) workbook,
-                    MindMapUI.WorkbookClose, this);
-        }
-        IStorage storage = workbook.getTempStorage();
-        if (storage != null) {
-            storage.clear();
+        synchronized (ioLock) {
+            ICoreEventSupport support = (ICoreEventSupport) workbook
+                    .getAdapter(ICoreEventSupport.class);
+            if (support != null) {
+                support.dispatchTargetChange((ICoreEventSource) workbook,
+                        MindMapUI.WorkbookClose, this);
+            }
+            IStorage storage = workbook.getTempStorage();
+            if (storage != null) {
+                storage.clear();
+            }
         }
     }
 
@@ -314,25 +321,27 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
     }
 
     public void loadWorkbook(IEncryptionHandler encryptionHandler,
-            IProgressMonitor monitor) throws IOException, CoreException,
-            org.eclipse.core.runtime.CoreException {
-        loadWorkbook(createStorage(), encryptionHandler, monitor);
+            IProgressMonitor monitor) throws CoreException {
+        synchronized (ioLock) {
+            loadWorkbook(createStorage(), encryptionHandler, monitor);
+        }
     }
 
     public void loadWorkbook(IStorage storage,
             IEncryptionHandler encryptionHandler, IProgressMonitor monitor)
-            throws IOException, CoreException,
-            org.eclipse.core.runtime.CoreException {
-        if (workbook != null)
-            return;
+            throws CoreException {
+        synchronized (ioLock) {
+            if (workbook != null)
+                return;
 
-        if (workbookLoader == null)
-            throw new org.eclipse.core.runtime.CoreException(new Status(
-                    IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
-                    "No workbook loader is set.")); //$NON-NLS-1$
+            if (workbookLoader == null)
+                throw new CoreException(
+                        new Status(IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
+                                "No workbook loader is set.")); //$NON-NLS-1$
 
-        setWorkbook(workbookLoader.loadWorkbook(storage, encryptionHandler,
-                monitor));
+            setWorkbook(workbookLoader.loadWorkbook(storage, encryptionHandler,
+                    monitor));
+        }
     }
 
     static IStorage createStorage() {
@@ -356,140 +365,129 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
 
     public void saveWorkbook(IProgressMonitor monitor,
             IWorkbookReferrer previewSaver, boolean skipNewRevisions)
-            throws IOException, CoreException,
-            org.eclipse.core.runtime.CoreException {
-        monitor.beginTask(null, 100);
-        if (workbook == null)
-            throw new org.eclipse.core.runtime.CoreException(new Status(
-                    IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
-                    "No workbook to save.")); //$NON-NLS-1$
-        if (workbookSaver == null)
-            throw new org.eclipse.core.runtime.CoreException(new Status(
-                    IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
-                    "No workbook saver has been set.")); //$NON-NLS-1$
+            throws CoreException {
+        synchronized (ioLock) {
+            monitor.beginTask(null, 100);
+            if (workbook == null)
+                throw new CoreException(new Status(IStatus.ERROR,
+                        MindMapUIPlugin.PLUGIN_ID, "No workbook to save.")); //$NON-NLS-1$
+            if (workbookSaver == null)
+                throw new CoreException(new Status(IStatus.ERROR,
+                        MindMapUIPlugin.PLUGIN_ID,
+                        "No workbook saver has been set.")); //$NON-NLS-1$
 
-        // Leave 1 tick for finalizing work:
-        int mainWorkTicks = 99;
+            // Leave 1 tick for finalizing work:
+            int mainWorkTicks = 99;
 
-        if (!skipNewRevisions) {
-            monitor.subTask(MindMapMessages.WorkbookSaver_CreateRevisions_taskName);
-            saveRevisions(monitor);
-        }
-        monitor.worked(10);
-        mainWorkTicks -= 10;
-
-        // Delete old preview:
-        workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.jpg"); //$NON-NLS-1$
-        workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.png"); //$NON-NLS-1$
-        if (previewSaver != null) {
-            monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
-            savePreview(monitor);
-        } else {
-            setPreviewOutdated(true);
-        }
-        monitor.worked(10);
-        mainWorkTicks -= 10;
-
-        monitor.subTask(MindMapMessages.WorkbookSaver_SaveWorkbookContent_taskName);
-        Object backup = WorkbookBackupManager.getInstance()
-                .ensureBackedUp(this);
-        try {
-            workbookSaver.save(monitor, workbook);
-        } catch (Throwable e) {
-            if (backup != null) {
-                IWorkbookBackupMaker backupMaker = getWorkbookBackupMaker();
-                if (backupMaker != null) {
-                    try {
-                        backupMaker.restore(monitor, backup);
-                    } catch (Throwable e2) {
-                    }
-                }
+            if (!skipNewRevisions) {
+                monitor.subTask(MindMapMessages.WorkbookSaver_CreateRevisions_taskName);
+                saveRevisions(monitor);
             }
-            if (e instanceof IOException)
-                throw (IOException) e;
-            if (e instanceof CoreException)
-                throw (CoreException) e;
-            if (e instanceof org.eclipse.core.runtime.CoreException)
-                throw (org.eclipse.core.runtime.CoreException) e;
-            if (e instanceof Error)
-                throw (Error) e;
-            if (e instanceof RuntimeException)
-                throw (RuntimeException) e;
-            throw new org.eclipse.core.runtime.CoreException(new Status(
-                    IStatus.ERROR, MindMapUI.PLUGIN_ID,
-                    e.getLocalizedMessage(), e));
-        }
-        monitor.worked(mainWorkTicks);
+            monitor.worked(10);
+            mainWorkTicks -= 10;
 
-        monitor.subTask(MindMapMessages.WorkbookSaver_Finalize_taskName);
-        for (IWorkbookReferrer referrer : getReferrers()) {
-            referrer.postSave(monitor);
-        }
+            // Delete old preview:
+            workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.jpg"); //$NON-NLS-1$
+            workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.png"); //$NON-NLS-1$
+            if (previewSaver != null) {
+                monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
+                savePreview(monitor);
+            } else {
+                setPreviewOutdated(true);
+            }
+            monitor.worked(10);
+            mainWorkTicks -= 10;
 
-        monitor.done();
+            monitor.subTask(MindMapMessages.WorkbookSaver_SaveWorkbookContent_taskName);
+            WorkbookBackupManager wbm = WorkbookBackupManager.getInstance();
+            IWorkbookBackup backup = wbm.ensureBackedUp(this, monitor);
+            try {
+                workbookSaver.save(monitor, workbook);
+            } catch (Throwable e) {
+                if (backup != null) {
+                    backup.restore(monitor);
+                }
+                if (e instanceof CoreException)
+                    throw (CoreException) e;
+                throw new CoreException(new Status(IStatus.ERROR,
+                        MindMapUI.PLUGIN_ID, e.getLocalizedMessage(), e));
+            }
+            wbm.removeWorkbook(this);
+            wbm.addWorkbook(this);
+            monitor.worked(mainWorkTicks);
+
+            monitor.subTask(MindMapMessages.WorkbookSaver_Finalize_taskName);
+            for (IWorkbookReferrer referrer : getReferrers()) {
+                referrer.postSave(monitor);
+            }
+
+            monitor.done();
+        }
     }
 
     public void saveWorkbookAs(Object newKey, IProgressMonitor monitor,
             IWorkbookReferrer previewSaver, boolean skipNewRevisions)
-            throws IOException, CoreException,
-            org.eclipse.core.runtime.CoreException {
-        monitor.beginTask(null, 100);
-        if (workbook == null)
-            throw new org.eclipse.core.runtime.CoreException(new Status(
-                    IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
-                    "No workbook to save.")); //$NON-NLS-1$
+            throws CoreException {
+        synchronized (ioLock) {
+            monitor.beginTask(null, 100);
+            if (workbook == null)
+                throw new CoreException(new Status(IStatus.ERROR,
+                        MindMapUIPlugin.PLUGIN_ID, "No workbook to save.")); //$NON-NLS-1$
 
-        monitor.subTask(MindMapMessages.WorkbookSaver_PrepareNewSaveTarget_taskName);
-        Object oldKey = getKey();
-        setKey(newKey);
-        setWorkbookLoader(null);
-        setWorkbookSaver(null);
-        WorkbookRefInitializer.getInstance().initialize(this, newKey,
-                getPrimaryReferrer());
-        if (workbookSaver == null)
-            throw new org.eclipse.core.runtime.CoreException(new Status(
-                    IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
-                    "No workbook saver has been set.")); //$NON-NLS-1$
+            monitor.subTask(MindMapMessages.WorkbookSaver_PrepareNewSaveTarget_taskName);
+            Object oldKey = getKey();
+            setKey(newKey);
+            setWorkbookLoader(null);
+            setWorkbookSaver(null);
+            WorkbookRefInitializer.getInstance().initialize(this, newKey,
+                    getPrimaryReferrer());
+            if (workbookSaver == null)
+                throw new CoreException(new Status(IStatus.ERROR,
+                        MindMapUIPlugin.PLUGIN_ID,
+                        "No workbook saver has been set.")); //$NON-NLS-1$
 
-        // Leave 1 tick for finalizing work:
-        int mainWorkTicks = 99;
+            // Leave 1 tick for finalizing work:
+            int mainWorkTicks = 99;
 
-        WorkbookRefManager.getInstance().changeKey(this, oldKey, newKey);
-        monitor.worked(10);
-        mainWorkTicks -= 10;
+            WorkbookRefManager.getInstance().changeKey(this, oldKey, newKey);
+            monitor.worked(10);
+            mainWorkTicks -= 10;
 
-        if (!skipNewRevisions) {
-            monitor.subTask(MindMapMessages.WorkbookSaver_CreateRevisions_taskName);
-            saveRevisions(monitor);
+            if (!skipNewRevisions) {
+                monitor.subTask(MindMapMessages.WorkbookSaver_CreateRevisions_taskName);
+                saveRevisions(monitor);
+            }
+            monitor.worked(10);
+            mainWorkTicks -= 10;
+
+            // Delete old preview:
+            workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.jpg"); //$NON-NLS-1$
+            workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.png"); //$NON-NLS-1$
+            if (previewSaver != null) {
+                monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
+                savePreview(monitor);
+            } else {
+                setPreviewOutdated(true);
+            }
+            monitor.worked(10);
+            mainWorkTicks -= 10;
+
+            monitor.subTask(MindMapMessages.WorkbookSaver_SaveWorkbookContent_taskName);
+            workbookSaver.save(monitor, workbook);
+            monitor.worked(mainWorkTicks);
+
+            WorkbookBackupManager.getInstance().removeWorkbook(this);
+            WorkbookBackupManager.getInstance().addWorkbook(this);
+
+            monitor.subTask(MindMapMessages.WorkbookSaver_Finalize_taskName);
+            for (IWorkbookReferrer referrer : getReferrers()) {
+                referrer.postSaveAs(newKey, monitor);
+            }
+            monitor.done();
         }
-        monitor.worked(10);
-        mainWorkTicks -= 10;
-
-        // Delete old preview:
-        workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.jpg"); //$NON-NLS-1$
-        workbook.getManifest().deleteFileEntry("Thumbnails/thumbnail.png"); //$NON-NLS-1$
-        if (previewSaver != null) {
-            monitor.subTask(MindMapMessages.WorkbookSaver_SavePreviewImage_taskName);
-            savePreview(monitor);
-        } else {
-            setPreviewOutdated(true);
-        }
-        monitor.worked(10);
-        mainWorkTicks -= 10;
-
-        monitor.subTask(MindMapMessages.WorkbookSaver_SaveWorkbookContent_taskName);
-        workbookSaver.save(monitor, workbook);
-        monitor.worked(mainWorkTicks);
-
-        monitor.subTask(MindMapMessages.WorkbookSaver_Finalize_taskName);
-        for (IWorkbookReferrer referrer : getReferrers()) {
-            referrer.postSaveAs(newKey, monitor);
-        }
-        monitor.done();
     }
 
-    private void saveRevisions(IProgressMonitor monitor) throws IOException,
-            CoreException {
+    private void saveRevisions(IProgressMonitor monitor) throws CoreException {
         if (!isContentDirty()
                 || ((WorkbookImpl) workbook).isSkipRevisionsWhenSaving()
                 || !shouldSaveNewRevisions())
@@ -502,7 +500,12 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
             IRevision latestRevision = manager.getLatestRevision();
             if (latestRevision == null || sheet.getModifiedTime() == 0
                     || sheet.getModifiedTime() > latestRevision.getTimestamp()) {
-                manager.addRevision(sheet);
+                try {
+                    manager.addRevision(sheet);
+                } catch (Throwable e) {
+                    throw new CoreException(new Status(IStatus.ERROR,
+                            MindMapUIPlugin.PLUGIN_ID, null, e));
+                }
             }
         }
     }
@@ -540,4 +543,7 @@ public class WorkbookRef implements IWorkbookRef, IPropertyChangeListener {
         }
     }
 
+    public String toString() {
+        return key == null ? super.toString() : key.toString();
+    }
 }

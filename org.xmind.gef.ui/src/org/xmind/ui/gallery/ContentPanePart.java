@@ -16,6 +16,7 @@ package org.xmind.ui.gallery;
 import java.util.Collection;
 
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.xmind.gef.part.GraphicalEditPart;
 
 public class ContentPanePart extends GraphicalEditPart {
@@ -34,6 +35,11 @@ public class ContentPanePart extends GraphicalEditPart {
             return (Object[]) model;
         if (model instanceof Collection)
             return ((Collection) model).toArray();
+        IStructuredContentProvider contentProvider = (IStructuredContentProvider) getSite()
+                .getViewer().getAdapter(IStructuredContentProvider.class);
+        if (contentProvider != null) {
+            return contentProvider.getElements(model);
+        }
         return new Object[] { model };
     }
 

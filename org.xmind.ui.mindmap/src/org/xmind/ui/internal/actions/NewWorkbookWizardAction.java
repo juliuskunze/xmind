@@ -30,7 +30,7 @@ public class NewWorkbookWizardAction extends Action implements IWorkbenchAction 
         if (window == null)
             return;
 
-        NewWorkbookEditor.open(window, false);
+        NewWorkbookEditor.showIn(window);
 //        NewWorkbookWizardDialog.openWizard(window, false);
     }
 

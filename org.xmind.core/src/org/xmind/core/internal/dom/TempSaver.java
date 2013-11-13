@@ -37,7 +37,6 @@ import org.xmind.core.io.IStorage;
 import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.core.style.IStyleSheet;
 import org.xmind.core.util.DOMUtils;
-import org.xmind.core.util.FileUtils;
 
 /**
  * @author frankshaka
@@ -121,7 +120,7 @@ public class TempSaver {
     }
 
     private IStorage createStorage() {
-        return null;
+        return new ByteArrayStorage();
     }
 
     private void saveStorage(IStorage sourceStorage, IOutputTarget target)
@@ -148,16 +147,25 @@ public class TempSaver {
         try {
             InputStream in = getInputStream(source, entryPath);
             if (in != null) {
-                OutputStream out = getOutputStream(target, entryPath);
-                if (out != null) {
-                    try {
-                        FileUtils.transfer(in, out, true);
-                    } finally {
-                        long time = source.getEntryTime(entryPath);
-                        if (time >= 0) {
-                            target.setEntryTime(entryPath, time);
+                try {
+                    long time = source.getEntryTime(entryPath);
+                    if (time >= 0) {
+                        target.setEntryTime(entryPath, time);
+                    }
+                    OutputStream out = getOutputStream(target, entryPath);
+                    if (out != null) {
+                        try {
+                            byte[] byteBuffer = new byte[1024];
+                            int numBytes;
+                            while ((numBytes = in.read(byteBuffer)) > 0) {
+                                out.write(byteBuffer, 0, numBytes);
+                            }
+                        } finally {
+                            out.close();
                         }
                     }
+                } finally {
+                    in.close();
                 }
             }
         } catch (IOException e) {
@@ -168,7 +176,7 @@ public class TempSaver {
     }
 
     private InputStream getInputStream(IInputSource source, String entryPath)
-            throws CoreException {
+            throws IOException, CoreException {
         if (source.hasEntry(entryPath)) {
             return source.getEntryStream(entryPath);
         }
@@ -192,7 +200,7 @@ public class TempSaver {
         if (!target.isEntryAvaialble(entryPath))
             return null;
 
-        return target.getEntryStream(entryPath);
+        return target.openEntryStream(entryPath);
     }
 
     private boolean hasBeenSaved(String entryPath) {

@@ -81,7 +81,7 @@ public class FileProtocol implements IProtocol {
                 }
             }
             return FilePathParser.toAbsolutePath(
-                    System.getProperty("user.home"), path); //$NON-NLS-1$
+                    FilePathParser.ABSTRACT_FILE_BASE, path);
         }
         return path;
     }

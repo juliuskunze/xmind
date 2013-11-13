@@ -55,11 +55,11 @@ public abstract class MindMapDNDClientBase implements IDndClient {
         IWorkbook workbook = sheet.getOwnedWorkbook();
         IPart parent = (IPart) request.getParameter(GEF.PARAM_PARENT);
         if (parent != null || request.getTargets().size() == 1) {
+            boolean dropInParent = request.getTargets().contains(parent);
             if (parent == null) {
                 parent = request.getPrimaryTarget();
             }
             ITopic targetParent = findTargetParentTopic(viewer, parent);
-            boolean dropInParent = request.getTargets().contains(parent);
             return makeDNDCommand(transferredData, request, workbook,
                     targetParent, dropInParent,
                     request.getParameter(GEF.PARAM_PARENT) == null);
@@ -146,6 +146,16 @@ public abstract class MindMapDNDClientBase implements IDndClient {
                     IMarker marker = (element instanceof IMarker) ? (IMarker) element
                             : ((IMarkerRef) element).getMarker();
                     if (marker != null) {
+                        String markerId = (element instanceof IMarker) ? ((IMarker) element)
+                                .getId() : ((IMarkerRef) element).getMarkerId();
+                        if (floating && position != null) {
+                            ITopic topic = workbook.createTopic();
+                            topic.setPosition(position.x, position.y);
+                            commands.add(new AddTopicCommand(topic,
+                                    targetParent, -1, ITopic.DETACHED));
+                            commands.add(new AddMarkerCommand(topic, markerId));
+                            return;
+                        }
                         IMarkerGroup group = marker.getParent();
                         if (group.isSingleton()) {
                             for (IMarker m : group.getMarkers()) {
@@ -155,8 +165,6 @@ public abstract class MindMapDNDClientBase implements IDndClient {
                                 }
                             }
                         }
-                        String markerId = (element instanceof IMarker) ? ((IMarker) element)
-                                .getId() : ((IMarkerRef) element).getMarkerId();
                         commands.add(new AddMarkerCommand(targetParent,
                                 markerId));
                     }

@@ -47,13 +47,18 @@ public class DefaultBranchStyleSelector extends MindMapStyleSelectorBase
 
     protected String getThemeStyleValue(IGraphicalPart part, String familyName,
             String key) {
-        if (Styles.LineColor.equals(key)
-                && Styles.FAMILY_MAIN_TOPIC.equals(familyName)
-                && part instanceof IBranchPart) {
-            String value = StyleUtils
-                    .getIndexedBranchLineColor((IBranchPart) part);
-            if (isValidValue(part, key, value))
+        if ((Styles.LineColor.equals(key) || Styles.LineWidth.equals(key))
+                && (Styles.FAMILY_MAIN_TOPIC.equals(familyName) || Styles.FAMILY_SUB_TOPIC
+                        .equals(familyName)) && part instanceof IBranchPart) {
+            String value = super.getThemeStyleValue(part, familyName, key);
+            if (value != null)
                 return value;
+            if (Styles.LineColor.equals(key)) {
+                value = StyleUtils
+                        .getIndexedBranchLineColor((IBranchPart) part);
+                if (isValidValue(part, key, value))
+                    return value;
+            }
         }
         if (inheritedStyleKeys != null && inheritedStyleKeys.contains(key)) {
             if (part instanceof IBranchPart) {

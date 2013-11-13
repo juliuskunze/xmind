@@ -1,0 +1,10 @@
+Apache Software Foundation http://www.apache.org/
+Apple Inc. http://www.apple.com/
+Aspose Corporate http://www.aspose.com/
+Douglas Crockford https://github.com/douglascrockford/JSON-java
+Eclipse Foundation http://www.eclipse.org/
+Erich Seifert http://trac.erichseifert.de/vectorgraphics2d/
+JavaZOOM http://www.javazoom.net/
+Legion of the Bouncy Castle http://www.bouncycastle.org/
+Mindaugas Idzelis and others http://jazzy.sourceforge.net/
+Robert Hegemann and other LAME Developers http://lame.sourceforge.net/

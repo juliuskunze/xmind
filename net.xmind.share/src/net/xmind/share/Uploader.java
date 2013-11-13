@@ -30,6 +30,7 @@ import net.xmind.signin.XMindNet;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.draw2d.Layer;
@@ -42,6 +43,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.xmind.core.Core;
 import org.xmind.core.IMeta;
 import org.xmind.core.ISheet;
@@ -49,7 +51,6 @@ import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.GEF;
-import org.xmind.ui.dialogs.ErrorDetailsDialog;
 import org.xmind.ui.dialogs.NotificationWindow;
 import org.xmind.ui.mindmap.IMindMapViewer;
 import org.xmind.ui.mindmap.MindMap;
@@ -76,6 +77,8 @@ public class Uploader extends JobChangeAdapter {
 
     private File file;
 
+    private boolean trimmed = false;
+
     public Uploader(Shell parentShell, IMindMapViewer sourceViewer) {
         this.parentShell = parentShell;
         this.sourceViewer = sourceViewer;
@@ -88,17 +91,25 @@ public class Uploader extends JobChangeAdapter {
         try {
             prepared = prepare();
         } catch (OutOfMemoryError e) {
-            XmindSharePlugin.log(e, "Failed to prepare XMind file to upload."); //$NON-NLS-1$
-            new ErrorDetailsDialog(parentShell, Messages.ErrorDialog_title,
-                    Messages.ErrorDialog_OutOfMemory_message, e,
-                    "Failed to prepare XMind file to upload.", //$NON-NLS-1$
-                    System.currentTimeMillis()).open();
+            StatusManager.getManager().handle(
+                    new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
+                            Messages.ErrorDialog_OutOfMemory_message, e),
+                    StatusManager.SHOW);
+//            XmindSharePlugin.log(e, "Failed to prepare XMind file to upload."); //$NON-NLS-1$
+//            new ErrorDetailsDialog(parentShell, Messages.ErrorDialog_title,
+//                    Messages.ErrorDialog_OutOfMemory_message, e,
+//                    "Failed to prepare XMind file to upload.", //$NON-NLS-1$
+//                    System.currentTimeMillis()).open();
         } catch (Throwable e) {
-            XmindSharePlugin.log(e, "Failed to prepare XMind file to upload."); //$NON-NLS-1$
-            new ErrorDetailsDialog(parentShell, Messages.ErrorDialog_title,
-                    Messages.ErrorDialog_UnexpectedError_message, e,
-                    "Failed to prepare XMind file to upload.", //$NON-NLS-1$
-                    System.currentTimeMillis()).open();
+            StatusManager.getManager().handle(
+                    new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
+                            Messages.ErrorDialog_UnexpectedError_message, e),
+                    StatusManager.SHOW);
+//            XmindSharePlugin.log(e, "Failed to prepare XMind file to upload."); //$NON-NLS-1$
+//            new ErrorDetailsDialog(parentShell, Messages.ErrorDialog_title,
+//                    Messages.ErrorDialog_UnexpectedError_message, e,
+//                    "Failed to prepare XMind file to upload.", //$NON-NLS-1$
+//                    System.currentTimeMillis()).open();
         }
 
         if (!prepared) {
@@ -107,6 +118,8 @@ public class Uploader extends JobChangeAdapter {
         }
 
         UploadJob uploadJob = new UploadJob(info);
+        uploadJob.setSystem(false);
+        uploadJob.setUser(true);
         uploadJob.addJobChangeListener(this);
         uploadJob.schedule();
     }
@@ -116,9 +129,12 @@ public class Uploader extends JobChangeAdapter {
             return false;
 
         final Display display = parentShell.getDisplay();
+
+        info.setProperty(Info.MULTISHEETS, multiSheets(sourceViewer));
+
         extractor = new MindMapExtractor(sourceViewer);
         workbook = extractor.extract();
-        trimAttachments();
+        trimWorkbook();
         generatePreview(display);
 
         if (fullImage == null || origin == null)
@@ -131,6 +147,7 @@ public class Uploader extends JobChangeAdapter {
         info.setInt(IMeta.ORIGIN_X, origin.x);
         info.setInt(IMeta.ORIGIN_Y, origin.y);
         info.setProperty(IMeta.BACKGROUND_COLOR, getBackgroundColor());
+        info.setProperty(Info.TRIMMED, trimmed);
 
         UploaderDialog dialog = createUploadDialog();
         int ret = dialog.open();
@@ -179,6 +196,14 @@ public class Uploader extends JobChangeAdapter {
         info.setProperty(Info.FILE, file);
         info.setProperty(Info.WORKBOOK, workbook);
         return true;
+    }
+
+    private Boolean multiSheets(IMindMapViewer sourceViewer) {
+        IWorkbook workbook = (IWorkbook) sourceViewer
+                .getAdapter(IWorkbook.class);
+        if (workbook.getSheets().size() > 1)
+            return true;
+        return false;
     }
 
     private String getBackgroundColor() {
@@ -294,21 +319,44 @@ public class Uploader extends JobChangeAdapter {
         display.asyncExec(runnable);
     }
 
-    private void trimAttachments() {
+    private void trimWorkbook() {
+        trim();
+    }
+
+    private void trim() {
         for (ISheet sheet : workbook.getSheets()) {
-            trimAttachments(sheet.getRootTopic());
+            trim(sheet.getRootTopic());
         }
     }
 
-    private void trimAttachments(ITopic topic) {
+    private void trim(ITopic topic) {
         String hyperlink = topic.getHyperlink();
         if (hyperlink != null) {
             if (HyperlinkUtils.isAttachmentURL(hyperlink)) {
                 topic.setHyperlink(null);
+                trimmed = true;
+            }
+
+            if (HyperlinkUtils.getProtocolName(hyperlink) != null
+                    && HyperlinkUtils.getProtocolName(hyperlink).equals("file")) { //$NON-NLS-1$
+                topic.setHyperlink(null);
+                trimmed = true;
+            }
+
+            if (HyperlinkUtils.isInternalURL(hyperlink)) {
+                if (workbook.findTopic(hyperlink.substring(hyperlink
+                        .indexOf('#') + 1)) == null) {
+                    topic.setHyperlink(null);
+                    trimmed = true;
+                }
             }
         }
+        if (topic.getExtension("org.xmind.ui.audionotes") != null) { //$NON-NLS-1$
+            topic.deleteExtension("org.xmind.ui.audionotes"); //$NON-NLS-1$
+            trimmed = true;
+        }
         for (ITopic c : topic.getAllChildren()) {
-            trimAttachments(c);
+            trim(c);
         }
     }
 

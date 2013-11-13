@@ -1,0 +1,45 @@
+/* ******************************************************************************
+ * Copyright (c) 2006-2012 XMind Ltd. and others.
+ * 
+ * This file is a part of XMind 3. XMind releases 3 and
+ * above are dual-licensed under the Eclipse Public License (EPL),
+ * which is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the GNU Lesser General Public License (LGPL), 
+ * which is available at http://www.gnu.org/licenses/lgpl.html
+ * See http://www.xmind.net/license.html for details.
+ * 
+ * Contributors:
+ *     XMind Ltd. - initial API and implementation
+ *******************************************************************************/
+package org.xmind.core.internal.command;
+
+import org.eclipse.core.runtime.ILog;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+
+public class Logger {
+
+    private Logger() {
+        throw new AssertionError();
+    }
+
+    public static void log(String message, Throwable error) {
+        ILog log = getLog();
+        if (log != null) {
+            log.log(new Status(error == null ? IStatus.INFO : IStatus.ERROR,
+                    XMindCommandPlugin.PLUGIN_ID, message, error));
+        }
+    }
+
+    public static void log(IStatus status) {
+        ILog log = getLog();
+        if (log != null) {
+            log.log(status);
+        }
+    }
+
+    private static ILog getLog() {
+        return XMindCommandPlugin.getLog();
+    }
+
+}

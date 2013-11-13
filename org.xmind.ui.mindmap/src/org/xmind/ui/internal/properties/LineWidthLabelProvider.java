@@ -20,16 +20,30 @@ import org.xmind.ui.viewers.ImageCachedLabelProvider;
 public class LineWidthLabelProvider extends ImageCachedLabelProvider {
 
     public String getText(Object element) {
+        LineWidth value;
         if (element instanceof LineWidth) {
-            return ((LineWidth) element).getName();
+            value = (LineWidth) element;
+        } else if (element instanceof String) {
+            value = LineWidth.findByValue((String) element);
+        } else {
+            value = null;
         }
+        if (value != null)
+            return value.getName();
         return super.getText(element);
     }
 
     protected Image createImage(Object element) {
+        LineWidth value;
         if (element instanceof LineWidth) {
-            LineWidth lineWidth = (LineWidth) element;
-            ImageDescriptor icon = lineWidth.getIcon();
+            value = (LineWidth) element;
+        } else if (element instanceof String) {
+            value = LineWidth.findByValue((String) element);
+        } else {
+            value = null;
+        }
+        if (value != null) {
+            ImageDescriptor icon = value.getIcon();
             if (icon != null)
                 return icon.createImage(false);
         }

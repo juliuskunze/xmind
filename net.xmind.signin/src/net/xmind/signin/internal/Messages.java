@@ -46,6 +46,14 @@ public class Messages extends NLS {
     public static String Renew_text;
     public static String Renew_toolTip;
 
+    public static String ReportErrorJob_jobName;
+
+    public static String ReportErrorJob_SendingErrorReport_taskTitle;
+
+    public static String XMindNetErrorReporter_ReporterEmailInputDialog_message;
+
+    public static String XMindNetErrorReporter_ReporterEmailInputDialog_windowTitle;
+
     public static String XMindUpdater_Task_CheckForUpdates;
     public static String XMindUpdater_Task_ConfirmDownloading;
     public static String XMindUpdater_Task_ChooseSaveLocation;

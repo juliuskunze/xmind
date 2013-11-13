@@ -14,7 +14,6 @@
 package org.xmind.ui.internal.properties;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -56,7 +55,6 @@ import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.properties.StyledPropertySectionPart;
 import org.xmind.ui.resources.ColorUtils;
 import org.xmind.ui.resources.FontUtils;
-import org.xmind.ui.resources.FontUtils.IFontNameListCallback;
 import org.xmind.ui.richtext.AlignmentGroup;
 import org.xmind.ui.style.StyleUtils;
 import org.xmind.ui.style.Styles;
@@ -124,9 +122,10 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
             int ret = dialog.open();
             showTempFont(null);
             if (ret == FontDialog.OK) {
-                changeFont(dialog.getFontName(), dialog.getFontHeight(), dialog
-                        .getBold(), dialog.getItalic(), dialog.getUnderline(),
-                        dialog.getStrikeout(), dialog.getColor());
+                changeFont(dialog.getFontName(), dialog.getFontHeight(),
+                        dialog.getBold(), dialog.getItalic(),
+                        dialog.getUnderline(), dialog.getStrikeout(),
+                        dialog.getColor());
             }
         }
 
@@ -304,22 +303,29 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
                 PropertyMessages.FontFamily_toolTip);
         fontViewer.setContentProvider(new ArrayContentProvider());
         fontViewer.setLabelProvider(new FontLabelProvider());
-        fontViewer.getControl().setEnabled(false);
-        IFontNameListCallback callback = new IFontNameListCallback() {
-            public void setAvailableFontNames(List<String> fontNames) {
-                if (fontViewer == null || fontViewer.getControl().isDisposed())
-                    return;
-                fontViewer.getControl().setEnabled(true);
-                fontViewer.setInput(fontNames);
-                TextStyleData ts = calcCurrentTextStyle();
-                if (ts != null && ts.name != null) {
-                    fontViewer.setSelection(new StructuredSelection(ts.name));
-                }
-                fontViewer
-                        .addSelectionChangedListener(new FontSelectionChangedListener());
-            }
-        };
-        FontUtils.fetchAvailableFontNames(parent.getDisplay(), callback);
+//        fontViewer.getControl().setEnabled(false);
+        fontViewer.setInput(FontUtils.getAvailableFontNames());
+        TextStyleData ts = calcCurrentTextStyle();
+        if (ts != null && ts.name != null) {
+            fontViewer.setSelection(new StructuredSelection(ts.name));
+        }
+        fontViewer
+                .addSelectionChangedListener(new FontSelectionChangedListener());
+//        IFontNameListCallback callback = new IFontNameListCallback() {
+//            public void setAvailableFontNames(List<String> fontNames) {
+//                if (fontViewer == null || fontViewer.getControl().isDisposed())
+//                    return;
+//                fontViewer.getControl().setEnabled(true);
+//                fontViewer.setInput(fontNames);
+//                TextStyleData ts = calcCurrentTextStyle();
+//                if (ts != null && ts.name != null) {
+//                    fontViewer.setSelection(new StructuredSelection(ts.name));
+//                }
+//                fontViewer
+//                        .addSelectionChangedListener(new FontSelectionChangedListener());
+//            }
+//        };
+//        FontUtils.fetchAvailableFontNames(parent.getDisplay(), callback);
 
         ToolBarManager fontBar = new ToolBarManager(SWT.FLAT);
         fontBar.add(new ChooseFontAction());
@@ -338,8 +344,8 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
         sizeViewer.setLabelProvider(new SizeLabelProvider());
         sizeViewer.setPermitsUnprovidedElement(true);
         if (FONT_SIZE_LIST.isEmpty()) {
-            FONT_SIZE_LIST.addAll(Arrays.asList(8, 9, 10, 11, 12, 14, 16, 18,
-                    20, 22, 24, 36, 48, 56));
+            FONT_SIZE_LIST.addAll(Arrays.asList(8, 9, 10, 11, 12, 13, 14, 16,
+                    18, 20, 22, 24, 36, 48, 56));
         }
         sizeViewer.setInput(FONT_SIZE_LIST);
         sizeViewer
@@ -351,8 +357,8 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
         styleBar.add(strikeoutAction = new StrikeoutAction());
 
         textColorPicker = new ColorPicker(
-                ColorPicker.AUTO | ColorPicker.CUSTOM, PaletteContents
-                        .getDefault());
+                ColorPicker.AUTO | ColorPicker.CUSTOM,
+                PaletteContents.getDefault());
         textColorPicker.getAction().setToolTipText(
                 PropertyMessages.TextColor_toolTip);
         textColorPicker.addOpenListener(new ColorOpenListener());
@@ -528,10 +534,10 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
                 : Styles.NORMAL);
         addStyle(req, Styles.FontStyle, italic ? Styles.FONT_STYLE_ITALIC
                 : Styles.NORMAL);
-        addStyle(req, Styles.TextDecoration, StyleUtils.toTextDecoration(
-                underline, strikeout));
-        addStyle(req, Styles.TextColor, color == null ? null : ColorUtils
-                .toString(color));
+        addStyle(req, Styles.TextDecoration,
+                StyleUtils.toTextDecoration(underline, strikeout));
+        addStyle(req, Styles.TextColor,
+                color == null ? null : ColorUtils.toString(color));
         sendRequest(req);
     }
 
@@ -606,9 +612,9 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
             textStyle = null;
         } else {
             textStyle = new TextStyle(FontUtils.getFont(source.getFontName(),
-                    source.getFontHeight(), source.getBold(), source
-                            .getItalic()), ColorUtils.getColor(source
-                    .getColor()), null);
+                    source.getFontHeight(), source.getBold(),
+                    source.getItalic()),
+                    ColorUtils.getColor(source.getColor()), null);
             textStyle.strikeout = source.getStrikeout();
             textStyle.underline = source.getUnderline();
         }
@@ -616,8 +622,7 @@ public class FontPropertySectionPart extends StyledPropertySectionPart {
             IGraphicalPart part = getGraphicalPart(o, viewer);
             if (part != null) {
                 IGraphicalPart p = part instanceof ITopicPart ? ((ITopicPart) part)
-                        .getOwnerBranch()
-                        : part;
+                        .getOwnerBranch() : part;
 //                (ITitleTextPart) part
 //                        .getAdapter(ITitleTextPart.class);
                 if (p != null) {

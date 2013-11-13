@@ -13,17 +13,18 @@
  *******************************************************************************/
 package org.xmind.ui.internal.editor;
 
-import java.io.IOException;
-
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.xmind.core.Core;
-import org.xmind.core.CoreException;
 import org.xmind.core.IEncryptionHandler;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.core.internal.dom.WorkbookImpl;
 import org.xmind.core.io.IStorage;
+import org.xmind.ui.internal.MindMapUIPlugin;
 
 /**
  * 
@@ -53,8 +54,7 @@ public class TempWorkbookLoader implements IWorkbookLoader {
 
     public IWorkbook loadWorkbook(IStorage storage,
             IEncryptionHandler encryptionHandler, IProgressMonitor monitor)
-            throws IOException, CoreException,
-            org.eclipse.core.runtime.CoreException {
+            throws CoreException {
         try {
             IWorkbook workbook = Core.getWorkbookBuilder()
                     .loadFromTempLocation(tempLocation);
@@ -66,6 +66,9 @@ public class TempWorkbookLoader implements IWorkbookLoader {
                         Core.WorkbookPreSaveOnce, ICoreEventListener.NULL);
             }
             return workbook;
+        } catch (Throwable e) {
+            throw new CoreException(new Status(IStatus.ERROR,
+                    MindMapUIPlugin.PLUGIN_ID, null, e));
         } finally {
             ref.setWorkbookLoader(oldLoader);
         }

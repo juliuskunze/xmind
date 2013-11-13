@@ -14,7 +14,6 @@
 package org.xmind.ui.gallery;
 
 import org.eclipse.draw2d.IFigure;
-import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.swt.graphics.Image;
@@ -61,13 +60,13 @@ public class SimpleImageDecorator extends Decorator {
                 GalleryViewer.ImageConstrained, false);
         imageFigure.setConstrained(constained);
         imageFigure.setStretched(stretched);
-        Dimension size = (Dimension) properties
-                .get(GalleryViewer.FrameContentSize);
-        if (size == null) {
-            imageFigure.setPreferredSize(imageFigure.getImageSize());
-        } else {
-            imageFigure.setPreferredSize(size);
-        }
+//        Dimension size = (Dimension) properties
+//                .get(GalleryViewer.FrameContentSize);
+//        if (size == null) {
+//            imageFigure.setPreferredSize(imageFigure.getImageSize());
+//        } else {
+//            imageFigure.setPreferredSize(size);
+//        }
     }
 
 }

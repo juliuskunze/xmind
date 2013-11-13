@@ -44,6 +44,8 @@ public class MindMapUI {
 
     public static final String VIEW_REVISIONS = "org.xmind.ui.RevisionsView"; //$NON-NLS-1$
 
+    public static final String VIEW_LOCAL_NETWORK_SHARING = "org.xmind.ui.LocalNetworkSharingView"; //$NON-NLS-1$
+
     public static final String POPUP_DIALOG_SETTINGS_ID = "org.xmind.ui.popupDialog"; //$NON-NLS-1$
 
     public static final String FILE_EXT_XMIND = ".xmind"; //$NON-NLS-1$

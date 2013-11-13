@@ -23,6 +23,7 @@ import org.eclipse.swt.graphics.ImageData;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerRef;
 import org.xmind.core.marker.IMarkerResource;
+import org.xmind.core.marker.IMarkerVariation;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.resources.ImageUtils;
 
@@ -36,26 +37,25 @@ public class MarkerImageDescriptor extends ImageDescriptor {
 
     private String markerId;
 
-    private int widthHint;
+    private int maxWidth;
 
-    private int heightHint;
+    private int maxHeigh;
 
-    protected MarkerImageDescriptor(IMarker marker, int widthHint,
-            int heightHint) {
+    protected MarkerImageDescriptor(IMarker marker, int maxWidth, int maxHeigh) {
         this.marker = marker;
         this.markerRef = null;
         this.markerId = marker.getId();
-        this.widthHint = widthHint;
-        this.heightHint = heightHint;
+        this.maxWidth = maxWidth;
+        this.maxHeigh = maxHeigh;
     }
 
-    protected MarkerImageDescriptor(IMarkerRef markerRef, int widthHint,
-            int heightHint) {
+    protected MarkerImageDescriptor(IMarkerRef markerRef, int maxWidth,
+            int maxHeigh) {
         this.marker = null;
         this.markerRef = markerRef;
         this.markerId = markerRef.getMarkerId();
-        this.widthHint = widthHint;
-        this.heightHint = heightHint;
+        this.maxWidth = maxWidth;
+        this.maxHeigh = maxHeigh;
     }
 
     @Override
@@ -90,28 +90,23 @@ public class MarkerImageDescriptor extends ImageDescriptor {
     }
 
     private ImageData performScale(ImageData result) {
-        if (widthHint >= 0 || heightHint >= 0) {
-            int w = widthHint;
-            int h = heightHint;
-            if (w < 0)
-                w = result.width;
-            if (h < 0)
-                h = result.height;
-            result = result.scaledTo(w, h);
-        } else {
-            double hScale = (double) result.width / MindMapUI.MAX_MARKER_WIDTH;
-            double vScale = (double) result.height
-                    / MindMapUI.MAX_MARKER_HEIGHT;
+        if (maxWidth >= 0 || maxHeigh >= 0) {
+            double hScale = (double) result.width / maxWidth;
+            double vScale = (double) result.height / maxHeigh;
             boolean shouldScaleWidth = hScale > 1;
             boolean shouldScaleHeight = vScale > 1;
             if (shouldScaleWidth || shouldScaleHeight) {
                 int w, h;
                 if (hScale > vScale) {
-                    w = MindMapUI.MAX_MARKER_WIDTH;
+                    w = maxWidth;
                     h = (int) (result.height / hScale);
+                    if (h == 0)
+                        h = 1;
                 } else {
                     w = (int) (result.width / vScale);
-                    h = MindMapUI.MAX_MARKER_HEIGHT;
+                    h = maxHeigh;
+                    if (w == 0)
+                        w = 1;
                 }
                 result = result.scaledTo(w, h);
             }
@@ -137,11 +132,29 @@ public class MarkerImageDescriptor extends ImageDescriptor {
         if (res == null)
             return null;
 
-        InputStream in = res.getInputStream();
+        IMarkerVariation variation = getMarkerVariation(res);
+
+        InputStream in;
+        if (variation == null) {
+            in = res.getInputStream();
+        } else {
+            in = res.getInputStream(variation);
+            if (in == null)
+                in = res.getInputStream();
+        }
         if (in == null)
             return null;
 
         return new BufferedInputStream(in);
+    }
+
+    private IMarkerVariation getMarkerVariation(IMarkerResource res) {
+        for (IMarkerVariation variation : res.getVariations()) {
+            if (variation.isApplicable(maxWidth, maxHeigh)) {
+                return variation;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -151,10 +164,10 @@ public class MarkerImageDescriptor extends ImageDescriptor {
         if (obj == null || !(obj instanceof MarkerImageDescriptor))
             return false;
         MarkerImageDescriptor that = (MarkerImageDescriptor) obj;
-        if ((this.widthHint < 0 ? that.widthHint >= 0
-                : this.widthHint != that.widthHint)
-                || (this.heightHint < 0 ? that.heightHint >= 0
-                        : this.heightHint != that.heightHint))
+        if ((this.maxWidth < 0 ? that.maxWidth >= 0
+                : this.maxWidth != that.maxWidth)
+                || (this.maxHeigh < 0 ? that.maxHeigh >= 0
+                        : this.maxHeigh != that.maxHeigh))
             return false;
         IMarker thisMarker = this.getMarker();
         return thisMarker != null && thisMarker.equals(that.getMarker());
@@ -191,17 +204,17 @@ public class MarkerImageDescriptor extends ImageDescriptor {
     }
 
     public static ImageDescriptor createFromMarker(IMarker marker,
-            int widthHint, int heightHint) {
+            int maxWidth, int maxHeigh) {
         if (marker == null)
             return getErrorImage();
-        return new MarkerImageDescriptor(marker, widthHint, heightHint);
+        return new MarkerImageDescriptor(marker, maxWidth, maxHeigh);
     }
 
     public static ImageDescriptor createFromMarkerRef(IMarkerRef markerRef,
-            int widthHint, int heightHint) {
+            int maxWidth, int maxHeigh) {
         if (markerRef == null)
             return getErrorImage();
-        return new MarkerImageDescriptor(markerRef, widthHint, heightHint);
+        return new MarkerImageDescriptor(markerRef, maxWidth, maxHeigh);
     }
 
 }

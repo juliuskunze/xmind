@@ -31,6 +31,7 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
@@ -47,6 +48,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
+import org.eclipse.ui.PlatformUI;
 import org.xmind.core.Core;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerGroup;
@@ -54,6 +56,7 @@ import org.xmind.core.marker.IMarkerResource;
 import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.core.util.FileUtils;
 import org.xmind.ui.internal.dialogs.DialogUtils;
+import org.xmind.ui.internal.wizards.MarkerExportWizard;
 import org.xmind.ui.internal.wizards.MarkerGroupContentProvider;
 import org.xmind.ui.internal.wizards.MarkerGroupLabelProvider;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -73,6 +76,8 @@ public class MarkerManagerPrefPage extends PreferencePage implements
     private Button removeGroupButton;
 
     private Button renameGroupButton;
+
+    private Button exportGroupButton;
 
     private Button addMarkerButton;
 
@@ -222,6 +227,12 @@ public class MarkerManagerPrefPage extends PreferencePage implements
         renameGroupButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
                 true, false));
         hookWidget(renameGroupButton, SWT.Selection);
+
+        exportGroupButton = new Button(inner, SWT.PUSH);
+        exportGroupButton.setText(PrefMessages.MarkersPage_ExportGroup_text);
+        exportGroupButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+                true, false));
+        hookWidget(exportGroupButton, SWT.Selection);
     }
 
     private void createMarkerGroup(Composite parent) {
@@ -369,6 +380,8 @@ public class MarkerManagerPrefPage extends PreferencePage implements
             removeGroup();
         } else if (event.widget == renameGroupButton) {
             renameGroup();
+        } else if (event.widget == exportGroupButton) {
+            exportGroup();
         } else if (event.widget == addMarkerButton) {
             addMarker();
         } else if (event.widget == removeMarkerButton) {
@@ -420,6 +433,14 @@ public class MarkerManagerPrefPage extends PreferencePage implements
             return;
         IMarkerSheet sheet = getSheet();
         for (Object group : selection.toList()) {
+            List<IMarker> markers = ((IMarkerGroup) group).getMarkers();
+            for (IMarker marker : markers) {
+                if (MindMapUI.getResourceManager().getRecentMarkerGroup()
+                        .getMarker(marker.getId()) != null)
+                    MindMapUI.getResourceManager().getRecentMarkerGroup()
+                            .removeMarker(marker);
+                removeMarkerFile(marker);
+            }
             sheet.removeMarkerGroup((IMarkerGroup) group);
         }
         groupViewer.refresh();
@@ -434,6 +455,14 @@ public class MarkerManagerPrefPage extends PreferencePage implements
         if (selection.isEmpty())
             return;
         groupViewer.editElement(selection.getFirstElement(), 0);
+    }
+
+    private void exportGroup() {
+        MarkerExportWizard wizard = new MarkerExportWizard();
+        wizard.init(PlatformUI.getWorkbench(), null);
+        WizardDialog dialog = new WizardDialog(getShell(), wizard);
+        dialog.create();
+        dialog.open();
     }
 
     /**
@@ -524,8 +553,21 @@ public class MarkerManagerPrefPage extends PreferencePage implements
         IMarkerGroup group = (IMarkerGroup) groupSelection.getFirstElement();
         for (Object marker : selection.toList()) {
             group.removeMarker((IMarker) marker);
+            if (MindMapUI.getResourceManager().getRecentMarkerGroup()
+                    .getMarker(((IMarker) marker).getId()) != null)
+                MindMapUI.getResourceManager().getRecentMarkerGroup()
+                        .removeMarker((IMarker) marker);
+            removeMarkerFile((IMarker) marker);
         }
         markerViewer.refresh();
+    }
+
+    private void removeMarkerFile(IMarker marker) {
+        if (marker == null)
+            return;
+        String path = Core.getWorkspace().getAbsolutePath(
+                "markers/" + marker.getResourcePath()); //$NON-NLS-1$
+        new File(path).delete();
     }
 
     /**
@@ -549,6 +591,7 @@ public class MarkerManagerPrefPage extends PreferencePage implements
                 .getSelection();
         removeGroupButton.setEnabled(!groupSelection.isEmpty());
         renameGroupButton.setEnabled(!groupSelection.isEmpty());
+        exportGroupButton.setEnabled(!groupSelection.isEmpty());
 
         addMarkerButton.setEnabled(!groupSelection.isEmpty());
 

@@ -14,16 +14,13 @@
 
 package org.xmind.ui.internal.editor;
 
-import java.util.Collection;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.osgi.util.NLS;
-import org.xmind.core.IWorkbook;
-import org.xmind.ui.internal.MindMapMessages;
-import org.xmind.ui.mindmap.IWorkbookRef;
+import org.xmind.core.internal.InternalCore;
+import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.Logger;
 
@@ -33,7 +30,10 @@ import org.xmind.ui.util.Logger;
  */
 public class BackgroundWorkbookSaver {
 
-    private static BackgroundWorkbookSaver INSTANCE = null;
+    private static final BackgroundWorkbookSaver INSTANCE = new BackgroundWorkbookSaver();
+
+    private static boolean DEBUGGING = MindMapUIPlugin
+            .isDebugging("/debug/autosave"); //$NON-NLS-1$
 
     private static class DaemonJob extends Job {
 
@@ -57,145 +57,115 @@ public class BackgroundWorkbookSaver {
          */
         @Override
         protected IStatus run(IProgressMonitor monitor) {
+            monitor.beginTask(null, 1);
             try {
-                runWithProgress(monitor);
-            } catch (Throwable e) {
-                if (monitor.isCanceled() || e instanceof InterruptedException)
+                do {
+                    IStatus slept = sleep(monitor);
+                    if (slept != null && !slept.isOK())
+                        return slept;
+
+                    if (DEBUGGING)
+                        System.out.println("AutoSave starts now..."); //$NON-NLS-1$
+
+                    Object[] refs = WorkbookRefManager.getInstance()
+                            .getWorkbookRefs().toArray();
+                    for (int i = 0; i < refs.length; i++) {
+                        if (refs[i] instanceof WorkbookRef) {
+                            save(monitor, (WorkbookRef) refs[i]);
+                        }
+                        if (monitor.isCanceled())
+                            return Status.CANCEL_STATUS;
+                    }
+
+                    if (DEBUGGING)
+                        System.out.println("AutoSave finishes."); //$NON-NLS-1$
+
+                } while (!monitor.isCanceled());
+                if (monitor.isCanceled())
                     return Status.CANCEL_STATUS;
+                return Status.OK_STATUS;
+            } catch (Throwable e) {
+                if (e instanceof InterruptedException)
+                    return Status.CANCEL_STATUS;
+
+                if (DEBUGGING) {
+                    System.err.println("AutoSave error:"); //$NON-NLS-1$
+                    e.printStackTrace();
+                }
+
                 String msg = "Background workbook saver daemon ended with unknown error"; //$NON-NLS-1$
                 Logger.log(e, msg);
                 return new Status(IStatus.WARNING, MindMapUI.PLUGIN_ID,
                         IStatus.ERROR, msg, e);
             }
-            if (monitor.isCanceled())
-                return Status.CANCEL_STATUS;
-            return Status.OK_STATUS;
         }
 
-        private void runWithProgress(IProgressMonitor monitor) throws Throwable {
-            do {
-                sleep(monitor);
-
-                if (monitor.isCanceled())
-                    return;
-
-                try {
-                    invoke(monitor);
-                    if (monitor.isCanceled())
-                        return;
-                } catch (Throwable e) {
-                    if (monitor.isCanceled())
-                        return;
-                    Logger.log(e);
-                }
-            } while (!monitor.isCanceled());
-        }
-
-        private void invoke(IProgressMonitor monitor) {
-            BackupJob job = new BackupJob();
-            job.schedule();
+        private IStatus sleep(IProgressMonitor monitor) {
+            int total = intervals;
             try {
-                job.join();
+                if (DEBUGGING && total > 5000) {
+                    Thread.sleep(total - 5000);
+                    System.out.println("AutoSave will start in 5 seconds..."); //$NON-NLS-1$
+                    Thread.sleep(3000);
+                    System.out.println("AutoSave will start in 2 seconds..."); //$NON-NLS-1$
+                    Thread.sleep(2000);
+                } else {
+                    if (DEBUGGING)
+                        System.out.println("AutoSave will start in " //$NON-NLS-1$
+                                + (total / 1000) + " seconds..."); //$NON-NLS-1$
+                    Thread.sleep(total);
+                }
             } catch (InterruptedException e) {
-            }
-        }
-
-        private void sleep(IProgressMonitor monitor) {
-            long start = System.currentTimeMillis();
-            long end = start + intervals;
-            while (System.currentTimeMillis() < end) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                }
-                if (monitor.isCanceled())
-                    return;
-            }
-        }
-
-    }
-
-    private static class BackupJob extends Job {
-
-        /**
-         * @param name
-         */
-        public BackupJob() {
-            super("Save Workbooks In Background"); //$NON-NLS-1$
-            setSystem(true);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.core.runtime.jobs.Job#run(org.eclipse.core.runtime.
-         * IProgressMonitor)
-         */
-        @Override
-        protected IStatus run(IProgressMonitor monitor) {
-            try {
-                runWithProgress(monitor);
-            } catch (Throwable e) {
-                if (monitor.isCanceled() || e instanceof InterruptedException)
-                    return Status.CANCEL_STATUS;
-                String msg = "Background workbook saver ended with unknown error"; //$NON-NLS-1$
-                Logger.log(e, msg);
-                return new Status(IStatus.WARNING, MindMapUI.PLUGIN_ID,
-                        IStatus.ERROR, msg, e);
+                return Status.CANCEL_STATUS;
             }
             if (monitor.isCanceled())
                 return Status.CANCEL_STATUS;
             return Status.OK_STATUS;
         }
 
-        private void runWithProgress(IProgressMonitor monitor) throws Throwable {
-            Collection<IWorkbookRef> refs = WorkbookRefManager.getInstance()
-                    .getWorkbookRefs();
-            monitor.beginTask(
-                    MindMapMessages.BackgroundWorkbookSaver_SaveWorkbook_taskName,
-                    refs.size());
-            for (IWorkbookRef ref : refs) {
-                try {
-                    save(ref, monitor);
-                    if (monitor.isCanceled())
-                        return;
-                } catch (Throwable e) {
-                    if (monitor.isCanceled())
-                        return;
-                    Logger.log(e);
+        private void save(IProgressMonitor monitor, WorkbookRef ref) {
+            synchronized (ref.getIOLock()) {
+                if (!ref.isReady() || !ref.isSaveable()
+                        || ref.getWorkbook() == null || !ref.isContentDirty())
+                    return;
+
+                IWorkbookSaver saver = ref.getWorkbookSaver();
+                if (saver != null && saver.willOverwriteTarget()) {
+                    try {
+                        if (DEBUGGING)
+                            System.out.println("AutoSave start: " + ref); //$NON-NLS-1$
+                        ref.saveWorkbook(new SubProgressMonitor(monitor, 0),
+                                null, true);
+                        if (InternalCore.DEBUG_WORKBOOK_SAVE)
+                            Logger.log("BackgroundWorkbookSaver: Finished saving workbook in background: " //$NON-NLS-1$
+                                    + ref.getKey().toString());
+                        if (DEBUGGING)
+                            System.out.println("AutoSave finished: " + ref); //$NON-NLS-1$
+                    } catch (Throwable e) {
+                        if (DEBUGGING) {
+                            System.err.println("AutoSave error: " + ref); //$NON-NLS-1$
+                            e.printStackTrace();
+                        }
+                        Logger.log(e,
+                                "BackgroundWorkbookSaver: Failed to save workbook: " //$NON-NLS-1$
+                                        + ref.getKey().toString());
+                    }
                 }
-                monitor.worked(1);
             }
         }
 
-        private void save(IWorkbookRef ref, IProgressMonitor monitor)
-                throws Throwable {
-            WorkbookRef r = (WorkbookRef) ref;
-            if (!r.isReady() || !r.isSaveable())
-                return;
-
-            IWorkbook workbook = ref.getWorkbook();
-            if (workbook == null)
-                return;
-
-            if (!r.isContentDirty())
-                return;
-
-            monitor.subTask(NLS
-                    .bind(MindMapMessages.BackgroundWorkbookSaver_SavingWorkbook_taskNamePattern,
-                            workbook.getFile()));
-
-            IWorkbookSaver saver = r.getWorkbookSaver();
-            if (saver != null && saver.willOverwriteTarget()) {
-                r.saveWorkbook(monitor, null, true);
-            }
+        protected void canceling() {
+            super.canceling();
+            Thread t = getThread();
+            if (t != null)
+                t.interrupt();
         }
 
     }
 
     private DaemonJob daemon = null;
 
-    public void runWith(int intervals, boolean enabled) {
+    public synchronized void reset(int intervals, boolean enabled) {
         stopAll();
         if (enabled) {
             daemon = new DaemonJob(intervals);
@@ -203,14 +173,14 @@ public class BackgroundWorkbookSaver {
         }
     }
 
-    public boolean isRunning() {
+    public synchronized boolean isRunning() {
         return daemon != null;
     }
 
     /**
      * 
      */
-    public void stopAll() {
+    public synchronized void stopAll() {
         if (daemon != null) {
             Thread thread = daemon.getThread();
             daemon.cancel();
@@ -222,9 +192,6 @@ public class BackgroundWorkbookSaver {
     }
 
     public static BackgroundWorkbookSaver getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new BackgroundWorkbookSaver();
-        }
         return INSTANCE;
     }
 

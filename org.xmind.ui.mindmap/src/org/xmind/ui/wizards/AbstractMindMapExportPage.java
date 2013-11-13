@@ -46,8 +46,10 @@ public abstract class AbstractMindMapExportPage extends AbstractExportPage {
         return getCastedWizard().getSourceMindMap();
     }
 
+    @SuppressWarnings("nls")
     protected String getSuggestedFileName() {
-        return getSourceMindMap().getCentralTopic().getTitleText();
+        String fileName = getSourceMindMap().getCentralTopic().getTitleText();
+        return fileName.replaceAll("\\r\\n|\\r|\\n", " ");
     }
 
     protected boolean hasSource() {

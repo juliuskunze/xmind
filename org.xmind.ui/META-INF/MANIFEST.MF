@@ -1,20 +1,18 @@
 Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: %pluginName
-Bundle-SymbolicName: org.xmind.ui;singleton:=true
-Bundle-Version: 3.3.1.qualifier
-Bundle-Activator: org.xmind.ui.internal.XmindUIPlugin
-Bundle-Vendor: %providerName
-Require-Bundle: org.eclipse.ui,
- org.eclipse.core.runtime,
- org.xmind.ui.mindmap;visibility:=reexport,
- org.eclipse.core.expressions,
- org.xmind.core.runtime;visibility:=reexport,
- org.xmind.gef.ui;visibility:=reexport,
- org.xmind.ui.browser,
- org.xmind.ui.toolkit
-Eclipse-LazyStart: true
 Export-Package: org.xmind.ui.internal;x-friends:="org.xmind.ui"
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
+Bundle-Name: %pluginName
 Bundle-Localization: plugin
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Require-Bundle: org.eclipse.ui,org.eclipse.core.runtime,org.xmind.ui.m
+ indmap;visibility:=reexport,org.eclipse.core.expressions,org.xmind.co
+ re.runtime;visibility:=reexport,org.xmind.gef.ui;visibility:=reexport
+ ,org.xmind.ui.browser,org.xmind.ui.toolkit
+Bundle-Vendor: %providerName
+Eclipse-LazyStart: true
+Bundle-Version: 3.4.0.201311050558
+Bundle-ManifestVersion: 2
+Bundle-Activator: org.xmind.ui.internal.XmindUIPlugin
+Bundle-SymbolicName: org.xmind.ui;singleton:=true
+
+

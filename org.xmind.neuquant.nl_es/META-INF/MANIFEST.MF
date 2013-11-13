@@ -1,8 +1,10 @@
 Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: NeuQuant Image Quantization Spanish Language Support
-Bundle-SymbolicName: org.xmind.neuquant.nl_es;singleton:=true
-Bundle-Version: 1.0.0.qualifier
-Bundle-Vendor: Anthony Dekker
+Bundle-Vendor: XMind Ltd.
 Fragment-Host: org.xmind.neuquant
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name: NeuQuant Image Quantization Spanish Language Support
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.xmind.neuquant.nl_es;singleton:=true
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

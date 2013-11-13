@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Require-Bundle: org.eclipse.ui,org.eclipse.core.runtime,org.xmind.core
+ .command;bundle-version="3.4.0",org.xmind.core.command.remote;bundle-
+ version="[3.4.0,3.5.0)",org.xmind.core.sharing.localnetwork;bundle-ve
+ rsion="3.4.0",org.xmind.gef.ui,org.xmind.ui.toolkit,org.eclipse.draw2
+ d,org.eclipse.ui.forms,org.xmind.ui,org.eclipse.core.filesystem,org.e
+ clipse.core.expressions;bundle-version="3.4.400"
+Export-Package: org.xmind.ui.internal.sharing;x-internal:=true
+Bundle-Vendor: %providerName
+Bundle-ActivationPolicy: lazy
+Bundle-Version: 3.4.0.201311050558
+Eclipse-PlatformFilter: (|(osgi.os=win32)(osgi.os=macosx))
+Bundle-Name: %pluginName
+Bundle-ManifestVersion: 2
+Bundle-Activator: org.xmind.ui.internal.sharing.LocalNetworkSharingUI
+Bundle-SymbolicName: org.xmind.ui.sharing;singleton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

@@ -23,7 +23,6 @@ import static org.xmind.core.internal.dom.DOMConstants.ATTR_TIMESTAMP;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_REVISION;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_REVISION_CONTENT;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
@@ -204,10 +203,7 @@ public class RevisionManagerImpl extends RevisionManager implements
 
         String path = getDirPath() + getFileName(revNum, timestamp, "xml"); //$NON-NLS-1$
         IFileEntry entry = ownedWorkbook.getManifest().createFileEntry(path);
-        OutputStream stream = entry.getOutputStream();
-        if (stream == null)
-            throw new FileNotFoundException(
-                    "No storage to place revision snapshot: " + path); //$NON-NLS-1$
+        OutputStream stream = entry.openOutputStream();
         DOMUtils.save(doc, stream, true);
         return path;
     }

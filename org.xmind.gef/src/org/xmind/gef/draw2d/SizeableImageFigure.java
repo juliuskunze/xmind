@@ -132,6 +132,56 @@ public class SizeableImageFigure extends ReferencedFigure implements IHasImage {
         repaint();
     }
 
+    @Override
+    public Dimension getPreferredSize(int wHint, int hHint) {
+        if (prefSize != null)
+            return prefSize;
+        if (getLayoutManager() != null) {
+            Dimension d = getLayoutManager().getPreferredSize(this, wHint,
+                    hHint);
+            if (d != null)
+                return d;
+        }
+        return calculatePreferredImageSize(wHint, hHint);
+    }
+
+    protected Dimension calculatePreferredImageSize(int wHint, int hHint) {
+        Dimension size = getImageSize();
+        if (wHint < 0 && hHint < 0)
+            return size;
+        boolean constrained = isConstrained();
+        boolean stretched = isStretched();
+        if (constrained || stretched) {
+            if (size.width == 0 || size.height == 0)
+                return new Dimension(Math.max(wHint, 0), Math.max(hHint, 0));
+            if (wHint == 0 || hHint == 0)
+                return new Dimension(0, 0);
+            if (wHint > 0 && hHint > 0) {
+                if (constrained
+                        && (stretched || size.width > wHint || size.height > hHint)) {
+                    int a = size.width * hHint;
+                    int b = size.height * wHint;
+                    if (stretched ? (a < b) : (a > b)) {
+                        int h = wHint == 0 ? 0 : b / size.width;
+                        return new Dimension(wHint, h);
+                    } else if (stretched ? (a > b) : (a < b)) {
+                        int w = hHint == 0 ? 0 : a / size.height;
+                        return new Dimension(w, hHint);
+                    } else {
+                        return new Dimension(wHint, hHint);
+                    }
+                } else {
+                    return new Dimension(size.width, size.height);
+                }
+            } else if (wHint > 0) {
+                return new Dimension(wHint, wHint * size.height / size.width);
+            } else { // if (hHint > 0) {
+                return new Dimension(hHint * size.width / size.height, hHint);
+            }
+        }
+        return size;
+    }
+
     /**
      * @see org.eclipse.draw2d.Figure#paintFigure(Graphics)
      */

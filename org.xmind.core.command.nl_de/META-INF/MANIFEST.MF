@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-Vendor: XMind Ltd.
+Fragment-Host: org.xmind.core.command
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name:  German Language Support
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.xmind.core.command.nl_de;singleton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

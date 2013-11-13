@@ -92,12 +92,19 @@ public class FileUtils {
         Iterator<String> entries = inputSource.getEntries();
         while (entries.hasNext()) {
             String entryPath = entries.next();
-            if (filter == null || filter.select(entryPath, null, false)) {
+            if ((filter == null || filter.select(entryPath, null, false))) {
                 InputStream is = inputSource.getEntryStream(entryPath);
                 if (is != null) {
-                    OutputStream os = outputTarget.getEntryStream(entryPath);
-                    if (os != null) {
-                        transfer(is, os);
+                    try {
+                        OutputStream os = outputTarget
+                                .openEntryStream(entryPath);
+                        try {
+                            transfer(is, os);
+                        } finally {
+                            os.close();
+                        }
+                    } finally {
+                        is.close();
                     }
                 }
             }
@@ -117,7 +124,7 @@ public class FileUtils {
     public static void transfer(InputStream is, OutputStream os,
             boolean closeOnFinish, String taskName) throws IOException {
         try {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[4096];
             while (true) {
                 int num = is.read(buffer);
                 if (num <= 0)

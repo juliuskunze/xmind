@@ -35,10 +35,10 @@ public class LegendItemFigure extends Figure implements ITitledFigure {
 
     private Dimension cachedPrefSize = null;
 
-    public LegendItemFigure() {
+    public LegendItemFigure(int textRenderStyle) {
         this.icon = new SizeableImageFigure();
         this.icon.setConstrained(true);
-        this.caption = new RotatableWrapLabel(RotatableWrapLabel.NORMAL);
+        this.caption = new RotatableWrapLabel(textRenderStyle);
         add(this.icon);
         add(this.caption);
     }
@@ -103,6 +103,10 @@ public class LegendItemFigure extends Figure implements ITitledFigure {
         return caption.getTextAlignment();
     }
 
+    public int getTextRenderStyle() {
+        return ((RotatableWrapLabel) caption).getRenderStyle();
+    }
+
     public void setLineSpacing(int spacing) {
         caption.setLineSpacing(spacing);
     }
@@ -117,6 +121,10 @@ public class LegendItemFigure extends Figure implements ITitledFigure {
 
     public void setTextAlignment(int align) {
         caption.setTextAlignment(align);
+    }
+
+    public void setTextRenderStyle(int textRenderStyle) {
+        ((RotatableWrapLabel) caption).setRenderStyle(textRenderStyle);
     }
 
     public Image getIconImage() {

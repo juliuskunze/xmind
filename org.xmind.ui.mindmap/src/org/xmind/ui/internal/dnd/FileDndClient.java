@@ -47,44 +47,34 @@ import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogMessages;
 import org.xmind.ui.internal.protocols.FilePathParser;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.prefs.PrefConstants;
 import org.xmind.ui.util.ImageFormat;
 import org.xmind.ui.util.Logger;
 
 public class FileDndClient extends MindMapDNDClientBase {
 
-    private static final String CREATE_ATTACHMENT = "CREATE_ATTACHMENT"; //$NON-NLS-1$
-
-    private static final String CREATE_HYPERLINK = "CREATE_HYPERLINK"; //$NON-NLS-1$
-
     private static final String CREATE_IMAGE = "CREATE_IMAGE"; //$NON-NLS-1$
 
-    private static final String ASK_USER = "ASK_USER"; //$NON-NLS-1$
-
-    private static final String ADD_EXTERNAL_FOLDER = "dndConfirm.ExternalFolder"; //$NON-NLS-1$
-
     private static final String ADD_EXTERNAL_FILE = "dndConfirm.ExternalFile"; //$NON-NLS-1$
-
-    private static final String ADD_MULTIPLE_EXTERNAL_FILES = "dndConfirm.MultipleExternalFiles"; //$NON-NLS-1$
 
     private class FileDropHandler {
 
         private String path;
-
-        private String action;
+        private String active;
 
         public FileDropHandler(String path, String action) {
             this.path = path;
-            this.action = action;
+            this.active = action;
         }
 
         public void createViewerElements(IWorkbook workbook,
                 ITopic targetParent, List<Object> elements) {
             File file = new File(path);
-            if (CREATE_HYPERLINK.equals(action)) {
+            if (PrefConstants.CREATE_HYPERLINK.equals(active)) {
                 elements.add(createFileHyperlinkTopic(workbook, file));
-            } else if (CREATE_ATTACHMENT.equals(action)) {
+            } else if (PrefConstants.CREATE_ATTACHMENT.equals(active)) {
                 elements.add(createAttachmentTopic(workbook, file, null));
-            } else if (CREATE_IMAGE.equals(action)) {
+            } else if (CREATE_IMAGE.equals(active)) {
                 if (targetParent != null) {
                     elements.add(createImageOnTopic(workbook, targetParent,
                             file));
@@ -124,6 +114,7 @@ public class FileDndClient extends MindMapDNDClientBase {
                                     HyperlinkUtils.toAttachmentURL(entry
                                             .getPath()));
                             topic.getImage().setSize(size.width, size.height);
+                            topic.setTitleText(""); //$NON-NLS-1$
                         } else {
                             topic.setHyperlink(HyperlinkUtils
                                     .toAttachmentURL(entry.getPath()));
@@ -226,7 +217,8 @@ public class FileDndClient extends MindMapDNDClientBase {
     private void createImageFileDropHandler(String imagePath, int operation,
             List<FileDropHandler> handlers) {
         if (operation == DND.DROP_LINK) {
-            createFileDropHandlers(handlers, CREATE_HYPERLINK, imagePath);
+            createFileDropHandlers(handlers, PrefConstants.CREATE_HYPERLINK,
+                    imagePath);
         } else {
             createFileDropHandlers(handlers, CREATE_IMAGE, imagePath);
         }
@@ -235,14 +227,16 @@ public class FileDndClient extends MindMapDNDClientBase {
     private void createSingleFolderDropHandler(String path, int operation,
             List<FileDropHandler> handlers, Shell shell) {
         if (operation == DND.DROP_LINK) {
-            createFileDropHandlers(handlers, CREATE_HYPERLINK, path);
+            createFileDropHandlers(handlers, PrefConstants.CREATE_HYPERLINK,
+                    path);
         } else if (operation == DND.DROP_COPY) {
-            createFileDropHandlers(handlers, CREATE_ATTACHMENT, path);
+            createFileDropHandlers(handlers, PrefConstants.CREATE_ATTACHMENT,
+                    path);
         } else {
             askForConfirmation(
                     shell,
                     DialogMessages.DND_ExternalFolder,
-                    ADD_EXTERNAL_FOLDER,
+                    ADD_EXTERNAL_FILE,
                     NLS.bind(
                             DialogMessages.DND_ExternalFolder_confirmation_with_path,
                             path), handlers, path);
@@ -252,9 +246,11 @@ public class FileDndClient extends MindMapDNDClientBase {
     private void createSingleFileDropHandler(String path, int operation,
             List<FileDropHandler> handlers, Shell shell) {
         if (operation == DND.DROP_LINK) {
-            createFileDropHandlers(handlers, CREATE_HYPERLINK, path);
+            createFileDropHandlers(handlers, PrefConstants.CREATE_HYPERLINK,
+                    path);
         } else if (operation == DND.DROP_COPY) {
-            createFileDropHandlers(handlers, CREATE_ATTACHMENT, path);
+            createFileDropHandlers(handlers, PrefConstants.CREATE_ATTACHMENT,
+                    path);
         } else {
             askForConfirmation(
                     shell,
@@ -272,9 +268,11 @@ public class FileDndClient extends MindMapDNDClientBase {
     private void createMultipleFilesDropHandler(String[] paths, int operation,
             List<FileDropHandler> handlers, Shell shell) {
         if (operation == DND.DROP_LINK) {
-            createFileDropHandlers(handlers, CREATE_HYPERLINK, paths);
+            createFileDropHandlers(handlers, PrefConstants.CREATE_HYPERLINK,
+                    paths);
         } else if (operation == DND.DROP_COPY) {
-            createFileDropHandlers(handlers, CREATE_ATTACHMENT, paths);
+            createFileDropHandlers(handlers, PrefConstants.CREATE_ATTACHMENT,
+                    paths);
         } else {
             StringBuffer sb = new StringBuffer(paths.length * 30);
             for (int i = 0; i < paths.length; i++) {
@@ -305,7 +303,7 @@ public class FileDndClient extends MindMapDNDClientBase {
             askForConfirmation(
                     shell,
                     DialogMessages.DND_MultipleExternalFiles,
-                    ADD_MULTIPLE_EXTERNAL_FILES,
+                    ADD_EXTERNAL_FILE,
                     NLS.bind(
                             DialogMessages.DND_MultipleExternalFiles_confirmation_with_fileList,
                             sb.toString()), handlers, paths);
@@ -315,11 +313,11 @@ public class FileDndClient extends MindMapDNDClientBase {
     private void askForConfirmation(Shell shell, String itemName,
             String prefKey, String dialogMessage,
             List<FileDropHandler> handlers, String... paths) {
-        String action = getPref().getString(prefKey);
-        if ("".equals(action) || ASK_USER.equals(action)) { //$NON-NLS-1$
-            action = null;
+        String active = getPref().getString(prefKey);
+        if ("".equals(active) || PrefConstants.ASK_USER.equals(active)) { //$NON-NLS-1$
+            active = null;
         }
-        if (action == null) {
+        if (active == null) {
             shell.forceActive();
             MessageDialogWithToggle dialog = new MessageDialogWithToggle(
                     shell,
@@ -340,16 +338,16 @@ public class FileDndClient extends MindMapDNDClientBase {
                             itemName), false);
             int ret = dialog.open();
             if (ret == IDialogConstants.INTERNAL_ID) {
-                action = CREATE_HYPERLINK;
+                active = PrefConstants.CREATE_HYPERLINK;
             } else if (ret == IDialogConstants.INTERNAL_ID + 1) {
-                action = CREATE_ATTACHMENT;
+                active = PrefConstants.CREATE_ATTACHMENT;
             }
-            if (dialog.getToggleState() && action != null) {
-                getPref().setValue(prefKey, action);
+            if (dialog.getToggleState() && active != null) {
+                getPref().setValue(prefKey, active);
             }
         }
-        if (action != null) {
-            createFileDropHandlers(handlers, action, paths);
+        if (active != null) {
+            createFileDropHandlers(handlers, active, paths);
         }
     }
 

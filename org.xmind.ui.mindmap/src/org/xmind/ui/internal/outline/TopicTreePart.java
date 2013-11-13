@@ -43,9 +43,17 @@ public class TopicTreePart extends MindMapTreePartBase {
     public void handleCoreEvent(CoreEvent event) {
         String type = event.getType();
         if (Core.TitleText.equals(type) || Core.TopicHyperlink.equals(type)) {
-            update();
+            runInUI(new Runnable() {
+                public void run() {
+                    update();
+                }
+            }, false);
         } else if (Core.TopicAdd.equals(type) || Core.TopicRemove.equals(type)) {
-            refresh();
+            runInUI(new Runnable() {
+                public void run() {
+                    refresh();
+                }
+            }, false);
         } else {
             super.handleCoreEvent(event);
         }

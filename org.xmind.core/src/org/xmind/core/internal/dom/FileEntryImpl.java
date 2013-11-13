@@ -18,14 +18,14 @@ import static org.xmind.core.internal.dom.DOMConstants.ATTR_MEDIA_TYPE;
 import static org.xmind.core.internal.dom.DOMConstants.TAG_ENCRYPTION_DATA;
 import static org.xmind.core.internal.dom.InternalDOMUtils.getParentPath;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.xmind.core.Core;
-import org.xmind.core.CoreException;
 import org.xmind.core.IEncryptionData;
 import org.xmind.core.IFileEntry;
 import org.xmind.core.IFileEntryFilter;
@@ -153,12 +153,8 @@ public class FileEntryImpl extends FileEntry {
             return null;
         IStorage storage = getStorage();
         if (storage != null) {
-            try {
-                String path = getPath();
-                return storage.getInputSource().getEntryStream(path);
-            } catch (CoreException e) {
-                Core.getLogger().log(e);
-            }
+            String path = getPath();
+            return storage.getInputSource().getEntryStream(path);
         }
         return null;
     }
@@ -168,34 +164,40 @@ public class FileEntryImpl extends FileEntry {
             return null;
         IStorage storage = getStorage();
         if (storage != null) {
-            try {
-                return storage.getOutputTarget().getEntryStream(getPath());
-            } catch (CoreException e) {
-                Core.getLogger().log(e);
-            }
+            return storage.getOutputTarget().getEntryStream(getPath());
         }
         return null;
+    }
+
+    public InputStream openInputStream() throws IOException {
+        if (isDirectory())
+            throw new FileNotFoundException(getPath());
+        IStorage storage = getStorage();
+        if (storage == null)
+            throw new FileNotFoundException(getPath());
+        return storage.getInputSource().openEntryStream(getPath());
+    }
+
+    public OutputStream openOutputStream() throws IOException {
+        if (isDirectory())
+            throw new FileNotFoundException(getPath());
+        IStorage storage = getStorage();
+        if (storage == null)
+            throw new FileNotFoundException(getPath());
+        return storage.getOutputTarget().openEntryStream(getPath());
     }
 
     public long getTime() {
         IStorage storage = getStorage();
         if (storage != null)
-            try {
-                return storage.getInputSource().getEntryTime(getPath());
-            } catch (CoreException e) {
-                Core.getLogger().log(e);
-            }
+            return storage.getInputSource().getEntryTime(getPath());
         return -1;
     }
 
     public void setTime(long time) {
         IStorage storage = getStorage();
         if (storage != null) {
-            try {
-                storage.getOutputTarget().setEntryTime(getPath(), time);
-            } catch (CoreException e) {
-                Core.getLogger().log(e);
-            }
+            storage.getOutputTarget().setEntryTime(getPath(), time);
         }
     }
 
@@ -248,11 +250,7 @@ public class FileEntryImpl extends FileEntry {
 //        }
         IStorage storage = getStorage();
         if (storage != null) {
-            try {
-                return storage.getInputSource().getEntrySize(getPath());
-            } catch (CoreException e) {
-                Core.getLogger().log(e);
-            }
+            return storage.getInputSource().getEntrySize(getPath());
         }
         return -1;
     }

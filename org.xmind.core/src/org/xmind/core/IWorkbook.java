@@ -235,45 +235,134 @@ public interface IWorkbook extends IAdaptable, IModifiable {
     IResourceRef createResourceRef(String resourceType, String resourceId);
 
     /**
+     * Saves this workbook to the last saved location.
      * 
      * @throws IOException
      * @throws CoreException
+     * @deprecated Workbook instances should NOT cache output target any more,
+     *             as the output target may not be ready if called multiple
+     *             times. Use other save(xxx) methods instead and prepare a
+     *             proper output target in prior.
      */
     void save() throws IOException, CoreException;
 
     /**
+     * Saves all contents of this workbook to a target local file. The default
+     * implementation uses the ZIP file format to store multiple entries into
+     * one file.
+     * 
+     * <p>
+     * As a legacy behaviour, the file path passed to this method is remembered
+     * and reused for the {@link #save()} method. However, this behaviour is not
+     * recommended any more and may be removed in future. So clients should not
+     * rely on the deprecated <code>save()</code> method any more.
+     * </p>
+     * 
+     * <p>
+     * Another legacy behaviour is that the file path passed to this method will
+     * override the file path set by <code>setFile()</code>. So curently clients
+     * need to call <code>setFile()</code> after calling this method if they
+     * want the workbook refers to a different file path. However, this
+     * behaviour may be removed in future to reduce the reliability on local
+     * files.
+     * </p>
      * 
      * @param file
+     *            the absolute path of the target file in the local file system
      * @throws IOException
+     *             if I/O error occurs
      * @throws CoreException
+     *             if some logic or execution error occurs, e.g. missing some
+     *             required components, or operation canceled by user, etc.
      */
     void save(String file) throws IOException, CoreException;
 
     /**
+     * Saves all contents of this workbook to a target output stream. The
+     * default implementation uses the ZIP file format to store multiple entries
+     * into one output stream.
+     * 
+     * <p>
+     * Note that it's not gauranteed that the output stream will be closed when
+     * the process finishes, so clients should explictly call
+     * <code>close()</code> on the output stream in a <code>finally</code>
+     * block.
+     * </p>
      * 
      * @param output
+     *            the output stream to write workbook contents to
      * @throws IOException
+     *             if I/O error occurs
      * @throws CoreException
+     *             if some logic or execution error occurs, e.g. missing some
+     *             required components, or operation canceled by user, etc.
      */
     void save(OutputStream output) throws IOException, CoreException;
 
     /**
+     * Saves all contents of this workbook to a multi-entry output target.
+     * 
+     * <p>
+     * Note that clients should make sure the output target is ready before
+     * calling this method.
+     * </p>
+     * 
+     * <p>
+     * As a legacy behaviour, the output target passed in this method is
+     * remembered and reused for the {@link #save()} method. However, this
+     * behaviour is not recommended any more and may be removed in future. So
+     * clients should not rely on the deprecated <code>save()</code> method any
+     * more.
+     * </p>
      * 
      * @param target
+     *            the output target to write all entries of this workbook to
      * @throws IOException
+     *             if I/O error occurs
      * @throws CoreException
+     *             if some logic or execution error occurs, e.g. missing some
+     *             required components, or operation canceled by user, etc.
      */
     void save(IOutputTarget target) throws IOException, CoreException;
 
     /**
+     * Returns the path of the local file that this workbook refers to.
      * 
-     * @return
+     * <p>
+     * The path is typically set by {@link #setFile(String)} or
+     * {@link #save(String)}.
+     * </p>
+     * 
+     * <p>
+     * Developer Guide: As a legacy concept, the reliability on local files will
+     * be gradually reduced in future so that a workbook performs as a pure
+     * in-memory model and support more kinds of output targets to save to. So
+     * this method may one day be deprecated, and thus it's recommended that
+     * clients use external mechanisms to remember which output target a
+     * workbook refers to and is referred to.
+     * <p>
+     * 
+     * @return the file path that this workbook refers to
+     * @see #setFile(String)
+     * @see #save(String)
      */
     String getFile();
 
     /**
+     * Sets the path of a local file that this workbook will refer to.
+     * 
+     * <p>
+     * Developer Guide: As a legacy concept, the reliability on local files will
+     * be gradually reduced in future so that a workbook performs as a pure
+     * in-memory model and support more kinds of output targets to save to. So
+     * this method may one day be deprecated, and thus it's recommended that
+     * clients use external mechanisms to remember which output target a
+     * workbook refers to and is referred to.
+     * <p>
      * 
      * @param file
+     *            the path of a new local file that this workbook will refer to
+     * @see #getFile()
      */
     void setFile(String file);
 

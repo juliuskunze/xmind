@@ -13,14 +13,19 @@
  *******************************************************************************/
 package org.xmind.ui.internal.mindmap;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
 import org.eclipse.draw2d.IFigure;
+import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.draw2d.RotatableWrapLabel;
 import org.xmind.gef.part.IPart;
 import org.xmind.ui.internal.decorators.NumberingDecorator;
 import org.xmind.ui.mindmap.INumberingPart;
 import org.xmind.ui.mindmap.ITopicPart;
 
-public class NumberingPart extends MindMapPartBase implements INumberingPart {
+public class NumberingPart extends MindMapPartBase implements INumberingPart,
+        PropertyChangeListener {
 
     public NumberingPart() {
         setDecorator(NumberingDecorator.getInstance());
@@ -60,7 +65,37 @@ public class NumberingPart extends MindMapPartBase implements INumberingPart {
     }
 
     protected IFigure createFigure() {
-        return new RotatableWrapLabel();
+        boolean useAdvancedRenderer = getSite().getViewer().getProperties()
+                .getBoolean(IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, false);
+        return new RotatableWrapLabel(
+                useAdvancedRenderer ? RotatableWrapLabel.ADVANCED
+                        : RotatableWrapLabel.NORMAL);
+    }
+
+    protected void onActivated() {
+        super.onActivated();
+        getSite()
+                .getViewer()
+                .getProperties()
+                .addPropertyChangeListener(
+                        IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, this);
+    }
+
+    protected void onDeactivated() {
+        getSite()
+                .getViewer()
+                .getProperties()
+                .removePropertyChangeListener(
+                        IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, this);
+        super.onDeactivated();
+    }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+        boolean useAdvancedRenderer = getSite().getViewer().getProperties()
+                .getBoolean(IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, false);
+        ((RotatableWrapLabel) getFigure())
+                .setRenderStyle(useAdvancedRenderer ? RotatableWrapLabel.ADVANCED
+                        : RotatableWrapLabel.NORMAL);
     }
 
 }

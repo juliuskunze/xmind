@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Require-Bundle: org.eclipse.core.runtime,org.xmind.core.command;bundle
+ -version="[3.4.0,3.5.0)",org.xmind.core.command.remote;bundle-version
+ ="[3.4.0,3.5.0)",org.xmind.core;bundle-version="3.4.0",net.coobird.th
+ umbnailator;bundle-version="0.4.3"
+Export-Package: org.xmind.core.internal.sharing;x-internal:=true,org.x
+ mind.core.sharing
+Bundle-Vendor: %providerName
+Bundle-ActivationPolicy: lazy
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name: %pluginName
+Bundle-ManifestVersion: 2
+Bundle-Activator: org.xmind.core.internal.sharing.LocalNetworkSharing
+Bundle-SymbolicName: org.xmind.core.sharing.localnetwork;singleton:=tr
+ ue
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

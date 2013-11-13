@@ -21,9 +21,9 @@ public interface ILicenseInfo {
 
     int VALID_PRO_SUBSCRIPTION = 1;
 
-    int VALID_PRO_LICENSE = 1 << 1;
+    int VALID_PRO_LICENSE_KEY = 1 << 1;
 
-    int VALID_PLUS_LICENSE = 1 << 2;
+    int VALID_PLUS_LICENSE_KEY = 1 << 2;
 
     int NO_LICENSING_INFO = 1 << 10;
 
@@ -37,26 +37,40 @@ public interface ILicenseInfo {
 
     int VERIFYING = 1 << 31;
 
-    int VALID = VALID_PRO_SUBSCRIPTION | VALID_PRO_LICENSE | VALID_PLUS_LICENSE;
+    int VALID = VALID_PRO_SUBSCRIPTION | VALID_PRO_LICENSE_KEY
+            | VALID_PLUS_LICENSE_KEY;
 
     /**
+     * Returns the type code of the license verification result. This code may
+     * consists of multiple bit flags defined as static members of this
+     * interface.
      * 
-     * @return
+     * @return the type code
      */
     int getType();
 
     /**
+     * Returns the error that caused failure of the license verification.
      * 
-     * @return
+     * @return the error object
      */
     Throwable getError();
 
     /**
-     * Returns the representative name of the entity who the current XMind
-     * Pro/Plus is licensed to.
+     * Returns the representative name of the entity to whom the current XMind
+     * Pro/Plus is licensed.
      * 
-     * @return
+     * @return the name of the licensee entity, or <code>null</code> if license
+     *         verification fails
      */
     String getLicensedTo();
+
+    /**
+     * Returns a 12-character string representing the verified license key.
+     * 
+     * @return the license key header, or <code>null</code> if no license key is
+     *         verified
+     */
+    ILicenseKeyHeader getLicenseKeyHeader();
 
 }

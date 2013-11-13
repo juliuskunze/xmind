@@ -32,12 +32,18 @@ public class DeleteSheetCommand extends SourceCommand {
         this.parent = parent;
     }
 
+    public DeleteSheetCommand(ISheet sheet, IWorkbook parent) {
+        super(sheet);
+        Assert.isNotNull(parent);
+        this.parent = parent;
+    }
+
     public int getType() {
         return GEF.CMD_DELETE;
     }
 
     public boolean canExecute() {
-        return super.canExecute() && parent.getSheets().size() > 1;
+        return super.canExecute();
     }
 
     public void execute() {

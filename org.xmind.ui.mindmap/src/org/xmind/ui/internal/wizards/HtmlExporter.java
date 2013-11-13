@@ -45,6 +45,7 @@ import org.xmind.core.internal.dom.DOMConstants;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerRef;
 import org.xmind.core.marker.IMarkerResource;
+import org.xmind.core.marker.IMarkerVariation;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.util.DOMUtils;
 import org.xmind.core.util.FileUtils;
@@ -1007,7 +1008,15 @@ public class HtmlExporter extends Exporter {
         name = FileUtils.getNoExtensionFileName(name);
         String path = newPath(getImagesPath(), name, ext);
         FileUtils.ensureFileParent(new File(path));
-        InputStream in = resource.getInputStream();
+
+        List<IMarkerVariation> variations = resource.getVariations();
+        InputStream in;
+        if (variations.size() > 0) {
+            in = resource.getInputStream(variations.get(variations.size() - 1));
+        } else {
+            in = resource.getInputStream();
+        }
+
         if (in != null) {
             try {
                 FileUtils.transfer(in, new FileOutputStream(path), true);

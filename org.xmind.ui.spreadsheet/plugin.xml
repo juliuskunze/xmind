@@ -31,7 +31,7 @@
                         <with
                               variable="topic">
                            <test
-                                 property="org.xmind.ui.topic.structureClass"
+                                 property="org.xmind.core.topic.structureClass"
                                  value="org.xmind.ui.spreadsheet">
                            </test>
                         </with>

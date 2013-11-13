@@ -74,4 +74,12 @@ public class FileEditorInput implements IEditorInput, IPersistableElement {
         return this.file.equals(that.file);
     }
 
+    public String toString() {
+        return "FileEditorInput@" + file.getAbsolutePath(); //$NON-NLS-1$
+    }
+
+    public int hashCode() {
+        return file.hashCode();
+    }
+
 }

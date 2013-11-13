@@ -19,6 +19,7 @@ import org.xmind.core.IAdaptable;
 import org.xmind.core.IIdentifiable;
 import org.xmind.core.INamed;
 import org.xmind.core.IProperties;
+import org.xmind.core.ITopic;
 import org.xmind.core.util.Property;
 
 public interface IStyle extends IAdaptable, IIdentifiable, IProperties, INamed {
@@ -67,14 +68,30 @@ public interface IStyle extends IAdaptable, IIdentifiable, IProperties, INamed {
     String MAP = "map"; //$NON-NLS-1$
 
     /**
+     * Gets the style sheet who owns this style.
+     * <p>
+     * A style can not be added to a style sheet that does not own it.
      * 
-     * @return
+     * @return the owned style sheet
      */
     IStyleSheet getOwnedStyleSheet();
 
     /**
+     * Gets the string identifitying the type of this style. A style with a
+     * specific type can only be applied to a specific type of object, i.e. a
+     * style with {@link #TOPIC} type can only be applied to {@link ITopic}
+     * objects. Trying to apply a style to a object of different type may result
+     * in no effects.
      * 
-     * @return
+     * @see #TOPIC
+     * @see #MAP
+     * @see #BOUNDARY
+     * @see #RELATIONSHIP
+     * @see #SUMMARY
+     * @see #PARAGRAPH
+     * @see #TEXT
+     * @see #THEME
+     * @return the type of this style
      */
     String getType();
 
@@ -111,12 +128,5 @@ public interface IStyle extends IAdaptable, IIdentifiable, IProperties, INamed {
      * @param styleId
      */
     void setDefaultStyleId(String styleFamily, String styleId);
-
-//    /**
-//     * 
-//     * @param style
-//     * @return
-//     */
-//    boolean contentEquals(IStyle style);
 
 }

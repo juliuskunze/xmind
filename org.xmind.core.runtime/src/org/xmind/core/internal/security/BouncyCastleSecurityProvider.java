@@ -95,9 +95,7 @@ public final class BouncyCastleSecurityProvider implements ISecurityProvider {
             encData.setChecksumType("MD5"); //$NON-NLS-1$
         }
 
-        encData
-                .setAttribute(ALGORITHM_NAME, TAG_ALGORITHM,
-                        ATTR_ALGORITHM_NAME);
+        encData.setAttribute(ALGORITHM_NAME, TAG_ALGORITHM, ATTR_ALGORITHM_NAME);
         encData.setAttribute(KEY_DERIVATION_ALGORITHM_NAME, TAG_KEY_DERIVATION,
                 ATTR_KEY_DERIVATION_NAME);
         encData.setAttribute(generateSalt(), TAG_KEY_DERIVATION, ATTR_SALT);

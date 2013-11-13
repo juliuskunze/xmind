@@ -89,13 +89,13 @@ public class ImageDownloader {
 
         protected void doDone(IJobChangeEvent event) {
             busyDownloads.remove(this);
-            int code = event.getResult().getCode();
-            if (code == DownloadJob.SUCCESS) {
+            int code = event.getResult().getSeverity();
+            if (code == IStatus.OK) {
                 onSuccess();
-            } else if (code == DownloadJob.FAILED) {
-                onFailed(event.getResult());
-            } else if (code == DownloadJob.CANCELED) {
+            } else if (code == IStatus.CANCEL) {
                 onCancel();
+            } else {
+                onFailed(event.getResult());
             }
         }
 

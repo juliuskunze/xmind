@@ -239,7 +239,8 @@ public abstract class AbstractWorkbookBuilder implements IWorkbookBuilder {
         if (!dir.isDirectory())
             throw new FileNotFoundException(
                     "Temp location is not directory: " + tempLocation); //$NON-NLS-1$
-        return doLoadFromDirectory(dir, null, null);
+        DirectoryStorage storage = new DirectoryStorage(dir);
+        return loadFromInputSource(storage.getInputSource(), storage, null);
     }
 
     /*

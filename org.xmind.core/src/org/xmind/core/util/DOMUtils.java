@@ -202,35 +202,28 @@ public class DOMUtils {
 
     };
 
-    private static Transformer transformer = null;
-    private static DocumentBuilder documentBuilder = null;
+//    private static Transformer transformer = null;
+//    private static DocumentBuilder documentBuilder = null;
 
     private DOMUtils() {
     }
 
     private static Transformer getDefaultTransformer() throws CoreException {
-        if (transformer == null) {
-            try {
-                transformer = TransformerFactory.newInstance().newTransformer();
-            } catch (TransformerException e) {
-                throw new CoreException(Core.ERROR_FAIL_ACCESS_XML_TRANSFORMER,
-                        e);
-            }
+        try {
+            return TransformerFactory.newInstance().newTransformer();
+        } catch (TransformerException e) {
+            throw new CoreException(Core.ERROR_FAIL_ACCESS_XML_TRANSFORMER, e);
         }
-        return transformer;
     }
 
     public static DocumentBuilder getDefaultDocumentBuilder()
             throws ParserConfigurationException {
-        if (documentBuilder == null) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory
-                    .newInstance();
-            factory.setAttribute(
-                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                    true);
-            documentBuilder = factory.newDocumentBuilder();
-            documentBuilder.setErrorHandler(NULL_ERROR_HANDLER);
-        }
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setAttribute(
+                "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+                true);
+        DocumentBuilder documentBuilder = factory.newDocumentBuilder();
+        documentBuilder.setErrorHandler(NULL_ERROR_HANDLER);
         return documentBuilder;
     }
 

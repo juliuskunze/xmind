@@ -17,6 +17,15 @@
             id="org.xmind.ui.import.FreeMind"
             name="%importWizard.freemind.name">
       </wizard>
+      <!--
+      <wizard
+            category="org.xmind.ui.importWizards"
+            class="org.xmind.ui.internal.imports.workbook.WorkbookImportWizard"
+            icon="icons/importworkbook.gif"
+            id="org.xmind.ui.import.Workbook"
+            name="%importWizard.workbook.name">
+      </wizard>
+      -->
    </extension>
 
 </plugin>

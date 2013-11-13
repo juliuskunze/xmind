@@ -196,7 +196,12 @@ public abstract class MindMapPropertySectionPartBase extends
         super.unhookSelection(selection);
     }
 
-    public void handleCoreEvent(CoreEvent event) {
-        refresh();
+    public void handleCoreEvent(final CoreEvent event) {
+        getContainer().getContainerSite().getWorkbenchWindow().getWorkbench()
+                .getDisplay().syncExec(new Runnable() {
+                    public void run() {
+                        refresh();
+                    }
+                });
     }
 }

@@ -13,13 +13,11 @@
  *******************************************************************************/
 package org.xmind.core.internal.dom;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.xmind.core.Core;
-import org.xmind.core.CoreException;
 import org.xmind.core.internal.zip.ArchiveConstants;
-import org.xmind.core.io.IInputSource;
 import org.xmind.core.io.IStorage;
 import org.xmind.core.marker.AbstractMarkerResource;
 import org.xmind.core.marker.IMarker;
@@ -34,45 +32,25 @@ public class WorkbookMarkerResource extends AbstractMarkerResource {
     }
 
     public InputStream getInputStream() {
-//        IArchivedWorkbook aw = getArchivedWorkbook();
-//        if (aw != null)
-//            return aw.getEntryInputStream(getFullPath());
-        try {
-            IStorage storage = getStorage();
-            IInputSource inputSource = storage.getInputSource();
-            String fullPath = getFullPath();
-            InputStream entryStream = inputSource.getEntryStream(fullPath);
-            return entryStream;
-        } catch (CoreException e) {
-            Core.getLogger().log(e);
-        }
-        return null;
+        return getStorage().getInputSource().getEntryStream(getFullPath());
     }
 
     public OutputStream getOutputStream() {
-//        IArchivedWorkbook aw = getArchivedWorkbook();
-//        if (aw != null)
-//            return aw.getEntryOutputStream(getFullPath());
-        try {
-            return getStorage().getOutputTarget().getEntryStream(getFullPath());
-        } catch (CoreException e) {
-            Core.getLogger().log(e);
-        }
-        return null;
+        return getStorage().getOutputTarget().getEntryStream(getFullPath());
+    }
+
+    public InputStream openInputStream() throws IOException {
+        return getStorage().getInputSource().openEntryStream(getFullPath());
+    }
+
+    public OutputStream openOutputStream() throws IOException {
+        return getStorage().getOutputTarget().openEntryStream(getFullPath());
     }
 
     private IStorage getStorage() {
         return workbook.getTempStorage();
     }
 
-//    private IArchivedWorkbook getArchivedWorkbook() {
-//        IArchivedWorkbook aw = workbook.getTempArchivedWorkbook();
-//        if (aw == null)
-//            aw = workbook.getArchivedWorkbook();
-//        return aw;
-//    }
-
-    @Override
     public boolean equals(Object obj) {
         if (obj == this)
             return true;

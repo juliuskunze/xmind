@@ -264,6 +264,8 @@ public class WorkbookRevisionsPage extends PageBookPage implements
      * .event.CoreEvent)
      */
     public void handleCoreEvent(CoreEvent event) {
+        if (getControl() == null || getControl().isDisposed())
+            return;
         if (K_AUTO_SAVE.equals(event.getTarget())) {
             getControl().getDisplay().asyncExec(new Runnable() {
                 public void run() {

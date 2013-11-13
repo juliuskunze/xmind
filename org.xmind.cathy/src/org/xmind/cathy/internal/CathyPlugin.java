@@ -19,6 +19,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.util.tracker.ServiceTracker;
+import org.xmind.core.command.ICommandService;
 import org.xmind.core.internal.XmindCore;
 
 /**
@@ -124,6 +126,8 @@ public class CathyPlugin extends AbstractUIPlugin {
     // The shared instance.
     private static CathyPlugin plugin;
 
+    private ServiceTracker<ICommandService, ICommandService> commandServiceTracker = null;
+
     /**
      * The constructor.
      */
@@ -144,6 +148,19 @@ public class CathyPlugin extends AbstractUIPlugin {
         activateNetworkSettings();
     }
 
+    /**
+     * This method is called when the plug-in is stopped
+     */
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        if (commandServiceTracker != null) {
+            commandServiceTracker.close();
+            commandServiceTracker = null;
+        }
+        super.stop(context);
+        plugin = null;
+    }
+
     private void activateNetworkSettings() {
         Bundle networkPlugin = Platform.getBundle("org.eclipse.core.net"); //$NON-NLS-1$
         if (networkPlugin != null) {
@@ -156,14 +173,12 @@ public class CathyPlugin extends AbstractUIPlugin {
     }
 
     /**
-     * This method is called when the plug-in is stopped
+     * Returns the distribution identifier of this XMind product.
+     * 
+     * @return the distribution identifier of this XMind product
+     * @deprecated Use system property
+     *             <code>"org.xmind.product.distribution.id"</code>
      */
-    @Override
-    public void stop(BundleContext context) throws Exception {
-        super.stop(context);
-        plugin = null;
-    }
-
     public static String getDistributionId() {
         String distribId = System
                 .getProperty("org.xmind.product.distribution.id"); //$NON-NLS-1$
@@ -171,6 +186,16 @@ public class CathyPlugin extends AbstractUIPlugin {
             distribId = "cathy_portable"; //$NON-NLS-1$
         }
         return distribId;
+    }
+
+    public synchronized ICommandService getCommandService() {
+        if (commandServiceTracker == null) {
+            commandServiceTracker = new ServiceTracker<ICommandService, ICommandService>(
+                    getBundle().getBundleContext(),
+                    ICommandService.class.getName(), null);
+            commandServiceTracker.open();
+        }
+        return commandServiceTracker.getService();
     }
 
     /**
@@ -192,8 +217,7 @@ public class CathyPlugin extends AbstractUIPlugin {
     public static void log(String message) {
         if (message == null)
             message = ""; //$NON-NLS-1$
-        getDefault().getLog()
-                .log(new Status(IStatus.ERROR, PLUGIN_ID, message));
+        getDefault().getLog().log(new Status(IStatus.INFO, PLUGIN_ID, message));
     }
 
 }

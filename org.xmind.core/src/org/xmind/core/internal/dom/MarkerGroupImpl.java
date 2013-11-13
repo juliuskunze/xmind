@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.core.internal.dom;
 
+import static org.xmind.core.internal.dom.DOMConstants.ATTR_HIDDEN;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_ID;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_NAME;
 import static org.xmind.core.internal.dom.DOMConstants.ATTR_SINGLETON;
@@ -100,6 +101,10 @@ public class MarkerGroupImpl extends MarkerGroup implements ICoreEventSource {
                 .parseBoolean(implementation.getAttribute(ATTR_SINGLETON));
     }
 
+    public boolean isHidden() {
+        return Boolean.parseBoolean(implementation.getAttribute(ATTR_HIDDEN));
+    }
+
     public void setName(String name) {
         String oldName = implementation.hasAttribute(ATTR_NAME) ? getName()
                 : null;
@@ -110,8 +115,13 @@ public class MarkerGroupImpl extends MarkerGroup implements ICoreEventSource {
     }
 
     public void setSingleton(boolean singleton) {
-        DOMUtils.setAttribute(implementation, ATTR_SINGLETON, Boolean
-                .toString(singleton));
+        DOMUtils.setAttribute(implementation, ATTR_SINGLETON,
+                Boolean.toString(singleton));
+    }
+
+    public void setHidden(boolean hidden) {
+        DOMUtils.setAttribute(implementation, ATTR_HIDDEN,
+                Boolean.toString(hidden));
     }
 
     public String getId() {
@@ -119,8 +129,8 @@ public class MarkerGroupImpl extends MarkerGroup implements ICoreEventSource {
     }
 
     public List<IMarker> getMarkers() {
-        return DOMUtils.getChildList(implementation, TAG_MARKER, ownedSheet
-                .getElementAdapterProvider());
+        return DOMUtils.getChildList(implementation, TAG_MARKER,
+                ownedSheet.getElementAdapterProvider());
     }
 
     public void addMarker(IMarker marker) {

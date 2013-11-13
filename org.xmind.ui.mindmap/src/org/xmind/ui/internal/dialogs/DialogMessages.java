@@ -24,6 +24,11 @@ public class DialogMessages extends NLS {
 
     private static final String BUNDLE_NAME = "org.xmind.ui.internal.dialogs.messages"; //$NON-NLS-1$
 
+    public static String ReduceFileSize_Advise_text;
+    public static String DeleteEditingHistory_text;
+    public static String DeletePreviewImage_text;
+    public static String ReduceFileSize_text;
+
     public static String CommonDialogTitle;
     public static String Open_title;
     public static String Save_title;
@@ -80,6 +85,9 @@ public class DialogMessages extends NLS {
     public static String AllSupportedFilesFilterName;
     public static String MarkerPackageFilterName;
 
+    public static String PageSetupDialog_Content;
+    public static String PageSetupDialog_CurrentMap;
+    public static String PageSetupDialog_WholeWorkbook;
     public static String PageSetupDialog_windowTitle;
     public static String PageSetupDialog_title;
     public static String PageSetupDialog_description;

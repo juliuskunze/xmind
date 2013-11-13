@@ -13,8 +13,8 @@
  *******************************************************************************/
 package net.xmind.workbench.internal.actions;
 
-import net.xmind.signin.XMindNet;
-import net.xmind.workbench.internal.XMindNetWorkbench;
+import net.xmind.workbench.internal.NewsletterSubscriptionReminder;
+import net.xmind.workbench.internal.XMindNetWorkbenchServiceCenter;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
@@ -30,7 +30,12 @@ public class NewsletterSubscriptionActionDelegate implements
         if (window == null)
             return;
 
-        XMindNet.gotoURL(XMindNetWorkbench.URL_SUBSCRIBE_NEWSLETTER);
+//        XMindNet.gotoURL(XMindNetWorkbench.URL_SUBSCRIBE_NEWSLETTER);
+        NewsletterSubscriptionReminder reminder = XMindNetWorkbenchServiceCenter
+                .getNewsletterSubscriptionReminder();
+        if (reminder != null) {
+            reminder.show();
+        }
     }
 
     public void selectionChanged(IAction action, ISelection selection) {

@@ -1,5 +1,6 @@
 package org.xmind.cathy.internal.jobs;
 
+import java.io.File;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -15,7 +16,7 @@ public class CheckOpenFilesJob extends OpenFilesJob {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.xmind.cathy.internal.jobs.OpenFilesJob#filterFilesToOpen(java.util
      * .List, org.eclipse.core.runtime.IProgressMonitor)
@@ -29,7 +30,7 @@ public class CheckOpenFilesJob extends OpenFilesJob {
         if (opening.exists()) {
             String[] contents = opening.getContents();
             for (String line : contents) {
-                if (!line.startsWith("-")) { //$NON-NLS-1$
+                if (line.startsWith("xmind:") || new File(line).exists()) { //$NON-NLS-1$
                     filesToOpen.add(line);
                 }
             }

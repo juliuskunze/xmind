@@ -1,8 +1,14 @@
 package org.xmind.ui.internal.editor;
 
+import java.io.File;
+
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
+import org.xmind.ui.dialogs.IDialogConstants;
+import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.mindmap.MindMapUI;
 
 public class WorkbookHistoryItem {
@@ -48,6 +54,14 @@ public class WorkbookHistoryItem {
     }
 
     public void reopen(IWorkbenchPage page) throws CoreException {
+        if (!new File(getPath()).exists()) {
+            MessageDialog
+                    .openWarning(
+                            new Shell(),
+                            IDialogConstants.COMMON_TITLE,
+                            MindMapMessages.WorkbookHistoryItem_FileMissingMessage);
+            return;
+        }
         page.openEditor(createNewEditorInput(), MindMapUI.MINDMAP_EDITOR_ID,
                 true);
     }

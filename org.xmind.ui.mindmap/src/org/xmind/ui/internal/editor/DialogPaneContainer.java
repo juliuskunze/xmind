@@ -80,6 +80,8 @@ public class DialogPaneContainer implements IDialogPaneContainer {
             activation = contextService
                     .activateContext("org.xmind.ui.context.backcover"); //$NON-NLS-1$
         }
+
+        // Block:
         Display display = Display.getCurrent();
         while (currentPane != null) {
             if (!display.readAndDispatch()) {

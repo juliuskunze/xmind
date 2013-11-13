@@ -16,6 +16,7 @@ package org.xmind.cathy.internal;
 import java.util.Arrays;
 
 import net.xmind.signin.ILicenseInfo;
+import net.xmind.signin.ILicenseKeyHeader;
 import net.xmind.signin.ILicenseListener;
 import net.xmind.signin.XMindNet;
 
@@ -41,6 +42,7 @@ import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 import org.xmind.cathy.internal.jobs.OpenFilesJob;
 import org.xmind.cathy.internal.jobs.StartupJob;
+import org.xmind.core.internal.InternalCore;
 import org.xmind.ui.internal.dialogs.DialogMessages;
 import org.xmind.ui.internal.editor.WorkbookHistory;
 
@@ -165,9 +167,20 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor implements
                 SafeRunner.run(new SafeRunnable() {
                     public void run() throws Exception {
                         final IProgressMonitor monitor = new NullProgressMonitor();
+                        if (InternalCore.DEBUG_WORKBOOK_SAVE)
+                            CathyPlugin
+                                    .log("CathyWorkbenchAdvisor: About to save workbook on workbench close: " //$NON-NLS-1$
+                                            + editor.getEditorInput()
+                                                    .toString());
                         editor.doSave(monitor);
                         if (!monitor.isCanceled()) {
                             saved[0] = true;
+                        } else {
+                            if (InternalCore.DEBUG_WORKBOOK_SAVE)
+                                CathyPlugin
+                                        .log("CathyWorkbenchAdvisor: Finished saving workbook on workbench close: " //$NON-NLS-1$
+                                                + editor.getEditorInput()
+                                                        .toString());
                         }
                     }
                 });
@@ -188,21 +201,41 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor implements
     public void licenseVerified(ILicenseInfo info) {
         String name = info.getLicensedTo();
         if (name != null && !"".equals(name)) { //$NON-NLS-1$
-            System.setProperty("org.xmind.product.distribution.description", //$NON-NLS-1$
-                    NLS.bind(WorkbenchMessages.About_LicensedTo, name));
+            name = NLS.bind(WorkbenchMessages.About_LicensedTo, name);
         } else {
-            System.setProperty("org.xmind.product.distribution.description", ""); //$NON-NLS-1$ //$NON-NLS-2$
+            name = ""; //$NON-NLS-1$
         }
+        System.setProperty("org.xmind.product.license.licensee", name); //$NON-NLS-1$
+
         int type = info.getType();
+        ILicenseKeyHeader header = info.getLicenseKeyHeader();
         String licenseType;
-        if ((type & ILicenseInfo.VALID_PRO_LICENSE) != 0) {
+        if ((type & ILicenseInfo.VALID_PRO_LICENSE_KEY) != 0) {
             licenseType = WorkbenchMessages.About_ProTitle;
-        } else if ((type & ILicenseInfo.VALID_PLUS_LICENSE) != 0) {
+        } else if ((type & ILicenseInfo.VALID_PLUS_LICENSE_KEY) != 0) {
             licenseType = WorkbenchMessages.About_PlusTitle;
         } else if ((type & ILicenseInfo.VALID_PRO_SUBSCRIPTION) != 0) {
             licenseType = WorkbenchMessages.About_ProSubscriptionTitle;
         } else {
             licenseType = null;
+        }
+
+        if (header != null
+                && ((type & ILicenseInfo.VALID_PLUS_LICENSE_KEY) != 0 || (type & ILicenseInfo.VALID_PRO_LICENSE_KEY) != 0)) {
+            String licenseeType = header.getLicenseeType();
+            if (ILicenseKeyHeader.LICENSEE_FAMILY.equals(licenseeType)) {
+                licenseType = NLS.bind("{0} (Family License)", licenseType); //$NON-NLS-1$
+            } else if (ILicenseKeyHeader.LICENSEE_EDU.equals(licenseeType)) {
+                licenseType = NLS.bind("{0} (Academia License)", licenseType); //$NON-NLS-1$
+            } else if (ILicenseKeyHeader.LICENSEE_GOV.equals(licenseeType)) {
+                licenseType = NLS.bind("{0} (Gov/NPO License)", licenseType); //$NON-NLS-1$
+            } else if (ILicenseKeyHeader.LICENSEE_TEAM_5U.equals(licenseeType)
+                    || ILicenseKeyHeader.LICENSEE_TEAM_10U.equals(licenseeType)
+                    || ILicenseKeyHeader.LICENSEE_TEAM_20U.equals(licenseeType)) {
+                licenseType = NLS.bind("{0} (Team License)", licenseType); //$NON-NLS-1$
+            } else if (ILicenseKeyHeader.LICENSEE_VLE.equals(licenseeType)) {
+                licenseType = NLS.bind("{0} (Volume License)", licenseType); //$NON-NLS-1$
+            }
         }
         if (licenseType == null) {
             licenseType = WorkbenchMessages.About_LicenseType_Unactivated;

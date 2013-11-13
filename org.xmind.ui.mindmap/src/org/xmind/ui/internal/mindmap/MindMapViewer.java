@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.eclipse.draw2d.FigureCanvas;
 import org.eclipse.draw2d.geometry.Rectangle;
+import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -86,6 +87,7 @@ public class MindMapViewer extends GraphicalViewer implements IMindMapViewer {
         setDndSupport(MindMapUI.getMindMapDndSupport());
         setPartFactory(MindMapUI.getMindMapPartFactory());
         setRootPart(new MindMapRootPart());
+        getProperties().set(VIEWER_RENDER_TEXT_AS_PATH, Util.isWindows());
     }
 
     public Object getAdapter(Class adapter) {

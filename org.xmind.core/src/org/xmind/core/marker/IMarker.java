@@ -27,4 +27,8 @@ public interface IMarker extends IAdaptable, IIdentifiable, INamed {
 
     IMarkerSheet getOwnedSheet();
 
+    boolean isHidden();
+
+    void setHidden(boolean hidden);
+
 }

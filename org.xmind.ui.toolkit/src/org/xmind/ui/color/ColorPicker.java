@@ -20,10 +20,10 @@ import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.jface.action.ExternalActionManager;
+import org.eclipse.jface.action.ExternalActionManager.IBindingManagerCallback;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionManagerOverrides;
 import org.eclipse.jface.action.IMenuCreator;
-import org.eclipse.jface.action.ExternalActionManager.IBindingManagerCallback;
 import org.eclipse.jface.bindings.Trigger;
 import org.eclipse.jface.bindings.TriggerSequence;
 import org.eclipse.jface.bindings.keys.IKeyLookup;
@@ -75,7 +75,7 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
 
         private PaletteViewer viewer;
 
-        private boolean openingColorDialog = false;
+        private boolean showingNativeColorDialog = false;
 
         public ColorChooserPopupDialog(Shell parent) {
             super(parent, SWT.NO_TRIM, true, false, false, false, false, null,
@@ -94,17 +94,18 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
                 viewer = new PaletteViewer() {
                     protected RGB openNativeColorDialog(Shell shell,
                             RGB oldColor) {
-                        openingColorDialog = true;
-                        RGB ret = super.openNativeColorDialog(shell, oldColor);
-                        openingColorDialog = false;
-                        return ret;
+                        showingNativeColorDialog = true;
+                        try {
+                            return super.openNativeColorDialog(shell, oldColor);
+                        } finally {
+                            showingNativeColorDialog = false;
+                        }
                     }
                 };
                 viewer.setShowAutoItem(hasPopupStyle(AUTO));
                 viewer.setShowNoneItem(hasPopupStyle(NONE));
                 viewer.setShowCustomItem(hasPopupStyle(CUSTOM));
-                viewer
-                        .addSelectionChangedListener(viewerSelectionChangedListener);
+                viewer.addSelectionChangedListener(viewerSelectionChangedListener);
                 viewer.addOpenListener(viewerOpenListener);
             }
             viewer.createControl(composite);
@@ -153,7 +154,7 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
         }
 
         public boolean close() {
-            if (openingColorDialog)
+            if (showingNativeColorDialog)
                 return false;
             boolean closed = super.close();
             this.aroundBounds = null;
@@ -600,8 +601,8 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
                     case SWT.Selection:
                         Widget ew = event.widget;
                         if (ew != null) {
-                            handleWidgetSelection(event, ((MenuItem) ew)
-                                    .getSelection());
+                            handleWidgetSelection(event,
+                                    ((MenuItem) ew).getSelection());
                         }
                         break;
                     }
@@ -627,8 +628,8 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
                     case SWT.Selection:
                         Widget ew = event.widget;
                         if (ew != null) {
-                            handleWidgetSelection(event, ((ToolItem) ew)
-                                    .getSelection());
+                            handleWidgetSelection(event,
+                                    ((ToolItem) ew).getSelection());
                         }
                         break;
                     }
@@ -1224,15 +1225,15 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
             // If there is no regular image, but there is a hover image,
             // convert the hover image to gray and use it as the regular image.
             if (image == null && hoverImage != null) {
-                image = ImageDescriptor.createWithFlags(action
-                        .getHoverImageDescriptor(), SWT.IMAGE_GRAY);
+                image = ImageDescriptor.createWithFlags(
+                        action.getHoverImageDescriptor(), SWT.IMAGE_GRAY);
             } else {
                 // If there is no hover image, use the regular image as the hover image,
                 // and convert the regular image to gray
                 if (hoverImage == null && image != null) {
                     hoverImage = image;
-                    image = ImageDescriptor.createWithFlags(action
-                            .getImageDescriptor(), SWT.IMAGE_GRAY);
+                    image = ImageDescriptor.createWithFlags(
+                            action.getImageDescriptor(), SWT.IMAGE_GRAY);
                 }
             }
 

@@ -47,7 +47,8 @@ public class JSONStore implements IDataStore {
     }
 
     public String getString(String key) {
-        return json.optString(key, null);
+        Object o = json.opt(key);
+        return o == null || JSONObject.NULL.equals(o) ? null : o.toString();
     }
 
     public Map<Object, Object> toMap() {

@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.w3c.dom.Document;
@@ -340,8 +339,8 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     }
 
     public void removeSheet(ISheet sheet) {
-        if (hasOnlyOneSheet())
-            return;
+//        if (hasOnlyOneSheet())
+//            return;
 
         Element s = ((SheetImpl) sheet).getImplementation();
         Element w = getWorkbookElement();
@@ -356,16 +355,16 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
         }
     }
 
-    private boolean hasOnlyOneSheet() {
-        Iterator<Element> it = DOMUtils.childElementIterByTag(
-                getWorkbookElement(), TAG_SHEET);
-        if (it.hasNext()) {
-            it.next();
-            if (!it.hasNext())
-                return true;
-        }
-        return false;
-    }
+//    private boolean hasOnlyOneSheet() {
+//        Iterator<Element> it = DOMUtils.childElementIterByTag(
+//                getWorkbookElement(), TAG_SHEET);
+//        if (it.hasNext()) {
+//            it.next();
+//            if (!it.hasNext())
+//                return true;
+//        }
+//        return false;
+//    }
 
     public void moveSheet(int sourceIndex, int targetIndex) {
         if (sourceIndex < 0 || sourceIndex == targetIndex)
@@ -684,7 +683,7 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     /**
      * @see org.xmind.core.IWorkbook#save()
      */
-    public void save() throws IOException, CoreException {
+    public synchronized void save() throws IOException, CoreException {
         save(new ISaveable() {
             public void run() throws IOException, CoreException {
                 saver.save();
@@ -695,7 +694,8 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     /**
      * @see org.xmind.core.IWorkbook#save(java.lang.String)
      */
-    public void save(final String file) throws IOException, CoreException {
+    public synchronized void save(final String file) throws IOException,
+            CoreException {
         if (file == null)
             throw new IllegalArgumentException();
 
@@ -711,8 +711,8 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
      * 
      * @see org.xmind.core.IWorkbook#save(org.xmind.core.io.IOutputTarget)
      */
-    public void save(final IOutputTarget target) throws IOException,
-            CoreException {
+    public synchronized void save(final IOutputTarget target)
+            throws IOException, CoreException {
         if (target == null)
             throw new IllegalArgumentException();
 
@@ -728,8 +728,8 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
      * 
      * @see org.xmind.core.IWorkbook#save(java.io.OutputStream)
      */
-    public void save(final OutputStream output) throws IOException,
-            CoreException {
+    public synchronized void save(final OutputStream output)
+            throws IOException, CoreException {
         if (output == null)
             throw new IllegalArgumentException();
 

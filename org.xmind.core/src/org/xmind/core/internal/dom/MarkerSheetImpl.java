@@ -53,9 +53,10 @@ import org.xmind.core.marker.IMarkerResourceProvider;
 import org.xmind.core.marker.IMarkerSheet;
 import org.xmind.core.util.DOMUtils;
 import org.xmind.core.util.FileUtils;
+import org.xmind.core.util.IPropertiesProvider;
 
 public class MarkerSheetImpl extends MarkerSheet implements
-        INodeAdaptableFactory, ICoreEventSource {
+        INodeAdaptableFactory, ICoreEventSource, IPropertiesProvider {
 
     private Document implementation;
 
@@ -92,12 +93,12 @@ public class MarkerSheetImpl extends MarkerSheet implements
     }
 
     public Object getAdapter(Class adapter) {
-        if (adapter == Document.class || adapter == Node.class)
-            return implementation;
         if (adapter == IMarkerResourceProvider.class)
             return realResourceProvider;
         if (adapter == ICoreEventSupport.class)
             return getCoreEventSupport();
+        if (adapter == IPropertiesProvider.class)
+            return this;
         if (adapter == Properties.class)
             return getProperties();
         if (adapter == ElementRegistry.class)
@@ -106,6 +107,8 @@ public class MarkerSheetImpl extends MarkerSheet implements
             return this;
         if (adapter == INodeAdaptableProvider.class)
             return getElementAdapterProvider();
+        if (adapter == Document.class || adapter == Node.class)
+            return implementation;
         return super.getAdapter(adapter);
     }
 
@@ -470,11 +473,11 @@ public class MarkerSheetImpl extends MarkerSheet implements
         }
     }
 
-    protected Properties getProperties() {
+    public Properties getProperties() {
         return properties;
     }
 
-    protected void setProperties(Properties properties) {
+    public void setProperties(Properties properties) {
         this.properties = properties;
     }
 

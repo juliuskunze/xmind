@@ -24,9 +24,8 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.xmind.core.Core;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
@@ -188,13 +187,10 @@ public class StylesViewer extends CategorizedGalleryViewer implements
 
     private ICoreEventRegister register;
 
-    public StylesViewer(Composite parent) {
+    public StylesViewer() {
         setContentProvider(new StyleContentProvider());
         setLabelProvider(new StyleLabelProvider());
-        createControl(parent, SWT.NO_REDRAW_RESIZE);
-    }
 
-    protected void configureNestedViewer(GalleryViewer viewer) {
         Properties properties = getProperties();
         properties.set(GalleryViewer.Horizontal, Boolean.TRUE);
         properties.set(GalleryViewer.Wrap, Boolean.TRUE);
@@ -206,12 +202,15 @@ public class StylesViewer extends CategorizedGalleryViewer implements
         properties.set(GalleryViewer.TitlePlacement, GalleryViewer.TITLE_TOP);
         properties.set(GalleryViewer.SingleClickToOpen, Boolean.FALSE);
 
-        super.configureNestedViewer(viewer);
-        viewer.setPartFactory(new StylePartFactory(viewer.getPartFactory()));
         EditDomain editDomain = new EditDomain();
         editDomain.installTool(GEF.TOOL_SELECT, new StyleSelectTool());
         editDomain.installTool(GEF.TOOL_EDIT, new StyleNameEditTool());
-        viewer.setEditDomain(editDomain);
+        setEditDomain(editDomain);
+    }
+
+    protected void configureNestedViewer(GalleryViewer viewer, Object category) {
+        super.configureNestedViewer(viewer, category);
+        viewer.setPartFactory(new StylePartFactory(viewer.getPartFactory()));
     }
 
     protected void inputChanged(Object input, Object oldInput) {
@@ -249,14 +248,21 @@ public class StylesViewer extends CategorizedGalleryViewer implements
         }
     }
 
-    public void handleCoreEvent(CoreEvent event) {
-        if (Core.Name.equals(event.getType())) {
-            if (event.getSource() instanceof IStyle) {
-                update(event.getSource(), null);
+    public void handleCoreEvent(final CoreEvent event) {
+        Control c = getControl();
+        if (c == null || c.isDisposed())
+            return;
+        c.getDisplay().syncExec(new Runnable() {
+            public void run() {
+                if (Core.Name.equals(event.getType())) {
+                    if (event.getSource() instanceof IStyle) {
+                        update(event.getSource(), null);
+                    }
+                } else {
+                    refresh(true);
+                }
             }
-        } else {
-            setInput(getInput());
-        }
+        });
     }
 
     public void setSelection(ISelection selection) {

@@ -25,6 +25,7 @@ import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.jface.viewers.OpenEvent;
@@ -86,6 +87,11 @@ public class GalleryViewer extends GraphicalViewer {
     /**
      * Values: true, false
      */
+    public static final String PackFrameContent = "org.xmind.ui.gallery.packFrameContent"; //$NON-NLS-1$
+
+    /**
+     * Values: true, false
+     */
     public static final String FlatFrames = "org.xmind.ui.gallery.flatFrames"; //$NON-NLS-1$
 
     /**
@@ -134,22 +140,24 @@ public class GalleryViewer extends GraphicalViewer {
         }
     }
 
+    private IStructuredContentProvider contentProvider = null;
+
     private IBaseLabelProvider labelProvider = null;
 
-    private ILabelProviderListener labelProviderListener = null;
+    private ILabelProviderListener labelProviderListener = new GalleryLabelProviderListener();
 
     private List<IOpenListener> openListeners = null;
 
     public GalleryViewer() {
-//        setContentProvider(new GalleryModelContentProvider());
         setPartFactory(GalleryPartFactory.getDefault());
-//        setGenre(GalleryGenre.getDefault());
         setRootPart(new GraphicalRootEditPart());
     }
 
     public Object getAdapter(Class adapter) {
         if (adapter == IBaseLabelProvider.class)
             return getLabelProvider();
+        if (adapter == IStructuredContentProvider.class)
+            return getContentProvider();
         return super.getAdapter(adapter);
     }
 
@@ -184,6 +192,22 @@ public class GalleryViewer extends GraphicalViewer {
         }
     }
 
+    public void setContentProvider(IStructuredContentProvider contentProvider) {
+        IStructuredContentProvider oldContentProvider = this.contentProvider;
+        this.contentProvider = contentProvider;
+        if (oldContentProvider != null) {
+            Object currentInput = getInput();
+            oldContentProvider.inputChanged(this, currentInput, null);
+            oldContentProvider.dispose();
+            contentProvider.inputChanged(this, null, currentInput);
+            refresh();
+        }
+    }
+
+    public IStructuredContentProvider getContentProvider() {
+        return contentProvider;
+    }
+
     public IBaseLabelProvider getLabelProvider() {
         if (labelProvider == null) {
             labelProvider = new LabelProvider();
@@ -200,13 +224,10 @@ public class GalleryViewer extends GraphicalViewer {
             return;
 
         if (oldLabelProvider != null) {
-            if (labelProviderListener != null) {
-                oldLabelProvider.removeListener(labelProviderListener);
-            }
+            oldLabelProvider.removeListener(labelProviderListener);
         }
         this.labelProvider = labelProvider;
-        if (labelProviderListener == null)
-            labelProviderListener = new GalleryLabelProviderListener();
+        labelProviderListener = new GalleryLabelProviderListener();
         labelProvider.addListener(labelProviderListener);
         refresh();
 
@@ -216,9 +237,13 @@ public class GalleryViewer extends GraphicalViewer {
     }
 
     protected void handleDispose(DisposeEvent e) {
+        if (contentProvider != null) {
+            contentProvider.inputChanged(this, getInput(), null);
+            contentProvider.dispose();
+            contentProvider = null;
+        }
         if (labelProvider != null) {
-            if (labelProviderListener != null)
-                labelProvider.removeListener(labelProviderListener);
+            labelProvider.removeListener(labelProviderListener);
             labelProvider.dispose();
             labelProvider = null;
         }

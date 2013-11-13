@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -47,27 +49,37 @@ public class FontUtils {
     private static List<IFontNameListCallback> callbacks = null;
 
     private FontUtils() {
+        throw new AssertionError();
     }
 
     /**
      * Get all font names available in the current graphics environment.
-     * <p>
-     * <b>IMPORTANT</b>:This method is NOT recommended because it may cause UI
-     * thread delay. To avoid that, use
-     * {@link #fetchAvailableFontNames(IFontNameListCallback)} instead.
-     * </p>
      * 
      * @return A string list containing all available font names
-     * @see #fetchAvailableFontNames(IFontNameListCallback)
      */
     public static List<String> getAvailableFontNames() {
         if (availableFontNames == null) {
-            availableFontNames = findAvailableFontNames();
+            availableFontNames = findAvailableFontNamesBySWT();
         }
-        return availableFontNames;
+        return Collections.unmodifiableList(availableFontNames);
     }
 
-    private static ArrayList<String> findAvailableFontNames() {
+    private static List<String> findAvailableFontNamesBySWT() {
+        FontData[] fonts = Display.getCurrent().getFontList(null, true);
+        Set<String> set = new TreeSet<String>();
+        for (int i = 0; i < fonts.length; i++) {
+            set.add(fonts[i].getName());
+        }
+        return new ArrayList<String>(set);
+    }
+
+    /**
+     * Use AWT to retrieve all available font names.
+     * 
+     * @return font names
+     * @deprecated Use {@link #findAvailableFontNamesBySWT()}.
+     */
+    protected static ArrayList<String> findAvailableFontNamesByAWT() {
         String[] names = GraphicsEnvironment.getLocalGraphicsEnvironment()
                 .getAvailableFontFamilyNames();
         ArrayList<String> list = new ArrayList<String>(names.length);
@@ -86,7 +98,13 @@ public class FontUtils {
     }
 
     /**
+     * <p>
+     * <b>NOTE: This method has been deprecated and is not recommended. Use
+     * {@link #getAvailableFontNames()} instead.</b>
+     * </p>
+     * <p>
      * Fetch all available font names from the current graphics environment.
+     * </p>
      * <p>
      * Since SWT doesn't provide any convenient API for just getting current
      * system's all available font names, we have to try acquiring a basic font
@@ -110,6 +128,9 @@ public class FontUtils {
      * @param callback
      *            A callback to handle with the result list after the 'fetching'
      *            process is over
+     * @deprecated AWT API's result lacks of localized names and not fully
+     *             compatible with SWT API, so use
+     *             {@link #getAvailableFontNames()} instead.
      */
     public static void fetchAvailableFontNames(final Display display,
             final IFontNameListCallback callback) {
@@ -743,5 +764,68 @@ public class FontUtils {
     public static Font getItalic(String key) {
         return getItalic(key, null);
     }
+
+    /**
+     * This little program tests whether SWT's
+     * {@link Device#getFontList(String, boolean)} can retrieve as much
+     * available font names as AWT's API.
+     * 
+     * <p>
+     * Although SWT can not retrieve the same font name list as AWT, the results
+     * are fairly enough for applications that provide font names for users to
+     * choose.
+     * </p>
+     * 
+     * @param args
+     */
+//    public static void main(String[] args) {
+//        Set<String> swtFontSet = new HashSet<String>();
+//
+//        System.out.println("============== SWT Fonts ============="); //$NON-NLS-1$
+//        Display display = new Display();
+//        FontData[] swtFonts = display.getFontList(null, true);
+//        FontData[] swtFonts2 = display.getFontList(null, false);
+//        System.out.println("Scalable Fonts: " + swtFonts.length); //$NON-NLS-1$
+//        System.out.println("Non-scalable Fonts: " + swtFonts2.length); //$NON-NLS-1$
+//        for (int i = 0; i < swtFonts.length; i++) {
+//            System.out.println(swtFonts[i].getName() + " - " //$NON-NLS-1$
+//                    + swtFonts[i].toString());
+//            swtFontSet.add(swtFonts[i].getName());
+//        }
+//        for (int i = 0; i < swtFonts2.length; i++) {
+//            System.out.println(swtFonts2[i].getName() + " - " //$NON-NLS-1$
+//                    + swtFonts2[i].toString());
+//            swtFontSet.add(swtFonts2[i].getName());
+//        }
+//        System.out.println("--------------------------------------"); //$NON-NLS-1$
+//
+//        System.out.println();
+//        System.out.println();
+//
+//        String[] awtFonts = GraphicsEnvironment.getLocalGraphicsEnvironment()
+//                .getAvailableFontFamilyNames();
+//        System.out.println("============== AWT Fonts =============="); //$NON-NLS-1$
+//        for (int i = 0; i < awtFonts.length; i++) {
+//            System.out.println(awtFonts[i]);
+//        }
+//        System.out.println("--------------------------------------"); //$NON-NLS-1$
+//        Set<String> awtFontSet = new HashSet<String>(Arrays.asList(awtFonts));
+//        display.dispose();
+//
+//        System.out.println();
+//        System.out.println("SWT Fonts: " + swtFontSet.size()); //$NON-NLS-1$
+//        System.out.println("AWT Fonts: " + awtFontSet.size()); //$NON-NLS-1$
+//        System.out.println("Equality: " + swtFontSet.equals(awtFontSet)); //$NON-NLS-1$
+//
+//        Set<String> set1 = new HashSet<String>(awtFontSet);
+//        set1.removeAll(swtFontSet);
+//        System.out.println("Fonts Not In SWT: " + set1); //$NON-NLS-1$
+//
+//        Set<String> set2 = new HashSet<String>(swtFontSet);
+//        set2.removeAll(awtFontSet);
+//        System.out.println("Fonts Not In AWT: " + set2); //$NON-NLS-1$
+//
+//        System.exit(0);
+//    }
 
 }

@@ -33,10 +33,14 @@ public class RelationshipTreePart extends MindMapTreePartBase {
         register.register(Core.TitleText);
     }
 
-    public void handleCoreEvent(CoreEvent event) {
+    public void handleCoreEvent(final CoreEvent event) {
         String type = event.getType();
         if (Core.TitleText.equals(type)) {
-            update();
+            runInUI(new Runnable() {
+                public void run() {
+                    update();
+                }
+            }, false);
         } else {
             super.handleCoreEvent(event);
         }

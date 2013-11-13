@@ -29,6 +29,10 @@ public interface IMarkerGroup extends IAdaptable, IIdentifiable, INamed {
 
     void setSingleton(boolean singleton);
 
+    boolean isHidden();
+
+    void setHidden(boolean hidden);
+
     /**
      * Returns the marker sheet containing this group.
      * <p>

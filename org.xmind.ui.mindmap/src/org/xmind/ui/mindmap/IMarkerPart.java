@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.ui.mindmap;
 
+import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.swt.graphics.Image;
 import org.xmind.core.ITopic;
 import org.xmind.core.marker.IMarker;
@@ -30,5 +31,7 @@ public interface IMarkerPart extends IGraphicalPart {
     ITopicPart getTopicPart();
 
     Image getImage();
+
+    Dimension getPreferredSize();
 
 }

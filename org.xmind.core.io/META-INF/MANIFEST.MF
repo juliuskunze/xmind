@@ -1,13 +1,14 @@
 Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: %pluginName
-Bundle-SymbolicName: org.xmind.core.io;singleton:=true
-Bundle-Version: 3.3.1.qualifier
-Bundle-Vendor: %providerName
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
-Bundle-ActivationPolicy: lazy
-Export-Package: org.xmind.core.io,
- org.xmind.core.io.freemind,
- org.xmind.core.io.mindmanager
-Bundle-Localization: plugin
+Export-Package: org.xmind.core.io,org.xmind.core.io.freemind,org.xmind
+ .core.io.mindmanager,org.xmind.core.io.workbook
 Require-Bundle: org.xmind.core
+Bundle-Vendor: %providerName
+Bundle-ActivationPolicy: lazy
+Bundle-Version: 3.4.0.201311050558
+Bundle-Name: %pluginName
+Bundle-Localization: plugin
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.xmind.core.io;singleton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

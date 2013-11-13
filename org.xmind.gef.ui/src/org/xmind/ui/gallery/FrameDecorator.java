@@ -14,95 +14,72 @@
 package org.xmind.ui.gallery;
 
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.Label;
+import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IColorProvider;
 import org.eclipse.jface.viewers.IFontProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
+import org.xmind.gef.IViewer;
 import org.xmind.gef.draw2d.ITextFigure;
 import org.xmind.gef.part.Decorator;
 import org.xmind.gef.part.IGraphicalPart;
 import org.xmind.gef.util.Properties;
+import org.xmind.ui.viewers.IGraphicalToolTipProvider;
+import org.xmind.ui.viewers.IToolTipProvider;
 
 public class FrameDecorator extends Decorator {
 
     public static final FrameDecorator DEFAULT = new FrameDecorator();
-
-//    public void activate(IGraphicalPart part, IFigure figure) {
-//        super.activate(part, figure);
-//        createContents(part, part.getContentPane());
-//    }
-//
-//    protected void createContents(IGraphicalPart part, IFigure contentPane) {
-//        SizeableImageFigure imageFigure = new SizeableImageFigure();
-//        contentPane.add(imageFigure);
-//    }
 
     public void decorate(IGraphicalPart part, IFigure figure) {
         super.decorate(part, figure);
         FrameFigure frame = (FrameFigure) part.getFigure();
         Object model = part.getModel();
 
-        GalleryViewer viewer = (GalleryViewer) part.getSite().getViewer();
+        IViewer viewer = part.getSite().getViewer();
         Properties properties = viewer.getProperties();
-        IBaseLabelProvider labelProvider = viewer.getLabelProvider();
+        IBaseLabelProvider labelProvider = (IBaseLabelProvider) viewer
+                .getAdapter(IBaseLabelProvider.class);
         boolean hideTitle = properties.getBoolean(GalleryViewer.HideTitle,
                 false);
         frame.setHideTitle(hideTitle);
 
         boolean flat = properties.getBoolean(GalleryViewer.FlatFrames, false);
         frame.setFlat(flat);
+        frame.setContentSize((Dimension) properties
+                .get(GalleryViewer.FrameContentSize));
 
         int titlePlacement = properties.getInteger(
-                GalleryViewer.TitlePlacement, GalleryViewer.TITLE_TOP);
+                GalleryViewer.TitlePlacement,
+                GalleryViewer.TITLE_TOP.intValue());
         frame.setTitlePlacement(titlePlacement);
         if (!hideTitle) {
             decorateTitle(frame.getTitle(), model, labelProvider);
         }
-//        decorateContent(part, model, properties, labelProvider);
-    }
 
-//    protected void decorateContent(IGraphicalPart part, Object model,
-//            Properties properties, IBaseLabelProvider labelProvider) {
-//        Image image = getImage(model, labelProvider);
-//        IFigure contentPane = part.getContentPane();
-//        if (!contentPane.getChildren().isEmpty()) {
-//            Object imageFigure = contentPane.getChildren().get(0);
-//            if (imageFigure instanceof SizeableImageFigure) {
-//                decorateImage((SizeableImageFigure) imageFigure, image,
-//                        properties);
-//            }
-//        }
-//    }
+        if (labelProvider instanceof IGraphicalToolTipProvider) {
+            IGraphicalToolTipProvider toolTipProvider = (IGraphicalToolTipProvider) labelProvider;
+            IFigure toolTipFigure = toolTipProvider.getToolTipFigure(model);
+            frame.setToolTip(toolTipFigure);
+        } else if (labelProvider instanceof IToolTipProvider) {
+            IToolTipProvider toolTipProvider = (IToolTipProvider) labelProvider;
+            String toolTip = toolTipProvider.getToolTip(model);
+            if (toolTip == null || "".equals(toolTip)) { //$NON-NLS-1$
+                frame.setToolTip(null);
+            } else {
+                Label toolTipFigure = new Label();
+                toolTipFigure.setText(toolTip);
+                frame.setToolTip(toolTipFigure);
+            }
+        }
+    }
 
     private String getText(Object element, IBaseLabelProvider labelProvider) {
         if (labelProvider instanceof ILabelProvider)
             return ((ILabelProvider) labelProvider).getText(element);
         return null;
     }
-
-//    private Image getImage(Object element, IBaseLabelProvider labelProvider) {
-//        if (labelProvider instanceof ILabelProvider)
-//            return ((ILabelProvider) labelProvider).getImage(element);
-//        return null;
-//    }
-//
-//    protected void decorateImage(SizeableImageFigure imageFigure, Image image,
-//            Properties properties) {
-//        imageFigure.setImage(image);
-//        boolean stretched = properties.getBoolean(GalleryViewer.ImageStretched,
-//                false);
-//        boolean constained = properties.getBoolean(
-//                GalleryViewer.ImageConstrained, false);
-//        imageFigure.setConstrained(constained);
-//        imageFigure.setStretched(stretched);
-//        Dimension size = (Dimension) properties
-//                .get(GalleryViewer.FrameContentSize);
-//        if (size == null) {
-//            imageFigure.setPreferredSize(imageFigure.getImageSize());
-//        } else {
-//            imageFigure.setPreferredSize(size);
-//        }
-//    }
 
     protected void decorateTitle(ITextFigure titleFigure, Object model,
             IBaseLabelProvider labelProvider) {

@@ -55,6 +55,16 @@ public interface IGraphicalViewer extends IViewer {
      */
     String VIEWER_IGNORE_SCROLL_EVENT = "ignoreScrollEvent"; //$NON-NLS-1$
 
+    /**
+     * A viewer property indicating that all text figures should be rendered as
+     * a path.
+     * <p>
+     * Values: Boolean, <code>true</code> to render text as paths,
+     * <code>false</code> to use default renderer.
+     * </p>
+     */
+    String VIEWER_RENDER_TEXT_AS_PATH = "renderTextAsPath"; //$NON-NLS-1$
+
     FigureCanvas getCanvas();
 
     Dimension getSize();
@@ -76,6 +86,8 @@ public interface IGraphicalViewer extends IViewer {
     Point getScrollPosition();
 
     void ensureVisible(Rectangle box);
+
+    void center(int x, int y);
 
     void center(Point cen);
 

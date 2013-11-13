@@ -14,9 +14,12 @@
 package org.xmind.ui.internal;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.osgi.service.debug.DebugOptions;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
+import org.osgi.util.tracker.ServiceTracker;
 import org.xmind.core.Core;
+import org.xmind.core.command.ICommandService;
 import org.xmind.core.internal.XmindCore;
 import org.xmind.ui.internal.editor.BackgroundWorkbookSaver;
 
@@ -27,6 +30,10 @@ public class MindMapUIPlugin extends AbstractUIPlugin {
 
     // The shared instance.
     private static MindMapUIPlugin plugin;
+
+    private ServiceTracker<ICommandService, ICommandService> commandServiceTracker = null;
+
+    private ServiceTracker<DebugOptions, DebugOptions> debugTracker = null;
 
     /**
      * The constructor
@@ -45,6 +52,7 @@ public class MindMapUIPlugin extends AbstractUIPlugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
+
         // activate core runtime
         XmindCore.getDefault();
         //Shell shell = plugin.getWorkbench().getDisplay().getActiveShell();
@@ -61,8 +69,23 @@ public class MindMapUIPlugin extends AbstractUIPlugin {
      */
     public void stop(BundleContext context) throws Exception {
         BackgroundWorkbookSaver.getInstance().stopAll();
+
+        if (commandServiceTracker != null) {
+            commandServiceTracker.close();
+            commandServiceTracker = null;
+        }
         plugin = null;
         super.stop(context);
+    }
+
+    public ICommandService getCommandService() {
+        if (commandServiceTracker == null) {
+            commandServiceTracker = new ServiceTracker<ICommandService, ICommandService>(
+                    getBundle().getBundleContext(),
+                    ICommandService.class.getName(), null);
+            commandServiceTracker.open();
+        }
+        return commandServiceTracker.getService();
     }
 
     /**
@@ -81,6 +104,28 @@ public class MindMapUIPlugin extends AbstractUIPlugin {
             section = ds.addNewSection(sectionName);
         }
         return section;
+    }
+
+    private DebugOptions getDebugOptions() {
+        if (debugTracker == null) {
+            debugTracker = new ServiceTracker<DebugOptions, DebugOptions>(
+                    getBundle().getBundleContext(), DebugOptions.class, null);
+            debugTracker.open();
+        }
+        return debugTracker.getService();
+    }
+
+    /**
+     * Returns the debug switch for the specified option.
+     * 
+     * @param option
+     *            value like <code>"/debug/some/feature"</code>
+     * @return <code>true</code> if debugging is turned on for this option, or
+     *         <code>false</code> otherwise
+     */
+    public static boolean isDebugging(String option) {
+        return getDefault().getDebugOptions().getBooleanOption(
+                PLUGIN_ID + option, false);
     }
 
 }

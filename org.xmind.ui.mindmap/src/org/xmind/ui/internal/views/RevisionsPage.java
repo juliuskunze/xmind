@@ -54,6 +54,7 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventSource;
+import org.xmind.core.internal.dom.SheetImpl;
 import org.xmind.gef.command.Command;
 import org.xmind.gef.command.CompoundCommand;
 import org.xmind.gef.command.ICommandStack;
@@ -231,10 +232,16 @@ public class RevisionsPage extends Page implements ICoreEventListener,
             if (targetSheet == null)
                 return;
 
+            if (targetSheet instanceof SheetImpl) {
+                ((SheetImpl) targetSheet).updateModifiedTime();
+            }
             final int index = sheet.getIndex();
             List<Command> commands = new ArrayList<Command>(2);
+            ISheet placeholderSheet = workbook.createSheet();
+            commands.add(new AddSheetCommand(placeholderSheet, workbook));
             commands.add(new DeleteSheetCommand(sheet));
             commands.add(new AddSheetCommand(targetSheet, workbook, index));
+            commands.add(new DeleteSheetCommand(placeholderSheet, workbook));
             Command command = new CompoundCommand(
                     MindMapMessages.RevertToRevisionCommand_label, commands);
             ICommandStack commandStack = (ICommandStack) source
@@ -244,7 +251,6 @@ public class RevisionsPage extends Page implements ICoreEventListener,
             } else {
                 command.execute();
             }
-
         }
     }
 
@@ -507,7 +513,8 @@ public class RevisionsPage extends Page implements ICoreEventListener,
     }
 
     private void asyncExec(Runnable runnable) {
-        getSite().getShell().getDisplay().asyncExec(runnable);
+        getSite().getWorkbenchWindow().getWorkbench().getDisplay()
+                .asyncExec(runnable);
     }
 
     public Object getAdapter(Class adapter) {

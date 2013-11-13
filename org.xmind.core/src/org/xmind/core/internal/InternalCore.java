@@ -28,6 +28,9 @@ import org.xmind.core.util.ILogger;
 
 public class InternalCore {
 
+    public static final boolean DEBUG_WORKBOOK_SAVE = Boolean
+            .getBoolean("org.xmind.debug.core.workbookSave"); //$NON-NLS-1$
+
     /**
      * @author MANGOSOFT
      * 

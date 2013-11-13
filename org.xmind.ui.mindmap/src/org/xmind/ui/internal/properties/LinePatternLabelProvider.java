@@ -20,15 +20,30 @@ import org.xmind.ui.viewers.ImageCachedLabelProvider;
 public class LinePatternLabelProvider extends ImageCachedLabelProvider {
 
     public String getText(Object element) {
+        LinePattern value;
         if (element instanceof LinePattern) {
-            return ((LinePattern) element).getName();
+            value = (LinePattern) element;
+        } else if (element instanceof String) {
+            value = LinePattern.findByValue((String) element);
+        } else {
+            value = null;
         }
+        if (value != null)
+            return value.getName();
         return super.getText(element);
     }
 
     protected Image createImage(Object element) {
+        LinePattern value;
         if (element instanceof LinePattern) {
-            ImageDescriptor icon = ((LinePattern) element).getIcon();
+            value = (LinePattern) element;
+        } else if (element instanceof String) {
+            value = LinePattern.findByValue((String) element);
+        } else {
+            value = null;
+        }
+        if (value != null) {
+            ImageDescriptor icon = value.getIcon();
             if (icon != null)
                 return icon.createImage(false);
         }

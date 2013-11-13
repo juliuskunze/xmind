@@ -21,6 +21,7 @@ import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Layer;
 import org.eclipse.draw2d.LayoutManager;
 import org.eclipse.draw2d.PositionConstants;
+import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Insets;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.swt.SWT;
@@ -51,7 +52,7 @@ public class FrameFigure extends Figure {
     protected static final Color ColorSelected = ColorUtils.getColor("#0070d8"); //$NON-NLS-1$
     protected static final Color ColorSelectedPreselected = ColorUtils
             .getColor("#2088e0"); //$NON-NLS-1$
-    protected static final Color ColorInactive = ColorUtils.gray(ColorSelected);
+//    protected static final Color ColorInactive = ColorUtils.gray(ColorSelected);
 
     private class FocusBorder extends AbstractBorder {
 
@@ -72,9 +73,8 @@ public class FrameFigure extends Figure {
             tempRect.setBounds(getPaintRectangle(figure, insets));
             tempRect.shrink(1, 1);
 
-            graphics
-                    .setForegroundColor(selectedPreselected ? ColorSelectedPreselected
-                            : ColorSelected);
+            graphics.setForegroundColor(selectedPreselected ? ColorSelectedPreselected
+                    : ColorSelected);
 
             graphics.setAlpha(lighter ? 0x80 : 0xf0);
             Path p = new Path(Display.getCurrent());
@@ -92,6 +92,8 @@ public class FrameFigure extends Figure {
     private RotatableWrapLabel title;
 
     private IFigure titleContainer;
+
+    private IFigure contentContainer;
 
     private ShadowedLayer contentLayer;
 
@@ -125,9 +127,34 @@ public class FrameFigure extends Figure {
         title.setAbbreviated(true);
         titleContainer.add(title, FrameBorderLayout.TOP);
 
+        contentContainer = new Layer();
+        AdvancedToolbarLayout contentContainerLayout = new AdvancedToolbarLayout(
+                true);
+        contentContainerLayout
+                .setMajorAlignment(AdvancedToolbarLayout.ALIGN_CENTER);
+        contentContainerLayout
+                .setMinorAlignment(AdvancedToolbarLayout.ALIGN_CENTER);
+        contentContainerLayout
+                .setInnerMinorAlignment(AdvancedToolbarLayout.ALIGN_CENTER);
+        contentContainer.setLayoutManager(contentContainerLayout);
+        add(contentContainer, FrameBorderLayout.CENTER);
+
         contentLayer = new ShadowedLayer();
-        contentLayer.setBorderColor(ColorConstants.gray);
-        add(contentLayer, FrameBorderLayout.CENTER);
+        contentLayer.setBorderColor(ColorUtils.getColor(170, 170, 170));
+        contentContainer.add(contentLayer);
+    }
+
+    public void setContentSize(Dimension size) {
+        if (size == null) {
+            contentContainer.setPreferredSize(null);
+        } else {
+            Insets ins1 = contentContainer.getInsets();
+            Insets ins2 = contentLayer.getInsets();
+            contentContainer
+                    .setPreferredSize(size.getExpanded(ins1.getWidth(),
+                            ins1.getHeight()).expand(ins2.getWidth(),
+                            ins2.getHeight()));
+        }
     }
 
     public void setLayoutManager(LayoutManager manager) {
@@ -165,12 +192,12 @@ public class FrameFigure extends Figure {
                         ColorUtils.gradientLighter(color), alpha);
                 break;
             case PositionConstants.RIGHT:
-                paintHorizontalBackground(graphics, 0, b, ColorUtils
-                        .gradientLighter(color), alpha, color, alpha);
+                paintHorizontalBackground(graphics, 0, b,
+                        ColorUtils.gradientLighter(color), alpha, color, alpha);
                 break;
             case PositionConstants.BOTTOM:
-                paintVerticalBackground(graphics, 0, b, ColorUtils
-                        .gradientLighter(color), alpha, color, alpha);
+                paintVerticalBackground(graphics, 0, b,
+                        ColorUtils.gradientLighter(color), alpha, color, alpha);
                 break;
             case PositionConstants.TOP:
                 paintVerticalBackground(graphics, 0, b, color, alpha,
@@ -219,6 +246,14 @@ public class FrameFigure extends Figure {
 
     public ITextFigure getTitle() {
         return title;
+    }
+
+    public int getTitleRenderStyle() {
+        return title.getRenderStyle();
+    }
+
+    public void setTitleRenderStyle(int renderStyle) {
+        title.setRenderStyle(renderStyle);
     }
 
     /**
@@ -334,9 +369,9 @@ public class FrameFigure extends Figure {
             return;
         setFlag(FLAG_FLAT, flat);
         if (flat) {
-            contentLayer.setDepths(0);
+            contentLayer.setShadowDepths(0);
         } else {
-            contentLayer.setDepths(3);
+            contentLayer.setShadowDepths(3);
         }
     }
 

@@ -14,7 +14,7 @@ import org.eclipse.jface.text.hyperlink.URLHyperlink;
 
 public class RichTextHyperlinkDetector extends AbstractHyperlinkDetector {
 
-    private static final String regex = "http://([\\w-]+\\.)+[\\w-]+(/[\\w- ./?%&=]*)?";//$NON-NLS-1$
+    private static final String regex = "\\b(https?|ftp|mailto|svn|irc|gopher|telnet|nntp|worldwind|news):(?:/{1,3})([\\w-]+\\.)+[\\w-]+[\\w-._/\\~%-+&#?!=()@:]*";//$NON-NLS-1$
 
     public IHyperlink[] detectHyperlinks(ITextViewer textViewer,
             IRegion region, boolean canShowMultipleHyperlinks) {

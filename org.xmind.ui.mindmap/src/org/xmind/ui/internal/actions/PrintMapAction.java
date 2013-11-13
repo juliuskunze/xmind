@@ -56,7 +56,7 @@ public class PrintMapAction extends PageAction {
     }
 
     public void run() {
-        IGraphicalEditor editor = getEditor();
+        final IGraphicalEditor editor = getEditor();
         if (editor == null)
             return;
 
@@ -77,7 +77,7 @@ public class PrintMapAction extends PageAction {
         if (parentShell == null || parentShell.isDisposed())
             return;
 
-        IMindMap mindMap = findMindMap(page);
+        final IMindMap mindMap = findMindMap(page);
         if (mindMap == null)
             return;
 
@@ -89,7 +89,7 @@ public class PrintMapAction extends PageAction {
             if (open == PageSetupDialog.CANCEL)
                 return;
 
-            IDialogSettings settings = pageSetupDialog.getSettings();
+            final IDialogSettings settings = pageSetupDialog.getSettings();
             PrinterData printerData = new PrinterData();
             try {
                 printerData.orientation = settings
@@ -101,28 +101,33 @@ public class PrintMapAction extends PageAction {
             printDialog.setPrinterData(printerData);
             printerData = printDialog.open();
             if (printerData != null) {
-                print(mindMap, printerData, settings, page.getViewer(),
-                        parentShell);
-                return;
-            }
-        }
-    }
+                final PrintClient client = new PrintClient(getJobName(mindMap),
+                        parentShell, printerData, settings);
+                Display display = parentShell.getDisplay();
 
-    private void print(final IMindMap map, PrinterData printerData,
-            IDialogSettings settings, final IGraphicalViewer sourceViewer,
-            Shell parentShell) {
-        final PrintClient client = new PrintClient(getJobName(map),
-                parentShell, printerData, settings);
-        Display display = parentShell.getDisplay();
-        try {
-            BusyIndicator.showWhile(display, new Runnable() {
-                public void run() {
-                    //client.print(sourceViewer);
-                    client.print(map);
+                try {
+                    BusyIndicator.showWhile(display, new Runnable() {
+                        public void run() {
+                            if (settings
+                                    .getBoolean(PrintConstants.CONTENTWHOLE)) {
+                                IGraphicalEditorPage[] pages = editor
+                                        .getPages();
+                                for (int i = 0; i < pages.length; i++) {
+
+                                    client.print(findMindMap(pages[i]));
+                                }
+                            } else {
+                                client.print(mindMap);
+                            }
+                            return;
+                        }
+                    });
+                    return;
+                } finally {
+                    client.dispose();
                 }
-            });
-        } finally {
-            client.dispose();
+            }
+
         }
     }
 

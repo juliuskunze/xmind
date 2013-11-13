@@ -20,7 +20,7 @@ import org.eclipse.ui.IPlaceholderFolderLayout;
 import org.xmind.ui.mindmap.MindMapUI;
 
 /**
- * Brainstorm Perspective
+ * Mind Mapping Perspective
  * 
  * @author Brian Sun
  */
@@ -71,12 +71,14 @@ public class Perspective implements IPerspectiveFactory {
                 "bottom", IPageLayout.BOTTOM, 0.7f, pageLayout.getEditorArea()); //$NON-NLS-1$
         layout.addPlaceholder(MindMapUI.VIEW_NOTES);
         layout.addPlaceholder(MindMapUI.VIEW_THEMES);
+        layout.addPlaceholder(CONSOLE_VIEW_ID);
     }
 
     private void createLeftLayout(IPageLayout pageLayout) {
         IPlaceholderFolderLayout layout = pageLayout.createPlaceholderFolder(
                 "left", IPageLayout.LEFT, 0.37f, pageLayout.getEditorArea()); //$NON-NLS-1$
-        layout.addPlaceholder("org.xmind.ui.BrowserView"); //$NON-NLS-1$
+        layout.addPlaceholder(MindMapUI.VIEW_BROSWER);
+        layout.addPlaceholder("org.xmind.ui.LocalNetworkSharingView"); //$NON-NLS-1$
     }
 
 }

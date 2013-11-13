@@ -73,6 +73,26 @@ import org.xmind.ui.viewers.SWTUtils;
 
 public class PopupFilteredList extends PopupDialog {
 
+    /**
+     * An element creator creates an element using a user-input text. This class
+     * is used when the popup filtered list permits unprovided values and need
+     * to convert the user-input text into a proper value.
+     * 
+     * @author Frank Shaka
+     */
+    public static interface IElementCreator {
+
+        /**
+         * Creates an element according to the user-input text.
+         * 
+         * @param text
+         *            a string inputted by user
+         * @return an element created according to the specified text
+         */
+        Object createElement(String text);
+
+    }
+
     public static class PatternFilter extends ViewerFilter {
 
         private String patternText = null;
@@ -284,13 +304,19 @@ public class PopupFilteredList extends PopupDialog {
 
     private boolean permitsUnprovidedElement = false;
 
+    private IElementCreator elementCreator = null;
+
     public PopupFilteredList(Shell parent) {
-        this(parent, null, null);
+        this(parent, SWT.ON_TOP | SWT.RESIZE);
     }
 
     public PopupFilteredList(Shell parent, String titleText, String infoText) {
         super(parent, SWT.ON_TOP | SWT.RESIZE, true, false, false, false,
                 false, titleText, infoText);
+    }
+
+    public PopupFilteredList(Shell parent, int shellStyle) {
+        super(parent, shellStyle, true, false, false, false, false, null, null);
     }
 
     protected Control createDialogArea(Composite parent) {
@@ -501,9 +527,16 @@ public class PopupFilteredList extends PopupDialog {
     protected void fireOpen() {
         ISelection selection = getViewer().getSelection();
         if (selection.isEmpty() && permitsUnprovidedElement()) {
-            selection = new StructuredSelection(getFilterText().getText());
+            selection = new StructuredSelection(createElement(getFilterText()
+                    .getText()));
         }
         fireOpenEvent(new OpenEvent(getViewer(), selection));
+    }
+
+    private Object createElement(String text) {
+        if (elementCreator != null)
+            return elementCreator.createElement(text);
+        return text;
     }
 
     protected void fireOpen(Object element) {
@@ -621,6 +654,14 @@ public class PopupFilteredList extends PopupDialog {
 
     public void setPermitsUnprovidedElement(boolean permitsUnprovidedElement) {
         this.permitsUnprovidedElement = permitsUnprovidedElement;
+    }
+
+    public void setElementCreator(IElementCreator elementCreator) {
+        this.elementCreator = elementCreator;
+    }
+
+    public IElementCreator getElementCreator() {
+        return elementCreator;
     }
 
 }

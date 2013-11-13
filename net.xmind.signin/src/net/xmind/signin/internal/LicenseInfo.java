@@ -14,6 +14,7 @@
 package net.xmind.signin.internal;
 
 import net.xmind.signin.ILicenseInfo;
+import net.xmind.signin.ILicenseKeyHeader;
 
 public class LicenseInfo implements ILicenseInfo {
 
@@ -23,18 +24,22 @@ public class LicenseInfo implements ILicenseInfo {
 
     private final String name;
 
+    private final ILicenseKeyHeader licenseKeyHeader;
+
     public LicenseInfo() {
-        this(VERIFYING, null, null);
+        this(VERIFYING, null, null, null);
     }
 
     public LicenseInfo(int status) {
-        this(status, null, null);
+        this(status, null, null, null);
     }
 
-    public LicenseInfo(int status, Throwable error, String name) {
+    public LicenseInfo(int status, Throwable error, String name,
+            ILicenseKeyHeader licenseKeyHeader) {
         this.status = status;
         this.error = error;
         this.name = name;
+        this.licenseKeyHeader = licenseKeyHeader;
     }
 
     public int getType() {
@@ -49,7 +54,24 @@ public class LicenseInfo implements ILicenseInfo {
         return name;
     }
 
-    @Override
+    public ILicenseKeyHeader getLicenseKeyHeader() {
+        return licenseKeyHeader;
+    }
+
+    public String toString() {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("LicenseInfo{"); //$NON-NLS-1$
+        buffer.append(status);
+        buffer.append(",error="); //$NON-NLS-1$
+        buffer.append(error == null ? "" : error.getLocalizedMessage()); //$NON-NLS-1$
+        buffer.append(",licensedTo="); //$NON-NLS-1$
+        buffer.append(name);
+        buffer.append(",licenseKeyHeader="); //$NON-NLS-1$
+        buffer.append(licenseKeyHeader);
+        buffer.append('}');
+        return super.toString();
+    }
+
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
@@ -60,10 +82,11 @@ public class LicenseInfo implements ILicenseInfo {
                 && (this.name == that.name || (this.name != null && this.name
                         .equals(that.name)))
                 && (this.error == that.error || (this.error != null && this.error
-                        .equals(that.error)));
+                        .equals(that.error)))
+                && (this.licenseKeyHeader == that.licenseKeyHeader || (this.licenseKeyHeader != null && this.licenseKeyHeader
+                        .equals(that.licenseKeyHeader)));
     }
 
-    @Override
     public int hashCode() {
         return status;
     }

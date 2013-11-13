@@ -94,6 +94,12 @@ public class InternalBrowserEditor extends EditorPart implements
                 }
                 viewer.changeStyle(style);
                 site.getWorkbenchWindow().getActivePage().activate(this);
+                if (initialURL != null
+                        && ((style & IBrowserSupport.NO_TOOLBAR) == 0 && (style & IBrowserSupport.NO_LOCATION_BAR) == 0)) {
+                    setContentDescription(initialURL);
+                } else {
+                    setContentDescription(""); //$NON-NLS-1$
+                }
             }
 
             setPartName(bei.getName());
@@ -161,8 +167,13 @@ public class InternalBrowserEditor extends EditorPart implements
                         setPartName((String) event.getNewValue());
                 } else if (IBrowserViewer.PROPERTY_LOCATION.equals(event
                         .getPropertyName())) {
-                    if (event.getNewValue() != null)
-                        setContentDescription((String) event.getNewValue());
+                    String location = (String) event.getNewValue();
+                    int currentStyle = getBrowserEditorInput().getStyle();
+                    if (location == null
+                            || ((currentStyle & IBrowserSupport.NO_TOOLBAR) == 0 && (currentStyle & IBrowserSupport.NO_LOCATION_BAR) == 0)) {
+                        location = ""; //$NON-NLS-1$
+                    }
+                    setContentDescription(location);
                 }
             }
         };

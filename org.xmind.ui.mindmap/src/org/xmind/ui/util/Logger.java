@@ -26,16 +26,21 @@ public class Logger {
     public static void log(Throwable e, String message) {
         if (message == null)
             message = ""; //$NON-NLS-1$
-        MindMapUIPlugin.getDefault().getLog().log(
-                new Status(IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
+        MindMapUIPlugin
+                .getDefault()
+                .getLog()
+                .log(new Status(IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID,
                         IStatus.ERROR, message, e));
     }
 
     public static void log(String message) {
         if (message == null)
             message = ""; //$NON-NLS-1$
-        MindMapUIPlugin.getDefault().getLog().log(
-                new Status(IStatus.ERROR, MindMapUIPlugin.PLUGIN_ID, message));
+        MindMapUIPlugin
+                .getDefault()
+                .getLog()
+                .log(new Status(IStatus.INFO, MindMapUIPlugin.PLUGIN_ID,
+                        message));
     }
 
     public static void debug(Class<?> clazz, String message) {

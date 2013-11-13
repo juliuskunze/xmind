@@ -41,6 +41,11 @@
 		<resource-mapping src="urn:mindjet:Prio4" dest="priority-4" />
 		<resource-mapping src="urn:mindjet:Prio5" dest="priority-5" />
 		<resource-mapping src="urn:mindjet:Prio6" dest="priority-6" />
+		
+		<resource-mapping src="urn:mindjet:ArrowUp" dest="arrow-up" />
+		<resource-mapping src="urn:mindjet:ArrowDown" dest="arrow-down" />
+		<resource-mapping src="urn:mindjet:ArrowLeft" dest="arrow-left" />
+		<resource-mapping src="urn:mindjet:ArrowRight" dest="arrow-right" />
 	</resource-group>
 	<resource-group type="topicShape">
 		<resource-mapping src="urn:mindjet:RoundedRectangle" dest="org.xmind.topicShape.roundedRect" />

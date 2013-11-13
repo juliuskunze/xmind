@@ -13,7 +13,6 @@
  *******************************************************************************/
 package org.xmind.core.io;
 
-import org.xmind.core.CoreException;
 
 /**
  * @author frankshaka
@@ -24,16 +23,14 @@ public interface IStorage {
     /**
      * 
      * @return
-     * @throws CoreException
      */
-    IInputSource getInputSource() throws CoreException;
+    IInputSource getInputSource();
 
     /**
      * 
      * @return
-     * @throws CoreException
      */
-    IOutputTarget getOutputTarget() throws CoreException;
+    IOutputTarget getOutputTarget();
 
     /**
      * 

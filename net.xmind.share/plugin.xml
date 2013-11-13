@@ -13,7 +13,6 @@
                id="com.xmindshare.uploader.actions.upload"
                label="%action.upload.text"
                menubarPath="file/additions"
-               mode="FORCE_TEXT"
                toolbarPath="additions"
                tooltip="%action.upload.toolTip">
          </action>
@@ -27,6 +26,13 @@
             id="com.xmindshare.uploader.commands.upload"
             name="%command.upload.name">
       </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commandImages">
+      <image
+            commandId="com.xmindshare.uploader.commands.upload"
+            icon="icons/upload.gif">
+      </image>
    </extension>
 
 </plugin>

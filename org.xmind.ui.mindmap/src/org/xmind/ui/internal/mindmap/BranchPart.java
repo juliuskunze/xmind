@@ -392,7 +392,7 @@ public class BranchPart extends MindMapPartBase implements IBranchPart {
         register.register(Core.Labels);
     }
 
-    public void handleCoreEvent(CoreEvent event) {
+    public void handleCoreEvent(final CoreEvent event) {
         String type = event.getType();
         if (Core.TopicFolded.equals(type)) {
             treeUpdate(true);

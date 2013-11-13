@@ -85,10 +85,16 @@ public class DirectoryInputSource implements IInputSource {
                 } else {
                     entryName = parentEntry + "/" + file.getName(); //$NON-NLS-1$
                 }
-                list.add(entryName);
+                if (!file.isDirectory()) {
+                    list.add(entryName);
+                }
                 getSubFiles(entryName, file, list);
             }
         }
+    }
+
+    public boolean isEntryAvailable(String entryName) {
+        return isAvailable() && !new File(dir, entryName).isDirectory();
     }
 
     protected boolean isAvailable() {
@@ -115,6 +121,10 @@ public class DirectoryInputSource implements IInputSource {
             }
         }
         return null;
+    }
+
+    public InputStream openEntryStream(String entryName) throws IOException {
+        return new FileInputStream(new File(dir, entryName));
     }
 
     public boolean closeEntryStream(String entryPath, InputStream stream) {

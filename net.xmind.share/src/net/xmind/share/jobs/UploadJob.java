@@ -12,8 +12,8 @@
 package net.xmind.share.jobs;
 
 import java.io.File;
-import java.io.IOException;
 
+import net.xmind.share.FileValidationException;
 import net.xmind.share.Info;
 import net.xmind.share.Messages;
 import net.xmind.share.Uploader;
@@ -25,7 +25,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
-import org.xmind.core.CoreException;
 import org.xmind.core.IMeta;
 import org.xmind.core.IWorkbook;
 
@@ -168,9 +167,11 @@ public class UploadJob extends Job {
         if (permalink == null)
             return new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                     "Upload session is prepared, but has no permalink to use."); //$NON-NLS-1$
-        savePermalink(permalink);
+        IStatus saved = savePermalink(permalink);
         if (monitor.isCanceled())
             return Status.CANCEL_STATUS;
+        if (saved != null && !saved.isOK())
+            return saved;
         monitor.worked(5);
 
         // start transfering file data up to XMind server
@@ -214,29 +215,35 @@ public class UploadJob extends Job {
         return Status.OK_STATUS;
     }
 
-    private void savePermalink(String permalink) {
+    private IStatus savePermalink(String permalink) {
         IWorkbook workbook = (IWorkbook) info.getProperty(Info.WORKBOOK);
-        if (workbook != null) {
-            workbook.getMeta().setValue(Info.SHARE + IMeta.SEP + "SourceUrl", //$NON-NLS-1$
-                    permalink);
-            File file = (File) info.getProperty(Info.FILE);
-            if (file != null) {
-                try {
-                    String path = file.getAbsolutePath();
-                    workbook.save(path);
-                    Uploader.validateUploadFile(path);
-                } catch (IOException ignore) {
-                } catch (CoreException ignore) {
-                }
-            } else {
-                try {
-                    workbook.save();
-                    Uploader.validateUploadFile(workbook.getFile());
-                } catch (IOException ignore) {
-                } catch (CoreException ignore) {
-                }
-            }
+        if (workbook == null)
+            return new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
+                    "Failed to save source URL. No workbook available"); //$NON-NLS-1$
+
+        workbook.getMeta().setValue(Info.SHARE + IMeta.SEP + "SourceUrl", //$NON-NLS-1$
+                permalink);
+        File file = (File) info.getProperty(Info.FILE);
+        if (file == null)
+            return new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
+                    "Failed to save source URL. No file available."); //$NON-NLS-1$
+
+        String path = file.getAbsolutePath();
+        try {
+            workbook.save(path);
+        } catch (Throwable e) {
+            return new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
+                    "Failed to save source URL due to error: " //$NON-NLS-1$
+                            + e.getLocalizedMessage(), e);
         }
+        try {
+            Uploader.validateUploadFile(path);
+        } catch (FileValidationException e) {
+            return new Status(IStatus.ERROR, XmindSharePlugin.PLUGIN_ID,
+                    "Failed to save source URL due to file corruption: " //$NON-NLS-1$
+                            + e.getLocalizedMessage(), e);
+        }
+        return Status.OK_STATUS;
     }
 
     @Override

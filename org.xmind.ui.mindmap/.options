@@ -1,0 +1,5 @@
+# Turn on/off general debugging for this plugin:
+org.xmind.ui.mindmap/debug=false
+
+# Turn on/off debugging for Auto Save feature:
+org.xmind.ui.mindmap/debug/autosave=false

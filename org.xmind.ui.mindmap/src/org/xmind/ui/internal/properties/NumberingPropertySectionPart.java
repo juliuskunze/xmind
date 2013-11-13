@@ -28,14 +28,10 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
@@ -57,102 +53,102 @@ import org.xmind.ui.viewers.MComboViewer;
 public class NumberingPropertySectionPart extends
         MindMapPropertySectionPartBase {
 
-    private static class BalanceLayout extends Layout {
-
-        public Control left;
-
-        public Control center;
-
-        public Control right;
-
-        public int spacing = 3;
-
-        protected Point computeSize(Composite composite, int wHint, int hHint,
-                boolean flushCache) {
-            Point size = new Point(0, 0);
-            if (wHint >= 0)
-                size.x = wHint;
-            if (hHint >= 0)
-                size.y = hHint;
-            if (wHint < 0 || hHint < 0) {
-                Point centerSize;
-                if (center == null) {
-                    centerSize = null;
-                } else {
-                    centerSize = center.computeSize(SWT.DEFAULT, hHint,
-                            flushCache);
-                }
-                Point leftSize;
-                Point rightSize;
-                if (left != null || right != null) {
-                    leftSize = left == null ? null : left.computeSize(
-                            SWT.DEFAULT, hHint, flushCache);
-                    rightSize = right == null ? null : right.computeSize(
-                            SWT.DEFAULT, hHint, flushCache);
-                } else {
-                    leftSize = null;
-                    rightSize = null;
-                }
-                if (hHint < 0) {
-                    if (centerSize != null)
-                        size.y = Math.max(size.y, centerSize.y);
-                    if (leftSize != null)
-                        size.y = Math.max(size.y, leftSize.y);
-                    if (rightSize != null)
-                        size.y = Math.max(size.y, rightSize.y);
-                }
-                if (wHint < 0) {
-                    int width = 0;
-                    if (leftSize != null)
-                        width = Math.max(width, leftSize.x);
-                    if (rightSize != null)
-                        width = Math.max(width, rightSize.x);
-                    if (centerSize != null)
-                        width += centerSize.x;
-                    size.x = Math.max(size.x, width);
-                }
-            }
-
-            // avoid using default width or height
-            size.x = Math.max(1, size.x);
-            size.y = Math.max(1, size.y);
-            return size;
-        }
-
-        protected void layout(Composite composite, boolean flushCache) {
-            Rectangle area = composite.getClientArea();
-            if (center != null) {
-                if (left != null || right != null) {
-                    Point centerSize = center.computeSize(SWT.DEFAULT,
-                            area.height, flushCache);
-                    int maxCenterWidth = area.width - spacing * 2 - 20;
-                    int centerWidth = Math.min(centerSize.x, maxCenterWidth);
-                    center.setBounds(area.x + (area.width - centerWidth) / 2,
-                            area.y, centerWidth, area.height);
-                    int sideWidth = (area.width - spacing * 2 - centerSize.x) / 2;
-                    if (left != null)
-                        left.setBounds(area.x, area.y, sideWidth, area.height);
-                    if (right != null)
-                        right.setBounds(area.x + area.width - sideWidth,
-                                area.y, sideWidth, area.height);
-                } else {
-                    center.setBounds(area);
-                }
-            } else if (left != null) {
-                int sideWidth = Math.max(0, area.width
-                        - (right == null ? 0 : spacing)) / 2;
-                left.setBounds(area.x, area.y, sideWidth, area.height);
-                if (right != null)
-                    right.setBounds(area.x + area.width - sideWidth, area.y,
-                            sideWidth, area.height);
-            } else if (right != null) {
-                int rightWidth = Math.max(0, area.width / 2);
-                right.setBounds(area.x + area.width - rightWidth, area.y,
-                        rightWidth, area.height);
-            }
-        }
-
-    }
+//    private static class BalanceLayout extends Layout {
+//
+//        public Control left;
+//
+//        public Control center;
+//
+//        public Control right;
+//
+//        public int spacing = 3;
+//
+//        protected Point computeSize(Composite composite, int wHint, int hHint,
+//                boolean flushCache) {
+//            Point size = new Point(0, 0);
+//            if (wHint >= 0)
+//                size.x = wHint;
+//            if (hHint >= 0)
+//                size.y = hHint;
+//            if (wHint < 0 || hHint < 0) {
+//                Point centerSize;
+//                if (center == null) {
+//                    centerSize = null;
+//                } else {
+//                    centerSize = center.computeSize(SWT.DEFAULT, hHint,
+//                            flushCache);
+//                }
+//                Point leftSize;
+//                Point rightSize;
+//                if (left != null || right != null) {
+//                    leftSize = left == null ? null : left.computeSize(
+//                            SWT.DEFAULT, hHint, flushCache);
+//                    rightSize = right == null ? null : right.computeSize(
+//                            SWT.DEFAULT, hHint, flushCache);
+//                } else {
+//                    leftSize = null;
+//                    rightSize = null;
+//                }
+//                if (hHint < 0) {
+//                    if (centerSize != null)
+//                        size.y = Math.max(size.y, centerSize.y);
+//                    if (leftSize != null)
+//                        size.y = Math.max(size.y, leftSize.y);
+//                    if (rightSize != null)
+//                        size.y = Math.max(size.y, rightSize.y);
+//                }
+//                if (wHint < 0) {
+//                    int width = 0;
+//                    if (leftSize != null)
+//                        width = Math.max(width, leftSize.x);
+//                    if (rightSize != null)
+//                        width = Math.max(width, rightSize.x);
+//                    if (centerSize != null)
+//                        width += centerSize.x;
+//                    size.x = Math.max(size.x, width);
+//                }
+//            }
+//
+//            // avoid using default width or height
+//            size.x = Math.max(1, size.x);
+//            size.y = Math.max(1, size.y);
+//            return size;
+//        }
+//
+//        protected void layout(Composite composite, boolean flushCache) {
+//            Rectangle area = composite.getClientArea();
+//            if (center != null) {
+//                if (left != null || right != null) {
+//                    Point centerSize = center.computeSize(SWT.DEFAULT,
+//                            area.height, flushCache);
+//                    int maxCenterWidth = area.width - spacing * 2 - 20;
+//                    int centerWidth = Math.min(centerSize.x, maxCenterWidth);
+//                    center.setBounds(area.x + (area.width - centerWidth) / 2,
+//                            area.y, centerWidth, area.height);
+//                    int sideWidth = (area.width - spacing * 2 - centerSize.x) / 2;
+//                    if (left != null)
+//                        left.setBounds(area.x, area.y, sideWidth, area.height);
+//                    if (right != null)
+//                        right.setBounds(area.x + area.width - sideWidth,
+//                                area.y, sideWidth, area.height);
+//                } else {
+//                    center.setBounds(area);
+//                }
+//            } else if (left != null) {
+//                int sideWidth = Math.max(0, area.width
+//                        - (right == null ? 0 : spacing)) / 2;
+//                left.setBounds(area.x, area.y, sideWidth, area.height);
+//                if (right != null)
+//                    right.setBounds(area.x + area.width - sideWidth, area.y,
+//                            sideWidth, area.height);
+//            } else if (right != null) {
+//                int rightWidth = Math.max(0, area.width / 2);
+//                right.setBounds(area.x + area.width - rightWidth, area.y,
+//                        rightWidth, area.height);
+//            }
+//        }
+//
+//    }
 
     private class NumberFormatLabelProvider extends LabelProvider {
         public String getText(Object element) {
@@ -228,12 +224,17 @@ public class NumberingPropertySectionPart extends
         line2 = new Composite(parent, SWT.NONE);
         line2.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true,
                 false));
-        BalanceLayout layout2 = new BalanceLayout();
+        GridLayout layout2 = new GridLayout(3, false);
+        layout2.marginWidth = 0;
+        layout2.marginHeight = 0;
+        layout2.verticalSpacing = 0;
+        layout2.horizontalSpacing = 3;
         line2.setLayout(layout2);
         createLineContent2(line2);
-        layout2.left = prefixInput;
-        layout2.center = numberLabel;
-        layout2.right = suffixInput;
+        prefixInput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        numberLabel
+                .setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
+        suffixInput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
     }
 
     private void createLineContent1(Composite parent) {

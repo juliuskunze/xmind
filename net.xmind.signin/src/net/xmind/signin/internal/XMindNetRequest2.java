@@ -248,7 +248,7 @@ public class XMindNetRequest2 {
 //        if (method.getRequestHeader("Accept") == null) { //$NON-NLS-1$
 //            method.setRequestHeader("Accept", "application/json"); //$NON-NLS-1$ //$NON-NLS-2$
 //        }
-//        method.setRequestHeader("X-Client-ID", "xmind_v3.3.1"); //$NON-NLS-1$ //$NON-NLS-2$
+//        method.setRequestHeader("X-Client-ID", "xmind_v3.4.0"); //$NON-NLS-1$ //$NON-NLS-2$
 //    }
 //
 //    private RequestEntity generateRequestEntity() {

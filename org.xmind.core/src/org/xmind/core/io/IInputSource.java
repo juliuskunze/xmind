@@ -13,13 +13,11 @@
  *******************************************************************************/
 package org.xmind.core.io;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 public interface IInputSource {
-
-    Iterator<String> NO_ENTRIES = new ArrayList<String>(0).iterator();
 
     /**
      * 
@@ -35,11 +33,41 @@ public interface IInputSource {
     Iterator<String> getEntries();
 
     /**
+     * Determines whether a specified entry is a available.
      * 
      * @param entryName
-     * @return
+     *            the name of the entry
+     * @return <code>true</code> if the specified entry is available, or
+     *         <code>false</code> otherwise
+     */
+    boolean isEntryAvailable(String entryName);
+
+    /**
+     * Opens a new input stream to read data from for specified entry.
+     * 
+     * <p>
+     * <strong>For diagnostic purpose, this method is not recommended any more.
+     * Use {@link #openEntryStream(String)} instead to let potential I/O errors
+     * be thrown.</strong>
+     * </p>
+     * 
+     * @param entryName
+     *            the name of the entry
+     * @return an input stream for the specified entry, or <code>null</code> if
+     *         the specified entry is not available
      */
     InputStream getEntryStream(String entryName);
+
+    /**
+     * Opens a new input stream to read data from for the specified entry.
+     * 
+     * @param entryName
+     * @return an output stream for the specified entry (never <code>null</code>
+     *         )
+     * @throws IOException
+     *             if I/O error occurs or entry is not found
+     */
+    InputStream openEntryStream(String entryName) throws IOException;
 
     /**
      * Returns the file size of the specific entry.

@@ -37,6 +37,7 @@ import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.ISummaryPart;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.properties.DecorationLabelProvider;
 import org.xmind.ui.style.Styles;
 import org.xmind.ui.viewers.MComboViewer;
 

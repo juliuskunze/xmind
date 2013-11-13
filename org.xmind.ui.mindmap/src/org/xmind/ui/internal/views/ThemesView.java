@@ -33,6 +33,7 @@ import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.IViewSite;
@@ -201,8 +202,8 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         getSite().getPage().addPartListener(this);
 
         ICoreEventSupport ces = (ICoreEventSupport) MindMapUI
-                .getResourceManager().getUserThemeSheet().getAdapter(
-                        ICoreEventSupport.class);
+                .getResourceManager().getUserThemeSheet()
+                .getAdapter(ICoreEventSupport.class);
         if (ces != null) {
             register = new CoreEventRegister(this);
             register.setNextSupport(ces);
@@ -299,9 +300,9 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         if (domain == null)
             return;
 
-        domain.handleRequest(new Request(MindMapUI.REQ_MODIFY_THEME).setViewer(
-                viewer).setPrimaryTarget(sheetPart).setParameter(
-                MindMapUI.PARAM_RESOURCE, theme));
+        domain.handleRequest(new Request(MindMapUI.REQ_MODIFY_THEME)
+                .setViewer(viewer).setPrimaryTarget(sheetPart)
+                .setParameter(MindMapUI.PARAM_RESOURCE, theme));
         updateSelection();
     }
 
@@ -418,16 +419,27 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         updateSelection();
     }
 
-    public void handleCoreEvent(CoreEvent event) {
-        if (Core.ThemeId.equals(event.getType())) {
-            updateSelection();
-        } else if (Core.Name.equals(event.getType())) {
-            viewer.update(new Object[] { event.getSource() });
-        } else {
-            viewer.setInput(getViewerInput());
-            viewer.setSelection(new StructuredSelection(event.getSource()),
-                    true);
-        }
+    public void handleCoreEvent(final CoreEvent event) {
+        if (viewer == null)
+            return;
+
+        Control c = viewer.getControl();
+        if (c == null || c.isDisposed())
+            return;
+
+        c.getDisplay().syncExec(new Runnable() {
+            public void run() {
+                if (Core.ThemeId.equals(event.getType())) {
+                    updateSelection();
+                } else if (Core.Name.equals(event.getType())) {
+                    viewer.update(new Object[] { event.getSource() });
+                } else {
+                    viewer.setInput(getViewerInput());
+                    viewer.setSelection(
+                            new StructuredSelection(event.getSource()), true);
+                }
+            }
+        });
     }
 
 }

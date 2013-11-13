@@ -13,27 +13,116 @@
  *******************************************************************************/
 package org.xmind.ui.gallery;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+import org.eclipse.draw2d.AbstractLayout;
 import org.eclipse.draw2d.Cursors;
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.LayoutManager;
+import org.eclipse.draw2d.geometry.Dimension;
+import org.eclipse.draw2d.geometry.Insets;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.swt.graphics.Cursor;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
+import org.xmind.gef.IGraphicalViewer;
+import org.xmind.gef.draw2d.RotatableWrapLabel;
 import org.xmind.gef.part.GraphicalEditPart;
 import org.xmind.gef.part.IPart;
+import org.xmind.gef.part.IPartSite;
 import org.xmind.gef.part.IRequestHandler;
 import org.xmind.gef.policy.NullEditPolicy;
 import org.xmind.gef.status.StatusEvent;
+import org.xmind.gef.util.Properties;
 
-public class FramePart extends GraphicalEditPart {
+public class FramePart extends GraphicalEditPart implements
+        PropertyChangeListener {
+
+    private static class FrameContentLayout extends AbstractLayout {
+
+        private static Rectangle BOUNDS = new Rectangle();
+
+        private static Rectangle CHILD_BOUNDS = new Rectangle();
+
+        private IPartSite site;
+
+        public FrameContentLayout(IPartSite site) {
+            this.site = site;
+        }
+
+        public void layout(IFigure container) {
+            Rectangle area = container.getClientArea(BOUNDS);
+            int childX, childY, childWidth, childHeight;
+            for (Object child : container.getChildren()) {
+                IFigure figure = (IFigure) child;
+                Dimension childSize = figure.getPreferredSize(area.width,
+                        area.height);
+                childWidth = Math.min(childSize.width, area.width);
+                childHeight = Math.min(childSize.height, area.height);
+                childX = area.x + (area.width - childWidth) / 2;
+                childY = area.y + (area.height - childHeight) / 2;
+                CHILD_BOUNDS.setBounds(childX, childY, childWidth, childHeight);
+                figure.setBounds(CHILD_BOUNDS);
+            }
+        }
+
+        @Override
+        protected Dimension calculatePreferredSize(IFigure container,
+                int wHint, int hHint) {
+            Insets insets = container.getInsets();
+            Properties properties = site.getProperties();
+            Dimension contentSize = (Dimension) properties
+                    .get(GalleryViewer.FrameContentSize);
+            boolean pack = properties.getBoolean(
+                    GalleryViewer.PackFrameContent, false);
+            if (contentSize != null && !pack)
+                return new Dimension(contentSize.width + insets.getWidth(),
+                        contentSize.height + insets.getHeight());
+
+            int childWHint = contentSize != null ? contentSize.width
+                    : (wHint < 0 ? wHint : Math.max(0,
+                            wHint - insets.getWidth()));
+            int childHHint = contentSize != null ? contentSize.height
+                    : (hHint < 0 ? hHint : Math.max(0,
+                            hHint - insets.getHeight()));
+            int childWidth = 0, childHeight = 0;
+            for (Object child : container.getChildren()) {
+                Dimension childSize = ((IFigure) child).getPreferredSize(
+                        childWHint, childHHint);
+                childWidth = Math.max(childWidth, childSize.width);
+                childHeight = Math.max(childHeight, childSize.height);
+            }
+
+            if (contentSize != null) {
+                childWidth = Math.min(childWidth, contentSize.width);
+                childHeight = Math.min(childHeight, contentSize.height);
+            }
+
+            return new Dimension(childWidth + insets.getWidth(), childHeight
+                    + insets.getHeight());
+        }
+
+    }
 
     public FramePart(Object model) {
         setModel(model);
         setDecorator(FrameDecorator.DEFAULT);
     }
 
+    @Override
+    protected LayoutManager createLayoutManager() {
+        return new FrameContentLayout(getSite());
+    }
+
     protected IFigure createFigure() {
-        return new FrameFigure();
+        FrameFigure figure = new FrameFigure();
+        boolean useAdvancedRenderer = getSite().getViewer().getProperties()
+                .getBoolean(IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, false);
+        figure.setTitleRenderStyle(useAdvancedRenderer ? RotatableWrapLabel.ADVANCED
+                : RotatableWrapLabel.NORMAL);
+        return figure;
     }
 
     public FrameFigure getFigure() {
@@ -111,5 +200,31 @@ public class FramePart extends GraphicalEditPart {
         for (IPart child : getChildren()) {
             child.update();
         }
+    }
+
+    protected void onActivated() {
+        super.onActivated();
+        getSite()
+                .getViewer()
+                .getProperties()
+                .addPropertyChangeListener(
+                        IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, this);
+    }
+
+    protected void onDeactivated() {
+        getSite()
+                .getViewer()
+                .getProperties()
+                .removePropertyChangeListener(
+                        IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, this);
+        super.onDeactivated();
+    }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+        boolean useAdvancedRenderer = getSite().getViewer().getProperties()
+                .getBoolean(IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, false);
+        getFigure().setTitleRenderStyle(
+                useAdvancedRenderer ? RotatableWrapLabel.ADVANCED
+                        : RotatableWrapLabel.NORMAL);
     }
 }

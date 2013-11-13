@@ -13,7 +13,6 @@
  *******************************************************************************/
 package org.xmind.core;
 
-import java.io.IOException;
 
 /**
  * @author MANGOSOFT
@@ -21,6 +20,6 @@ import java.io.IOException;
  */
 public interface IChecksumStream {
 
-    String getChecksum() throws IOException;
+    String getChecksum();
 
 }

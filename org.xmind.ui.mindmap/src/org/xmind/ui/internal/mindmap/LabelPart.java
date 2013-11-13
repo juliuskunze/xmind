@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.xmind.ui.internal.mindmap;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Set;
 
 import org.eclipse.draw2d.IFigure;
@@ -22,6 +24,7 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
 import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.GEF;
+import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.draw2d.RotatableWrapLabel;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.part.IRequestHandler;
@@ -32,7 +35,8 @@ import org.xmind.ui.mindmap.ILabelPart;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.MindMapUtils;
 
-public class LabelPart extends MindMapPartBase implements ILabelPart {
+public class LabelPart extends MindMapPartBase implements ILabelPart,
+        PropertyChangeListener {
 
     private String labelText = null;
 
@@ -41,7 +45,11 @@ public class LabelPart extends MindMapPartBase implements ILabelPart {
     }
 
     protected IFigure createFigure() {
-        return new RotatableWrapLabel(RotatableWrapLabel.NORMAL);
+        boolean useAdvancedRenderer = getSite().getViewer().getProperties()
+                .getBoolean(IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, false);
+        return new RotatableWrapLabel(
+                useAdvancedRenderer ? RotatableWrapLabel.ADVANCED
+                        : RotatableWrapLabel.NORMAL);
     }
 
     public String getLabelText() {
@@ -92,8 +100,8 @@ public class LabelPart extends MindMapPartBase implements ILabelPart {
 
     protected void declareEditPolicies(IRequestHandler reqHandler) {
         super.declareEditPolicies(reqHandler);
-        reqHandler.installEditPolicy(GEF.ROLE_EDITABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_EDITABLE,
+                NullEditPolicy.getInstance());
         reqHandler.installEditPolicy(GEF.ROLE_NAVIGABLE,
                 MindMapUI.POLICY_TOPIC_NAVIGABLE);
 
@@ -108,11 +116,41 @@ public class LabelPart extends MindMapPartBase implements ILabelPart {
     public void handleCoreEvent(CoreEvent event) {
         String type = event.getType();
         if (Core.Labels.equals(type)) {
-            labelText = null;
-            update();
+            runInUI(new Runnable() {
+                public void run() {
+                    labelText = null;
+                    update();
+                }
+            });
         } else {
             super.handleCoreEvent(event);
         }
+    }
+
+    protected void onActivated() {
+        super.onActivated();
+        getSite()
+                .getViewer()
+                .getProperties()
+                .addPropertyChangeListener(
+                        IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, this);
+    }
+
+    protected void onDeactivated() {
+        getSite()
+                .getViewer()
+                .getProperties()
+                .removePropertyChangeListener(
+                        IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, this);
+        super.onDeactivated();
+    }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+        boolean useAdvancedRenderer = getSite().getViewer().getProperties()
+                .getBoolean(IGraphicalViewer.VIEWER_RENDER_TEXT_AS_PATH, false);
+        ((RotatableWrapLabel) getFigure())
+                .setRenderStyle(useAdvancedRenderer ? RotatableWrapLabel.ADVANCED
+                        : RotatableWrapLabel.NORMAL);
     }
 
 }
