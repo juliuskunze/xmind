@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: XMind Remote Command Service Plug-in
+Bundle-SymbolicName: org.xmind.core.command.remote;singleton:=true
+Bundle-Version: 3.4.1.qualifier
+Bundle-Activator: org.xmind.core.internal.command.remote.RemoteCommandPlugin
+Bundle-Vendor: XMind Ltd.
+Require-Bundle: org.eclipse.core.runtime,
+ org.xmind.core.command;bundle-version="[3.4.0,3.5.0)"
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ActivationPolicy: lazy
+Export-Package: org.xmind.core.command.remote,
+ org.xmind.core.command.remote.socket,
+ org.xmind.core.command.transfer,
+ org.xmind.core.internal.command.remote;x-internal:=true
+Bundle-Localization: plugin

@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %pluginName
+Bundle-SymbolicName: org.xmind.core.io;singleton:=true
+Bundle-Version: 3.4.1.qualifier
+Bundle-Vendor: %providerName
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ActivationPolicy: lazy
+Export-Package: org.xmind.core.io,
+ org.xmind.core.io.freemind,
+ org.xmind.core.io.mindmanager,
+ org.xmind.core.io.workbook
+Bundle-Localization: plugin
+Require-Bundle: org.xmind.core

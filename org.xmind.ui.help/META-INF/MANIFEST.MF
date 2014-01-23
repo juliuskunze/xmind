@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Bundle-Vendor: %providerName
-Bundle-Version: 3.4.0.201311050558
-Bundle-Name: %pluginName
-Bundle-Localization: plugin
-Bundle-ManifestVersion: 2
-Bundle-SymbolicName: org.xmind.ui.help;singleton:=true
-
-
