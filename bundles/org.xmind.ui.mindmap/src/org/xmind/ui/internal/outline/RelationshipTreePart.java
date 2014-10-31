@@ -28,8 +28,8 @@ public class RelationshipTreePart extends MindMapTreePartBase {
         return (IRelationship) super.getModel();
     }
 
-    protected void registerCoreEvents(ICoreEventRegister register) {
-        super.registerCoreEvents(register);
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
+        super.registerCoreEvents(source, register);
         register.register(Core.TitleText);
     }
 

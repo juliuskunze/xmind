@@ -1,22 +1,19 @@
 /* ******************************************************************************
  * Copyright (c) 2006-2012 XMind Ltd. and others.
- * 
+ *
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
  * which is available at http://www.eclipse.org/legal/epl-v10.html
- * and the GNU Lesser General Public License (LGPL), 
+ * and the GNU Lesser General Public License (LGPL),
  * which is available at http://www.gnu.org/licenses/lgpl.html
  * See http://www.xmind.net/license.html for details.
- * 
+ *
  * Contributors:
  *     XMind Ltd. - initial API and implementation
  *******************************************************************************/
 package org.xmind.ui.internal.editor;
 
 import static org.eclipse.ui.IWorkbenchActionConstants.MB_ADDITIONS;
-import static org.eclipse.ui.IWorkbenchActionConstants.M_EDIT;
-import static org.eclipse.ui.IWorkbenchActionConstants.M_FILE;
-import static org.eclipse.ui.IWorkbenchActionConstants.SAVE_EXT;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,11 +27,9 @@ import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IStatusLineManager;
-import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.commands.ActionHandler;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -43,12 +38,12 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
+import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
-import org.eclipse.ui.actions.ContributionItemFactory;
 import org.eclipse.ui.actions.RetargetAction;
 import org.eclipse.ui.handlers.IHandlerActivation;
 import org.eclipse.ui.handlers.IHandlerService;
@@ -62,17 +57,13 @@ import org.xmind.ui.actions.MindMapActionFactory;
 import org.xmind.ui.internal.IActionBuilder;
 import org.xmind.ui.internal.ImageActionExtensionManager;
 import org.xmind.ui.internal.MindMapMessages;
-import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.actions.ActionConstants;
 import org.xmind.ui.internal.actions.AddMarkerHandler;
 import org.xmind.ui.internal.actions.AlignmentAction;
 import org.xmind.ui.internal.actions.AllMarkersMenu;
-import org.xmind.ui.internal.actions.AllowOverlapsAction;
 import org.xmind.ui.internal.actions.DropDownInsertImageAction;
 import org.xmind.ui.internal.actions.FindReplaceAction;
 import org.xmind.ui.internal.actions.GroupMarkers;
-import org.xmind.ui.internal.actions.ImportFromWorkbookAction;
-import org.xmind.ui.internal.actions.MindMapViewsMenu;
 import org.xmind.ui.internal.actions.RenameSheetAction;
 import org.xmind.ui.internal.actions.SaveSheetAsAction;
 import org.xmind.ui.internal.actions.SortAction;
@@ -100,7 +91,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         }
 
         /**
-         * 
+         *
          */
         public Contributor(String id, String name) {
             this(id, name, null);
@@ -196,7 +187,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     private class ContentPopupContributor extends Contributor {
 
         /**
-         * 
+         *
          */
         public ContentPopupContributor() {
             super(null);
@@ -230,47 +221,56 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         }
 
         private void buildSingleTopicPopupActions() {
+            add(drillDownAction);
+            add(new Separator());
+
             add(createPopupInsertMenu());
             add(getPopupStructureMenu());
-            add(getPopupAllMarkersMenu());
+//            add(getPopupAllMarkersMenu());
             add(new Separator());
 
             add(cutAction);
             add(copyAction);
             add(pasteAction);
+            add(duplicateAction);
             add(deleteAction);
-            add(new Separator());
-
-            add(popupEditAction);
-            add(editLabelAction);
-            add(editNotesAction);
-            add(new Separator());
-
-            add(modifyHyperlinkAction);
-            add(cancelHyperlinkAction);
-
-            add(openHyperlinkAction);
-            add(new GroupMarker("org.xmind.ui.popup.hyperlinkGroup")); //$NON-NLS-1$
-            add(saveAttachmentAsAction);
-            add(new GroupMarker("org.xmind.ui.popup.attachmentGroup")); //$NON-NLS-1$
             add(new Separator());
 
             add(extendAllAction);
             add(collapseAllAction);
             add(new Separator());
 
-            add(drillDownAction);
+//            add(drillDownAction);
             add(new Separator());
 
             add(resetPositionAction);
-            add(new Separator());
-
             add(getPopupSortGroup());
             add(new Separator());
 
-            add(new Separator(ActionConstants.CM_ADDITIONS));
+            add(editNotesAction);
+            add(modifyHyperlinkAction);
+            //task info
+//            add(showTaskInfoAction);
+            add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
             add(new Separator());
+
             add(propertiesAction);
+
+//            add(popupEditAction);
+//            add(editLabelAction);
+//
+//            add(cancelHyperlinkAction);
+//
+//            add(openHyperlinkAction);
+//            add(new GroupMarker("org.xmind.ui.popup.hyperlinkGroup")); //$NON-NLS-1$
+//            add(saveAttachmentAsAction);
+//            add(new GroupMarker("org.xmind.ui.popup.attachmentGroup")); //$NON-NLS-1$
+//            add(new Separator());
+//
+//            add(new Separator());
+//
+//            add(new Separator(ActionConstants.CM_ADDITIONS));
+//            add(new Separator());
         }
 
         private void buildMultipleTopicsPopupActions() {
@@ -281,7 +281,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
 //            add(structureMenu);
 
 //            add(popupAllMarkersMenu);
-            add(getPopupAllMarkersMenu());
+//            add(getPopupAllMarkersMenu());
             add(new Separator());
 
             add(cutAction);
@@ -381,7 +381,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
 
             add(new Separator(ActionConstants.CM_ADDITIONS));
             add(new Separator());
-            add(propertiesAction);
+//            add(propertiesAction);
         }
 
         private void buildImagePopupActions() {
@@ -479,6 +479,11 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
     private IWorkbenchAction cutAction;
     private IWorkbenchAction pasteAction;
     private IWorkbenchAction propertiesAction;
+
+    private IWorkbenchAction duplicateAction;
+
+//    private IWorkbenchAction showTaskInfoAction;
+    private IWorkbenchAction newSheetFromTemplateAction;
 
     private DropDownInsertImageAction dropDownInsertImageAction;
 
@@ -635,10 +640,10 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         finishAction = MindMapActionFactory.FINISH.create(window);
         addRetargetAction((RetargetAction) finishAction);
 
-        IPreferenceStore prefStore = MindMapUIPlugin.getDefault()
-                .getPreferenceStore();
-        allowOverlapsAction = new AllowOverlapsAction(prefStore);
-        addAction(allowOverlapsAction);
+//        IPreferenceStore prefStore = MindMapUIPlugin.getDefault()
+//                .getPreferenceStore();
+//        allowOverlapsAction = new AllowOverlapsAction(prefStore);
+//        addAction(allowOverlapsAction);
 
         tileAction = MindMapActionFactory.TILE.create(window);
         addRetargetAction((RetargetAction) tileAction);
@@ -646,6 +651,10 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         resetPositionAction = MindMapActionFactory.RESET_POSITION
                 .create(window);
         addRetargetAction((RetargetAction) resetPositionAction);
+
+        newSheetFromTemplateAction = MindMapActionFactory.NEW_SHEET_FROM_TEMPLATE
+                .create(window);
+        addRetargetAction((RetargetAction) newSheetFromTemplateAction);
 
         if (handlerService != null) {
             addMarkerHandler = new AddMarkerHandler();
@@ -675,6 +684,9 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         propertiesAction = ActionFactory.PROPERTIES.create(window);
         addRetargetAction((RetargetAction) propertiesAction);
 
+        duplicateAction = MindMapActionFactory.DUPLICATE.create(window);
+        addRetargetAction((RetargetAction) duplicateAction);
+
         addRetargetAction((RetargetAction) MindMapActionFactory.MOVE_UP
                 .create(window));
         addRetargetAction((RetargetAction) MindMapActionFactory.MOVE_DOWN
@@ -684,7 +696,7 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         addRetargetAction((RetargetAction) MindMapActionFactory.MOVE_RIGHT
                 .create(window));
 
-        contentPopupContributor = new ContentPopupContributor();
+//        contentPopupContributor = new ContentPopupContributor();
 
         List<IActionBuilder> imageActionBuilders = ImageActionExtensionManager
                 .getInstance().getActionBuilders();
@@ -733,311 +745,311 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         activateHandler(action);
     }
 
-    public void contributeToMenu(IMenuManager menuManager) {
-        super.contributeToMenu(menuManager);
+//    public void contributeToMenu(IMenuManager menuManager) {
+//        super.contributeToMenu(menuManager);
+//
+//        IMenuManager editMenu = menuManager.findMenuUsingPath(M_EDIT);
+//        if (editMenu != null) {
+//            IContributionItem selectAllItem = editMenu
+//                    .find(ActionFactory.SELECT_ALL.getId());
+//            if (selectAllItem != null) {
+//                editMenu.insertBefore(selectAllItem.getId(), goHomeAction);
+//                editMenu.insertAfter(selectAllItem.getId(),
+//                        selectChildrenAction);
+//                editMenu.insertAfter(selectAllItem.getId(),
+//                        selectBrothersAction);
+//            }
+//        }
+//
+//        boolean useMindMapOrView = hasExistingShowViewMenu(menuManager);
+//
+//        IMenuManager viewMenu = createMenu(ActionConstants.M_VIEW,
+//                useMindMapOrView ? MindMapMessages.MindMapMenu
+//                        : MindMapMessages.ViewMenu);
+//        addViewActions(viewMenu, useMindMapOrView);
+//
+//        IMenuManager insertMenu = createMenu(ActionConstants.M_INSERT,
+//                MindMapMessages.InsertMenu);
+//        addInsertActions(insertMenu);
+//
+//        IMenuManager modifyMenu = createMenu(ActionConstants.M_MODIFY,
+//                MindMapMessages.ModifyMenu);
+//        addModifyActions(modifyMenu);
+//
+//        IMenuManager toolsMenu = createMenu(ActionConstants.M_TOOLS,
+//                MindMapMessages.ToolsMenu);
+//        addToolsActions(toolsMenu);
+//
+//        IMenuManager fileMenu = menuManager.findMenuUsingPath(M_FILE);
+//
+//        if (fileMenu != null) {
+//            insertSaveContributions(fileMenu);
+//        }
+//
+//        if (menuManager.find(MB_ADDITIONS) != null) {
+//            menuManager.prependToGroup(MB_ADDITIONS, toolsMenu);
+//            menuManager.prependToGroup(MB_ADDITIONS, modifyMenu);
+//            menuManager.prependToGroup(MB_ADDITIONS, insertMenu);
+//            menuManager.prependToGroup(MB_ADDITIONS, viewMenu);
+//        } else {
+//            menuManager.add(viewMenu);
+//            menuManager.add(insertMenu);
+//            menuManager.add(modifyMenu);
+//            menuManager.add(toolsMenu);
+//        }
+//    }
+//
+//    private void insertSaveContributions(IMenuManager menu) {
+//        IContributionItem saveItem = menu.find(ActionFactory.SAVE.getId());
+//        if (saveItem != null) {
+//            IContributionItem lastItem = null;
+//            for (IContributionItem item : menu.getItems()) {
+//                if (lastItem != null) {
+//                    if (item.isSeparator() || item.getId() == null) {
+//                        String id = lastItem.getId();
+//                        menu.insertAfter(id, saveAsTemplateAction);
+//                        menu.insertAfter(id, saveSheetAsAction);
+//                        return;
+//                    } else {
+//                        lastItem = item;
+//                    }
+//                } else if (item == saveItem) {
+//                    lastItem = item;
+//                }
+//            }
+//            if (lastItem != null) {
+//                String id = lastItem.getId();
+//                menu.insertAfter(id, saveAsTemplateAction);
+//                menu.insertAfter(id, saveSheetAsAction);
+//            }
+//        }
+//        if (menu.find(SAVE_EXT) != null) {
+//            menu.prependToGroup(SAVE_EXT, saveAsTemplateAction);
+//            menu.prependToGroup(SAVE_EXT, saveSheetAsAction);
+//        } else {
+//            menu.prependToGroup(MB_ADDITIONS, saveAsTemplateAction);
+//            menu.prependToGroup(MB_ADDITIONS, saveSheetAsAction);
+//        }
+//    }
+//
+//    private boolean hasExistingShowViewMenu(IMenuManager menuManager) {
+//        return menuManager.findUsingPath("window/showView") != null; //$NON-NLS-1$
+//    }
+//
+//    private IMenuManager createMenu(String menuId, String menuName) {
+//        return new MenuManager(menuName, menuId);
+//    }
+//
+//    private void addViewActions(IMenuManager menu, boolean useMindMapOrView) {
+//        menu.add(new GroupMarker(ActionConstants.VIEW_START));
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_PRESENTATION));
+//        menu.add(new Separator());
+//
+//        menu.add(actualSizeAction);
+//        menu.add(zoomOutAction);
+//        menu.add(zoomInAction);
+//        menu.add(new Separator());
+//
+//        menu.add(fitMapAction);
+//        menu.add(fitSelectionAction);
+//        menu.add(new Separator());
+//
+//        menu.add(drillUpAction);
+//        menu.add(drillDownAction);
+//        menu.add(new Separator());
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_FILTER));
+//        menu.add(new Separator());
+//
+//        menu.add(new Separator(MB_ADDITIONS));
+//        menu.add(new Separator());
+//
+//        menu.add(createViewList(useMindMapOrView));
+//        menu.add(new GroupMarker(ActionConstants.VIEW_END));
+//    }
+//
+//    private IContributionItem createViewList(boolean mindMapOrSystem) {
+//        if (mindMapOrSystem)
+//            return new MindMapViewsMenu(getPage().getWorkbenchWindow());
+//        IContributionItem contributeItem = ContributionItemFactory.VIEWS_SHORTLIST
+//                .create(getPage().getWorkbenchWindow());
+//        return contributeItem;
+//    }
+//
+//    private void addInsertActions(IMenuManager menu) {
+//        menu.add(new GroupMarker(ActionConstants.INSERT_START));
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_INSERT_TOPIC));
+//
+//        menu.add(insertTopicAction);
+//        menu.add(insertSubtopicAction);
+//        menu.add(insertTopicBeforeAction);
+//        menu.add(insertParentTopicAction);
+//
+//        menu.add(insertFloatingTopicAction);
+//        menu.add(insertFloatingCentralTopicAction);
+//        menu.add(new GroupMarker(ActionConstants.INSERT_TOPIC_EXT));
+//        menu.add(new Separator());
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_INSERT));
+//        menu.add(getAllMarkersMenu());
+//        menu.add(getInsertImageAction());
+//        menu.add(createRelationshipAction);
+//        menu.add(createBoundaryAction);
+//        menu.add(createSummaryAction);
+//        menu.add(insertAttachmentAction);
+//        menu.add(new GroupMarker(ActionConstants.INSERT_EXT));
+//        menu.add(new Separator());
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_SHEET));
+//        menu.add(newSheetAction);
+//        menu.add(insertSheetAction);
+//        menu.add(deleteSheetAction);
+//        menu.add(new GroupMarker(ActionConstants.SHEET_EXT));
+//        menu.add(new Separator());
+//
+//        menu.add(new Separator(MB_ADDITIONS));
+//
+//        menu.add(new GroupMarker(ActionConstants.INSERT_END));
+//    }
+//
+//    private void addModifyActions(IMenuManager menu) {
+//        menu.add(new GroupMarker(ActionConstants.MODIFY_START));
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_TOPIC_EDIT));
+//        menu.add(editTitleAction);
+//        menu.add(editLabelAction);
+//        menu.add(editNotesAction);
+//        menu.add(new GroupMarker(ActionConstants.TOPIC_EDIT_EXT));
+//        menu.add(new Separator());
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_HYPERLINK));
+//        menu.add(modifyHyperlinkAction);
+//        menu.add(cancelHyperlinkAction);
+//
+//        menu.add(openHyperlinkAction);
+//        menu.add(saveAttachmentAsAction);
+//        menu.add(new GroupMarker(ActionConstants.HYPERLINK_EXT));
+//        menu.add(new Separator());
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_EXTEND));
+//        menu.add(extendAction);
+//        menu.add(collapseAction);
+//        menu.add(extendAllAction);
+//        menu.add(collapseAllAction);
+//        menu.add(new GroupMarker(ActionConstants.EXTEND_EXT));
+//        menu.add(new Separator());
+//
+//        menu.add(new GroupMarker(ActionConstants.GROUP_POSITION));
+//        menu.add(allowOverlapsAction);
+//        menu.add(tileAction);
+//        menu.add(resetPositionAction);
+//        menu.add(new Separator());
+//        menu.add(getAlignmentGroup());
+//        menu.add(getSortGroup());
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker(ActionConstants.POSITION_EXT));
+//        menu.add(new Separator());
+//
+//        menu.add(new Separator(MB_ADDITIONS));
+//
+//        menu.add(new GroupMarker(ActionConstants.MODIFY_END));
+//    }
+//
+//    private void addToolsActions(IMenuManager menu) {
+//        menu.add(new GroupMarker(ActionConstants.TOOLS_START));
+//
+//        menu.add(new GroupMarker("additions1")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions2")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions3")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions4")); //$NON-NLS-1$
+//        menu.add(new ImportFromWorkbookAction());
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions5")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions6")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions7")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions8")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions9")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker("additions10")); //$NON-NLS-1$
+//        menu.add(new Separator());
+//        menu.add(new Separator(MB_ADDITIONS));
+//        menu.add(new Separator());
+//
+//        menu.add(new GroupMarker(ActionConstants.TOOLS_END));
+//    }
+//
+//    public void contributeToToolBar(IToolBarManager toolBarManager) {
+//        super.contributeToToolBar(toolBarManager);
+//        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_PRESENTATION));
+//        toolBarManager.add(new Separator());
+//
+//        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_SHEET));
+//        toolBarManager.add(newSheetAction);
+//        toolBarManager.add(new GroupMarker(ActionConstants.SHEET_EXT));
+//        toolBarManager.add(new Separator());
+//
+//        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_INSERT_TOPIC));
+//        toolBarManager.add(insertTopicAction);
+//        toolBarManager.add(insertSubtopicAction);
+//        toolBarManager.add(insertTopicBeforeAction);
+//        toolBarManager.add(insertParentTopicAction);
+//        toolBarManager.add(new GroupMarker(ActionConstants.INSERT_TOPIC_EXT));
+//        toolBarManager.add(new Separator());
+//
+//        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_INSERT));
+//        toolBarManager.add(insertAttachmentAction);
+//        toolBarManager.add(getInsertImageAction());
+//        toolBarManager.add(editLabelAction);
+//        toolBarManager.add(editNotesAction);
+//        toolBarManager.add(modifyHyperlinkAction);
+//        toolBarManager.add(createBoundaryAction);
+//        toolBarManager.add(createSummaryAction);
+//        toolBarManager.add(createRelationshipAction);
+//        toolBarManager.add(new GroupMarker(ActionConstants.INSERT_EXT));
+//        toolBarManager.add(new Separator());
+//
+//        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_DRILL_DOWN));
+//        toolBarManager.add(drillDownAction);
+//        toolBarManager.add(drillUpAction);
+//        toolBarManager.add(new GroupMarker(ActionConstants.DRILL_DOWN_EXT));
+//    }
+//
+//    private MenuManager getAllMarkersMenu() {
+//        if (allMarkersMenu == null)
+//            allMarkersMenu = new AllMarkersMenu();
+//        return allMarkersMenu;
+//    }
 
-        IMenuManager editMenu = menuManager.findMenuUsingPath(M_EDIT);
-        if (editMenu != null) {
-            IContributionItem selectAllItem = editMenu
-                    .find(ActionFactory.SELECT_ALL.getId());
-            if (selectAllItem != null) {
-                editMenu.insertBefore(selectAllItem.getId(), goHomeAction);
-                editMenu.insertAfter(selectAllItem.getId(),
-                        selectChildrenAction);
-                editMenu.insertAfter(selectAllItem.getId(),
-                        selectBrothersAction);
-            }
-        }
+//    private MenuManager getPopupAllMarkersMenu() {
+//        if (popupAllMarkersMenu != null) {
+//            popupAllMarkersMenu.dispose();
+//            popupAllMarkersMenu = null;
+//        }
+//        popupAllMarkersMenu = new AllMarkersMenu();
+//        popupAllMarkersMenu.setActivePage(page);
+//        return popupAllMarkersMenu;
+//    }
 
-        boolean useMindMapOrView = hasExistingShowViewMenu(menuManager);
-
-        IMenuManager viewMenu = createMenu(ActionConstants.M_VIEW,
-                useMindMapOrView ? MindMapMessages.MindMapMenu
-                        : MindMapMessages.ViewMenu);
-        addViewActions(viewMenu, useMindMapOrView);
-
-        IMenuManager insertMenu = createMenu(ActionConstants.M_INSERT,
-                MindMapMessages.InsertMenu);
-        addInsertActions(insertMenu);
-
-        IMenuManager modifyMenu = createMenu(ActionConstants.M_MODIFY,
-                MindMapMessages.ModifyMenu);
-        addModifyActions(modifyMenu);
-
-        IMenuManager toolsMenu = createMenu(ActionConstants.M_TOOLS,
-                MindMapMessages.ToolsMenu);
-        addToolsActions(toolsMenu);
-
-        IMenuManager fileMenu = menuManager.findMenuUsingPath(M_FILE);
-
-        if (fileMenu != null) {
-            insertSaveContributions(fileMenu);
-        }
-
-        if (menuManager.find(MB_ADDITIONS) != null) {
-            menuManager.prependToGroup(MB_ADDITIONS, toolsMenu);
-            menuManager.prependToGroup(MB_ADDITIONS, modifyMenu);
-            menuManager.prependToGroup(MB_ADDITIONS, insertMenu);
-            menuManager.prependToGroup(MB_ADDITIONS, viewMenu);
-        } else {
-            menuManager.add(viewMenu);
-            menuManager.add(insertMenu);
-            menuManager.add(modifyMenu);
-            menuManager.add(toolsMenu);
-        }
-    }
-
-    private void insertSaveContributions(IMenuManager menu) {
-        IContributionItem saveItem = menu.find(ActionFactory.SAVE.getId());
-        if (saveItem != null) {
-            IContributionItem lastItem = null;
-            for (IContributionItem item : menu.getItems()) {
-                if (lastItem != null) {
-                    if (item.isSeparator() || item.getId() == null) {
-                        String id = lastItem.getId();
-                        menu.insertAfter(id, saveAsTemplateAction);
-                        menu.insertAfter(id, saveSheetAsAction);
-                        return;
-                    } else {
-                        lastItem = item;
-                    }
-                } else if (item == saveItem) {
-                    lastItem = item;
-                }
-            }
-            if (lastItem != null) {
-                String id = lastItem.getId();
-                menu.insertAfter(id, saveAsTemplateAction);
-                menu.insertAfter(id, saveSheetAsAction);
-            }
-        }
-        if (menu.find(SAVE_EXT) != null) {
-            menu.prependToGroup(SAVE_EXT, saveAsTemplateAction);
-            menu.prependToGroup(SAVE_EXT, saveSheetAsAction);
-        } else {
-            menu.prependToGroup(MB_ADDITIONS, saveAsTemplateAction);
-            menu.prependToGroup(MB_ADDITIONS, saveSheetAsAction);
-        }
-    }
-
-    private boolean hasExistingShowViewMenu(IMenuManager menuManager) {
-        return menuManager.findUsingPath("window/showView") != null; //$NON-NLS-1$
-    }
-
-    private IMenuManager createMenu(String menuId, String menuName) {
-        return new MenuManager(menuName, menuId);
-    }
-
-    private void addViewActions(IMenuManager menu, boolean useMindMapOrView) {
-        menu.add(new GroupMarker(ActionConstants.VIEW_START));
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_PRESENTATION));
-        menu.add(new Separator());
-
-        menu.add(actualSizeAction);
-        menu.add(zoomOutAction);
-        menu.add(zoomInAction);
-        menu.add(new Separator());
-
-        menu.add(fitMapAction);
-        menu.add(fitSelectionAction);
-        menu.add(new Separator());
-
-        menu.add(drillUpAction);
-        menu.add(drillDownAction);
-        menu.add(new Separator());
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_FILTER));
-        menu.add(new Separator());
-
-        menu.add(new Separator(MB_ADDITIONS));
-        menu.add(new Separator());
-
-        menu.add(createViewList(useMindMapOrView));
-        menu.add(new GroupMarker(ActionConstants.VIEW_END));
-    }
-
-    private IContributionItem createViewList(boolean mindMapOrSystem) {
-        if (mindMapOrSystem)
-            return new MindMapViewsMenu(getPage().getWorkbenchWindow());
-        IContributionItem contributeItem = ContributionItemFactory.VIEWS_SHORTLIST
-                .create(getPage().getWorkbenchWindow());
-        return contributeItem;
-    }
-
-    private void addInsertActions(IMenuManager menu) {
-        menu.add(new GroupMarker(ActionConstants.INSERT_START));
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_INSERT_TOPIC));
-
-        menu.add(insertTopicAction);
-        menu.add(insertSubtopicAction);
-        menu.add(insertTopicBeforeAction);
-        menu.add(insertParentTopicAction);
-
-        menu.add(insertFloatingTopicAction);
-        menu.add(insertFloatingCentralTopicAction);
-        menu.add(new GroupMarker(ActionConstants.INSERT_TOPIC_EXT));
-        menu.add(new Separator());
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_INSERT));
-        menu.add(getAllMarkersMenu());
-        menu.add(getInsertImageAction());
-        menu.add(createRelationshipAction);
-        menu.add(createBoundaryAction);
-        menu.add(createSummaryAction);
-        menu.add(insertAttachmentAction);
-        menu.add(new GroupMarker(ActionConstants.INSERT_EXT));
-        menu.add(new Separator());
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_SHEET));
-        menu.add(newSheetAction);
-        menu.add(insertSheetAction);
-        menu.add(deleteSheetAction);
-        menu.add(new GroupMarker(ActionConstants.SHEET_EXT));
-        menu.add(new Separator());
-
-        menu.add(new Separator(MB_ADDITIONS));
-
-        menu.add(new GroupMarker(ActionConstants.INSERT_END));
-    }
-
-    private void addModifyActions(IMenuManager menu) {
-        menu.add(new GroupMarker(ActionConstants.MODIFY_START));
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_TOPIC_EDIT));
-        menu.add(editTitleAction);
-        menu.add(editLabelAction);
-        menu.add(editNotesAction);
-        menu.add(new GroupMarker(ActionConstants.TOPIC_EDIT_EXT));
-        menu.add(new Separator());
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_HYPERLINK));
-        menu.add(modifyHyperlinkAction);
-        menu.add(cancelHyperlinkAction);
-
-        menu.add(openHyperlinkAction);
-        menu.add(saveAttachmentAsAction);
-        menu.add(new GroupMarker(ActionConstants.HYPERLINK_EXT));
-        menu.add(new Separator());
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_EXTEND));
-        menu.add(extendAction);
-        menu.add(collapseAction);
-        menu.add(extendAllAction);
-        menu.add(collapseAllAction);
-        menu.add(new GroupMarker(ActionConstants.EXTEND_EXT));
-        menu.add(new Separator());
-
-        menu.add(new GroupMarker(ActionConstants.GROUP_POSITION));
-        menu.add(allowOverlapsAction);
-        menu.add(tileAction);
-        menu.add(resetPositionAction);
-        menu.add(new Separator());
-        menu.add(getAlignmentGroup());
-        menu.add(getSortGroup());
-        menu.add(new Separator());
-        menu.add(new GroupMarker(ActionConstants.POSITION_EXT));
-        menu.add(new Separator());
-
-        menu.add(new Separator(MB_ADDITIONS));
-
-        menu.add(new GroupMarker(ActionConstants.MODIFY_END));
-    }
-
-    private void addToolsActions(IMenuManager menu) {
-        menu.add(new GroupMarker(ActionConstants.TOOLS_START));
-
-        menu.add(new GroupMarker("additions1")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions2")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions3")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions4")); //$NON-NLS-1$
-        menu.add(new ImportFromWorkbookAction());
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions5")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions6")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions7")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions8")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions9")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new GroupMarker("additions10")); //$NON-NLS-1$
-        menu.add(new Separator());
-        menu.add(new Separator(MB_ADDITIONS));
-        menu.add(new Separator());
-
-        menu.add(new GroupMarker(ActionConstants.TOOLS_END));
-    }
-
-    public void contributeToToolBar(IToolBarManager toolBarManager) {
-        super.contributeToToolBar(toolBarManager);
-        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_PRESENTATION));
-        toolBarManager.add(new Separator());
-
-        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_SHEET));
-        toolBarManager.add(newSheetAction);
-        toolBarManager.add(new GroupMarker(ActionConstants.SHEET_EXT));
-        toolBarManager.add(new Separator());
-
-        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_INSERT_TOPIC));
-        toolBarManager.add(insertTopicAction);
-        toolBarManager.add(insertSubtopicAction);
-        toolBarManager.add(insertTopicBeforeAction);
-        toolBarManager.add(insertParentTopicAction);
-        toolBarManager.add(new GroupMarker(ActionConstants.INSERT_TOPIC_EXT));
-        toolBarManager.add(new Separator());
-
-        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_INSERT));
-        toolBarManager.add(insertAttachmentAction);
-        toolBarManager.add(getInsertImageAction());
-        toolBarManager.add(editLabelAction);
-        toolBarManager.add(editNotesAction);
-        toolBarManager.add(modifyHyperlinkAction);
-        toolBarManager.add(createBoundaryAction);
-        toolBarManager.add(createSummaryAction);
-        toolBarManager.add(createRelationshipAction);
-        toolBarManager.add(new GroupMarker(ActionConstants.INSERT_EXT));
-        toolBarManager.add(new Separator());
-
-        toolBarManager.add(new GroupMarker(ActionConstants.GROUP_DRILL_DOWN));
-        toolBarManager.add(drillDownAction);
-        toolBarManager.add(drillUpAction);
-        toolBarManager.add(new GroupMarker(ActionConstants.DRILL_DOWN_EXT));
-    }
-
-    private MenuManager getAllMarkersMenu() {
-        if (allMarkersMenu == null)
-            allMarkersMenu = new AllMarkersMenu();
-        return allMarkersMenu;
-    }
-
-    private MenuManager getPopupAllMarkersMenu() {
-        if (popupAllMarkersMenu != null) {
-            popupAllMarkersMenu.dispose();
-            popupAllMarkersMenu = null;
-        }
-        popupAllMarkersMenu = new AllMarkersMenu();
-        popupAllMarkersMenu.setActivePage(page);
-        return popupAllMarkersMenu;
-    }
-
-    private MenuManager getAlignmentGroup() {
-        if (alignmentGroup == null)
-            alignmentGroup = makeAlignmentGroup();
-        return alignmentGroup;
-    }
-
-    private MenuManager getSortGroup() {
-        if (sortGroup == null)
-            sortGroup = makeSortGroup();
-        return sortGroup;
-    }
+//    private MenuManager getAlignmentGroup() {
+//        if (alignmentGroup == null)
+//            alignmentGroup = makeAlignmentGroup();
+//        return alignmentGroup;
+//    }
+//
+//    private MenuManager getSortGroup() {
+//        if (sortGroup == null)
+//            sortGroup = makeSortGroup();
+//        return sortGroup;
+//    }
 
     private Contributor getPopupAlignmentGroup() {
         if (popupAlignGroup == null)
@@ -1051,19 +1063,19 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         return popupSortGroup;
     }
 
-    private MenuManager makeAlignmentGroup() {
-        MenuManager menu = new MenuManager(MindMapMessages.AlignmentMenu,
-                ActionConstants.ALIGNMENT_GROUP_ID);
-        buildAlignmentGroup(menu);
-        return menu;
-    }
-
-    private MenuManager makeSortGroup() {
-        MenuManager menu = new MenuManager(MindMapMessages.SortMenu,
-                ActionConstants.SORT_GROUP_ID);
-        buildSortGroup(menu);
-        return menu;
-    }
+//    private MenuManager makeAlignmentGroup() {
+//        MenuManager menu = new MenuManager(MindMapMessages.AlignmentMenu,
+//                ActionConstants.ALIGNMENT_GROUP_ID);
+//        buildAlignmentGroup(menu);
+//        return menu;
+//    }
+//
+//    private MenuManager makeSortGroup() {
+//        MenuManager menu = new MenuManager(MindMapMessages.SortMenu,
+//                ActionConstants.SORT_GROUP_ID);
+//        buildSortGroup(menu);
+//        return menu;
+//    }
 
     private Contributor makeAlignmentGroup2() {
         Contributor group = new Contributor(ActionConstants.ALIGNMENT_GROUP_ID,
@@ -1123,25 +1135,30 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         menu.add(new GroupMarker(ActionConstants.GROUP_INSERT_TOPIC));
 
         menu.add(insertTopicAction);
+        menu.add(new Separator());
         menu.add(insertSubtopicAction);
         menu.add(insertTopicBeforeAction);
         menu.add(insertParentTopicAction);
+        menu.add(new Separator());
 
         menu.add(new GroupMarker(ActionConstants.INSERT_TOPIC_EXT));
         menu.add(new Separator());
         menu.add(new GroupMarker(ActionConstants.GROUP_INSERT));
+
         menu.add(getInsertImageAction());
         menu.add(createRelationshipAction);
         menu.add(createBoundaryAction);
         menu.add(createSummaryAction);
+        menu.add(editLabelAction);
         menu.add(insertAttachmentAction);
-        menu.add(new GroupMarker(ActionConstants.INSERT_EXT));
-        menu.add(new Separator());
-        menu.add(new GroupMarker(MB_ADDITIONS));
-        menu.add(new Separator());
-        menu.add(new GroupMarker(ActionConstants.INSERT_END));
+//        menu.add(new GroupMarker(ActionConstants.INSERT_EXT));
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker(MB_ADDITIONS));
+//        menu.add(new Separator());
+//        menu.add(new GroupMarker(ActionConstants.INSERT_END));
         menu.add(new Separator());
         menu.add(insertSheetAction);
+        menu.add(newSheetFromTemplateAction);
     }
 
     private void addContribution(Object manager, Object item) {
@@ -1228,9 +1245,9 @@ public class MindMapContributor extends GraphicalEditorActionBarContributor
         if (addMarkerHandler != null) {
             addMarkerHandler.setActivatePage(page);
         }
-        if (getAllMarkersMenu() != null) {
-            allMarkersMenu.setActivePage(page);
-        }
+//        if (getAllMarkersMenu() != null) {
+//            allMarkersMenu.setActivePage(page);
+//        }
 //        if (popupAllMarkersMenu != null) {
 //        if (getPopupAllMarkersMenu() != null) {
 //            popupAllMarkersMenu.setActivePage(page);

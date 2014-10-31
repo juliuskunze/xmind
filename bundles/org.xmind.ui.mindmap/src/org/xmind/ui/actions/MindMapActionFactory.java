@@ -1,13 +1,13 @@
 /* ******************************************************************************
  * Copyright (c) 2006-2012 XMind Ltd. and others.
- * 
+ *
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
  * which is available at http://www.eclipse.org/legal/epl-v10.html
- * and the GNU Lesser General Public License (LGPL), 
+ * and the GNU Lesser General Public License (LGPL),
  * which is available at http://www.gnu.org/licenses/lgpl.html
  * See http://www.xmind.net/license.html for details.
- * 
+ *
  * Contributors:
  *     XMind Ltd. - initial API and implementation
  *******************************************************************************/
@@ -217,8 +217,7 @@ public class MindMapActionFactory {
             LabelRetargetAction action = new LabelRetargetAction(getId(),
                     MindMapMessages.InsertTopicBefore_text);
             action.setToolTipText(MindMapMessages.InsertTopicBefore_toolTip);
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.insertTopicBefore"); //$NON-NLS-1$
+            action.setActionDefinitionId("org.xmind.ui.command.insertTopicBefore"); //$NON-NLS-1$
             action.setImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.INSERT_BEFORE, true));
             action.setDisabledImageDescriptor(MindMapUI.getImages().get(
@@ -233,8 +232,7 @@ public class MindMapActionFactory {
             LabelRetargetAction action = new LabelRetargetAction(getId(),
                     MindMapMessages.InsertParentTopic_text);
             action.setToolTipText(MindMapMessages.InsertParentTopic_toolTip);
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.insertParentTopic"); //$NON-NLS-1$
+            action.setActionDefinitionId("org.xmind.ui.command.insertParentTopic"); //$NON-NLS-1$
             action.setImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.INSERT_PARENT, true));
             action.setDisabledImageDescriptor(MindMapUI.getImages().get(
@@ -266,8 +264,7 @@ public class MindMapActionFactory {
             RetargetAction action = new RetargetAction(getId(),
                     MindMapMessages.InsertFloatingTopic_text);
             action.setToolTipText(MindMapMessages.InsertFloatingTopic_toolTip);
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.insertFloatingTopic"); //$NON-NLS-1$
+            action.setActionDefinitionId("org.xmind.ui.command.insertFloatingTopic"); //$NON-NLS-1$
             action.setImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.INSERT_FLOATING_MAIN, true));
             action.setDisabledImageDescriptor(MindMapUI.getImages().get(
@@ -281,10 +278,8 @@ public class MindMapActionFactory {
         public IWorkbenchAction create(IWorkbenchWindow window) {
             RetargetAction action = new RetargetAction(getId(),
                     MindMapMessages.InsertFloatingCentralTopic_text);
-            action
-                    .setToolTipText(MindMapMessages.InsertFloatingCentralTopic_toolTip);
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.insertFloatingCentralTopic"); //$NON-NLS-1$
+            action.setToolTipText(MindMapMessages.InsertFloatingCentralTopic_toolTip);
+            action.setActionDefinitionId("org.xmind.ui.command.insertFloatingCentralTopic"); //$NON-NLS-1$
             action.setImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.INSERT_FLOATING_CENTRAL, true));
             action.setDisabledImageDescriptor(MindMapUI.getImages().get(
@@ -358,8 +353,7 @@ public class MindMapActionFactory {
             RetargetAction action = new RetargetAction(getId(),
                     MindMapMessages.NEWSheet_from_text);
             action.setToolTipText(MindMapMessages.NEWSheet_from_toolTip);
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.insertSheetFrom"); //$NON-NLS-1$
+            action.setActionDefinitionId("org.xmind.ui.command.insertSheetFrom"); //$NON-NLS-1$
             action.setImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.NEW_SHEET_AS, true));
             action.setDisabledImageDescriptor(MindMapUI.getImages().get(
@@ -414,8 +408,7 @@ public class MindMapActionFactory {
             RetargetAction action = new RetargetAction(getId(),
                     MindMapMessages.CancelHyperlink_text);
             action.setToolTipText(MindMapMessages.CancelHyperlink_toolTip);
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.cancelHyperlink"); //$NON-NLS-1$
+            action.setActionDefinitionId("org.xmind.ui.command.cancelHyperlink"); //$NON-NLS-1$
             return action;
         }
     };
@@ -426,8 +419,7 @@ public class MindMapActionFactory {
             RetargetAction action = new RetargetAction(getId(),
                     MindMapMessages.SaveAttachment_text);
             action.setToolTipText(MindMapMessages.SaveAttachment_toolTip);
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.saveAttachmentAs"); //$NON-NLS-1$
+            action.setActionDefinitionId("org.xmind.ui.command.saveAttachmentAs"); //$NON-NLS-1$
             return action;
         }
     };
@@ -453,8 +445,7 @@ public class MindMapActionFactory {
                     IMindMapImages.ATTACHMENT, true));
             action.setDisabledImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.ATTACHMENT, false));
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.insertAttachment"); //$NON-NLS-1$
+            action.setActionDefinitionId("org.xmind.ui.command.insertAttachment"); //$NON-NLS-1$
             return action;
         }
     };
@@ -465,8 +456,7 @@ public class MindMapActionFactory {
             RetargetAction action = new RetargetAction(getId(),
                     MindMapMessages.InsertRelationship_text);
             action.setToolTipText(MindMapMessages.InsertRelationship_toolTip);
-            action
-                    .setActionDefinitionId("org.xmind.ui.command.createRelationship"); //$NON-NLS-1$
+            action.setActionDefinitionId("org.xmind.ui.command.createRelationship"); //$NON-NLS-1$
             action.setImageDescriptor(MindMapUI.getImages().get(
                     IMindMapImages.RELATIONSHIP, true));
             action.setDisabledImageDescriptor(MindMapUI.getImages().get(
@@ -711,6 +701,39 @@ public class MindMapActionFactory {
                     MindMapMessages.MoveRight_text);
             action.setToolTipText(MindMapMessages.MoveRight_toolTip);
             action.setActionDefinitionId("org.xmind.ui.command.moveRight"); //$NON-NLS-1$
+            return action;
+        }
+    };
+
+    public static final ActionFactory DUPLICATE = new ActionFactory(
+            "org.xmind.ui.duplicate") { //$NON-NLS-1$
+        public IWorkbenchAction create(IWorkbenchWindow window) {
+            if (window == null)
+                throw new IllegalArgumentException();
+            LabelRetargetAction action = new LabelRetargetAction(getId(),
+                    MindMapMessages.MindMapActionFactory_Duplicate_text);
+            action.setToolTipText(MindMapMessages.MindMapActionFactory_Duplicate_tooltip);
+            action.setActionDefinitionId("org.xmind.ui.command.duplicate"); //$NON-NLS-1$
+            action.setImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.INSERT_BEFORE, true));
+            action.setDisabledImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.INSERT_BEFORE, false));
+            return action;
+        }
+    };
+
+    public static final ActionFactory NEW_SHEET_FROM_TEMPLATE = new ActionFactory(
+            "org.xmind.ui.newSheetFromTemplate") { //$NON-NLS-1$
+        public IWorkbenchAction create(IWorkbenchWindow window) {
+            RetargetAction action = new RetargetAction(
+                    getId(),
+                    MindMapMessages.MindMapActionFactory_NewSheetFromTemplte_text);
+            action.setToolTipText(MindMapMessages.MindMapActionFactory_NewSheetFromTemplate_tooltip);
+            action.setActionDefinitionId("org.xmind.ui.command.newSheetFromTemplate"); //$NON-NLS-1$
+            action.setImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.NEW_SHEET_FROM_TEMPLATE, true));
+            action.setDisabledImageDescriptor(MindMapUI.getImages().get(
+                    IMindMapImages.NEW_SHEET_FROM_TEMPLATE, false));
             return action;
         }
     };

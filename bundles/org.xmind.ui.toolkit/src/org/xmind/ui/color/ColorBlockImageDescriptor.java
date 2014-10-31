@@ -66,7 +66,9 @@ public class ColorBlockImageDescriptor extends ImageDescriptor {
             gc.setForeground(display.getSystemColor(SWT.COLOR_RED));
             gc.drawLine(0, height - 1, width - 1, 0);
         }
-        gc.setForeground(display.getSystemColor(SWT.COLOR_DARK_GRAY));
+        Color color = new Color(display, 88, 88, 88);//#585858
+        gc.setForeground(color);
+        color.dispose();
         gc.drawRectangle(0, 0, width - 1, height - 1);
         gc.dispose();
         ImageData imageData = image.getImageData();

@@ -32,8 +32,8 @@ public class WorkbookTreePart extends MindMapTreePartBase {
         return getWorkbook().getSheets().toArray();
     }
 
-    protected void registerCoreEvents(ICoreEventRegister register) {
-        super.registerCoreEvents(register);
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
+        super.registerCoreEvents(source, register);
         register.register(Core.SheetAdd);
         register.register(Core.SheetMove);
         register.register(Core.SheetRemove);

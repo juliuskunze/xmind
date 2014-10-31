@@ -259,6 +259,15 @@ public class GEF {
     public static final String PARAM_POSITION_RELATIVE = "positionRelative"; //$NON-NLS-1$
 
     /**
+     * Request parameter: the absolute position of a position request.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>a {@link org.eclipse.draw2d.geometry.Point}</dd>
+     * </dl>
+     */
+    public static final String PARAM_POSITION_ABSOLUTE = "positionAbsolute"; //$NON-NLS-1$
+
+    /**
      * Request parameter: the text selection.
      * 
      * <dl>

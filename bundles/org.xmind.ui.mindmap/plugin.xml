@@ -17,6 +17,13 @@
             properties="type"
             type="org.xmind.core.style.IStyleSheet">
       </propertyTester>
+      <propertyTester
+            class="org.xmind.ui.internal.PreferencePropertyTester"
+            id="org.xmind.ui.propertyTester.preference"
+            namespace="org.xmind.ui.preference"
+            properties="key"
+            type="java.lang.Object">
+      </propertyTester>
    </extension>
 
    <extension

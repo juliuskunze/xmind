@@ -26,9 +26,9 @@ public class BrowserPref {
 
     protected static final String PREF_BROWSER_CHOICE = "browserChoice"; //$NON-NLS-1$
 
-    public static final int INTERNAL = 0;
+    public static final int INTERNAL = 1;
 
-    public static final int EXTERNAL = 1;
+    public static final int EXTERNAL = 0;
 
     private BrowserPref() {
     }

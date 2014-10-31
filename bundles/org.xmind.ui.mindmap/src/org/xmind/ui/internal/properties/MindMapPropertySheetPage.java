@@ -17,25 +17,43 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.forms.events.HyperlinkEvent;
+import org.eclipse.ui.forms.events.IHyperlinkListener;
+import org.eclipse.ui.forms.widgets.Hyperlink;
 import org.eclipse.ui.part.IPageSite;
 import org.xmind.core.IAdaptable;
 import org.xmind.core.INamed;
 import org.xmind.core.ITitled;
+import org.xmind.core.style.IStyled;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
+import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.gef.ui.properties.GraphicalPropertySheetPage;
+import org.xmind.ui.commands.CommandMessages;
+import org.xmind.ui.commands.ModifyStyleCommand;
+import org.xmind.ui.forms.WidgetFactory;
+import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.mindmap.ICategoryAnalyzation;
 import org.xmind.ui.mindmap.ICategoryManager;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.resources.FontUtils;
 
 public class MindMapPropertySheetPage extends GraphicalPropertySheetPage {
 
     private static PropertySectionContributorManager manager = PropertySectionContributorManager
             .getInstance();
+
+    private Hyperlink resetStyleControl;
 
     public MindMapPropertySheetPage(IGraphicalEditor editor) {
         super(editor);
@@ -73,9 +91,103 @@ public class MindMapPropertySheetPage extends GraphicalPropertySheetPage {
         }
     }
 
+    @Override
+    protected void createExtendSectionControls(WidgetFactory widgetFactory,
+            Composite parent) {
+        super.createExtendSectionControls(widgetFactory, parent);
+        createResetStyleControl(widgetFactory, parent);
+    }
+
+    private void createResetStyleControl(WidgetFactory widgetFactory,
+            Composite parent) {
+        resetStyleControl = widgetFactory.createHyperlink(parent,
+                MindMapMessages.MindMapPropertySheetPage_ResetStyle_text,
+                SWT.NONE);
+        resetStyleControl.setUnderlined(false);
+        resetStyleControl.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
+                true, false));
+        resetStyleControl.addHyperlinkListener(new IHyperlinkListener() {
+
+            public void linkExited(HyperlinkEvent e) {
+                resetStyleControl.setUnderlined(false);
+            }
+
+            public void linkEntered(HyperlinkEvent e) {
+                resetStyleControl.setUnderlined(true);
+            }
+
+            public void linkActivated(HyperlinkEvent e) {
+                resetStyles();
+            }
+        });
+        resetStyleControl.setFont(FontUtils.getRelativeHeight(
+                JFaceResources.DEFAULT_FONT, -1));
+        resetStyleControl.setForeground(parent.getDisplay().getSystemColor(
+                SWT.COLOR_BLUE));
+    }
+
+    private boolean shouldHasResetStyleControl(ISelection selection) {
+        if (!(selection instanceof StructuredSelection))
+            return false;
+
+        boolean result = true;
+
+        Object[] resetedStyleds = ((StructuredSelection) selection).toArray();
+        if (resetedStyleds != null) {
+            for (Object styled : resetedStyleds) {
+                if (!(styled instanceof IStyled)) {
+                    result = false;
+                }
+            }
+        }
+        return result;
+    }
+
+    protected void resetStyles() {
+        IGraphicalEditor editor = getContributedEditor();
+        if (editor == null)
+            return;
+
+        IGraphicalEditorPage activePageInstance = editor
+                .getActivePageInstance();
+        if (activePageInstance == null)
+            return;
+
+        ISelectionProvider selectionProvider = activePageInstance
+                .getSelectionProvider();
+        if (selectionProvider == null)
+            return;
+
+        ISelection selection = selectionProvider.getSelection();
+        if (!(selection instanceof StructuredSelection))
+            return;
+
+        Object[] resetedStyleds = ((StructuredSelection) selection).toArray();
+        if (resetedStyleds != null) {
+            for (Object styled : resetedStyleds) {
+                if (styled instanceof IStyled) {
+                    IStyled resetedStyled = (IStyled) styled;
+                    ModifyStyleCommand modifyStyleCommand = new ModifyStyleCommand(
+                            resetedStyled, (String) null);
+                    modifyStyleCommand
+                            .setLabel(CommandMessages.Command_ModifyStyle);
+                    editor.getCommandStack().execute(modifyStyleCommand);
+                }
+            }
+        }
+    }
+
     protected void selectionChanged(ISelection selection) {
         if (getControl() != null && !getControl().isDisposed())
             getControl().setRedraw(false);
+
+        if (resetStyleControl != null && !resetStyleControl.isDisposed()) {
+            boolean resetStyleControlVisible = shouldHasResetStyleControl(selection);
+            GridData gd = (GridData) resetStyleControl.getLayoutData();
+            gd.exclude = !resetStyleControlVisible;
+            resetStyleControl.setVisible(resetStyleControlVisible);
+        }
+
         if (selection instanceof IStructuredSelection) {
             IStructuredSelection ss = (IStructuredSelection) selection;
             List<String> newVisibleSectionIds = manager

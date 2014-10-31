@@ -376,7 +376,7 @@ public class BranchPart extends MindMapPartBase implements IBranchPart {
         update();
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
+    protected void registerCoreEvents(Object source,
             ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
         register.register(Core.TopicFolded);

@@ -32,10 +32,10 @@ public class InternalCore {
             .getBoolean("org.xmind.debug.core.workbookSave"); //$NON-NLS-1$
 
     /**
-     * @author MANGOSOFT
+     * @author Frank Shaka
      * 
      */
-    private final class DefaultLogger implements ILogger {
+    private final class ConsoleLogger implements ILogger {
         public void log(Throwable e) {
             e.printStackTrace();
         }
@@ -73,65 +73,62 @@ public class InternalCore {
         return "2.0"; //$NON-NLS-1$
     }
 
-    public IWorkbookBuilder getWorkbookBuilder() {
+    public synchronized IWorkbookBuilder getWorkbookBuilder() {
         if (workbookBuilder == null)
             workbookBuilder = new WorkbookBuilderImpl();
         return workbookBuilder;
     }
 
-    public IWorkspace getWorkspace() {
+    public synchronized IWorkspace getWorkspace() {
         if (workspace == null) {
             workspace = new Workspace();
         }
         return workspace;
     }
 
-    public IMarkerSheetBuilder getMarkerSheetBuilder() {
+    public synchronized IMarkerSheetBuilder getMarkerSheetBuilder() {
         if (markerSheetBuilder == null) {
             markerSheetBuilder = new MarkerSheetBuilderImpl();
         }
         return markerSheetBuilder;
     }
 
-    public Comparator<ITopic> getTopicComparator() {
+    public synchronized Comparator<ITopic> getTopicComparator() {
         if (topicComparator == null) {
             topicComparator = new TopicCompartor();
         }
         return topicComparator;
     }
 
-    public IIdFactory getIdFactory() {
+    public synchronized IIdFactory getIdFactory() {
         if (idFactory == null) {
             idFactory = new IDFactory();
         }
         return idFactory;
     }
 
-    public IStyleSheetBuilder getStyleSheetBuilder() {
+    public synchronized IStyleSheetBuilder getStyleSheetBuilder() {
         if (styleSheetBuilder == null) {
             styleSheetBuilder = new StyleSheetBuilderImpl();
         }
         return styleSheetBuilder;
     }
 
-    public static InternalCore getInstance() {
-        if (instance == null)
-            instance = new InternalCore();
-        return instance;
-    }
-
-    /**
-     * @return
-     */
-    public ILogger getLogger() {
+    public synchronized ILogger getLogger() {
         if (logger == null) {
-            logger = new DefaultLogger();
+            logger = new ConsoleLogger();
         }
         return logger;
     }
 
-    public void setLogger(ILogger logger) {
+    public synchronized void setLogger(ILogger logger) {
         this.logger = logger;
+    }
+
+    public static InternalCore getInstance() {
+        if (instance == null)
+            instance = new InternalCore();
+        return instance;
     }
 
 }

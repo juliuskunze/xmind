@@ -93,6 +93,8 @@ public class MarkerSheetImpl extends MarkerSheet implements
     }
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == IMarkerResourceProvider.class)
             return realResourceProvider;
         if (adapter == ICoreEventSupport.class)

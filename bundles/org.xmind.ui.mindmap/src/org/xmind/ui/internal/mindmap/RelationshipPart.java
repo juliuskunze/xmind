@@ -29,7 +29,6 @@ import org.xmind.core.IRelationshipEnd;
 import org.xmind.core.ITitled;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.GEF;
 import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IPart;
@@ -245,8 +244,7 @@ public class RelationshipPart extends ConnectionPart implements
 //        update();
 //    }
 
-    protected void registerCoreEvents(ICoreEventSource source,
-            ICoreEventRegister register) {
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
 //        register.register(Core.RelationshipControlPoint);
         register.register(Core.RelationshipEnd1);
@@ -256,13 +254,13 @@ public class RelationshipPart extends ConnectionPart implements
 
         if (source instanceof IRelationship) {
             IControlPoint cp1 = ((IRelationship) source).getControlPoint(0);
-            if (cp1 instanceof ICoreEventSource) {
-                register.setNextSource((ICoreEventSource) cp1);
+            if (cp1 != null) {
+                register.setNextSourceFrom(cp1);
                 register.register(Core.Position);
             }
             IControlPoint cp2 = ((IRelationship) source).getControlPoint(1);
-            if (cp2 instanceof ICoreEventSource) {
-                register.setNextSource((ICoreEventSource) cp2);
+            if (cp2 != null) {
+                register.setNextSourceFrom(cp2);
                 register.register(Core.Position);
             }
         }

@@ -195,6 +195,8 @@ public class PropertiesEditor implements IInputSelectionProvider {
     }
 
     public ISelection getSelection() {
+        if (selectedEntry == null)
+            return StructuredSelection.EMPTY;
         return new StructuredSelection(selectedEntry);
     }
 
@@ -423,6 +425,7 @@ public class PropertiesEditor implements IInputSelectionProvider {
             }
             firstSection = null;
             lastSection = null;
+            selectedEntry = null;
             sectionRegistry.clear();
             entryRegistry.clear();
             Control[] controls = getContents().getChildren();

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
@@ -45,8 +44,8 @@ public class ResourceMappingManager {
 
     private ResourceMappingManager(Document implementation) {
         this.implementation = implementation;
-        this.applicationId = DOMUtils.getAttribute(implementation
-                .getDocumentElement(),
+        this.applicationId = DOMUtils.getAttribute(
+                implementation.getDocumentElement(),
                 ResourceMappingConstants.ATT_APPLICATION_ID);
     }
 
@@ -97,8 +96,8 @@ public class ResourceMappingManager {
         if (implementation == null)
             return;
 
-        Iterator<Element> it = DOMUtils.childElementIterByTag(implementation
-                .getDocumentElement(),
+        Iterator<Element> it = DOMUtils.childElementIterByTag(
+                implementation.getDocumentElement(),
                 ResourceMappingConstants.TAG_RESOURCE_GROUP);
         while (it.hasNext()) {
             createResourceGorup(it.next());
@@ -118,8 +117,6 @@ public class ResourceMappingManager {
         }
     }
 
-    private static DocumentBuilder builder = null;
-
     public static ResourceMappingManager createEmptyInstance(
             String applicationId) {
         return new ResourceMappingManager(applicationId);
@@ -127,9 +124,7 @@ public class ResourceMappingManager {
 
     public static ResourceMappingManager createInstance(InputStream stream)
             throws ParserConfigurationException, SAXException, IOException {
-        if (builder == null) {
-            builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        }
+        DocumentBuilder builder = DOMUtils.getDefaultDocumentBuilder();
         try {
             Document document = builder.parse(stream);
             return new ResourceMappingManager(document);

@@ -16,6 +16,7 @@ package net.xmind.workbench.internal;
 import java.util.regex.Pattern;
 
 import net.xmind.signin.internal.XMindNetRequest;
+import net.xmind.workbench.ui.internal.NewsletterSubscriptionDialog;
 
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -120,12 +121,8 @@ public class NewsletterSubscriptionReminder {
         if (shell == null || shell.isDisposed())
             return;
 
-        InputDialog dialog = new InputDialog(
-                shell,
-                Messages.NewsletterSubscriptionReminder_DialogTitle,
-                Messages.NewsletterSubscriptionReminder_DialogMessage,
-                "", //$NON-NLS-1$
-                new IInputValidator() {
+        NewsletterSubscriptionDialog dialog = new NewsletterSubscriptionDialog(
+                shell, new IInputValidator() {
                     public String isValid(String newText) {
                         if (newText == null || "".equals(newText) //$NON-NLS-1$
                                 || !EMAIL_PATTERN.matcher(newText).matches())
@@ -133,6 +130,7 @@ public class NewsletterSubscriptionReminder {
                         return null;
                     }
                 });
+
         if (dialog.open() != InputDialog.OK)
             return;
 

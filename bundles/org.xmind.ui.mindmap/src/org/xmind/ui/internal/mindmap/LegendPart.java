@@ -28,7 +28,6 @@ import org.xmind.core.Core;
 import org.xmind.core.ILegend;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.util.IMarkerRefCounter;
 import org.xmind.gef.GEF;
 import org.xmind.gef.part.IPart;
@@ -166,16 +165,15 @@ public class LegendPart extends MindMapPartBase implements ILegendPart {
                 MindMapUI.POLICY_LEGEND_MOVABLE);
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
-            ICoreEventRegister register) {
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
         register.register(Core.Position);
         register.register(Core.MarkerDescription);
 
         Object counter = getLegend().getOwnedSheet().getAdapter(
                 IMarkerRefCounter.class);
-        if (counter instanceof ICoreEventSource) {
-            register.setNextSource((ICoreEventSource) counter);
+        if (counter != null) {
+            register.setNextSourceFrom(counter);
             register.register(Core.ResourceRefs);
         }
     }

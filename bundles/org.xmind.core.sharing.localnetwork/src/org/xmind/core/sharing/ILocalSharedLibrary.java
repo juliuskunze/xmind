@@ -14,10 +14,12 @@
 package org.xmind.core.sharing;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * 
  * @author Frank Shaka
+ * @author Jason Wong
  * 
  */
 public interface ILocalSharedLibrary extends ISharedLibrary {
@@ -38,6 +40,17 @@ public interface ILocalSharedLibrary extends ISharedLibrary {
      * @return added shared map
      */
     ISharedMap addSharedMap(File file);
+
+    /**
+     * Adds a new shared map from local file.
+     * 
+     * @param file
+     *            a local file to be added into this library
+     * @param receivers
+     *            a receiver list
+     * @return added shared map
+     */
+    ISharedMap addSharedMap(File file, List<String> receivers);
 
     /**
      * Removes the specified shared map.

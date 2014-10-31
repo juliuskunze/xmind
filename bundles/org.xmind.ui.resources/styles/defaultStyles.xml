@@ -85,7 +85,7 @@
 			line-color="#808080" line-width="2" line-pattern="solid" line-corner="5"/>
 		</style>
 		<style type="map" id="map" name="Map (Default)">
-			<map-properties svg:fill="#f3f4f9" svg:opacity=".6"/>
+			<map-properties svg:fill="#f3f4f9" svg:opacity=".6" color-gradient="none"/>
 		</style>
 	</automatic-styles>
 </xmap-styles>

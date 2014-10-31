@@ -78,10 +78,8 @@ public class BrowserPrefPage extends PreferencePage implements
         data.horizontalSpan = 2;
         external.setLayoutData(data);
 
-        internal
-                .setSelection(BrowserPref.getBrowserChoice() == BrowserPref.INTERNAL);
-        external
-                .setSelection(BrowserPref.getBrowserChoice() == BrowserPref.EXTERNAL);
+        internal.setSelection(BrowserPref.getBrowserChoice() == BrowserPref.INTERNAL);
+        external.setSelection(BrowserPref.getBrowserChoice() == BrowserPref.EXTERNAL);
         Dialog.applyDialogFont(composite);
         return composite;
     }
@@ -104,8 +102,8 @@ public class BrowserPrefPage extends PreferencePage implements
      * pressed.
      */
     protected void performDefaults() {
-        internal.setSelection(BrowserPref.isDefaultUseInternalBrowser());
-        external.setSelection(!BrowserPref.isDefaultUseInternalBrowser());
+        internal.setSelection(!BrowserPref.isDefaultUseSystemBrowser());
+        external.setSelection(BrowserPref.isDefaultUseSystemBrowser());
         super.performDefaults();
     }
 

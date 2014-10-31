@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import net.xmind.signin.XMindNet;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -56,12 +54,17 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.events.IHyperlinkListener;
 import org.eclipse.ui.forms.widgets.Hyperlink;
-import org.xmind.core.util.FileUtils;
+import org.xmind.ui.browser.BrowserSupport;
+import org.xmind.ui.browser.IBrowser;
+import org.xmind.ui.browser.IBrowserSupport;
+import org.xmind.ui.internal.browser.BrowserUtil;
 
 import com.swabunga.spell.engine.Configuration;
 
 public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
         IWorkbenchPreferencePage {
+
+    private static final String SPELLING_HELP_URL = "http://www.xmind.net/xmind/help/language-dic.html"; //$NON-NLS-1$
 
     private static final Object DEFAULT_PLACEHOLDER = Messages.defaultDictionary;
 
@@ -113,9 +116,17 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
         public DictionaryComparator() {
             super(new Comparator<String>() {
                 public int compare(String n1, String n2) {
-                    n1 = FileUtils.getNoExtensionFileName(n1);
-                    n2 = FileUtils.getNoExtensionFileName(n2);
-                    return n1.compareToIgnoreCase(n2);
+                    // Compare no-extension name:
+                    int s1 = n1.lastIndexOf('.');
+                    int s2 = n2.lastIndexOf('.');
+                    String p1 = s1 < 0 ? n1 : n1.substring(0, s1);
+                    String p2 = s2 < 0 ? n2 : n2.substring(0, s2);
+                    int c = p1.compareTo(p2);
+                    if (c != 0)
+                        return c;
+
+                    // Compare full name:
+                    return n1.compareTo(n2);
                 }
             });
         }
@@ -304,8 +315,15 @@ public class SpellingCheckPrefPage extends FieldEditorPreferencePage implements
             }
 
             public void linkActivated(HyperlinkEvent e) {
-                XMindNet.gotoURL(true,
-                        "http://www.xmind.net/xmind/help/language-dic.html"); //$NON-NLS-1$
+                final IBrowser browser;
+                browser = BrowserSupport.getInstance().createBrowser(
+                        IBrowserSupport.AS_EXTERNAL);
+                SafeRunner.run(new SafeRunnable() {
+                    public void run() throws Exception {
+                        browser.openURL(BrowserUtil
+                                .makeRedirectURL(SPELLING_HELP_URL));
+                    }
+                });
             }
         });
     }

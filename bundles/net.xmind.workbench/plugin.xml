@@ -63,14 +63,6 @@
                tooltip="%action.feedback.tooltip">
          </action>
          <action
-               class="net.xmind.workbench.internal.actions.WelcomeActionDelegate"
-               id="net.xmind.ui.welcome"
-               label="%action.welcome.label"
-               menubarPath="help/group.welcome"
-               style="push"
-               tooltip="%action.welcome.tooltip">
-         </action>
-         <action
                class="net.xmind.workbench.internal.actions.CheckForUpdatesActionDelegate"
                definitionId="net.xmind.ui.command.checkForUpdates"
                id="net.xmind.ui.checkForUpdates"

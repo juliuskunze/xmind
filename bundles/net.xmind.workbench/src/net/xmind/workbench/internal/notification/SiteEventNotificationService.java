@@ -1,13 +1,13 @@
 /* ******************************************************************************
  * Copyright (c) 2006-2012 XMind Ltd. and others.
- * 
+ *
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
  * which is available at http://www.eclipse.org/legal/epl-v10.html
- * and the GNU Lesser General Public License (LGPL), 
+ * and the GNU Lesser General Public License (LGPL),
  * which is available at http://www.gnu.org/licenses/lgpl.html
  * See http://www.xmind.net/license.html for details.
- * 
+ *
  * Contributors:
  *     XMind Ltd. - initial API and implementation
  *******************************************************************************/
@@ -19,9 +19,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
+import net.xmind.signin.IAccountInfo;
 import net.xmind.signin.IDataStore;
 import net.xmind.signin.ILicenseInfo;
 import net.xmind.signin.ILicenseKeyHeader;
@@ -32,23 +35,39 @@ import net.xmind.workbench.internal.Messages;
 import net.xmind.workbench.internal.XMindNetWorkbench;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.osgi.service.datalocation.Location;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
-import org.xmind.core.Core;
-import org.xmind.ui.dialogs.NotificationWindow;
+import org.osgi.framework.Bundle;
+import org.xmind.ui.dialogs.Notification;
 
 public class SiteEventNotificationService implements ILicenseListener {
 
+    private static final String LOCAL_STORE_FILE_NAME = "site-events.xml"; //$NON-NLS-1$
+
     private static boolean DEBUGGING = XMindNetWorkbench
             .isDebugging("/debug/events"); //$NON-NLS-1$
+
+    private static String HABIT_PROP_FILE = "habit.properties"; //$NON-NLS-1$
+
+    private static String FIRST_START_TIMESTAMP = "firstStartTimestamp"; //$NON-NLS-1$
+
+    private static String START_TIMESTAMP_1 = "startTimestamp1"; //$NON-NLS-1$
+
+    private static String START_TIMESTAMP_2 = "startTimestamp2"; //$NON-NLS-1$
+
+    private static String START_TIMESTAMP_3 = "startTimestamp3"; //$NON-NLS-1$
 
     private static int POPUP_DURATION = 60000;
 
@@ -109,6 +128,21 @@ public class SiteEventNotificationService implements ILicenseListener {
                 request.addParameter(
                         "license_info", //$NON-NLS-1$
                         licenseKeyHeader == null ? "" : licenseKeyHeader.toEncoded()); //$NON-NLS-1$
+
+                request.addParameter(FIRST_START_TIMESTAMP,
+                        habitData.getProperty(FIRST_START_TIMESTAMP));
+                request.addParameter(START_TIMESTAMP_1,
+                        habitData.getProperty(START_TIMESTAMP_1));
+                request.addParameter(START_TIMESTAMP_2,
+                        habitData.getProperty(START_TIMESTAMP_2));
+                request.addParameter(START_TIMESTAMP_3,
+                        habitData.getProperty(START_TIMESTAMP_3));
+
+                String xmindID = getXMindID();
+                if (xmindID != null && !"".equals(xmindID)) { //$NON-NLS-1$
+                    request.addParameter("xmind_id", xmindID); //$NON-NLS-1$
+                }
+
                 request.get();
 
                 if (!isRunning() || request.isAborted())
@@ -228,17 +262,22 @@ public class SiteEventNotificationService implements ILicenseListener {
 
     private String productVersion;
 
+    private Properties habitData;
+
+    private File habitFile;
+
     public SiteEventNotificationService(IWorkbench workbench) {
         Assert.isNotNull(workbench);
         this.workbench = workbench;
         prefStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
                 "org.xmind.cathy"); //$NON-NLS-1$
         productVersion = System.getProperty("org.xmind.product.version"); //$NON-NLS-1$
+        habitData = loadHabitData();
     }
 
     private SiteEventStore getLocalEventStore() {
         if (localEventStore == null) {
-            File file = getLocalFile();
+            File file = getLocalStoreFile();
             if (file.isFile()) {
                 try {
                     localEventStore = new SiteEventStore(new InputStreamReader(
@@ -261,7 +300,7 @@ public class SiteEventNotificationService implements ILicenseListener {
         if (localEventStore == null)
             return;
 
-        File file = getLocalFile();
+        File file = getLocalStoreFile();
         if (!file.exists()) {
             file.getParentFile().mkdirs();
         }
@@ -269,8 +308,9 @@ public class SiteEventNotificationService implements ILicenseListener {
                 "UTF-8")); //$NON-NLS-1$
     }
 
-    private static File getLocalFile() {
-        return new File(Core.getWorkspace().getAbsolutePath("site-events.xml")); //$NON-NLS-1$
+    private static File getLocalStoreFile() {
+        return new File(XMindNetWorkbench.getStatePath(LOCAL_STORE_FILE_NAME));
+//        return new File(Core.getWorkspace().getAbsolutePath("site-events.xml")); //$NON-NLS-1$
     }
 
     private synchronized void checkEvent() {
@@ -351,6 +391,10 @@ public class SiteEventNotificationService implements ILicenseListener {
                 for (ISiteEvent event : events) {
                     if (DEBUGGING)
                         System.out.println("Showing event: " + event); //$NON-NLS-1$
+
+                    if (!isShowTime(event))
+                        continue;
+
                     String text = event.getHTML();
                     if (text == null || "".equals(text)) { //$NON-NLS-1$
                         text = event.getText();
@@ -364,7 +408,7 @@ public class SiteEventNotificationService implements ILicenseListener {
                         if (style != null && "go".equals(style.toLowerCase())) { //$NON-NLS-1$
                             XMindNet.gotoURL(url);
                         } else {
-                            String caption = event.getCaption();
+//                            String caption = event.getCaption();
                             String moreUrl = event.getMoreUrl();
                             int duration = event.getDuration();
                             if (duration < 0) { // long time stay
@@ -372,15 +416,21 @@ public class SiteEventNotificationService implements ILicenseListener {
                             } else if (duration == 0) { // default value
                                 duration = POPUP_DURATION;
                             }
-                            IAction action = new URLAction(text, url, event
-                                    .isOpenExternal());
+                            IAction action = new URLAction(
+                                    Messages.SiteEventNotificationService_openAction_text,
+                                    url, event.isOpenExternal());
                             IAction moreAction = moreUrl == null ? null
                                     : new URLAction(
                                             Messages.SiteEventNotificationService_More_text,
                                             moreUrl, event.isOpenExternal());
-                            new NotificationWindow(shell, caption, action,
-                                    moreAction, duration).setCloseOnMoreLink(
-                                    true).open();
+
+                            Notification popup = new Notification(shell, null,
+                                    text, action, moreAction);
+                            popup.setGroupId(XMindNetWorkbench.PLUGIN_ID);
+                            popup.setCenterPopUp(true);
+                            popup.setDuration(duration);
+                            popup.popUp();
+                            recordShowEventTimestamp(event);
                         }
                     }
                 }
@@ -418,6 +468,10 @@ public class SiteEventNotificationService implements ILicenseListener {
         } catch (InterruptedException e) {
             return;
         }
+
+        recordFirstTimeStartXMindTimestamp();
+        recordStartXMindTimestamp();
+
         if (productVersion != null && !"".equals(productVersion)) { //$NON-NLS-1$
             ILicenseInfo licenseInfo = XMindNet.getLicenseInfo();
             int type = licenseInfo.getType();
@@ -433,6 +487,8 @@ public class SiteEventNotificationService implements ILicenseListener {
     public void shutdown() {
         stop();
         XMindNet.removeLicenseListener(this);
+
+        saveHabitData();
     }
 
     public boolean preShutdown(IWorkbench workbench, boolean forced) {
@@ -457,6 +513,184 @@ public class SiteEventNotificationService implements ILicenseListener {
         XMindNet.removeLicenseListener(this);
         parseLicenseInfo(info);
         checkEvent();
+    }
+
+    private Properties loadHabitData() {
+        Properties prop = new Properties();
+        File file = getHabitFile();
+        if (file == null || !file.exists())
+            return prop;
+
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            try {
+                prop.load(fis);
+            } finally {
+                fis.close();
+            }
+        } catch (IOException e) {
+        }
+        return prop;
+    }
+
+    private void saveHabitData() {
+        File file = getHabitFile();
+        file.getParentFile().mkdirs();
+
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            try {
+                habitData.store(fos, "Record user habit data."); //$NON-NLS-1$
+            } finally {
+                fos.close();
+            }
+        } catch (IOException e) {
+        }
+    }
+
+    private File getHabitFile() {
+        if (habitFile == null) {
+            Bundle bundle = XMindNetWorkbench.getDefault().getBundle();
+            if (bundle != null) {
+                File root = Platform.getStateLocation(bundle).toFile();
+                habitFile = new File(root, HABIT_PROP_FILE);
+            }
+        }
+        return habitFile;
+    }
+
+    private void recordFirstTimeStartXMindTimestamp() {
+        String timestamp = habitData.getProperty(FIRST_START_TIMESTAMP);
+        if (timestamp == null) {
+            habitData.setProperty(FIRST_START_TIMESTAMP,
+                    String.valueOf(System.currentTimeMillis()));
+        }
+    }
+
+    private void recordStartXMindTimestamp() {
+        String[] timestamps = loadStartXMindTimestamp();
+
+        long currentTimestamp = System.currentTimeMillis();
+        timestamps[0] = timestamps[1];
+        timestamps[1] = timestamps[2];
+        timestamps[2] = String.valueOf(currentTimestamp);
+
+        habitData.setProperty(START_TIMESTAMP_1, timestamps[0]);
+        habitData.setProperty(START_TIMESTAMP_2, timestamps[1]);
+        habitData.setProperty(START_TIMESTAMP_3, timestamps[2]);
+    }
+
+    private String[] loadStartXMindTimestamp() {
+        String[] timestamps = new String[3];
+        timestamps[0] = habitData.getProperty(START_TIMESTAMP_1, ""); //$NON-NLS-1$
+        timestamps[1] = habitData.getProperty(START_TIMESTAMP_2, ""); //$NON-NLS-1$
+        timestamps[2] = habitData.getProperty(START_TIMESTAMP_3, ""); //$NON-NLS-1$
+        return timestamps;
+    }
+
+    private void recordShowEventTimestamp(ISiteEvent event) {
+        String id = event.getId();
+        if (id == null || "".equals(id)) //$NON-NLS-1$
+            return;
+
+        long currentTimestamp = System.currentTimeMillis();
+        habitData.setProperty(id, Long.toString(currentTimestamp));
+    }
+
+    private String getXMindID() {
+        IAccountInfo accountInfo = XMindNet.getAccountInfo();
+        return accountInfo == null ? null : accountInfo.getUser();
+    }
+
+    private boolean isShowTime(ISiteEvent event) {
+        String prompt = event.getPrompt();
+        if (prompt == null || "".equals(prompt) || prompt.contains("every")) //$NON-NLS-1$ //$NON-NLS-2$
+            return true;
+
+        String id = event.getId();
+        if (id == null || "".equals(id)) //$NON-NLS-1$
+            return true;
+
+        String lastShowTime = habitData.getProperty(id);
+        if (lastShowTime == null || "".equals(lastShowTime)) //$NON-NLS-1$
+            return true;
+
+        try {
+            long interval = getShowInterval(prompt);
+            long current = System.currentTimeMillis();
+            long lastTime = Long.valueOf(lastShowTime);
+
+            return (current - lastTime) < interval;
+        } catch (Exception e) {
+        }
+
+        return true;
+    }
+
+    private long getShowInterval(String prompt) {
+        try {
+            int day = Integer.valueOf(prompt.replaceAll("every", "")); //$NON-NLS-1$//$NON-NLS-2$
+            return getIntervalMillis(day);
+        } catch (Exception e) {
+        }
+        return 0;
+    }
+
+    private long getIntervalMillis(int day) {
+        if (day > 0)
+            return day * 1000 * 3600 * 24;
+        return 0;
+    }
+
+    public static void migrateLocalStoreFile() {
+        File newLocalStoreFile = getLocalStoreFile();
+        if (newLocalStoreFile.exists())
+            return;
+
+        Location instanceLocation = Platform.getInstanceLocation();
+        if (instanceLocation == null)
+            return;
+
+        URL instanceURL = instanceLocation.getURL();
+        if (instanceURL == null)
+            return;
+
+        try {
+            instanceURL = FileLocator.toFileURL(instanceURL);
+        } catch (IOException e) {
+        }
+        File instanceDir = new File(instanceURL.getFile());
+        if (!instanceDir.exists())
+            return;
+
+        File oldLocalStoreFile = new File(
+                new File(instanceDir, ".xmind"), LOCAL_STORE_FILE_NAME); //$NON-NLS-1$
+        if (oldLocalStoreFile.exists()) {
+            moveLocalStoreFile(oldLocalStoreFile, newLocalStoreFile);
+            return;
+        }
+
+        oldLocalStoreFile = new File(instanceDir, LOCAL_STORE_FILE_NAME);
+        if (oldLocalStoreFile.exists()) {
+            moveLocalStoreFile(oldLocalStoreFile, newLocalStoreFile);
+            return;
+        }
+    }
+
+    private static void moveLocalStoreFile(File oldFile, File newFile) {
+        if (newFile.getParentFile() != null) {
+            newFile.getParentFile().mkdirs();
+        }
+        boolean moved = oldFile.renameTo(newFile);
+        if (!moved) {
+            XMindNetWorkbench
+                    .getDefault()
+                    .getLog()
+                    .log(new Status(IStatus.WARNING,
+                            XMindNetWorkbench.PLUGIN_ID,
+                            "Failed to migrate old site event local store file: " //$NON-NLS-1$
+                                    + oldFile.getAbsolutePath()));
+        }
     }
 
 }

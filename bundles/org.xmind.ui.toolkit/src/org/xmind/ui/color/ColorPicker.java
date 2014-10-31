@@ -47,6 +47,7 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
@@ -154,6 +155,12 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
         }
 
         public boolean close() {
+            Shell parentShell = null;
+            if (getShell() != null && !getShell().isDisposed()
+                    && getShell().getParent() instanceof Shell) {
+                parentShell = (Shell) getShell().getParent();
+            }
+
             if (showingNativeColorDialog)
                 return false;
             boolean closed = super.close();
@@ -166,7 +173,19 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
 //                        .removeSelectionChangedListener(viewerSelectionChangedListener);
 //                viewer.removeOpenListener(viewerOpenListener);
 //            }
+            if (parentShell != null && !parentShell.isDisposed()) {
+                Shell activeShell = Display.getCurrent().getActiveShell();
+                if (parentShell.getData() instanceof PopupDialog
+                        && parentShell != activeShell) {
+                    ((PopupDialog) parentShell.getData()).close();
+                }
+            }
             return closed;
+        }
+
+        @Override
+        protected Color getBackground() {
+            return Display.getCurrent().getSystemColor(SWT.COLOR_WHITE);
         }
 
     }
@@ -896,8 +915,7 @@ public class ColorPicker extends ContributionItem implements ISelectionProvider 
     }
 
     /**
-     * Synchronizes the UI with the given property. ATTN: Brian Sun
-     * �޸�������
+     * Synchronizes the UI with the given property. ATTN: Brian Sun �޸�������
      * 
      * @param propertyName
      *            the name of the property, or <code>null</code> meaning all

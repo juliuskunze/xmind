@@ -86,8 +86,9 @@ public class SignInDialog2 extends Dialog implements IJobChangeListener,
             }
             Base64 encoder = new Base64();
             try {
-                return new String(encoder.encode(md5.digest(password
-                        .getBytes("UTF-8"))), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+                return new String(
+                        encoder.encode(md5.digest(password.getBytes())),
+                        "UTF-8"); //$NON-NLS-1$
             } catch (UnsupportedEncodingException e) {
                 return null;
             }

@@ -22,6 +22,7 @@ import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.MarginBorder;
 import org.eclipse.draw2d.ToolbarLayout;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.IColorProvider;
@@ -36,9 +37,11 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+import org.xmind.core.internal.sharing.LocalNetworkSharing;
 import org.xmind.core.sharing.ILocalSharedMap;
 import org.xmind.core.sharing.ISharedLibrary;
 import org.xmind.core.sharing.ISharedMap;
+import org.xmind.core.sharing.SharingConstants;
 import org.xmind.ui.resources.FontUtils;
 import org.xmind.ui.viewers.IGraphicalToolTipProvider;
 
@@ -52,6 +55,7 @@ public class SharedMapLabelProvider extends LabelProvider implements
 
     private Map<Object, Image> imageCache = new HashMap<Object, Image>();
 
+    @Override
     public String getText(Object element) {
         if (element instanceof ISharedMap)
             return ((ISharedMap) element).getResourceName();
@@ -59,21 +63,45 @@ public class SharedMapLabelProvider extends LabelProvider implements
             ISharedLibrary library = (ISharedLibrary) element;
             int mapCount = library.getMapCount();
             String name = library.getName();
-            if (mapCount == 0)
-                return NLS
-                        .bind(SharingMessages.SharedLibrary_title_withLibraryName_and_ZeroMaps,
-                                name);
-            if (mapCount == 1)
-                return NLS
-                        .bind(SharingMessages.SharedLibrary_title_withLibraryName_and_OneMap,
-                                name);
-            return NLS
-                    .bind(SharingMessages.SharedLibrary_title_withLibraryName_and_MoreThanOneMaps,
-                            name, mapCount);
+            if (library.isLocal())
+                return getLibraryTitle(mapCount, name);
+
+            String arrangeMode = LocalNetworkSharingUI.getDefault()
+                    .getPreferenceStore()
+                    .getString(SharingConstants.PREF_ARRANGE_MODE);
+
+            if (IPreferenceStore.STRING_DEFAULT_DEFAULT.equals(arrangeMode)
+                    || arrangeMode.equals(SharingConstants.ARRANGE_MODE_PEOPLE)) {
+                String contactID = library.getContactID();
+                if (contactID == null || "".equals(contactID)) { //$NON-NLS-1$
+                    return getLibraryTitle(mapCount, name);
+                }
+
+                if (!LocalNetworkSharing.getDefault().getSharingService()
+                        .getContactManager().isContact(contactID)) {
+                    return name;
+                }
+            }
+            return getLibraryTitle(mapCount, name);
         }
         return super.getText(element);
     }
 
+    private String getLibraryTitle(int mapCount, String name) {
+        if (mapCount == 0)
+            return NLS
+                    .bind(SharingMessages.SharedLibrary_title_withLibraryName_and_ZeroMaps,
+                            name);
+        if (mapCount == 1)
+            return NLS
+                    .bind(SharingMessages.SharedLibrary_title_withLibraryName_and_OneMap,
+                            name);
+        return NLS
+                .bind(SharingMessages.SharedLibrary_title_withLibraryName_and_MoreThanOneMaps,
+                        name, mapCount);
+    }
+
+    @Override
     public Image getImage(Object element) {
         if (element instanceof ISharedMap) {
             ISharedMap map = (ISharedMap) element;
@@ -142,6 +170,7 @@ public class SharedMapLabelProvider extends LabelProvider implements
         }
     }
 
+    @Override
     public void dispose() {
         Object[] images = imageCache.values().toArray();
         imageCache.clear();

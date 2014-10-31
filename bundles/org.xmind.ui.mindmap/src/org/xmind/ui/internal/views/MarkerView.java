@@ -15,10 +15,16 @@ package org.xmind.ui.internal.views;
 
 import static org.xmind.ui.mindmap.MindMapUI.REQ_ADD_MARKER;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -35,14 +41,20 @@ import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.dnd.DragSourceEvent;
 import org.eclipse.swt.dnd.DragSourceListener;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.DropTargetListener;
+import org.eclipse.swt.dnd.FileTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ToolBar;
@@ -61,10 +73,11 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerGroup;
+import org.xmind.core.marker.IMarkerResource;
 import org.xmind.core.marker.IMarkerSheet;
+import org.xmind.core.util.FileUtils;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.Request;
 import org.xmind.gef.ui.editor.IGraphicalEditor;
@@ -77,6 +90,7 @@ import org.xmind.ui.internal.wizards.MarkerExportWizard;
 import org.xmind.ui.internal.wizards.MarkerImportWizard;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.MindMapUI;
+import org.xmind.ui.util.Logger;
 import org.xmind.ui.util.MarkerImageDescriptor;
 import org.xmind.ui.util.PrefUtils;
 
@@ -329,12 +343,9 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
         }
 
         private void installListeners() {
-            if (sheet instanceof ICoreEventSource) {
-                eventRegister = new CoreEventRegister((ICoreEventSource) sheet,
-                        this);
-                eventRegister.register(Core.MarkerGroupAdd);
-                eventRegister.register(Core.MarkerGroupRemove);
-            }
+            eventRegister = new CoreEventRegister(sheet, this);
+            eventRegister.register(Core.MarkerGroupAdd);
+            eventRegister.register(Core.MarkerGroupRemove);
         }
 
         private void uninstallListeners() {
@@ -445,6 +456,7 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
 //                    data.widthHint = 40;
                 tb.setLayoutData(data);
                 addDragSource(tb);
+                addDropTarget(tb);
 
                 control = section;
                 section.setClient(c);
@@ -496,14 +508,162 @@ public class MarkerView extends ViewPart implements IContributedContentsView {
             });
         }
 
+        private void addDropTarget(final ToolBar toolBar) {
+            final DropTarget dropTarget = new DropTarget(toolBar, DND.DROP_COPY
+                    | DND.DROP_MOVE);
+            dropTarget
+                    .setTransfer(new Transfer[] { FileTransfer.getInstance() });
+            toolBar.addDisposeListener(new DisposeListener() {
+
+                public void widgetDisposed(DisposeEvent e) {
+                    dropTarget.dispose();
+                }
+            });
+            dropTarget.addDropListener(new DropTargetListener() {
+
+                private Map<String, List<String>> dirToMarkerPaths = new HashMap<String, List<String>>();
+
+                public void dropAccept(DropTargetEvent event) {
+                    if (!FileTransfer.getInstance().isSupportedType(
+                            event.currentDataType)) {
+                        event.detail = DND.DROP_NONE;
+                    } else if (event.detail == DND.DROP_DEFAULT) {
+                        if ((event.operations & DND.DROP_COPY) != 0) {
+                            event.detail = DND.DROP_COPY;
+                        } else if ((event.operations & DND.DROP_MOVE) != 0) {
+                            event.detail = DND.DROP_MOVE;
+                        }
+                    }
+                }
+
+                public void drop(DropTargetEvent event) {
+                    if (event.data instanceof String[]) {
+                        IMarkerSheet userMarkerSheet = MindMapUI
+                                .getResourceManager().getUserMarkerSheet();
+                        IMarkerSheet markerSheet = group.getParent();
+                        for (String path : (String[]) event.data) {
+                            File dir = new File(path);
+                            if (dir.isDirectory()) {
+                                collectDirToMarkers(path, dirToMarkerPaths);
+
+                                Set<String> folders = dirToMarkerPaths.keySet();
+                                for (String folder : folders) {
+                                    File tempDir = new File(folder);
+                                    if (tempDir.isDirectory()) {
+                                        List<String> markerPaths = dirToMarkerPaths
+                                                .get(folder);
+                                        if (markerPaths != null
+                                                && !markerPaths.isEmpty()) {
+                                            IMarkerGroup markerGroup = userMarkerSheet
+                                                    .createMarkerGroup(false);
+                                            markerGroup.setName(tempDir
+                                                    .getName());
+                                            userMarkerSheet
+                                                    .addMarkerGroup(markerGroup);
+                                            for (String markerPath : markerPaths) {
+                                                if (imageValid(markerPath))
+                                                    createMarker(markerGroup,
+                                                            markerPath);
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (dir.isFile() && imageValid(path)) {
+                                if (markerSheet == MindMapUI
+                                        .getResourceManager()
+                                        .getSystemMarkerSheet()) {
+                                    IMarkerGroup markerGroup = userMarkerSheet
+                                            .createMarkerGroup(false);
+                                    markerGroup.setName(MindMapMessages.MarkerView_UntitledGroup_name);
+                                    userMarkerSheet.addMarkerGroup(markerGroup);
+                                    createMarker(markerGroup, path);
+                                } else if (userMarkerSheet == markerSheet) {
+                                    createMarker(group, path);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                private void collectDirToMarkers(String dirPath,
+                        Map<String, List<String>> dirToMarkerPaths) {
+                    File directory = new File(dirPath);
+                    if (directory.isDirectory()) {
+                        List<String> markerPaths = dirToMarkerPaths
+                                .get(dirPath);
+                        if (markerPaths == null)
+                            markerPaths = new LinkedList<String>();
+                        dirToMarkerPaths.put(dirPath, markerPaths);
+
+                        File[] files = directory.listFiles();
+                        for (File file : files) {
+                            if (file.isDirectory()) {
+                                collectDirToMarkers(file.getAbsolutePath(),
+                                        dirToMarkerPaths);
+                            } else if (file.isFile()
+                                    && imageValid(file.getAbsolutePath())) {
+                                markerPaths.add(file.getAbsolutePath());
+                            }
+                        }
+                    }
+                }
+
+                private void createMarker(IMarkerGroup targetGroup,
+                        String sourcePath) {
+                    String path = Core.getIdFactory().createId()
+                            + FileUtils.getExtension(sourcePath);
+                    IMarker marker = targetGroup.getOwnedSheet().createMarker(
+                            path);
+                    marker.setName(FileUtils.getFileName(sourcePath));
+                    IMarkerResource resource = marker.getResource();
+                    if (resource != null) {
+                        OutputStream os = resource.getOutputStream();
+                        if (os != null) {
+                            try {
+                                FileInputStream is = new FileInputStream(
+                                        sourcePath);
+                                FileUtils.transfer(is, os, true);
+                            } catch (IOException e) {
+                                Logger.log(e);
+                            }
+                        }
+                    }
+                    targetGroup.addMarker(marker);
+                }
+
+                private boolean imageValid(String sourcePath) {
+                    try {
+                        new Image(Display.getCurrent(), sourcePath).dispose();
+                        return true;
+                    } catch (Throwable e) {
+                    }
+                    return false;
+                }
+
+                public void dragOver(DropTargetEvent event) {
+                    dropAccept(event);
+                }
+
+                public void dragOperationChanged(DropTargetEvent event) {
+                    dropAccept(event);
+                }
+
+                public void dragLeave(DropTargetEvent event) {
+                    dropAccept(event);
+                }
+
+                public void dragEnter(DropTargetEvent event) {
+                    dropAccept(event);
+                }
+            });
+
+        }
+
         private void installListeners() {
-            if (group instanceof ICoreEventSource) {
-                eventRegister = new CoreEventRegister((ICoreEventSource) group,
-                        this);
-                eventRegister.register(Core.MarkerAdd);
-                eventRegister.register(Core.MarkerRemove);
-                eventRegister.register(Core.Name);
-            }
+            eventRegister = new CoreEventRegister(group, this);
+            eventRegister.register(Core.MarkerAdd);
+            eventRegister.register(Core.MarkerRemove);
+            eventRegister.register(Core.Name);
         }
 
         private void uninstallListeners() {

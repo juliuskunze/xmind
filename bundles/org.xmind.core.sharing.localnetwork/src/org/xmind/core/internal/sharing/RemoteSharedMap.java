@@ -25,12 +25,14 @@ import org.eclipse.core.runtime.Status;
 import org.xmind.core.command.Command;
 import org.xmind.core.command.IReturnValueConsumer;
 import org.xmind.core.command.ReturnValue;
+import org.xmind.core.command.arguments.Attributes;
 import org.xmind.core.command.binary.IBinaryEntry;
 import org.xmind.core.command.binary.IBinaryStore;
 import org.xmind.core.command.binary.INamedEntry;
 import org.xmind.core.command.remote.IRemoteCommandService;
 import org.xmind.core.command.remote.Options;
 import org.xmind.core.sharing.ISharedLibrary;
+import org.xmind.core.sharing.SharingConstants;
 
 /**
  * 
@@ -72,11 +74,19 @@ public class RemoteSharedMap extends AbstractSharedMap {
         return this.resourceCache;
     }
 
+    private Attributes getAttributes() {
+        Attributes data = new Attributes();
+        data.with(SharingConstants.PROP_CONTACT_ID, LocalNetworkSharing
+                .getDefault().getSharingService().getLocalLibrary()
+                .getContactID());
+        return data;
+    }
+
     private INamedEntry loadResourceIntoCache(IProgressMonitor loadingProgress) {
         final INamedEntry[] cache = new INamedEntry[1];
         cache[0] = null;
         remoteServer.execute(loadingProgress, new Command(COMMAND_SOURCE,
-                "sharing/file/" + getID(), null, null, null), //$NON-NLS-1$
+                "sharing/file/" + getID(), getAttributes(), null, null), //$NON-NLS-1$
                 new IReturnValueConsumer() {
                     public IStatus consumeReturnValue(IProgressMonitor monitor,
                             IStatus returnValue) {

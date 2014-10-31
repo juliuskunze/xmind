@@ -59,7 +59,8 @@ public abstract class PathConnectionDecoration extends
         if (fill) {
             graphics.fillPath(path);
         } else {
-            graphics.drawPath(path);
+            if (getLineWidth() > 0)
+                graphics.drawPath(path);
         }
     }
 

@@ -19,7 +19,10 @@ import net.xmind.signin.ILicenseInfo;
 import net.xmind.signin.ILicenseListener;
 import net.xmind.signin.XMindNet;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.CoolBarManager;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
@@ -80,10 +83,25 @@ public class CathyWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor
     public void postWindowOpen() {
         IWorkbenchWindow window = getWindowConfigurer().getWindow();
         if (window != null) {
-            CoolBarManager coolBar = ((WorkbenchWindow) window)
+            final CoolBarManager coolBar = ((WorkbenchWindow) window)
                     .getCoolBarManager();
             if (coolBar != null) {
-                coolBar.setLockLayout(true);
+                MenuManager menuManager = new MenuManager();
+                menuManager.add(new Action(WorkbenchMessages.CathyWorkbenchWindowAdvisor_menu_lockAction_text,
+                        IAction.AS_CHECK_BOX) {
+                    @Override
+                    public void run() {
+                        boolean isLocked = isChecked();
+                        coolBar.setLockLayout(isLocked);
+                    }
+                });
+                menuManager.add(new Action(WorkbenchMessages.CathyWorkbenchWindowAdvisor_menu_resetAction_text) {
+                    @Override
+                    public void run() {
+                        coolBar.resetItemOrder();
+                    }
+                });
+                coolBar.setContextMenuManager(menuManager);
             }
 
             window.getPartService().addPartListener(this);

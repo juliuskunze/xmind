@@ -21,9 +21,12 @@ import java.util.Set;
 
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.xmind.core.Core;
 import org.xmind.core.ISummary;
 import org.xmind.core.ITopic;
+import org.xmind.core.ITopicExtension;
+import org.xmind.core.ITopicExtensionElement;
 import org.xmind.core.ITopicRange;
 import org.xmind.gef.GEF;
 import org.xmind.gef.ISourceProvider;
@@ -40,6 +43,8 @@ import org.xmind.ui.commands.AddTopicCommand;
 import org.xmind.ui.commands.CommandMessages;
 import org.xmind.ui.commands.DeleteTopicCommand;
 import org.xmind.ui.commands.ModifyPositionCommand;
+import org.xmind.ui.commands.ModifyRightNumberOfUnbalancedStructureCommand;
+import org.xmind.ui.internal.branch.UnbalancedData;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -161,8 +166,8 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
     }
 
     private void alignTopics(Request request) {
-        List<ITopic> topics = MindMapUtils.filterOutDescendents(MindMapUtils
-                .getTopics(request.getTargets()), null);
+        List<ITopic> topics = MindMapUtils.filterOutDescendents(
+                MindMapUtils.getTopics(request.getTargets()), null);
         if (topics.isEmpty())
             return;
 
@@ -239,8 +244,9 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
     }
 
     private void moveOrCopyTopics(Request request) {
-        List<ITopic> topics = MindMapUtils.filterOutDescendents(MindMapUtils
-                .getTopics(request.getTargets()), null);
+        List<IPart> sources = request.getTargets();
+        List<ITopic> topics = MindMapUtils.filterOutDescendents(
+                MindMapUtils.getTopics(sources), null);
         if (topics.isEmpty())
             return;
         Collections.sort(topics, Core.getTopicComparator());
@@ -266,6 +272,8 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
         } else {
             targetParent = (ITopic) viewer.getAdapter(ITopic.class);
             targetType = ITopic.DETACHED;
+
+            parentPart = (ITopicPart) viewer.getAdapter(ITopicPart.class);
         }
         if (targetParent == null
                 || (!copy && !isValidMoveToNewParent(targetParent, topics)))
@@ -275,6 +283,66 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
         TopicMoveCommandBuilder builder = new TopicMoveCommandBuilder(viewer,
                 request.getTargetCommandStack(), targetParent, targetIndex,
                 targetType, targetPosition, relative);
+
+        IBranchPart parentBranch = MindMapUtils.findBranch(parentPart);
+        if (parentBranch == null)
+            return;
+
+        ITopic centralTopic = (ITopic) viewer.getAdapter(ITopic.class);
+        if (centralTopic == null)
+            return;
+
+        String centralTopicStructure = centralTopic.getStructureClass();
+        boolean isUnbalancedStructure = centralTopicStructure == null
+                || UnbalancedData.STRUCTUREID_UNBALANCED
+                        .equalsIgnoreCase(centralTopicStructure);
+
+        if (isUnbalancedStructure) {
+            ITopicExtension extension = centralTopic
+                    .createExtension(UnbalancedData.EXTENTION_UNBALANCEDSTRUCTURE);
+            ITopicExtensionElement element = extension.getContent()
+                    .getCreatedChild(
+                            UnbalancedData.EXTENTIONELEMENT_RIGHTNUMBER);
+
+            String preMoveRightNum = element.getTextContent();
+            if (preMoveRightNum == null)
+                preMoveRightNum = String.valueOf(0);
+            int postMoveRightNum = Integer.valueOf(preMoveRightNum);
+            for (IPart selected : sources) {
+                IBranchPart mainBranch = MindMapUtils.findBranch(selected);
+                if (mainBranch != null && !mainBranch.isCentral()) {
+                    IBranchPart centralBranch = mainBranch.getParentBranch();
+                    if (centralBranch != null && centralBranch.isCentral()) {
+                        IStructure structure = centralBranch.getBranchPolicy()
+                                .getStructure(centralBranch);
+                        if ((((IBranchStructureExtension) structure)
+                                .getChildTargetOrientation(centralBranch,
+                                        mainBranch) == PositionConstants.WEST)) {
+                            postMoveRightNum--;
+                        }
+                    }
+                    if (parentBranch.isCentral()
+                            && targetType != ITopic.DETACHED) {
+                        Rectangle bounds = parentPart.getFigure().getBounds();
+                        if (bounds
+                                .getCenter()
+                                .getDifference(
+                                        (Point) request
+                                                .getParameter(GEF.PARAM_POSITION_ABSOLUTE)).width < 0) {
+                            postMoveRightNum++;
+                        }
+                    }
+                }
+            }
+
+            ModifyRightNumberOfUnbalancedStructureCommand modifyRightNumberCommand = new ModifyRightNumberOfUnbalancedStructureCommand(
+                    centralTopic, preMoveRightNum, postMoveRightNum);
+            modifyRightNumberCommand
+                    .setLabel(copy ? CommandMessages.Command_CopyTopic
+                            : CommandMessages.Command_MoveTopic);
+            builder.addPendingCommand(modifyRightNumberCommand, true);
+        }
+
         PropertyCommandBuilder builder2 = new PropertyCommandBuilder(viewer,
                 builder, request);
 
@@ -289,6 +357,7 @@ public class TopicMovablePolicy extends MindMapPolicyBase {
             builder.copyTopics(topics);
         else
             builder.moveTopics(topics);
+
         builder2.addSources(topics.toArray(), true);
 
         builder2.end();

@@ -222,6 +222,16 @@ public class DOMUtils {
         factory.setAttribute(
                 "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
                 true);
+        factory.setFeature(
+                "http://apache.org/xml/features/disallow-doctype-decl", true); //$NON-NLS-1$
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        factory.setFeature(
+                "http://xml.org/sax/features/external-parameter-entities", false); //$NON-NLS-1$
+        factory.setFeature(
+                "http://xml.org/sax/features/external-general-entities", false); //$NON-NLS-1$
+        factory.setNamespaceAware(true);
+        factory.setIgnoringElementContentWhitespace(true);
         DocumentBuilder documentBuilder = factory.newDocumentBuilder();
         documentBuilder.setErrorHandler(NULL_ERROR_HANDLER);
         return documentBuilder;

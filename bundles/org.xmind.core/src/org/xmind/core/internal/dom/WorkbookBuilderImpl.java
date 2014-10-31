@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.util.zip.ZipInputStream;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
@@ -32,6 +31,7 @@ import org.xmind.core.io.ByteArrayStorage;
 import org.xmind.core.io.DirectoryStorage;
 import org.xmind.core.io.IInputSource;
 import org.xmind.core.io.IStorage;
+import org.xmind.core.util.DOMUtils;
 import org.xmind.core.util.FileUtils;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -42,7 +42,7 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
 
     private IEncryptionHandler defaultEncryptionHandler = null;
 
-    private DocumentBuilderFactory documentBuilderFactory = null;
+//    private DocumentBuilderFactory documentBuilderFactory = null;
 
     public String creatorName;
 
@@ -63,22 +63,22 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
         this.defaultEncryptionHandler = encryptionHandler;
     }
 
-    private synchronized DocumentBuilderFactory getDocumentBuilderFactory() {
-        if (documentBuilderFactory == null) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory
-                    .newInstance();
-            factory.setAttribute(
-                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                    Boolean.TRUE);
-            factory.setNamespaceAware(true);
-            documentBuilderFactory = factory;
-        }
-        return documentBuilderFactory;
-    }
+//    private synchronized DocumentBuilderFactory getDocumentBuilderFactory() {
+//        if (documentBuilderFactory == null) {
+//            DocumentBuilderFactory factory = DocumentBuilderFactory
+//                    .newInstance();
+//            factory.setAttribute(
+//                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
+//                    Boolean.TRUE);
+//            factory.setNamespaceAware(true);
+//            documentBuilderFactory = factory;
+//        }
+//        return documentBuilderFactory;
+//    }
 
     private DocumentBuilder getDocumentCreator() {
         try {
-            return getDocumentBuilderFactory().newDocumentBuilder();
+            return DOMUtils.getDefaultDocumentBuilder();
         } catch (ParserConfigurationException e) {
             throw new IllegalStateException(e);
         }
@@ -86,8 +86,7 @@ public class WorkbookBuilderImpl extends AbstractWorkbookBuilder implements
 
     public DocumentBuilder getDocumentLoader() throws CoreException {
         try {
-            DocumentBuilder loader = getDocumentBuilderFactory()
-                    .newDocumentBuilder();
+            DocumentBuilder loader = DOMUtils.getDefaultDocumentBuilder();
             loader.setErrorHandler(this);
             return loader;
         } catch (ParserConfigurationException e) {

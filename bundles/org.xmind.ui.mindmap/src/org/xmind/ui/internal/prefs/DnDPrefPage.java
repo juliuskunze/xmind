@@ -58,12 +58,13 @@ public class DnDPrefPage extends PreferencePage implements
         data.horizontalSpan = 1;
         alwaysRequest.setLayoutData(data);
 
-        link.setSelection(pre.getString(PrefConstants.ADD_EXTERNAL_FILE) == PrefConstants.CREATE_HYPERLINK);
-        copy.setSelection(pre.getString(PrefConstants.ADD_EXTERNAL_FILE) == PrefConstants.CREATE_ATTACHMENT);
+        String externalFile = pre.getString(PrefConstants.ADD_EXTERNAL_FILE);
+        link.setSelection(PrefConstants.CREATE_HYPERLINK.equals(externalFile));
+        copy.setSelection(PrefConstants.CREATE_ATTACHMENT.equals(externalFile));
         alwaysRequest
-                .setSelection(pre.getString(PrefConstants.ADD_EXTERNAL_FILE) == PrefConstants.ASK_USER
-                        || pre.getString(PrefConstants.ADD_EXTERNAL_FILE)
-                                .equals("")); //$NON-NLS-1$
+                .setSelection(PrefConstants.ASK_USER.equals(externalFile)
+                        || IPreferenceStore.STRING_DEFAULT_DEFAULT
+                                .equals(externalFile));
         return parent;
     }
 
@@ -87,6 +88,15 @@ public class DnDPrefPage extends PreferencePage implements
     public void init(IWorkbench workbench) {
     }
 
+    @Override
+    protected void performDefaults() {
+        link.setSelection(false);
+        copy.setSelection(false);
+        alwaysRequest.setSelection(true);
+        pre.setValue(PrefConstants.ADD_EXTERNAL_FILE, PrefConstants.ASK_USER);
+        super.performDefaults();
+    }
+
     public boolean performOk() {
 
         if (link.getSelection()) {
@@ -100,10 +110,13 @@ public class DnDPrefPage extends PreferencePage implements
                     PrefConstants.ASK_USER);
 
         }
-        link.setSelection(pre.getString(PrefConstants.ADD_EXTERNAL_FILE) == PrefConstants.CREATE_HYPERLINK);
-        copy.setSelection(pre.getString(PrefConstants.ADD_EXTERNAL_FILE) == PrefConstants.CREATE_ATTACHMENT);
+        String externalFile = pre.getString(PrefConstants.ADD_EXTERNAL_FILE);
+        link.setSelection(PrefConstants.CREATE_HYPERLINK.equals(externalFile));
+        copy.setSelection(PrefConstants.CREATE_ATTACHMENT.equals(externalFile));
         alwaysRequest
-                .setSelection(pre.getString(PrefConstants.ADD_EXTERNAL_FILE) == PrefConstants.ASK_USER);
+                .setSelection(PrefConstants.ASK_USER.equals(externalFile)
+                        || IPreferenceStore.STRING_DEFAULT_DEFAULT
+                                .equals(externalFile));
 
         return true;
     }

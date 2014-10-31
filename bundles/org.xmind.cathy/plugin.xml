@@ -31,13 +31,13 @@
          -->
           <property
           		name="introTitle"
-          		value="Welcome to XMind 2013"/>
+          		value="Welcome to XMind 2014"/>
           <property
           		name="introBrandingImage"
           		value="product:icons/introimage.png"/>
           <property
           		name="introBrandingImageText"
-          		value="XMind 2013"/>
+          		value="XMind 2014"/>
 		  <property
 				name="introDescription-overview"
 				value=""/>
@@ -52,7 +52,7 @@
                 value="icons/about.png">
 	      </property>
           <property name="aboutText" value="%productBlurb">
-          </property> 
+          </property>
       </product>
    </extension>
    <extension
@@ -161,6 +161,7 @@
             productId="org.xmind.cathy.product">
       </statusHandlerProductBinding>
    </extension>
+<!--
    <extension
          point="org.eclipse.ui.splashHandlers">
       <splashHandler
@@ -172,4 +173,5 @@
             splashId="org.xmind.cathy.splashHandler">
       </splashHandlerProductBinding>
    </extension>
+ -->
 </plugin>

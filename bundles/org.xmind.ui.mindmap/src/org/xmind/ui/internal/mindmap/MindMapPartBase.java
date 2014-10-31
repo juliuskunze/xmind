@@ -20,7 +20,6 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.graphicalpolicy.IGraphicalPolicy;
 import org.xmind.gef.graphicalpolicy.IStructure;
 import org.xmind.gef.graphicalpolicy.IStyleSelector;
@@ -77,21 +76,14 @@ public abstract class MindMapPartBase extends GraphicalEditPart implements
 
     protected void installModelListeners() {
         super.installModelListeners();
-        Object m = getRealModel();
-        if (m instanceof ICoreEventSource) {
-            ICoreEventSource source = (ICoreEventSource) m;
-            registerCoreEvents(source);
-        }
-    }
-
-    protected void registerCoreEvents(ICoreEventSource source) {
+        Object source = getRealModel();
         if (eventRegister == null)
             eventRegister = new CoreEventRegister(source,
                     getCoreEventListener(source));
         registerCoreEvents(source, eventRegister);
     }
 
-    protected ICoreEventListener getCoreEventListener(ICoreEventSource source) {
+    protected ICoreEventListener getCoreEventListener(Object source) {
         final MindMapPartBase handler = this;
         return new ICoreEventListener() {
             public void handleCoreEvent(final CoreEvent event) {
@@ -104,7 +96,7 @@ public abstract class MindMapPartBase extends GraphicalEditPart implements
         };
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
+    protected void registerCoreEvents(Object source,
             ICoreEventRegister register) {
     }
 

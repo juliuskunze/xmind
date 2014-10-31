@@ -63,7 +63,8 @@ public abstract class PathShapeDecoration extends AbstractShapeDecoration
         if (fill) {
             graphics.fillPath(path);
         } else {
-            graphics.drawPath(path);
+            if (getLineWidth() > 0)
+                graphics.drawPath(path);
         }
     }
 

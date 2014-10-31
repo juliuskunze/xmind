@@ -32,7 +32,6 @@ import org.eclipse.ui.forms.widgets.Hyperlink;
 import org.xmind.core.Core;
 import org.xmind.core.IImage;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.Request;
@@ -263,7 +262,7 @@ public class ImageSizePropertySectionPart extends
         return null;
     }
 
-    protected void registerEventListener(ICoreEventSource source,
+    protected void registerEventListener(Object source,
             ICoreEventRegister register) {
         register.register(Core.ImageWidth);
         register.register(Core.ImageHeight);

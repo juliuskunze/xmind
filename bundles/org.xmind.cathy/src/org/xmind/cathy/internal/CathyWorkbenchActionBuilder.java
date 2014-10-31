@@ -75,9 +75,9 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
 
     private IWorkbenchAction saveAllAction;
 
-    private IWorkbenchAction exportAction;
+//    private IWorkbenchAction exportAction;
 
-    private IWorkbenchAction importAction;
+//    private IWorkbenchAction importAction;
 
     private IWorkbenchAction exitAction;
 
@@ -145,11 +145,11 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         saveAllAction = ActionFactory.SAVE_ALL.create(window);
         register(saveAllAction);
 
-        exportAction = ActionFactory.EXPORT.create(window);
-        register(exportAction);
+//        exportAction = ActionFactory.EXPORT.create(window);
+//        register(exportAction);
 
-        importAction = ActionFactory.IMPORT.create(window);
-        register(importAction);
+//        importAction = ActionFactory.IMPORT.create(window);
+//        register(importAction);
 
         exitAction = ActionFactory.QUIT.create(window);
         register(exitAction);
@@ -234,8 +234,8 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         menu.add(new GroupMarker(IWorkbenchActionConstants.PRINT_EXT));
         menu.add(new Separator());
 
-        menu.add(importAction);
-        menu.add(exportAction);
+//        menu.add(importAction);
+//        menu.add(exportAction);
         menu.add(new GroupMarker(IWorkbenchActionConstants.IMPORT_EXT));
         menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
@@ -323,28 +323,29 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         return menu;
     }
 
+//
     protected void fillCoolBar(ICoolBarManager coolBar) {
         super.fillCoolBar(coolBar);
         IActionBarConfigurer2 actionBarConfigurer = (IActionBarConfigurer2) getActionBarConfigurer();
-
-        coolBar.add(new GroupMarker(ActionConstants.GROUP_FILE));
-
-        IToolBarManager fileBar = actionBarConfigurer.createToolBarManager();
-        fileBar.add(new GroupMarker(IWorkbenchActionConstants.NEW_GROUP));
-//        fileBar.add(newMenu.getNewWorkbookAction());
-        fileBar.add(newBlankAction);
-        fileBar.add(new GroupMarker(IWorkbenchActionConstants.NEW_EXT));
-        fileBar.add(openAction);
-        fileBar.add(new GroupMarker(IWorkbenchActionConstants.OPEN_EXT));
-        fileBar.add(new GroupMarker(IWorkbenchActionConstants.SAVE_GROUP));
-        fileBar.add(saveAction);
-        fileBar.add(new GroupMarker(IWorkbenchActionConstants.SAVE_EXT));
-        fileBar.add(getPrintItem());
-        fileBar.add(new GroupMarker(IWorkbenchActionConstants.PRINT_EXT));
-        fileBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
-        coolBar.add(actionBarConfigurer.createToolBarContributionItem(fileBar,
-                IWorkbenchActionConstants.TOOLBAR_FILE));
-
+//
+//        coolBar.add(new GroupMarker(ActionConstants.GROUP_FILE));
+//
+//        IToolBarManager fileBar = actionBarConfigurer.createToolBarManager();
+//        fileBar.add(new GroupMarker(IWorkbenchActionConstants.NEW_GROUP));
+////        fileBar.add(newMenu.getNewWorkbookAction());
+//        fileBar.add(newBlankAction);
+//        fileBar.add(new GroupMarker(IWorkbenchActionConstants.NEW_EXT));
+//        fileBar.add(openAction);
+//        fileBar.add(new GroupMarker(IWorkbenchActionConstants.OPEN_EXT));
+//        fileBar.add(new GroupMarker(IWorkbenchActionConstants.SAVE_GROUP));
+//        fileBar.add(saveAction);
+//        fileBar.add(new GroupMarker(IWorkbenchActionConstants.SAVE_EXT));
+//        fileBar.add(getPrintItem());
+//        fileBar.add(new GroupMarker(IWorkbenchActionConstants.PRINT_EXT));
+//        fileBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
+//        coolBar.add(actionBarConfigurer.createToolBarContributionItem(fileBar,
+//                IWorkbenchActionConstants.TOOLBAR_FILE));
+//
         coolBar.add(new GroupMarker(ActionConstants.GROUP_UNDO));
 
         IToolBarManager undoBar = actionBarConfigurer.createToolBarManager();
@@ -355,25 +356,29 @@ public class CathyWorkbenchActionBuilder extends ActionBarAdvisor {
         coolBar.add(actionBarConfigurer.createToolBarContributionItem(undoBar,
                 ActionConstants.TOOLBAR_UNDO));
 
-        coolBar.add(new GroupMarker(ActionConstants.GROUP_EDIT));
-
-        IToolBarManager editBar = actionBarConfigurer.createToolBarManager();
-        editBar.add(getCutItem());
-        editBar.add(getCopyItem());
-//        editBar.add(cutAction);
-//        editBar.add(copyAction);
-        editBar.add(new GroupMarker(IWorkbenchActionConstants.CUT_EXT));
-        editBar.add(getPasteItem());
-        editBar.add(getDeleteItem());
-//        editBar.add(pasteAction);
-//        editBar.add(deleteAction);
-        editBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
-        coolBar.add(actionBarConfigurer.createToolBarContributionItem(editBar,
-                ActionConstants.TOOLBAR_EDIT));
-
-        coolBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
-
-        coolBar.add(new GroupMarker(IWorkbenchActionConstants.GROUP_EDITOR));
+//        coolBar.appendToGroup("org.xmind.ui.group.undo", actionBarConfigurer
+//                .createToolBarContributionItem(undoBar,
+//                        ActionConstants.TOOLBAR_UNDO));
+//
+//        coolBar.add(new GroupMarker(ActionConstants.GROUP_EDIT));
+//
+//        IToolBarManager editBar = actionBarConfigurer.createToolBarManager();
+//        editBar.add(getCutItem());
+//        editBar.add(getCopyItem());
+////        editBar.add(cutAction);
+////        editBar.add(copyAction);
+//        editBar.add(new GroupMarker(IWorkbenchActionConstants.CUT_EXT));
+//        editBar.add(getPasteItem());
+//        editBar.add(getDeleteItem());
+////        editBar.add(pasteAction);
+////        editBar.add(deleteAction);
+//        editBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
+//        coolBar.add(actionBarConfigurer.createToolBarContributionItem(editBar,
+//                ActionConstants.TOOLBAR_EDIT));
+//
+//        coolBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
+//
+//        coolBar.add(new GroupMarker(IWorkbenchActionConstants.GROUP_EDITOR));
     }
 
     /*

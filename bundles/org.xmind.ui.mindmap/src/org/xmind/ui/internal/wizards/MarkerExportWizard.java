@@ -35,6 +35,7 @@ import org.xmind.core.marker.IMarkerGroup;
 import org.xmind.ui.internal.MarkerImpExpUtils;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogMessages;
+import org.xmind.ui.internal.dialogs.DialogUtils;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.wizards.AbstractExportPage;
 import org.xmind.ui.wizards.AbstractExportWizard;
@@ -67,22 +68,20 @@ public class MarkerExportWizard extends AbstractExportWizard {
             Label label = new Label(composite, SWT.NONE);
             label.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
                     false));
-            label
-                    .setText(WizardMessages.MarkerExportPage_ChooseMarkerGroups_label);
+            label.setText(WizardMessages.MarkerExportPage_ChooseMarkerGroups_label);
 
             viewer = new TableViewer(composite, SWT.BORDER | SWT.FULL_SELECTION
                     | SWT.MULTI);
             viewer.setContentProvider(new MarkerGroupContentProvider());
             viewer.setLabelProvider(new MarkerGroupLabelProvider());
-            viewer
-                    .setInput(MindMapUI.getResourceManager()
-                            .getUserMarkerSheet());
+            viewer.setInput(MindMapUI.getResourceManager().getUserMarkerSheet());
             viewer.getControl().setLayoutData(
                     new GridData(SWT.FILL, SWT.FILL, true, true));
 
             Control fileControl = createFileControls(composite);
             fileControl.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                     false));
+
         }
 
         protected void setDialogFilters(FileDialog dialog,
@@ -95,10 +94,6 @@ public class MarkerExportWizard extends AbstractExportWizard {
             filterExtensions.clear();
             filterExtensions.add(ext);
             super.setDialogFilters(dialog, filterNames, filterExtensions);
-        }
-
-        protected String getSuggestedFileName() {
-            return "Package.xmp"; //$NON-NLS-1$
         }
 
         public List<IMarkerGroup> getSelection() {
@@ -129,6 +124,12 @@ public class MarkerExportWizard extends AbstractExportWizard {
 
     public boolean performFinish() {
         if (hasTargetPath()) {
+            if (!isOverwriteWithoutPrompt()
+                    && new File(getTargetPath()).exists()) {
+                if (!DialogUtils.confirmOverwrite(getShell(), getTargetPath()))
+                    return false;
+            }
+
             final List<IMarkerGroup> selection = page.getSelection();
             if (!selection.isEmpty()) {
                 final boolean[] b = new boolean[1];
@@ -154,6 +155,10 @@ public class MarkerExportWizard extends AbstractExportWizard {
 
     protected boolean hasSource() {
         return true;
+    }
+
+    protected String getSuggestedFileName() {
+        return "Package.xmp"; //$NON-NLS-1$
     }
 
 }

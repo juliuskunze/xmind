@@ -17,7 +17,6 @@ import java.util.List;
 
 import org.xmind.ui.mindmap.IBranchPart;
 
-
 public interface IBranchPolicyManager {
 
     List<IBranchPolicyDescriptor> getBranchPolicyDescriptors();
@@ -32,5 +31,10 @@ public interface IBranchPolicyManager {
     String calculateBranchPolicyId(IBranchPart branch, String prefferedPolicyId);
 
     IBranchPolicy getDefaultBranchPolicy();
+
+    List<IBranchPolicyCategoryDescriptor> getBranchPolicyCategoryDescriptors();
+
+    IBranchPolicyCategoryDescriptor getBranchPolicyCategoryDescriptor(
+            String categoryId);
 
 }

@@ -18,22 +18,14 @@ import java.io.File;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.util.SafeRunnable;
-import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISaveablePart;
-import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.xmind.core.sharing.ILocalSharedLibrary;
-import org.xmind.core.sharing.ISharedMap;
 import org.xmind.core.sharing.ISharingService;
 import org.xmind.ui.internal.editor.MME;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -83,6 +75,13 @@ public class ShareOpenedFileHandler extends AbstractHandler {
                 File file = MME.getFile(editor.getEditorInput());
                 if (file == null || !file.exists()) {
                     if (editor instanceof ISaveablePart) {
+                        if (!MessageDialog
+                                .openConfirm(
+                                        Display.getCurrent().getActiveShell(),
+                                        SharingMessages.CommonDialogTitle_LocalNetworkSharing,
+                                        SharingMessages.ShareOpenedFileHandler_SaveTipMessageDialog_text))
+                            return;
+
                         ((ISaveablePart) editor).doSaveAs();
                         file = MME.getFile(editor.getEditorInput());
                         if (file == null || !file.exists())
@@ -98,34 +97,38 @@ public class ShareOpenedFileHandler extends AbstractHandler {
                     }
                 }
 
-                final ILocalSharedLibrary library = sharingService
-                        .getLocalLibrary();
+//                final ILocalSharedLibrary library = sharingService
+//                        .getLocalLibrary();
 //                List<ISharedMap> oldMaps = Arrays.asList(library.getMaps());
 
-                final ISharedMap[] map = new ISharedMap[1];
-                final File fileToAdd = file;
-                BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
-                    public void run() {
-                        map[0] = library.addSharedMap(fileToAdd);
-                    }
-                });
-                if (map[0] == null)
-                    return;
+//                final ISharedMap[] map = new ISharedMap[1];
+//                final File fileToAdd = file;
+//                BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
+//                    public void run() {
+//                        map[0] = library.addSharedMap(fileToAdd);
+//                    }
+//                });
 
-                final IViewPart[] view = new IViewPart[1];
-                SafeRunner.run(new SafeRunnable() {
-                    public void run() throws Exception {
-                        view[0] = page.showView(LocalNetworkSharingUI.VIEW_ID);
-                    }
-                });
+                SharingUtils.addSharedMaps(display.getActiveShell(),
+                        sharingService, new File[] { file });
+//                if (map[0] == null)
+//                    return;
 
-                if (view[0] != null) {
-                    ISelectionProvider selectionProvider = view[0].getSite()
-                            .getSelectionProvider();
-                    if (selectionProvider != null) {
-                        selectionProvider.setSelection(new StructuredSelection(
-                                map[0]));
-                    }
+//                final IViewPart[] view = new IViewPart[1];
+//                SafeRunner.run(new SafeRunnable() {
+//                    public void run() throws Exception {
+//                        view[0] = page.showView(LocalNetworkSharingUI.VIEW_ID);
+//                    }
+//                });
+//
+//                if (view[0] != null) {
+//                    ISelectionProvider selectionProvider = view[0].getSite()
+//                            .getSelectionProvider();
+//                    if (selectionProvider != null) {
+//                        selectionProvider.setSelection(new StructuredSelection(
+//                                map[0]));
+//                    }
+
 //                    SharedLibrariesViewer viewer = (SharedLibrariesViewer) view[0]
 //                            .getAdapter(SharedLibrariesViewer.class);
 //                    if (viewer != null) {
@@ -133,7 +136,7 @@ public class ShareOpenedFileHandler extends AbstractHandler {
 //                        viewer.setSelection(new StructuredSelection(map[0]),
 //                                true);
 //                    }
-                }
+//                }
 
 //                if (oldMaps.contains(map[0])) {
 //                    MessageDialog.openInformation(window.getShell(), NLS.bind(

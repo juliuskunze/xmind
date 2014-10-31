@@ -95,9 +95,13 @@ public interface ISharingService extends IAdaptable, ISchedulingRule {
 
     ILocalSharedLibrary getLocalLibrary();
 
+    IContactManager getContactManager();
+
     Collection<IRemoteSharedLibrary> getRemoteLibraries();
 
     IRemoteSharedLibrary findRemoteLibrary(String symbolicName);
+
+    IRemoteSharedLibrary findRemoteLibraryByID(String contactID);
 
     void addSharingListener(ISharingListener listener);
 

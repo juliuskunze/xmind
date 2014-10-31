@@ -46,7 +46,7 @@ public class WorkbookFactory {
                 .getSheets().size()));
         ITopic rootTopic = sheet.getRootTopic();
         rootTopic.setTitleText(MindMapMessages.TitleText_CentralTopic);
-        rootTopic.setStructureClass("org.xmind.ui.map.clockwise"); //$NON-NLS-1$
+        rootTopic.setStructureClass("org.xmind.ui.map.unbalanced"); //$NON-NLS-1$
 
         if (theme == null) {
             theme = MindMapUI.getResourceManager().getDefaultTheme();

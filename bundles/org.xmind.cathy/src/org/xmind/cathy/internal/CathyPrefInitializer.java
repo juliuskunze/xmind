@@ -17,6 +17,8 @@ import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.ui.IWorkbenchPreferenceConstants;
+import org.eclipse.ui.internal.UIPlugin;
 
 public class CathyPrefInitializer extends AbstractPreferenceInitializer {
 
@@ -33,6 +35,29 @@ public class CathyPrefInitializer extends AbstractPreferenceInitializer {
         node.putBoolean(CathyPlugin.CHECK_UPDATES_ON_STARTUP, true);
         node.putInt(CathyPlugin.STARTUP_ACTION,
                 CathyPlugin.STARTUP_ACTION_WIZARD);
+
+        UIPlugin.getDefault()
+                .getPreferenceStore()
+                .setValue(
+                        IWorkbenchPreferenceConstants.SHOW_TRADITIONAL_STYLE_TABS,
+                        true);
+
+//        ColorRegistry colorRegistry = PlatformUI.getWorkbench()
+//                .getThemeManager().getCurrentTheme().getColorRegistry();
+//        colorRegistry.put("org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_BG_END", //$NON-NLS-1$
+//                new RGB(191, 205, 219));
+//        colorRegistry.put(
+//                "org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_BG_START", //$NON-NLS-1$
+//                new RGB(191, 205, 219));
+//        colorRegistry.put("org.eclipse.ui.workbench.ACTIVE_TAB_BG_END", //$NON-NLS-1$
+//                new RGB(153, 180, 209));
+//        colorRegistry.put("org.eclipse.ui.workbench.ACTIVE_TAB_BG_START", //$NON-NLS-1$
+//                new RGB(153, 180, 209));
+//        colorRegistry.put("org.eclipse.ui.workbench.INACTIVE_TAB_BG_END", //$NON-NLS-1$
+//                new RGB(240, 240, 240));
+//        colorRegistry.put("org.eclipse.ui.workbench.INACTIVE_TAB_BG_START", //$NON-NLS-1$
+//                new RGB(240, 240, 240));
+
     }
 
 }

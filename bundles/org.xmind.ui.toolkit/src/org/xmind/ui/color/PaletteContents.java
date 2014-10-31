@@ -26,42 +26,66 @@ public class PaletteContents {
 
     public static PaletteContents getDefault() {
         if (instance == null) {
-            PaletteContents palette = new PaletteContents(30, 5, 6);
+            PaletteContents palette = new PaletteContents(48, 6, 8);
             // row 1
             palette.addItem(PaletteItem.Black);
             palette.addItem(PaletteItem.Red);
+            palette.addItem(PaletteItem.Orange);
             palette.addItem(PaletteItem.Yellow);
             palette.addItem(PaletteItem.Green);
             palette.addItem(PaletteItem.Blue);
-            palette.addItem(PaletteItem.Purple);
-            // row 2
-            palette.addItem(PaletteItem.DarkGray);
-            palette.addItem(PaletteItem.DarkRed);
-            palette.addItem(PaletteItem.DarkYellow);
-            palette.addItem(PaletteItem.DarkGreen);
-            palette.addItem(PaletteItem.DarkBlue);
-            palette.addItem(PaletteItem.DarkPurple);
-            // row 3
-            palette.addItem(PaletteItem.Gray);
-            palette.addItem(PaletteItem.Rose);
-            palette.addItem(PaletteItem.Orange);
-            palette.addItem(PaletteItem.Lemon);
-            palette.addItem(PaletteItem.LimeGreen);
-            palette.addItem(PaletteItem.Turquoise);
-            // row 4
-            palette.addItem(PaletteItem.LightGray);
-            palette.addItem(PaletteItem.Copper);
-            palette.addItem(PaletteItem.GoldenOlive);
-            palette.addItem(PaletteItem.Beige);
-            palette.addItem(PaletteItem.Sapphire);
-            palette.addItem(PaletteItem.Lavender);
-            // row 5
-            palette.addItem(PaletteItem.White);
-            palette.addItem(PaletteItem.Khaki);
-            palette.addItem(PaletteItem.ForestGreen);
-            palette.addItem(PaletteItem.AntiqueBlue);
             palette.addItem(PaletteItem.Indigo);
-            palette.addItem(PaletteItem.Violet);
+            palette.addItem(PaletteItem.Purple);
+
+            // row 2
+            palette.addItem(PaletteItem.White);
+            palette.addItem(PaletteItem.Red80);
+            palette.addItem(PaletteItem.Orange80);
+            palette.addItem(PaletteItem.Yellow80);
+            palette.addItem(PaletteItem.Green80);
+            palette.addItem(PaletteItem.Blue80);
+            palette.addItem(PaletteItem.Indigo80);
+            palette.addItem(PaletteItem.Purple80);
+
+            // row 3
+            palette.addItem(PaletteItem.Black80);
+            palette.addItem(PaletteItem.Red60);
+            palette.addItem(PaletteItem.Orange60);
+            palette.addItem(PaletteItem.Yellow60);
+            palette.addItem(PaletteItem.Green60);
+            palette.addItem(PaletteItem.Blue60);
+            palette.addItem(PaletteItem.Indigo60);
+            palette.addItem(PaletteItem.Purple60);
+
+            // row 4
+            palette.addItem(PaletteItem.Black60);
+            palette.addItem(PaletteItem.Red40);
+            palette.addItem(PaletteItem.Orange40);
+            palette.addItem(PaletteItem.Yellow40);
+            palette.addItem(PaletteItem.Green40);
+            palette.addItem(PaletteItem.Blue40);
+            palette.addItem(PaletteItem.Indigo40);
+            palette.addItem(PaletteItem.Purple40);
+
+            // row 5
+            palette.addItem(PaletteItem.Black40);
+            palette.addItem(PaletteItem.Red25);
+            palette.addItem(PaletteItem.Orange25);
+            palette.addItem(PaletteItem.Yellow25);
+            palette.addItem(PaletteItem.Green25);
+            palette.addItem(PaletteItem.Blue25);
+            palette.addItem(PaletteItem.Indigo25);
+            palette.addItem(PaletteItem.Purple25);
+
+            // row 6
+            palette.addItem(PaletteItem.Black20);
+            palette.addItem(PaletteItem.Red50);
+            palette.addItem(PaletteItem.Orange50);
+            palette.addItem(PaletteItem.Yellow50);
+            palette.addItem(PaletteItem.Green50);
+            palette.addItem(PaletteItem.Blue50);
+            palette.addItem(PaletteItem.Indigo50);
+            palette.addItem(PaletteItem.Purple50);
             instance = palette;
         }
         return instance;

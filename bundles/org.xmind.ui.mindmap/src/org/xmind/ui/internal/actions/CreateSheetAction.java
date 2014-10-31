@@ -76,7 +76,7 @@ public class CreateSheetAction extends EditorAction {
 
         sheet.getRootTopic().setTitleText(
                 MindMapMessages.TitleText_CentralTopic);
-        sheet.getRootTopic().setStructureClass("org.xmind.ui.map.clockwise"); //$NON-NLS-1$
+        sheet.getRootTopic().setStructureClass("org.xmind.ui.map.unbalanced"); //$NON-NLS-1$
 
         IStyle theme = MindMapUI.getResourceManager().getDefaultTheme();
         StyleUtils.setTheme(sheet, theme);

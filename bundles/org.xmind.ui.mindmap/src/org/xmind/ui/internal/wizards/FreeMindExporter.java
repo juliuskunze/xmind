@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -88,8 +87,6 @@ public class FreeMindExporter {
     }
 
     private static final String IMAGE_FILE = "images"; //$NON-NLS-1$
-
-    private static DocumentBuilder documentBuilder;
 
     private ISheet sheet;
 
@@ -454,8 +451,7 @@ public class FreeMindExporter {
             if (is != null) {
                 FileOutputStream os = new FileOutputStream(new File(imageDir,
                         fileName));
-                FileUtils.transfer(is, os, false);
-                is.close();
+                FileUtils.transfer(is, os, true);
 
                 String sourcePath = "images" + "/" + fileName; //$NON-NLS-1$ //$NON-NLS-2$
                 // " ASCII is 34
@@ -606,7 +602,10 @@ public class FreeMindExporter {
                     is.close();
                 }
             }
-        }
+        } else if (HyperlinkUtils.isLinkToWeb(hyperlink)
+                && !hyperlink.contains("http://") //$NON-NLS-1$
+                && !hyperlink.contains("https://")) //$NON-NLS-1$
+            return "http://" + hyperlink; //$NON-NLS-1$
         return hyperlink;
     }
 
@@ -669,14 +668,6 @@ public class FreeMindExporter {
 
     private static DocumentBuilder getDocumentBuilder()
             throws ParserConfigurationException {
-        if (documentBuilder == null) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory
-                    .newInstance();
-            factory.setAttribute(
-                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                    true);
-            documentBuilder = factory.newDocumentBuilder();
-        }
-        return documentBuilder;
+        return DOMUtils.getDefaultDocumentBuilder();
     }
 }

@@ -15,6 +15,7 @@ package org.xmind.ui.internal.browser;
 
 import java.util.HashMap;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.xmind.ui.browser.IBrowser;
@@ -57,6 +58,10 @@ public class BrowserSupportImpl implements IBrowserSupport {
 
     public IBrowser createBrowser(int style, String browserClientId,
             String name, String tooltip) {
+        //If OS is linux,force to use external browser as a temporary solution for linux browser bug.
+        if (Platform.OS_LINUX.equals(Platform.getOS())) {
+            style = AS_EXTERNAL;
+        }
         String browserId = BrowserUtil.encodeStyle(
                 browserClientId == null ? DEFAULT_CLIENT_ID : browserClientId,
                 style);

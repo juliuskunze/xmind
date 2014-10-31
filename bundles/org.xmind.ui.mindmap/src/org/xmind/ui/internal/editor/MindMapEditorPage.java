@@ -34,7 +34,6 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IEditDomainListener;
@@ -81,6 +80,7 @@ import org.xmind.ui.internal.actions.CutAction;
 import org.xmind.ui.internal.actions.DeleteAction;
 import org.xmind.ui.internal.actions.DrillDownAction;
 import org.xmind.ui.internal.actions.DrillUpAction;
+import org.xmind.ui.internal.actions.DuplicateAction;
 import org.xmind.ui.internal.actions.EditLabelAction;
 import org.xmind.ui.internal.actions.EditNotesAction;
 import org.xmind.ui.internal.actions.EditTitleAction;
@@ -97,6 +97,7 @@ import org.xmind.ui.internal.actions.InsertSubtopicAction;
 import org.xmind.ui.internal.actions.InsertTopicAction;
 import org.xmind.ui.internal.actions.InsertTopicBeforeAction;
 import org.xmind.ui.internal.actions.ModifyHyperlinkAction;
+import org.xmind.ui.internal.actions.NewSheetFromTemplateDialogAction;
 import org.xmind.ui.internal.actions.OpenHyperlinkAction;
 import org.xmind.ui.internal.actions.PrintMapAction;
 import org.xmind.ui.internal.actions.ResetPositionAction;
@@ -172,11 +173,8 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
 
     protected void installModelListeners(Object input) {
         super.installModelListeners(input);
-        if (input instanceof ICoreEventSource) {
-            eventRegister = new CoreEventRegister((ICoreEventSource) input,
-                    this);
-            eventRegister.register(Core.TitleText);
-        }
+        eventRegister = new CoreEventRegister(input, this);
+        eventRegister.register(Core.TitleText);
         prefStore = MindMapUIPlugin.getDefault().getPreferenceStore();
         if (prefStore != null) {
             prefStore.addPropertyChangeListener(this);
@@ -606,6 +604,10 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
         actionRegistry.addAction(raverseAction);
         addSelectionAction(raverseAction);
 
+        DuplicateAction duplicateAction = new DuplicateAction(this);
+        actionRegistry.addAction(duplicateAction);
+        addSelectionAction(duplicateAction);
+
         FinishAction finishAction = new FinishAction(
                 MindMapActionFactory.FINISH.getId(), this);
         actionRegistry.addAction(finishAction);
@@ -645,6 +647,11 @@ public class MindMapEditorPage extends GraphicalEditorPage implements
                 this);
         actionRegistry.addAction(saveAttachmentAsAction);
         addSelectionAction(saveAttachmentAsAction);
+
+        NewSheetFromTemplateDialogAction newSheetFromTemplateAction = new NewSheetFromTemplateDialogAction(
+                this);
+        actionRegistry.addAction(newSheetFromTemplateAction);
+        addSelectionAction(newSheetFromTemplateAction);
 
         addAlignmentAction(PositionConstants.LEFT, actionRegistry);
         addAlignmentAction(PositionConstants.CENTER, actionRegistry);

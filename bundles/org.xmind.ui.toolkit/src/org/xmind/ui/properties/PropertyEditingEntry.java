@@ -582,7 +582,7 @@ public class PropertyEditingEntry implements IPropertyEditingEntry,
                             .getForeground() : valueColor, null), 0, valueText
                             .length());
         }
-        canvas.layout(true);
+//        canvas.layout(true);
         canvas.redraw();
     }
 

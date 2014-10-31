@@ -276,13 +276,11 @@ public class NewWorkbookEditor extends EditorPart implements
         ICoreEventSupport ces = (ICoreEventSupport) MindMapUI
                 .getResourceManager().getUserThemeSheet()
                 .getAdapter(ICoreEventSupport.class);
-        if (ces != null) {
-            coreEventRegister = new CoreEventRegister(this);
-            coreEventRegister.setNextSupport(ces);
-            coreEventRegister.register(Core.StyleAdd);
-            coreEventRegister.register(Core.StyleRemove);
-            coreEventRegister.register(Core.Name);
-        }
+        coreEventRegister = new CoreEventRegister(this);
+        coreEventRegister.setNextSupport(ces);
+        coreEventRegister.register(Core.StyleAdd);
+        coreEventRegister.register(Core.StyleRemove);
+        coreEventRegister.register(Core.Name);
 
         createActionHandlers();
 

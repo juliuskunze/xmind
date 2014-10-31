@@ -20,6 +20,9 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.xmind.gef.Request;
 import org.xmind.ui.commands.CommandMessages;
+import org.xmind.ui.internal.MindMapUIPlugin;
+import org.xmind.ui.internal.prefs.PrefMessages;
+import org.xmind.ui.prefs.PrefConstants;
 import org.xmind.ui.properties.StyledPropertySectionPart;
 import org.xmind.ui.style.Styles;
 
@@ -29,6 +32,8 @@ public class SheetAdvancedStylePropertySectionPart extends
     private Button multiLineColorsCheck;
 
     private Button taperedLinesCheck;
+
+    private Button gradientColorCheck;
 
     protected void createContent(Composite parent) {
         multiLineColorsCheck = new Button(parent, SWT.CHECK);
@@ -52,6 +57,28 @@ public class SheetAdvancedStylePropertySectionPart extends
             public void widgetDefaultSelected(SelectionEvent e) {
             }
         });
+
+        gradientColorCheck = new Button(parent, SWT.CHECK);
+        gradientColorCheck
+                .setText(PrefMessages.EditorPage_UndoRedo_gradientColor);
+        gradientColorCheck.addSelectionListener(new SelectionListener() {
+            public void widgetSelected(SelectionEvent e) {
+                changeGradientColor();
+            }
+
+            public void widgetDefaultSelected(SelectionEvent e) {
+            }
+        });
+    }
+
+    protected void changeGradientColor() {
+        Request request = createStyleRequest(CommandMessages.Command_ToggleGradientColor);
+        if (gradientColorCheck.getSelection()) {
+            addStyle(request, Styles.GradientColor, Styles.GRADIENT);
+        } else {
+            addStyle(request, Styles.GradientColor, Styles.NONE);
+        }
+        sendRequest(request);
     }
 
     private void changeRainbowColor() {
@@ -60,7 +87,7 @@ public class SheetAdvancedStylePropertySectionPart extends
             addStyle(request, Styles.MultiLineColors,
                     Styles.DEFAULT_MULTI_LINE_COLORS);
         } else {
-            addStyle(request, Styles.MultiLineColors, null);
+            addStyle(request, Styles.MultiLineColors, Styles.NONE);
         }
         sendRequest(request);
     }
@@ -70,19 +97,32 @@ public class SheetAdvancedStylePropertySectionPart extends
         if (taperedLinesCheck.getSelection()) {
             addStyle(request, Styles.LineTapered, Styles.TAPERED);
         } else {
-            addStyle(request, Styles.LineTapered, null);
+            addStyle(request, Styles.LineTapered, Styles.NONE);
         }
         sendRequest(request);
     }
 
     protected void doRefresh() {
         if (multiLineColorsCheck != null && !multiLineColorsCheck.isDisposed()) {
-            String value = getUserValue(Styles.MultiLineColors);
-            multiLineColorsCheck.setSelection(value != null);
+            String value = getStyleValue(Styles.MultiLineColors, null);
+            multiLineColorsCheck.setSelection(value != null
+                    && !Styles.NONE.equals(value));
         }
         if (taperedLinesCheck != null && !taperedLinesCheck.isDisposed()) {
-            String value = getUserValue(Styles.LineTapered);
-            taperedLinesCheck.setSelection(value != null);
+            String value = getStyleValue(Styles.LineTapered, null);
+            taperedLinesCheck.setSelection(value != null
+                    && !Styles.NONE.equals(value));
+        }
+        if (gradientColorCheck != null && !gradientColorCheck.isDisposed()) {
+            boolean hasGradient = MindMapUIPlugin.getDefault()
+                    .getPreferenceStore()
+                    .getBoolean(PrefConstants.GRADIENT_COLOR);
+            String value = getStyleValue(Styles.GradientColor, null);
+            if (Styles.NONE.equals(value))
+                hasGradient = false;
+            else if (Styles.GRADIENT.equals(value))
+                hasGradient = true;
+            gradientColorCheck.setSelection(hasGradient);
         }
     }
 
@@ -90,6 +130,7 @@ public class SheetAdvancedStylePropertySectionPart extends
         super.dispose();
         multiLineColorsCheck = null;
         taperedLinesCheck = null;
+        gradientColorCheck = null;
     }
 
     public void setFocus() {

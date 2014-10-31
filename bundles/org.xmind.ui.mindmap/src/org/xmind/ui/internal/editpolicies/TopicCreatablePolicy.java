@@ -1,13 +1,13 @@
 /* ******************************************************************************
  * Copyright (c) 2006-2012 XMind Ltd. and others.
- * 
+ *
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
  * which is available at http://www.eclipse.org/legal/epl-v10.html
- * and the GNU Lesser General Public License (LGPL), 
+ * and the GNU Lesser General Public License (LGPL),
  * which is available at http://www.gnu.org/licenses/lgpl.html
  * See http://www.xmind.net/license.html for details.
- * 
+ *
  * Contributors:
  *     XMind Ltd. - initial API and implementation
  *******************************************************************************/
@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.osgi.util.NLS;
@@ -38,6 +39,8 @@ import org.xmind.core.IFileEntry;
 import org.xmind.core.ISheet;
 import org.xmind.core.ISummary;
 import org.xmind.core.ITopic;
+import org.xmind.core.ITopicExtension;
+import org.xmind.core.ITopicExtensionElement;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerGroup;
@@ -57,6 +60,7 @@ import org.xmind.gef.graphicalpolicy.IStructure;
 import org.xmind.gef.part.IGraphicalPart;
 import org.xmind.gef.part.IPart;
 import org.xmind.gef.service.IAnimationService;
+import org.xmind.ui.branch.IBranchStructureExtension;
 import org.xmind.ui.branch.ICreatableBranchStructureExtension;
 import org.xmind.ui.commands.AddBoundaryCommand;
 import org.xmind.ui.commands.AddMarkerCommand;
@@ -71,10 +75,12 @@ import org.xmind.ui.commands.ModifyBoundaryMasterCommand;
 import org.xmind.ui.commands.ModifyImageSizeCommand;
 import org.xmind.ui.commands.ModifyImageSourceCommand;
 import org.xmind.ui.commands.ModifyRangeCommand;
+import org.xmind.ui.commands.ModifyRightNumberOfUnbalancedStructureCommand;
 import org.xmind.ui.commands.ModifySummaryTopicCommand;
 import org.xmind.ui.commands.ModifyTitleTextCommand;
 import org.xmind.ui.commands.ModifyTopicHyperlinkCommand;
 import org.xmind.ui.internal.MindMapMessages;
+import org.xmind.ui.internal.branch.UnbalancedData;
 import org.xmind.ui.mindmap.IBranchPart;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -94,7 +100,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
                 || MindMapUI.REQ_CREATE_BOUNDARY.equals(requestType)
                 || MindMapUI.REQ_CREATE_SUMMARY.equals(requestType)
                 || MindMapUI.REQ_ADD_IMAGE.equals(requestType)
-                || MindMapUI.REQ_CREATE_SHEET.equals(requestType);
+                || MindMapUI.REQ_CREATE_SHEET.equals(requestType)
+                || MindMapUI.REQ_DUPLICATE_TOPIC.equals(requestType);
     }
 
     public void handle(Request request) {
@@ -102,7 +109,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
         if (GEF.REQ_CREATE.equals(reqType) //
                 || MindMapUI.REQ_CREATE_CHILD.equals(reqType) //
                 || MindMapUI.REQ_CREATE_BEFORE.equals(reqType) //
-                || MindMapUI.REQ_CREATE_PARENT.equals(reqType)) {
+                || MindMapUI.REQ_CREATE_PARENT.equals(reqType)
+                || MindMapUI.REQ_DUPLICATE_TOPIC.equals(reqType)) {
             createTopic(request);
         } else if (MindMapUI.REQ_ADD_ATTACHMENT.equals(reqType)) {
             addAttachments(request);
@@ -678,7 +686,8 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
             if (sourceBranch.isCentral()) {
                 reqType = MindMapUI.REQ_CREATE_CHILD;//
             }
-        } else if (MindMapUI.REQ_CREATE_BEFORE.equals(reqType)) {
+        } else if (MindMapUI.REQ_CREATE_BEFORE.equals(reqType)
+                || MindMapUI.REQ_DUPLICATE_TOPIC.equals(reqType)) {
             if (ITopic.SUMMARY.equals(sourceTopic.getType()))
                 return;
         } else if (MindMapUI.REQ_CREATE_PARENT.equals(reqType)) {
@@ -690,6 +699,10 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
         CreateTopicCommandBuilder builder = new CreateTopicCommandBuilder(
                 viewer, request.getTargetCommandStack(), sourceTopic, reqType);
         if (!builder.canStart())
+            return;
+
+        ITopic centralTopic = (ITopic) viewer.getAdapter(ITopic.class);
+        if (centralTopic == null)
             return;
 
         if (ITopic.ATTACHED.equals(builder.getTargetType())) {
@@ -704,6 +717,7 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
                     } else {
                         sourceChild = null;
                     }
+
                     IStructure structure = parentBranch.getBranchPolicy()
                             .getStructure(parentBranch);
                     if (structure instanceof ICreatableBranchStructureExtension) {
@@ -711,6 +725,51 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
                                 .decorateCreateRequest(parentBranch,
                                         sourceChild, request);
                     }
+
+                    String centralTopicStructure = centralTopic
+                            .getStructureClass();
+                    boolean isUnbalancedStructure = centralTopicStructure == null
+                            || UnbalancedData.STRUCTUREID_UNBALANCED
+                                    .equalsIgnoreCase(centralTopicStructure);
+                    if (isUnbalancedStructure
+                            && (!MindMapUI.REQ_CREATE_PARENT.equals(reqType))) {
+                        ITopicExtension extension = centralTopic
+                                .createExtension(UnbalancedData.EXTENTION_UNBALANCEDSTRUCTURE);
+                        ITopicExtensionElement element = extension
+                                .getContent()
+                                .getCreatedChild(
+                                        UnbalancedData.EXTENTIONELEMENT_RIGHTNUMBER);
+                        String preCreateRightNum = element.getTextContent();
+                        if (preCreateRightNum == null)
+                            preCreateRightNum = String.valueOf(0);
+                        int postCreateRightNum = Integer.valueOf(
+                                preCreateRightNum).intValue();
+
+                        if (parentBranch.isCentral()) {
+                            List<IBranchPart> mainBranches = parentBranch
+                                    .getSubBranches();
+                            int size = mainBranches.size();
+                            if ((((IBranchStructureExtension) structure)
+                                    .getChildTargetOrientation(parentBranch,
+                                            sourceBranch) == PositionConstants.WEST && parentBranch != sourceBranch)
+                                    || (parentBranch == sourceBranch
+                                            && size <= 2 && postCreateRightNum == size)) {
+                                postCreateRightNum++;
+                                if (size > 2
+                                        && (mainBranches.indexOf(sourceBranch) == size - 1))
+                                    postCreateRightNum--;
+                            }
+                        }
+
+                        ModifyRightNumberOfUnbalancedStructureCommand modifyRightNumberCommand = new ModifyRightNumberOfUnbalancedStructureCommand(
+                                centralTopic, preCreateRightNum,
+                                postCreateRightNum);
+                        builder.addPendingCommand(modifyRightNumberCommand,
+                                false);
+                        //if sourceCollectable is true,the operations of create and move topic 
+                        //maybe lead to undo/redo error.
+                    }
+
                 }
             }
         }
@@ -721,7 +780,12 @@ public class TopicCreatablePolicy extends MindMapPolicyBase {
         builder.start();
         builder2.start();
 
-        builder.createTopic();
+        if (MindMapUI.REQ_DUPLICATE_TOPIC.equals(reqType)) {
+            builder.createDuplicateTopic();
+        } else {
+            builder.createTopic();
+        }
+
         if (builder.getCreatedTopic() != null) {
             builder2.addSource(builder.getCreatedTopic(), true);
         }

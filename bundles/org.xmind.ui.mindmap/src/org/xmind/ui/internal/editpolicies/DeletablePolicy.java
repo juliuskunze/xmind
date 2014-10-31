@@ -16,15 +16,24 @@ package org.xmind.ui.internal.editpolicies;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.xmind.core.IRelationship;
 import org.xmind.core.ITopic;
 import org.xmind.core.ITopicComponent;
+import org.xmind.core.ITopicExtension;
+import org.xmind.core.ITopicExtensionElement;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.Request;
+import org.xmind.gef.graphicalpolicy.IStructure;
 import org.xmind.gef.part.IPart;
+import org.xmind.ui.branch.IBranchStructureExtension;
 import org.xmind.ui.commands.CommandMessages;
+import org.xmind.ui.commands.ModifyRightNumberOfUnbalancedStructureCommand;
+import org.xmind.ui.internal.branch.UnbalancedData;
+import org.xmind.ui.mindmap.IBranchPart;
+import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.util.MindMapUtils;
 
@@ -52,16 +61,62 @@ public class DeletablePolicy extends MindMapPolicyBase {
 
         IPart toFocus = MindMapUtils.findToFocus(targets, viewer);
 
-        String label = getDeleteLabel(MindMapUI.getCategoryManager().analyze(
-                elements.toArray()).getMainCategory());
+        String label = getDeleteLabel(MindMapUI.getCategoryManager()
+                .analyze(elements.toArray()).getMainCategory());
 
-        DeleteCommandBuilder builder = new DeleteCommandBuilder(viewer, request
-                .getTargetCommandStack());
+        DeleteCommandBuilder builder = new DeleteCommandBuilder(viewer,
+                request.getTargetCommandStack());
         if (!builder.canStart())
             return;
 
+        ITopic centralTopic = (ITopic) viewer.getAdapter(ITopic.class);
+        if (centralTopic == null)
+            return;
+
+        String centralTopicStricture = centralTopic.getStructureClass();
+        boolean isUnthrowedSideStructure = centralTopicStricture == null
+                || UnbalancedData.STRUCTUREID_UNBALANCED
+                        .equalsIgnoreCase(centralTopicStricture);
+
+        if (isUnthrowedSideStructure) {
+            ITopicExtension extension = centralTopic
+                    .createExtension(UnbalancedData.EXTENTION_UNBALANCEDSTRUCTURE);
+            ITopicExtensionElement ee = extension.getContent().getCreatedChild(
+                    UnbalancedData.EXTENTIONELEMENT_RIGHTNUMBER);
+            String preDeleteRightNum = ee.getTextContent();
+            if (preDeleteRightNum == null)
+                preDeleteRightNum = String.valueOf(0);
+            int postDeleteRightNum = Integer.valueOf(preDeleteRightNum);
+            for (IPart topicPart : targets) {
+                if (topicPart instanceof ITopicPart
+                        && !(ITopic.SUMMARY.equals(((ITopicPart) topicPart)
+                                .getTopic().getType()))) {
+                    IBranchPart mainBranch = MindMapUtils.findBranch(topicPart);
+                    if (!mainBranch.isCentral()) {
+                        IBranchPart centralBranch = mainBranch
+                                .getParentBranch();
+                        if (centralBranch != null && centralBranch.isCentral()) {
+                            IStructure structure = centralBranch
+                                    .getBranchPolicy().getStructure(
+                                            centralBranch);
+                            if ((((IBranchStructureExtension) structure)
+                                    .getChildTargetOrientation(centralBranch,
+                                            mainBranch) == PositionConstants.WEST)) {
+                                postDeleteRightNum--;
+                            }
+                        }
+                    }
+                }
+            }
+            builder.addPendingCommand(
+                    new ModifyRightNumberOfUnbalancedStructureCommand(
+                            centralTopic, preDeleteRightNum, postDeleteRightNum),
+                    true);
+        }
+
         builder.start();
         builder.setLabel(label);
+
         for (Object element : elements) {
             builder.delete(element);
         }

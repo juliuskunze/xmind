@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.ui.internal.branch;
 
+import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_CATEGORY_ID;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_DESCRIPTION;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_ICON;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_ID;
@@ -100,8 +101,8 @@ class BranchPolicy extends AbstractBranchPolicy implements
         defaultStructureId = element
                 .getAttribute(RegistryConstants.ATT_DEFAULT_STRUCTURE_ID);
         if (defaultStructureId == null)
-            throw new CoreException(new Status(IStatus.ERROR, element
-                    .getNamespaceIdentifier(), 0,
+            throw new CoreException(new Status(IStatus.ERROR,
+                    element.getNamespaceIdentifier(), 0,
                     "Invalid extension (missing default structure id): " //$NON-NLS-1$
                             + getId(), null));
         initializeEnablement();
@@ -167,6 +168,10 @@ class BranchPolicy extends AbstractBranchPolicy implements
 
     public String getDescription() {
         return element.getAttribute(ATT_DESCRIPTION);
+    }
+
+    public String getCategoryId() {
+        return element.getAttribute(ATT_CATEGORY_ID);
     }
 
     public String getName(IBranchPart branch) {
@@ -317,8 +322,8 @@ class BranchPolicy extends AbstractBranchPolicy implements
         }
         super.deactivateBranch(branch);
         if (cm != null) {
-            cm.setCache(SHOULD_NOTIFY_POST_DEACTIVATE, Boolean
-                    .valueOf(shouldNotifyAdvisor));
+            cm.setCache(SHOULD_NOTIFY_POST_DEACTIVATE,
+                    Boolean.valueOf(shouldNotifyAdvisor));
         }
     }
 

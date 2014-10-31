@@ -97,6 +97,8 @@ public class SiteEventStore {
             return startup;
         if (findEvent(event.getId()) == null)
             return !"never".equals(prompt); //$NON-NLS-1$
+        if (prompt != null && prompt.contains("every")) //$NON-NLS-1$
+            return true;
         return false;
     }
 

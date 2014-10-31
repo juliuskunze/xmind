@@ -17,15 +17,22 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ContributionItem;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.BusyIndicator;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.IEditorInput;
@@ -33,7 +40,10 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPropertyListener;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
+import org.xmind.core.sharing.ILocalSharedLibrary;
 import org.xmind.core.sharing.ILocalSharedMap;
 import org.xmind.core.sharing.ISharedMap;
 import org.xmind.core.sharing.ISharingListener;
@@ -44,6 +54,72 @@ import org.xmind.ui.internal.editor.MME;
 
 public class MindMapSharingStatusItem extends ContributionItem implements
         IPropertyListener, ISharingListener, Listener, PropertyChangeListener {
+
+    private class OpenLocalNetworkSharingViewAction extends Action {
+
+        public OpenLocalNetworkSharingViewAction(String text) {
+            super(text, LocalNetworkSharingUI.imageDescriptorFromPlugin(
+                    LocalNetworkSharingUI.PLUGIN_ID, "icons/localnetwork.gif")); //$NON-NLS-1$
+        }
+
+        @Override
+        public void run() {
+            IWorkbenchWindow window = PlatformUI.getWorkbench()
+                    .getActiveWorkbenchWindow();
+            if (window == null)
+                return;
+
+            final IWorkbenchPage page = window.getActivePage();
+            if (page == null)
+                return;
+
+            SafeRunner.run(new SafeRunnable() {
+                public void run() throws Exception {
+                    page.showView(LocalNetworkSharingUI.VIEW_ID);
+                }
+            });
+        }
+
+    }
+
+    private class DeleteSharedMapsAction extends Action {
+
+        private final ISharedMap localMap;
+
+        public DeleteSharedMapsAction(String text, ISharedMap localMap) {
+            super(text, LocalNetworkSharingUI.imageDescriptorFromPlugin(
+                    LocalNetworkSharingUI.PLUGIN_ID, "icons/delete.gif")); //$NON-NLS-1$
+            this.localMap = localMap;
+        }
+
+        @Override
+        public void run() {
+            if (sharingService == null)
+                return;
+
+            final ILocalSharedLibrary library = sharingService
+                    .getLocalLibrary();
+            if (!library.hasMaps())
+                return;
+
+            if (localMap != null) {
+                if (!MessageDialog
+                        .openConfirm(
+                                Display.getCurrent().getActiveShell(),
+                                SharingMessages.CommonDialogTitle_LocalNetworkSharing,
+                                NLS.bind(
+                                        SharingMessages.ConfirmDeleteSingleSharedMap_dialogMessage,
+                                        localMap.getResourceName())))
+                    return;
+            }
+
+            BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
+                public void run() {
+                    library.removeSharedMap(localMap);
+                }
+            });
+        }
+    }
 
     private static final String SHARE_COMMAND_ID = "org.xmind.ui.command.sharing.localnetwork.shareOpenedMap"; //$NON-NLS-1$
 
@@ -70,10 +146,12 @@ public class MindMapSharingStatusItem extends ContributionItem implements
         setVisible(LocalNetworkSharingUI.getDefault().isLNSServiceAvailable());
     }
 
+    @Override
     public boolean isDynamic() {
         return true;
     }
 
+    @Override
     public void dispose() {
         if (separator != null) {
             separator.dispose();
@@ -99,6 +177,7 @@ public class MindMapSharingStatusItem extends ContributionItem implements
         super.dispose();
     }
 
+    @Override
     public void fill(ToolBar parent, int index) {
         if (sharingService == null)
             return;
@@ -113,6 +192,7 @@ public class MindMapSharingStatusItem extends ContributionItem implements
         update(null);
     }
 
+    @Override
     public void update(String id) {
         if (item != null && !item.isDisposed()) {
             if (editor != null && sharingService != null) {
@@ -205,12 +285,32 @@ public class MindMapSharingStatusItem extends ContributionItem implements
         ISharedMap localMap = file == null ? null
                 : findSharedMapByLocalFile(file);
         if (localMap != null) {
-            revealSharedMap(localMap);
+            showPopupMenu(localMap);
         } else if (isSharedByRemoteUser(input)) {
             revealSharedMap(((SharedWorkbookEditorInput) input).getSourceMap());
         } else {
             executeShareCommand(event);
         }
+    }
+
+    private void showPopupMenu(ISharedMap localMap) {
+        MenuManager popupMenu = new MenuManager();
+        popupMenu
+                .add(new OpenLocalNetworkSharingViewAction(
+                        SharingMessages.SharingServiceStatusItem_ShowLocalNetworkSharingViewAction_text));
+
+        popupMenu.add(new Separator());
+
+        popupMenu
+                .add(new DeleteSharedMapsAction(
+                        SharingMessages.MindMapSharingStatusItem_Shared_popupMenuItem_stopSharingLabel,
+                        localMap));
+
+        Rectangle itemBounds = item.getBounds();
+        Menu menuWidget = popupMenu.createContextMenu(item.getParent());
+        menuWidget.setLocation(item.getParent().toDisplay(itemBounds.x,
+                itemBounds.y));
+        menuWidget.setVisible(true);
     }
 
     private void revealSharedMap(ISharedMap map) {

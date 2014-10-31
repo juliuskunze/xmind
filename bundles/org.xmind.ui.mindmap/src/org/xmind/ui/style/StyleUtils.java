@@ -473,7 +473,7 @@ public class StyleUtils {
                     ISheetPart sheet = (ISheetPart) viewer
                             .getAdapter(ISheetPart.class);
                     if (sheet != null) {
-                        value = getStyleSelector(sheet).getUserValue(sheet,
+                        value = getStyleSelector(sheet).getStyleValue(sheet,
                                 Styles.LineTapered);
                     }
                 }
@@ -502,11 +502,13 @@ public class StyleUtils {
                         sheet = (ISheetPart) viewer
                                 .getAdapter(ISheetPart.class);
                         if (sheet != null) {
-                            value = StyleUtils
-                                    .getStyleSelector(sheet)
-                                    .getUserValue(sheet, Styles.MultiLineColors);
-                            if (branch.getBranchType() == "subBranch") //$NON-NLS-1$
-                                value = null;
+                            value = StyleUtils.getStyleSelector(sheet)
+                                    .getStyleValue(sheet,
+                                            Styles.MultiLineColors);
+                            if (value != null
+                                    && branch.getBranchType() == "subBranch") //$NON-NLS-1$
+                                return parentSS.getStyleValue(parent,
+                                        Styles.LineColor);
                         }
                     }
                 }

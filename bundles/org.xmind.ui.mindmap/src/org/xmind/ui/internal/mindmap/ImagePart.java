@@ -29,7 +29,6 @@ import org.xmind.core.IImage;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.GEF;
 import org.xmind.gef.draw2d.SizeableImageFigure;
@@ -159,7 +158,7 @@ public class ImagePart extends MindMapPartBase implements IImagePart {
         }
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
+    protected void registerCoreEvents(Object source,
             ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
         register.register(Core.ImageAlignment);

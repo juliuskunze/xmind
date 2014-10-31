@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import java.util.Stack;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
@@ -211,8 +210,6 @@ public class FreeMindImporter extends MindMapImporter implements
                 styleStack.pop();
         }
     }
-
-    private static DocumentBuilder documentBuilder = null;
 
     private static ResourceMappingManager mappings = null;
 
@@ -668,15 +665,7 @@ public class FreeMindImporter extends MindMapImporter implements
 
     private DocumentBuilder getDocumentBuilder()
             throws ParserConfigurationException {
-        if (documentBuilder == null) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory
-                    .newInstance();
-            factory.setAttribute(
-                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                    true);
-            documentBuilder = factory.newDocumentBuilder();
-        }
-        return documentBuilder;
+        return DOMUtils.getDefaultDocumentBuilder();
     }
 
     private static Element child(Element parentEle, String childTag) {

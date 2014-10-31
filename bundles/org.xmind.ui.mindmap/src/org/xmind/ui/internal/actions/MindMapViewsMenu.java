@@ -21,10 +21,13 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.internal.ShowViewAction;
+import org.eclipse.ui.menus.IWorkbenchContribution;
+import org.eclipse.ui.services.IServiceLocator;
 import org.eclipse.ui.views.IViewDescriptor;
 import org.eclipse.ui.views.IViewRegistry;
 
-public class MindMapViewsMenu extends ContributionItem {
+public class MindMapViewsMenu extends ContributionItem implements
+        IWorkbenchContribution {
 
     private static class ShowViewAction2 extends ShowViewAction {
 
@@ -46,6 +49,9 @@ public class MindMapViewsMenu extends ContributionItem {
         }
     };
 
+    public MindMapViewsMenu() {
+    }
+
     public MindMapViewsMenu(IWorkbenchWindow window) {
         this.window = window;
     }
@@ -62,6 +68,9 @@ public class MindMapViewsMenu extends ContributionItem {
     }
 
     public void fill(Menu menu, int index) {
+        if (window == null)
+            return;
+
         if (getParent() instanceof MenuManager) {
             ((MenuManager) getParent()).addMenuListener(menuListener);
         }
@@ -95,6 +104,11 @@ public class MindMapViewsMenu extends ContributionItem {
     private void addShowViewAction(MenuManager manager, String viewId,
             IViewDescriptor view) {
         manager.add(new ShowViewAction2(window, view, false));
+    }
+
+    public void initialize(IServiceLocator serviceLocator) {
+        this.window = (IWorkbenchWindow) serviceLocator
+                .getService(IWorkbenchWindow.class);
     }
 
 }

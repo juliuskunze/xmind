@@ -16,7 +16,6 @@ package org.xmind.ui.internal.mindmap;
 import org.xmind.core.Core;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.part.IPart;
 import org.xmind.ui.internal.decorators.TopicTitleTextDecorator;
 
@@ -39,7 +38,7 @@ public class TopicTitleTextPart extends TitleTextPart {
         }
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
+    protected void registerCoreEvents(Object source,
             ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
         register.register(Core.TitleWidth);

@@ -48,7 +48,7 @@ public class EditorPrefPage extends FieldEditorPreferencePage implements
         addTopicPositioningGroup();
         addAnimationField();
         addShadowField();
-        addGradientColorField();
+//        addGradientColorField();
     }
 
     private void addUndoRedoField() {
@@ -101,11 +101,11 @@ public class EditorPrefPage extends FieldEditorPreferencePage implements
                 getFieldEditorParent()));
     }
 
-    private void addGradientColorField() {
-        addField(new BooleanFieldEditor(PrefConstants.GRADIENT_COLOR,
-                PrefMessages.EditorPage_UndoRedo_gradientColor,
-                getFieldEditorParent()));
-    }
+//    private void addGradientColorField() {
+//        addField(new BooleanFieldEditor(PrefConstants.GRADIENT_COLOR,
+//                PrefMessages.EditorPage_UndoRedo_gradientColor,
+//                getFieldEditorParent()));
+//    }
 
     private void addPreviewField() {
         addField(new BooleanFieldEditor(PrefConstants.PREVIEW_SKIPPED,

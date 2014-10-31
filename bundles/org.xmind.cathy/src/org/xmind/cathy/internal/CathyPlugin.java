@@ -13,15 +13,21 @@
  *******************************************************************************/
 package org.xmind.cathy.internal;
 
+import java.io.File;
+
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.osgi.service.debug.DebugOptions;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
+import org.xmind.core.Core;
 import org.xmind.core.command.ICommandService;
-import org.xmind.core.internal.XmindCore;
+import org.xmind.core.internal.runtime.WorkspaceConfigurer;
+import org.xmind.core.internal.runtime.WorkspaceSession;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -123,10 +129,20 @@ public class CathyPlugin extends AbstractUIPlugin {
      */
     //public static final String HIDE_NOTIFICATIONS = "hideNotifications"; //$NON-NLS-1$
 
+    /**
+     * String constants identifying the extension part of a XMind command file
+     * name.
+     */
+    public static final String COMMAND_FILE_EXT = ".xmind-command"; //$NON-NLS-1$
+
     // The shared instance.
     private static CathyPlugin plugin;
 
     private ServiceTracker<ICommandService, ICommandService> commandServiceTracker = null;
+
+    private ServiceTracker<DebugOptions, DebugOptions> debugTracker = null;
+
+    private WorkspaceSession xmindWorkspaceSession = null;
 
     /**
      * The constructor.
@@ -142,10 +158,9 @@ public class CathyPlugin extends AbstractUIPlugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
 
-        // Activate XMind Core
-        XmindCore.getDefault();
-
         activateNetworkSettings();
+
+        activateXMindCore();
     }
 
     /**
@@ -157,6 +172,12 @@ public class CathyPlugin extends AbstractUIPlugin {
             commandServiceTracker.close();
             commandServiceTracker = null;
         }
+
+        if (xmindWorkspaceSession != null) {
+            xmindWorkspaceSession.close();
+            xmindWorkspaceSession = null;
+        }
+
         super.stop(context);
         plugin = null;
     }
@@ -168,8 +189,26 @@ public class CathyPlugin extends AbstractUIPlugin {
                 networkPlugin
                         .loadClass("org.eclipse.core.internal.net.Activator"); //$NON-NLS-1$
             } catch (ClassNotFoundException e) {
+                getLog().log(
+                        new Status(
+                                IStatus.WARNING,
+                                PLUGIN_ID,
+                                "Failed to activate plugin 'org.eclipse.core.net'.", //$NON-NLS-1$
+                                e));
             }
+        } else {
+            getLog().log(
+                    new Status(IStatus.WARNING, PLUGIN_ID,
+                            "Plugin 'org.eclipse.core.net' not found. Network proxies may not be correct.")); //$NON-NLS-1$
         }
+    }
+
+    private void activateXMindCore() throws CoreException {
+        WorkspaceConfigurer
+                .setDefaultWorkspaceLocation(WorkspaceConfigurer.INSTANCE_LOCATION);
+
+        xmindWorkspaceSession = WorkspaceSession.openSessionIn(new File(Core
+                .getWorkspace().getTempDir()));
     }
 
     /**
@@ -218,6 +257,22 @@ public class CathyPlugin extends AbstractUIPlugin {
         if (message == null)
             message = ""; //$NON-NLS-1$
         getDefault().getLog().log(new Status(IStatus.INFO, PLUGIN_ID, message));
+    }
+
+    public DebugOptions getDebugOptions() {
+        if (debugTracker == null) {
+            debugTracker = new ServiceTracker<DebugOptions, DebugOptions>(
+                    getBundle().getBundleContext(),
+                    DebugOptions.class.getName(), null);
+            debugTracker.open();
+        }
+        return debugTracker.getService();
+    }
+
+    public boolean isDebugging(String option) {
+        return getDebugOptions().isDebugEnabled()
+                && getDebugOptions()
+                        .getBooleanOption(PLUGIN_ID + option, false);
     }
 
 }

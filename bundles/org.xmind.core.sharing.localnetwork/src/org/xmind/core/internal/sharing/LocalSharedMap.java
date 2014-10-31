@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.xmind.core.sharing.ILocalSharedMap;
@@ -25,6 +27,7 @@ import org.xmind.core.sharing.ISharedLibrary;
 /**
  * 
  * @author Frank Shaka
+ * @author Jason Wong
  * 
  */
 public class LocalSharedMap extends AbstractSharedMap implements
@@ -34,9 +37,9 @@ public class LocalSharedMap extends AbstractSharedMap implements
 
     private String encodedThumbnailData;
 
-    private long modifiedTime = 0;
-
     private long addedTime = 0;
+
+    private List<String> receiverIDs = new ArrayList<String>();
 
     public LocalSharedMap(ISharedLibrary library, String id) {
         super(library, id);
@@ -71,6 +74,7 @@ public class LocalSharedMap extends AbstractSharedMap implements
         }
     }
 
+    @Override
     public void setThumbnailData(byte[] data) {
         if (data != null && data.length == 0) {
             data = null;
@@ -82,14 +86,6 @@ public class LocalSharedMap extends AbstractSharedMap implements
 
     public String getEncodedThumbnailData() {
         return encodedThumbnailData == null ? "" : encodedThumbnailData; //$NON-NLS-1$
-    }
-
-    public long getResourceModifiedTime() {
-        return modifiedTime;
-    }
-
-    public void setResourceModifiedTime(long time) {
-        this.modifiedTime = time;
     }
 
     public long getAddedTime() {
@@ -115,6 +111,33 @@ public class LocalSharedMap extends AbstractSharedMap implements
         } finally {
             progress.done();
         }
+    }
+
+    public void addReceiver(String receiverID) {
+        receiverIDs.add(receiverID);
+    }
+
+    public void addReceivers(List<String> receiverIDs) {
+        this.receiverIDs.addAll(receiverIDs);
+    }
+
+    public List<String> getReceiverIDs() {
+        return this.receiverIDs;
+    }
+
+    public boolean hasAccessRight(String remoteID) {
+        boolean isContact = LocalNetworkSharing.getDefault()
+                .getSharingService().getContactManager().isContact(remoteID);
+        if (remoteID == null)
+            return true;
+
+        if (!isContact)
+            return false;
+
+        if (receiverIDs.isEmpty() || receiverIDs.contains(remoteID))
+            return true;
+
+        return false;
     }
 
     @Override

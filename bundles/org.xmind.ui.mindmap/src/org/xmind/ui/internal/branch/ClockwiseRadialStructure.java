@@ -49,8 +49,8 @@ public class ClockwiseRadialStructure extends BaseRadialStructure {
             if (insertion != null && i == insertion.getIndex()) {
                 if (i != numRight || !insertion.right) {
                     Point p = ref.getTranslated(cache.getX(y, right), y);
-                    Rectangle insBounds = RadialUtils.getPrefBounds(insertion
-                            .getSize(), p, right);
+                    Rectangle insBounds = RadialUtils.getPrefBounds(
+                            insertion.getSize(), p, right);
                     info.add(insBounds);
                     if (insertion.right)
                         y += insHeight;
@@ -82,8 +82,8 @@ public class ClockwiseRadialStructure extends BaseRadialStructure {
                 if ((i == numRight - 1 && insertion.getIndex() == numRight && insertion.right)
                         || i == num) {
                     Point p = ref.getTranslated(cache.getX(y, right), y);
-                    Rectangle insBounds = RadialUtils.getPrefBounds(insertion
-                            .getSize(), p, right);
+                    Rectangle insBounds = RadialUtils.getPrefBounds(
+                            insertion.getSize(), p, right);
                     info.add(insBounds);
                     y += insHeight;
                 }
@@ -164,15 +164,19 @@ public class ClockwiseRadialStructure extends BaseRadialStructure {
         int[] childrenSpacings = cache.getChildrenSpacings();
 
         int num = subBranches.size();
+
         boolean right = true;
 
         Dimension insSize = calcInsSize(branch, key);
         int insHeight = insSize.height;
-        boolean insRight = calcInsSide(branch, ref, key);
 
         int startY = ref.y;
         int y = startY - cache.getRightSumSpacing() / 2;
+
+        boolean insRight = calcInsSide(branch, ref, key);
         if (insRight) {
+            if (numRight == 0)
+                return 0;
             y -= insHeight / 2;
         }
 

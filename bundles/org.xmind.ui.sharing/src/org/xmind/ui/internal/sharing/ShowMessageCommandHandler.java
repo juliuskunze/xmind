@@ -32,16 +32,16 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.xmind.core.command.ICommand;
 import org.xmind.core.command.ICommandHandler;
 import org.xmind.core.command.arguments.ArrayMapper;
 import org.xmind.core.sharing.IRemoteSharedLibrary;
-import org.xmind.core.sharing.ISharedLibrary;
 import org.xmind.core.sharing.ISharedMap;
 import org.xmind.core.sharing.ISharingService;
-import org.xmind.ui.dialogs.NotificationWindow;
+import org.xmind.ui.dialogs.Notification;
 
 /**
  * 
@@ -72,6 +72,12 @@ public class ShowMessageCommandHandler implements ICommandHandler {
             return new Status(IStatus.WARNING, "org.xmind.core.sharing", //$NON-NLS-1$
                     "Remote library not found."); //$NON-NLS-1$
 
+        String contactId = sourceLibrary.getContactID();
+        if (contactId != null
+                && !sharingService.getContactManager().isContact(contactId))
+            return new Status(IStatus.WARNING, "org.xmind.core.sharing", //$NON-NLS-1$
+                    "Remote library not found in contact list."); //$NON-NLS-1$
+
         ArrayMapper mapsReader = new ArrayMapper(command.getArguments()
                 .getRawMap(), PROP_MAPS);
         List<ISharedMap> maps = new ArrayList<ISharedMap>(mapsReader.getSize());
@@ -90,91 +96,53 @@ public class ShowMessageCommandHandler implements ICommandHandler {
                     "No message or maps to show."); //$NON-NLS-1$
         }
 
-        showMessage(sourceLibrary, message, maps);
+        String text = getText(sourceLibrary.getName(), message, maps);
+        showMessage(maps, text);
         return Status.OK_STATUS;
     }
 
-    private void showMessage(final ISharedLibrary sourceLibrary,
-            final String message, final List<ISharedMap> maps) {
+    private void showMessage(final List<ISharedMap> maps, final String text) {
         if (!PlatformUI.isWorkbenchRunning())
             return;
+
         IWorkbench workbench = PlatformUI.getWorkbench();
         if (workbench != null) {
             Display display = workbench.getDisplay();
             if (display != null && !display.isDisposed()) {
                 display.asyncExec(new Runnable() {
                     public void run() {
-                        doShowMessage(sourceLibrary.getName(), message, maps);
+                        doShowMessage(maps, text);
                     }
                 });
             }
         }
     }
 
-    private void doShowMessage(final String sourceName, final String message,
-            final List<ISharedMap> maps) {
-        String text;
-        if (maps.size() == 0) {
-            text = NLS
-                    .bind(SharingMessages.SharingMessageNotification_label_withRemoteUserName_and_ZeroSharedMaps,
-                            sourceName);
-        } else if (maps.size() == 1) {
-            text = NLS
-                    .bind(SharingMessages.SharingMessageNotification_label_withRemoteUserName_and_OneSharedMap,
-                            sourceName, maps.get(0).getResourceName());
-        } else {
-            StringBuilder mapNames = new StringBuilder(maps.size() * 15);
-            for (int i = 0; i < maps.size(); i++) {
-                ISharedMap map = maps.get(i);
-                if (i > 0) {
-                    if (i == maps.size() - 1) {
-                        mapNames.append(SharingMessages.SharingMessageNotification_LastSharedMapNameConjunction);
-                    } else {
-                        mapNames.append(SharingMessages.SharingMessageNotification_DefaultSharedMapNamesConjunction);
-                    }
-                }
-                mapNames.append('\u2018');
-                mapNames.append(map.getResourceName());
-                mapNames.append('\u2019');
-            }
-            text = NLS
-                    .bind(SharingMessages.SharingMessageNotification_label_withRemoteUserName_and_NumberOfSharedMaps_and_ConjunctSharedMapNames,
-                            new String[] { sourceName,
-                                    String.valueOf(maps.size()),
-                                    mapNames.toString() });
-        }
-        if (message != null && !"".equals(message)) { //$NON-NLS-1$
-            text = text + "\n\n\u201C" + message + "\u201D"; //$NON-NLS-1$ //$NON-NLS-2$
-        }
-
+    private void doShowMessage(final List<ISharedMap> maps, String text) {
         IWorkbenchWindow window = PlatformUI.getWorkbench()
                 .getActiveWorkbenchWindow();
         Shell parentShell = window == null ? Display.getCurrent()
                 .getActiveShell() : window.getShell();
 
-        final NotificationWindow[] notification = new NotificationWindow[1];
-
+        final Notification[] notification = new Notification[1];
         IAction action = new Action() {
-
-            public void run() {
-                openMaps(maps);
-            }
-        };
-        action.setText(text);
-
-        IAction viewAction = new Action() {
-
+            @Override
             public void run() {
                 openMaps(maps);
                 notification[0].close();
             }
         };
-        viewAction
-                .setText(SharingMessages.SharingMessageNotification_ViewAction_text);
+        action.setText(SharingMessages.ShowMessageCommandHandler_openAction_name);
+        action.setImageDescriptor(LocalNetworkSharingUI
+                .imageDescriptorFromPlugin(LocalNetworkSharingUI.PLUGIN_ID,
+                        "icons/localnetwork32.png")); //$NON-NLS-1$
 
-        notification[0] = new NotificationWindow(parentShell, null, action,
-                viewAction, 0);
-        notification[0].open();
+        notification[0] = new Notification(parentShell, null, text, action,
+                null);
+        notification[0].setGroupId(LocalNetworkSharingUI.PLUGIN_ID);
+        notification[0].setCenterPopUp(true);
+        notification[0].setDuration(-1);
+        notification[0].popUp();
     }
 
     private void openMaps(final List<ISharedMap> maps) {
@@ -188,8 +156,65 @@ public class ShowMessageCommandHandler implements ICommandHandler {
                             .openWorkbenchWindow(null);
                 }
                 SharingUtils.openSharedMaps(window.getActivePage(), maps);
+                final IWorkbenchPage page = window.getActivePage();
+                if (page != null) {
+                    page.showView(LocalNetworkSharingUI.VIEW_ID);
+                }
             }
         });
+    }
+
+    private String getText(String sourceName, String message,
+            List<ISharedMap> maps) {
+        boolean hasMessage = message != null && !"".equals(message); //$NON-NLS-1$
+
+        String text;
+        if (maps.size() == 0) {
+            text = NLS
+                    .bind(SharingMessages.SharingMessageNotification_label_withRemoteUserName_and_ZeroSharedMaps,
+                            sourceName);
+        } else if (maps.size() == 1) {
+            if (hasMessage) {
+                text = NLS
+                        .bind(SharingMessages.ShowMessageCommandHandler_sharedMapWithMessage_tipText_withRemoteName_and_MapName,
+                                sourceName, maps.get(0).getResourceName());
+            } else {
+                text = NLS
+                        .bind(SharingMessages.ShowMessageCommandHandler_sharedMap_tipText_withRemoteName_and_MapName,
+                                sourceName, maps.get(0).getResourceName());
+            }
+        } else {
+            StringBuilder mapNames = new StringBuilder(maps.size() * 15);
+            for (int i = 0; i < maps.size(); i++) {
+                ISharedMap map = maps.get(i);
+                if (i > 0) {
+                    if (i == maps.size() - 1) {
+                        mapNames.append(SharingMessages.SharingMessageNotification_LastSharedMapNameConjunction);
+                    } else {
+                        mapNames.append(SharingMessages.SharingMessageNotification_DefaultSharedMapNamesConjunction);
+                    }
+                }
+                mapNames.append("'" + map.getResourceName() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            if (hasMessage) {
+                text = NLS
+                        .bind(SharingMessages.ShowMessageCommandHandler_shareMultipleMap_tipText_withRemoteName_and_mapsCount_and_mapsNameList,
+                                new String[] { sourceName,
+                                        String.valueOf(maps.size()),
+                                        mapNames.toString() });
+            } else {
+                text = NLS
+                        .bind(SharingMessages.ShowMessageCommandHandler_shareMap_tipText_withRemoteName_and_mapsCount_and_mapsNameList,
+                                new String[] { sourceName,
+                                        String.valueOf(maps.size()),
+                                        mapNames.toString() });
+            }
+
+        }
+        if (hasMessage) {
+            text = text + "\n\n\u201C" + message + "\u201D"; //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        return text;
     }
 
 }

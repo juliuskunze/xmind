@@ -54,6 +54,8 @@ public class ColorPropertyEditor extends PropertyEditor {
 
     private static final int DEFAULT_TEXT_STYLE = SWT.SINGLE | SWT.BORDER;
 
+    private static final String COLOR_NONE_VALUE = "none"; //$NON-NLS-1$
+
     private int textStyle;
 
     private ColorPickerConfigurer configurer;
@@ -115,6 +117,7 @@ public class ColorPropertyEditor extends PropertyEditor {
 
     private Control createText(Composite parent) {
         text = new Text(parent, textStyle);
+        text.setTextLimit(7);
         text.addFocusListener(new FocusListener() {
             public void focusLost(FocusEvent e) {
                 Display.getCurrent().asyncExec(new Runnable() {
@@ -152,6 +155,21 @@ public class ColorPropertyEditor extends PropertyEditor {
                 } else if (e.keyCode == 13) {
                     textEditingFinished();
                     e.doit = false;
+                } else {
+                    if (COLOR_NONE_VALUE.equals(e.text)) {
+                        return;
+                    }
+                    char[] charArray = e.text.toCharArray();
+                    for (char character : charArray) {
+                        boolean isValid = character == '#'
+                                || (character >= 'A' && character <= 'F')
+                                || (character >= 'a' && character <= 'f')
+                                || (character >= '0' && character <= '9');
+                        if (!isValid) {
+                            e.doit = false;
+                            return;
+                        }
+                    }
                 }
             }
         });
@@ -160,6 +178,10 @@ public class ColorPropertyEditor extends PropertyEditor {
                 if (modifying)
                     return;
                 String value = text.getText();
+                if ((value == null || value.lastIndexOf('#') != 0)
+                        && !COLOR_NONE_VALUE.equals(value)) {
+                    value = ""; //$NON-NLS-1$
+                }
                 changeValue("".equals(value) ? null : value); //$NON-NLS-1$
             }
         });
@@ -190,6 +212,9 @@ public class ColorPropertyEditor extends PropertyEditor {
 
     private void textEditingFinished() {
         String value = text.getText();
+        if ((value == null || value.length() != 7)
+                && !COLOR_NONE_VALUE.equals(value))
+            text.setText(""); //$NON-NLS-1$
         setValueToPicker(value);
         fireApplyEditorValue();
     }

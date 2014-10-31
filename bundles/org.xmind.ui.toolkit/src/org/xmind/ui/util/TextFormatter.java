@@ -91,4 +91,8 @@ public class TextFormatter {
             return String.format("%02d:%02d:%02d", hms); //$NON-NLS-1$
         }
     }
+
+    public static String removeNewLineCharacter(String text) {
+        return text.replaceAll(" ?(\\r\\n|\\n|\\r)+", " "); //$NON-NLS-1$ //$NON-NLS-2$
+    }
 }

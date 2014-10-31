@@ -60,7 +60,7 @@ public abstract class LayeredStyleSelector extends MindMapStyleSelectorBase {
             if (value != null)
                 return getCheckedValue(value);
         }
-        String value = super.getUserValue(part, key);
+        String value = super.getStyleValue(part, key, defaultValueProvider);
         if (value == null && !ignoresAutoValue(part, key))
             value = getAutoValue(part, key, defaultValueProvider);
         return value;

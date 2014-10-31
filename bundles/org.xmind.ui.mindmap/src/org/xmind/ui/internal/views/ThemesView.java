@@ -14,13 +14,17 @@
 package org.xmind.ui.internal.views;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IPageChangedListener;
@@ -67,6 +71,20 @@ import org.xmind.ui.mindmap.MindMapUI;
 
 public class ThemesView extends ViewPart implements IContributedContentsView,
         IPartListener, IPageChangedListener, ICoreEventListener {
+
+    private static final String GROUP_FILE = IWorkbenchActionConstants.GROUP_FILE;
+
+    private static final String GROUP_OPEN = "group.open"; //$NON-NLS-1$
+
+    private static final String GROUP_SHOW_IN = IWorkbenchActionConstants.GROUP_SHOW_IN;
+
+    private static final String GROUP_EDIT = "group.edit"; //$NON-NLS-1$
+
+    private static final String GROUP_REORGANIZE = IWorkbenchActionConstants.GROUP_REORGANIZE;
+
+    private static final String GROUP_GENERATE = "group.generate"; //$NON-NLS-1$
+
+    private static final String GROUP_PROPERTIES = "group.properties"; //$NON-NLS-1$
 
     private static final String KEY_LINK_TO_EDITOR = "LINK_TO_EDITOR"; //$NON-NLS-1$
 
@@ -166,6 +184,7 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         IStyle theme = MindMapUI.getResourceManager().getDefaultTheme();
         if (theme != null)
             viewer.setDefaultTheme(theme);
+
         viewer.setInput(getViewerInput());
         viewer.addOpenListener(new ChangeThemeListener());
 
@@ -185,18 +204,35 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
 
         ToggleLinkEditorAction toggleLinkingAction = new ToggleLinkEditorAction();
         setDefaultThemeAction = new SetDefaultThemeAction();
+
+        MenuManager contextMenu = new MenuManager("#PopupMenu"); //$NON-NLS-1$
+        contextMenu.add(setDefaultThemeAction);
+        contextMenu.add(new Separator(GROUP_FILE));
+        contextMenu.add(new Separator(GROUP_OPEN));
+        contextMenu.add(new GroupMarker(GROUP_SHOW_IN));
+        contextMenu.add(new Separator(GROUP_EDIT));
+        contextMenu.add(new Separator(GROUP_REORGANIZE));
+        contextMenu.add(new Separator(GROUP_GENERATE));
+        contextMenu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+        contextMenu.add(new Separator(GROUP_PROPERTIES));
+        viewer.getControl().setMenu(
+                contextMenu.createContextMenu(viewer.getControl()));
+        getSite().registerContextMenu(contextMenu, viewer);
+
         IToolBarManager toolBar = getViewSite().getActionBars()
                 .getToolBarManager();
-        toolBar.add(toggleLinkingAction);
         toolBar.add(setDefaultThemeAction);
         toolBar.add(new Separator());
         toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+        toolBar.add(new Separator());
+        toolBar.add(new Separator(GROUP_EDIT));
 
         IMenuManager menu = getViewSite().getActionBars().getMenuManager();
         menu.add(toggleLinkingAction);
-        menu.add(setDefaultThemeAction);
         menu.add(new Separator());
         menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+        menu.add(new Separator());
+        menu.add(new Separator(GROUP_EDIT));
 
         getSite().setSelectionProvider(viewer);
         getSite().getPage().addPartListener(this);
@@ -204,13 +240,11 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
         ICoreEventSupport ces = (ICoreEventSupport) MindMapUI
                 .getResourceManager().getUserThemeSheet()
                 .getAdapter(ICoreEventSupport.class);
-        if (ces != null) {
-            register = new CoreEventRegister(this);
-            register.setNextSupport(ces);
-            register.register(Core.StyleAdd);
-            register.register(Core.StyleRemove);
-            register.register(Core.Name);
-        }
+        register = new CoreEventRegister(this);
+        register.setNextSupport(ces);
+        register.register(Core.StyleAdd);
+        register.register(Core.StyleRemove);
+        register.register(Core.Name);
     }
 
     public void dispose() {
@@ -274,10 +308,18 @@ public class ThemesView extends ViewPart implements IContributedContentsView,
 
         List<IStyle> list = new ArrayList<IStyle>(systemThemes.size()
                 + userThemes.size() + 1);
-        list.add(resourceManager.getBlankTheme());
+        list.addAll(getReversed(userThemes));
         list.addAll(systemThemes);
-        list.addAll(userThemes);
+        list.add(resourceManager.getBlankTheme());
         return list;
+    }
+
+    private List<IStyle> getReversed(Collection<IStyle> sourceList) {
+        LinkedList<IStyle> targetList = new LinkedList<IStyle>();
+        for (IStyle item : sourceList) {
+            targetList.add(0, item);
+        }
+        return targetList;
     }
 
     private void changeTheme(IStyle theme) {

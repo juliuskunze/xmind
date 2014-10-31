@@ -234,6 +234,7 @@ public class MindMapDndTool extends GraphicalTool {
                 targetIndex = getParentSearcher().getIndex(targetParent, key);
             }
             req.setParameter(GEF.PARAM_INDEX, targetIndex);
+            req.setParameter(GEF.PARAM_POSITION_ABSOLUTE, getCursorPosition());
         }
         if (targetParent == null) {
             Point position = getCursorPosition();

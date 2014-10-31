@@ -45,10 +45,6 @@ public class HtmlExportWizard extends DocumentExportWizard {
             setDescription(WizardMessages.HtmlExportPage_description);
         }
 
-        protected String getSuggestedFileName() {
-            return super.getSuggestedFileName() + EXTENSIONS.get(0);
-        }
-
         protected void setDialogFilters(FileDialog dialog,
                 List<String> filterNames, List<String> filterExtensions) {
             filterNames.add(0,
@@ -96,6 +92,10 @@ public class HtmlExportWizard extends DocumentExportWizard {
     protected boolean isExtensionCompatible(String path, String extension) {
         return super.isExtensionCompatible(path, extension)
                 && EXTENSIONS.contains(extension.toLowerCase());
+    }
+
+    protected String getSuggestedFileName() {
+        return super.getSuggestedFileName() + EXTENSIONS.get(0);
     }
 
 }

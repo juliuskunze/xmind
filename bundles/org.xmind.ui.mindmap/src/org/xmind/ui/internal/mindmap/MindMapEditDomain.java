@@ -30,6 +30,7 @@ import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_PARENT;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_RELATIONSHIP;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_SHEET;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_CREATE_SUMMARY;
+import static org.xmind.ui.mindmap.MindMapUI.REQ_DUPLICATE_TOPIC;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_EDIT_LABEL;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_HIDE_LEGEND;
 import static org.xmind.ui.mindmap.MindMapUI.REQ_MODIFY_HYPERLINK;
@@ -97,6 +98,7 @@ public class MindMapEditDomain extends EditDomain {
         getPartRoles().setRole(REQ_CREATE_BEFORE, GEF.ROLE_CREATABLE);
         getPartRoles().setRole(REQ_CREATE_PARENT, GEF.ROLE_CREATABLE);
         getPartRoles().setRole(REQ_CREATE_SHEET, GEF.ROLE_CREATABLE);
+        getPartRoles().setRole(REQ_DUPLICATE_TOPIC, GEF.ROLE_CREATABLE);
 
         getPartRoles().setRole(REQ_CREATE_FLOAT, GEF.ROLE_CREATABLE);
         getPartRoles().setRole(REQ_CREATE_BOUNDARY, GEF.ROLE_CREATABLE);

@@ -14,7 +14,6 @@
 package org.xmind.core.command.transfer;
 
 import java.io.Closeable;
-import java.io.EOFException;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -107,6 +106,8 @@ public class ChunkReader implements Closeable {
 
     private static final int DEFAULT_BINARY_BUFFER_SIZE = DEFAULT_BUFFER_SIZE / 4 * 3;
 
+    private static final String EMPTY_TEXT = ""; //$NON-NLS-1$
+
     /**
      * This array is a lookup table that translates unicode characters drawn
      * from the "Base64 Alphabet" (as specified in Table 1 of RFC 2045) into
@@ -163,42 +164,96 @@ public class ChunkReader implements Closeable {
         return chunkEnded && binaryBuffered <= 0;
     }
 
+    /**
+     * Read a line of text and return it.
+     * 
+     * @return a line of text, or <code>null</code> if the main stream has
+     *         reached the end
+     * @throws IOException
+     */
     public String readText() throws IOException {
         closeBinaryStream(true);
-        if (isStreamEnded())
-            throw new EOFException();
-        int size = 0, sep, newSize;
-        int used = 0;
-        do {
+
+        // The number of bytes to return as text.
+        int size = 0;
+
+        // The index of the separator char in the byte buffer.
+        int sep;
+
+        // A new number of bytes that we need to enlarge the text buffer.
+        int newSize;
+
+        // The number of bytes in buffer.
+        int numBuffered;
+
+        // The total number of bytes that we consumed from the stream.
+        // This number may be one more than 'size' as we consume the separator 
+        // char as well.
+        int consumed = 0;
+
+        // Run until the end of stream is reached.
+        while (!isStreamEnded()) {
+
+            // Find the next separator char in the byte buffer,
+            // or the end of the byte buffer.
             sep = findSep(0);
+
+            // Calculate new text buffer size.
             newSize = size + sep;
+
+            // Enlarge the text buffer to receive new bytes.
             if (newSize > textBuffer.length) {
                 textBuffer = Arrays.copyOf(textBuffer,
                         Math.max(textBuffer.length << 1, newSize));
             }
+
+            // Copy required bytes from byte buffer to text buffer.
             if (sep > 0) {
                 System.arraycopy(buffer, 0, textBuffer, size, sep);
             }
+
+            // Now we have 'size' bytes in the text buffer.
             size = newSize;
-            if (sep == buffered) {
-                use(buffered);
-                used += buffered;
+
+            // Consume bytes from the byte buffer.
+            numBuffered = buffered;
+            if (sep == numBuffered) {
+                use(numBuffered);
+                consumed += numBuffered;
             } else {
                 use(sep + 1);
-                used += sep + 1;
+                consumed += sep + 1;
                 break;
             }
-            refill();
-        } while (!isStreamEnded());
-        if (used == 0 && isStreamEnded())
-            throw new EOFException();
+
+            // Reload byte buffer from the stream.
+            reload();
+        }
+
+        // No bytes consumed from stream, this must be caused by the end of stream,
+        // otherwise there must have been at least one separator char.
+        if (consumed == 0)
+            return null;
+
+        // Return the cached empty string to prevent creating a new String instance.
+        if (size == 0)
+            return EMPTY_TEXT;
+
+        // Construct a new String instance from the text buffer.
         return new String(textBuffer, 0, size, textEncoding);
     }
 
+    /**
+     * Create a stream for reading the next chunk of data.
+     * 
+     * @return an input stream for reading the next chunk of data, or
+     *         <code>null</code> if the main stream has reached the end
+     * @throws IOException
+     */
     public InputStream openNextChunkAsStream() throws IOException {
         closeBinaryStream(true);
         if (isStreamEnded())
-            throw new EOFException();
+            return null;
         return binaryStream = new ChunkInputStream(in);
     }
 
@@ -220,7 +275,7 @@ public class ChunkReader implements Closeable {
         in.close();
     }
 
-    private void refill() throws IOException {
+    private void reload() throws IOException {
         if (eof)
             return;
         if (!eof && buffered < buffer.length) {
@@ -260,7 +315,7 @@ public class ChunkReader implements Closeable {
     }
 
     private void refillBinary() throws IOException {
-        refill();
+        reload();
         if (eof) {
             chunkEnded = true;
         }

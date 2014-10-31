@@ -80,6 +80,8 @@ public class MindMapUI {
     public static final String REQ_CREATE_BOUNDARY = "create boundary"; //$NON-NLS-1$
     public static final String REQ_CREATE_SUMMARY = "create summary"; //$NON-NLS-1$
 
+    public static final String REQ_DUPLICATE_TOPIC = "duplicate"; //$NON-NLS-1$
+
     public static final String REQ_SELECT_CENTRAL = "select central"; //$NON-NLS-1$
     public static final String REQ_SELECT_BROTHERS = "select brothers"; //$NON-NLS-1$
     public static final String REQ_SELECT_CHILDREN = "select children"; //$NON-NLS-1$

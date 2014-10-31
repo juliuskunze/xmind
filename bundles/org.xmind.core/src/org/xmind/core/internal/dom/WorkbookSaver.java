@@ -114,15 +114,35 @@ public class WorkbookSaver {
         public synchronized void save() throws IOException, CoreException {
             try {
                 try {
-                    saveMeta();
-                    saveContent();
-                    saveMarkerSheet();
-                    saveStyleSheet();
-                    if (!workbook.isSkipRevisionsWhenSaving()) {
-                        saveRevisions();
+                    try {
+                        saveMeta();
+                    } finally {
+                        try {
+                            saveContent();
+                        } finally {
+                            try {
+                                saveMarkerSheet();
+                            } finally {
+                                try {
+                                    saveStyleSheet();
+                                } finally {
+                                    try {
+                                        if (!workbook
+                                                .isSkipRevisionsWhenSaving()) {
+                                            saveRevisions();
+                                        }
+                                    } finally {
+                                        try {
+                                            copyOtherStaff();
+                                        } finally {
+                                            saveManifest();
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
                     }
-                    copyOtherStaff();
-                    saveManifest();
                 } finally {
                     clearEncryptionData();
                 }

@@ -64,31 +64,39 @@ public class CommandTransferUtil {
 
     public static IBinaryStore readFiles(IProgressMonitor monitor,
             ChunkReader reader) throws IOException {
-        String sizeStr = reader.readText();
-        int size;
+        String numFilesStr = reader.readText();
+        if (numFilesStr == null)
+            // Empty files
+            return null;
+
+        int numFiles;
         try {
-            size = Integer.parseInt(sizeStr, 10);
+            numFiles = Integer.parseInt(numFilesStr, 10);
         } catch (NumberFormatException e) {
-            throw new IOException("Invalid format of files number: " + sizeStr); //$NON-NLS-1$
+            throw new IOException(
+                    "Invalid format of files number: " + numFilesStr); //$NON-NLS-1$
         }
-        monitor.beginTask(null, size);
+        monitor.beginTask(null, numFiles);
 
         IBinaryStore store = null;
         String entryName;
         try {
-            while (!"".equals(entryName = reader.readText())) { //$NON-NLS-1$
-                if (monitor.isCanceled())
-                    return null;
-                IProgressMonitor fileMonitor = new SubProgressMonitor(monitor,
-                        1);
-                if (store == null) {
-                    store = new BinaryStore();
+            while ((entryName = reader.readText()) != null) {
+                if ("".equals(entryName) || monitor.isCanceled()) //$NON-NLS-1$
+                    break;
+
+                InputStream chunkStream = reader.openNextChunkAsStream();
+                if (chunkStream != null) {
+                    IProgressMonitor fileMonitor = new SubProgressMonitor(
+                            monitor, 1);
+                    if (store == null) {
+                        store = new BinaryStore();
+                    }
+                    store.addEntry(fileMonitor, entryName, chunkStream);
+                    if (monitor.isCanceled())
+                        return null;
+                    fileMonitor.done();
                 }
-                store.addEntry(fileMonitor, entryName,
-                        reader.openNextChunkAsStream());
-                if (monitor.isCanceled())
-                    return null;
-                fileMonitor.done();
             }
         } catch (InterruptedException e) {
             return null;

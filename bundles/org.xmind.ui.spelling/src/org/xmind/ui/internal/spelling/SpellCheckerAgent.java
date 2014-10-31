@@ -17,18 +17,20 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.sourceforge.jazzy.Activator;
 
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.xmind.core.Core;
-import org.xmind.core.util.FileUtils;
+import org.eclipse.osgi.service.datalocation.Location;
 
 import com.swabunga.spell.engine.Configuration;
 import com.swabunga.spell.engine.SpellDictionaryHashMap;
@@ -54,6 +56,10 @@ public class SpellCheckerAgent {
 
     public static void setConfigurations(IPreferenceStore prefStore) {
         getInstance().doSetConfigurations(prefStore);
+    }
+
+    public static void migrateUserDictFile() {
+        getInstance().doMigrateUserDictFile();
     }
 
     private synchronized void doVisitSpellChecker(ISpellCheckerVisitor visitor) {
@@ -82,8 +88,8 @@ public class SpellCheckerAgent {
 
         monitor.subTask(Messages.creatingSpellCheckerInstance);
         SpellChecker spellChecker = Activator.createSpellChecker();
-        if (!SpellingPlugin.getDefault().getPreferenceStore().getBoolean(
-                SpellingPlugin.DEFAULT_SPELLING_CHECKER_DISABLED)) {
+        if (!SpellingPlugin.getDefault().getPreferenceStore()
+                .getBoolean(SpellingPlugin.DEFAULT_SPELLING_CHECKER_DISABLED)) {
             Activator.addDefaultDictionaries(spellChecker);
         }
         monitor.worked(1);
@@ -137,17 +143,21 @@ public class SpellCheckerAgent {
             }
         }
 
-        File userDict = FileUtils.ensureFileParent(new File(Core.getWorkspace()
-                .getAbsolutePath("spelling/user.dict"))); //$NON-NLS-1$
-        if (!userDict.exists()) {
+//        File userDict = FileUtils.ensureFileParent(new File(Core.getWorkspace()
+//                .getAbsolutePath("spelling/user.dict"))); //$NON-NLS-1$
+        File userDictFile = getUserDictFile();
+        if (!userDictFile.exists()) {
+            if (userDictFile.getParentFile() != null) {
+                userDictFile.getParentFile().mkdirs();
+            }
             try {
-                new FileOutputStream(userDict).close();
+                new FileOutputStream(userDictFile).close();
             } catch (IOException ignore) {
             }
         }
         try {
-            spellChecker
-                    .setUserDictionary(new SpellDictionaryHashMap(userDict));
+            spellChecker.setUserDictionary(new SpellDictionaryHashMap(
+                    userDictFile));
         } catch (IOException e) {
             SpellingPlugin.log(e);
         }
@@ -167,19 +177,72 @@ public class SpellCheckerAgent {
         if (configuration == null)
             return;
 
-        configuration.setBoolean(Configuration.SPELL_IGNOREDIGITWORDS, ps
-                .getBoolean(Configuration.SPELL_IGNOREDIGITWORDS));
+        configuration.setBoolean(Configuration.SPELL_IGNOREDIGITWORDS,
+                ps.getBoolean(Configuration.SPELL_IGNOREDIGITWORDS));
         configuration.setBoolean(Configuration.SPELL_IGNOREINTERNETADDRESSES,
                 ps.getBoolean(Configuration.SPELL_IGNOREINTERNETADDRESSES));
-        configuration.setBoolean(Configuration.SPELL_IGNOREMIXEDCASE, ps
-                .getBoolean(Configuration.SPELL_IGNOREMIXEDCASE));
+        configuration.setBoolean(Configuration.SPELL_IGNOREMIXEDCASE,
+                ps.getBoolean(Configuration.SPELL_IGNOREMIXEDCASE));
         configuration
                 .setBoolean(
                         Configuration.SPELL_IGNORESENTENCECAPITALIZATION,
-                        ps
-                                .getBoolean(Configuration.SPELL_IGNORESENTENCECAPITALIZATION));
-        configuration.setBoolean(Configuration.SPELL_IGNOREUPPERCASE, ps
-                .getBoolean(Configuration.SPELL_IGNOREUPPERCASE));
+                        ps.getBoolean(Configuration.SPELL_IGNORESENTENCECAPITALIZATION));
+        configuration.setBoolean(Configuration.SPELL_IGNOREUPPERCASE,
+                ps.getBoolean(Configuration.SPELL_IGNOREUPPERCASE));
+    }
+
+    private void doMigrateUserDictFile() {
+        File newFile = getUserDictFile();
+        if (newFile.exists())
+            return;
+
+        Location instanceLocation = Platform.getInstanceLocation();
+        if (instanceLocation == null)
+            return;
+
+        URL instanceURL = instanceLocation.getURL();
+        if (instanceURL == null)
+            return;
+
+        try {
+            instanceURL = FileLocator.toFileURL(instanceURL);
+        } catch (IOException e) {
+        }
+        File instanceDir = new File(instanceURL.getFile());
+        if (!instanceDir.exists())
+            return;
+
+        File oldFile = new File(new File(instanceDir, ".xmind"), //$NON-NLS-1$
+                "spelling/user.dict"); //$NON-NLS-1$
+        if (oldFile.exists()) {
+            moveUserDictFile(oldFile, newFile);
+            return;
+        }
+
+        oldFile = new File(instanceDir, "spelling/user.dict"); //$NON-NLS-1$
+        if (oldFile.exists()) {
+            moveUserDictFile(oldFile, newFile);
+            return;
+        }
+    }
+
+    private static void moveUserDictFile(File oldFile, File newFile) {
+        if (newFile.getParentFile() != null) {
+            newFile.getParentFile().mkdirs();
+        }
+        boolean moved = oldFile.renameTo(newFile);
+        if (!moved) {
+            SpellingPlugin
+                    .getDefault()
+                    .getLog()
+                    .log(new Status(IStatus.WARNING, SpellingPlugin.PLUGIN_ID,
+                            "Failed to migrate old user dict file: " //$NON-NLS-1$
+                                    + oldFile.getAbsolutePath()));
+        }
+    }
+
+    private static File getUserDictFile() {
+        return new File(SpellingPlugin.getBundleDataPath("user.dict")); //$NON-NLS-1$
     }
 
     private static SpellCheckerAgent getInstance() {

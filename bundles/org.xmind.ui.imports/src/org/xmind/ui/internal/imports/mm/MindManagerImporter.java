@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipInputStream;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.eclipse.osgi.util.NLS;
@@ -300,8 +299,6 @@ public class MindManagerImporter extends MindMapImporter implements
     private static final String DOCUMENT_XML = "Document.xml"; //$NON-NLS-1$
 
     private static final double DPM = 72 / 25.4;
-
-    private static DocumentBuilder documentBuilder = null;
 
     private static ResourceMappingManager mappings = null;
 
@@ -2039,15 +2036,7 @@ public class MindManagerImporter extends MindMapImporter implements
 
     private static DocumentBuilder getDocumentBuilder()
             throws ParserConfigurationException {
-        if (documentBuilder == null) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory
-                    .newInstance();
-            factory.setAttribute(
-                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                    true);
-            documentBuilder = factory.newDocumentBuilder();
-        }
-        return documentBuilder;
+        return DOMUtils.getDefaultDocumentBuilder();
     }
 
     public void error(SAXParseException exception) throws SAXException {

@@ -231,12 +231,16 @@ public class OutgoingCommandHandler {
         long start = System.currentTimeMillis();
 
         String status = reader.readText();
+        if (status == null)
+            return null;
+
         int severity;
         try {
             severity = Integer.parseInt(status, 10);
         } catch (NumberFormatException e) {
             return new Status(IStatus.ERROR, getPluginId(), NLS.bind(
-                    Messages.OutgoingCommandHandler_InvalidReturnValueStatus, status));
+                    Messages.OutgoingCommandHandler_InvalidReturnValueStatus,
+                    status));
         }
         if (monitor.isCanceled())
             return Status.CANCEL_STATUS;
@@ -249,11 +253,16 @@ public class OutgoingCommandHandler {
 
         String codeStr = reader.readText();
         int code;
-        try {
-            code = Integer.parseInt(codeStr, 10);
-        } catch (NumberFormatException e) {
-            return new Status(IStatus.ERROR, getPluginId(), NLS.bind(
-                    Messages.OutgoingCommandHandler_InvalidReturnValueCode, codeStr));
+        if (codeStr != null && !"".equals(codeStr)) { //$NON-NLS-1$
+            try {
+                code = Integer.parseInt(codeStr, 10);
+            } catch (NumberFormatException e) {
+                return new Status(IStatus.ERROR, getPluginId(), NLS.bind(
+                        Messages.OutgoingCommandHandler_InvalidReturnValueCode,
+                        codeStr));
+            }
+        } else {
+            code = 0;
         }
         if (monitor.isCanceled())
             return Status.CANCEL_STATUS;
@@ -273,13 +282,14 @@ public class OutgoingCommandHandler {
         if (CommandTransferUtil.MARKER_PROPERTIES.equals(responseType)) {
             Attributes attrs = new Attributes();
             String name;
-            while (!"".equals(name = reader.readText())) { //$NON-NLS-1$
+            String value;
+            while ((name = reader.readText()) != null
+                    && (value = reader.readText()) != null) {
                 if (monitor.isCanceled())
                     return Status.CANCEL_STATUS;
 
-                String value = reader.readText();
-                if (monitor.isCanceled())
-                    return Status.CANCEL_STATUS;
+                if ("".equals(name) || "".equals(value)) //$NON-NLS-1$ //$NON-NLS-2$
+                    break;
 
                 attrs.with(CommandTransferUtil.decode(name),
                         CommandTransferUtil.decode(value));
@@ -289,9 +299,11 @@ public class OutgoingCommandHandler {
         } else if (CommandTransferUtil.MARKER_VALUES.equals(responseType)) {
             List<String> values = new ArrayList<String>();
             String value;
-            while (!"".equals(value = reader.readText())) { //$NON-NLS-1$
+            while ((value = reader.readText()) != null) {
                 if (monitor.isCanceled())
                     return Status.CANCEL_STATUS;
+                if ("".equals(value)) //$NON-NLS-1$
+                    break;
                 values.add(CommandTransferUtil.decode(value));
             }
             returnValue = new ReturnValue(severity, pluginId, code, message,
@@ -349,11 +361,8 @@ public class OutgoingCommandHandler {
 
     protected IStatus createReceivingErrorStatus(Throwable e) {
         if (e instanceof EOFException) {
-            return new Status(
-                    IStatus.WARNING,
-                    getPluginId(),
-                    Messages.OutgoingCommandHandler_ConnectionClose,
-                    e);
+            return new Status(IStatus.WARNING, getPluginId(),
+                    Messages.OutgoingCommandHandler_ConnectionClose, e);
         }
         return new Status(IStatus.ERROR, getPluginId(), null, e);
     }

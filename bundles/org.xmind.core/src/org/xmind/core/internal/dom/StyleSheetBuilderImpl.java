@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
@@ -42,40 +41,24 @@ import org.xml.sax.SAXParseException;
 public class StyleSheetBuilderImpl extends StyleSheetBuilder implements
         ErrorHandler {
 
-    private DocumentBuilder documentCreator = null;
-
-    private DocumentBuilder documentLoader = null;
-
     private DocumentBuilder getDocumentCreator() {
-        if (documentCreator == null) {
-            try {
-                DocumentBuilderFactory factory = DocumentBuilderFactory
-                        .newInstance();
-                factory.setNamespaceAware(true);
-                documentCreator = factory.newDocumentBuilder();
-            } catch (ParserConfigurationException e) {
-                throw new IllegalStateException(e);
-            }
+        DocumentBuilder documentCreator = null;
+        try {
+            documentCreator = DOMUtils.getDefaultDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            throw new IllegalStateException(e);
         }
         return documentCreator;
     }
 
     private DocumentBuilder getDocumentLoader() throws CoreException {
-        if (documentLoader == null) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory
-                    .newInstance();
-            factory.setNamespaceAware(true);
-            factory
-                    .setAttribute(
-                            "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                            Boolean.TRUE);
-            try {
-                documentLoader = factory.newDocumentBuilder();
-            } catch (ParserConfigurationException e) {
-                throw new CoreException(Core.ERROR_FAIL_ACCESS_XML_PARSER, e);
-            }
-            documentLoader.setErrorHandler(this);
+        DocumentBuilder documentLoader = null;
+        try {
+            documentLoader = DOMUtils.getDefaultDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            throw new CoreException(Core.ERROR_FAIL_ACCESS_XML_PARSER, e);
         }
+        documentLoader.setErrorHandler(this);
         return documentLoader;
     }
 

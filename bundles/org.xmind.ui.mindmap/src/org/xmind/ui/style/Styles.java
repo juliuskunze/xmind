@@ -89,6 +89,8 @@ public class Styles {
      */
     public static final String MultiLineColors = DOMConstants.ATTR_MULTI_LINE_COLORS;
 
+    public static final String GradientColor = DOMConstants.ATTR_GRADIENT_COLOR;
+
     /**
      * A property key used to describe the width of a line.
      * <p>
@@ -127,6 +129,10 @@ public class Styles {
     public static final String LineCorner = DOMConstants.ATTR_LINE_CORNER;
 
     public static final String ShapeCorner = DOMConstants.ATTR_SHAPE_CORNER;
+
+    public static final String BorderLineColor = DOMConstants.ATTR_BORDER_LINE_COLOR;
+
+    public static final String BorderLineWidth = DOMConstants.ATTR_BORDER_LINE_WIDTH;
 
     public static final String LeftMargin = DOMConstants.ATTR_MARGIN_LEFT;
 
@@ -304,6 +310,8 @@ public class Styles {
      * @see #LineTapered
      */
     public static final String TAPERED = DOMConstants.VAL_TAPERED;
+
+    public static final String GRADIENT = DOMConstants.VAL_GRADIENT;
 
     public static final String ALIGN_LEFT = DOMConstants.VAL_LEFT;
 

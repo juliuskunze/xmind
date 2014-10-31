@@ -3,179 +3,867 @@
 	xmlns:svg="http://www.w3.org/2000/svg"
 	xmlns="urn:xmind:xmap:xmlns:style:2.0">
 	<automatic-styles>
-		<style type="topic" id="STY@LDC48Uvs-ZcI28NX4edkSg==">
-			<topic-properties svg:fill="#F5F1BC"/>
+		<style id="2ci8evjkhmr5m5tkgafaumb35m" name="" type="relationship">
+			<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" arrow-end-class="org.xmind.arrowShape.triangle" fo:color="#BF1E1B" fo:font-family="Comic Sans MS" fo:font-size="12pt" line-color="#BF1E1B" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
 		</style>
-		<style type="topic" id="STY@UUvY02qjMoQz67j4h73q6A==">
-			<topic-properties svg:fill="#ADF3A3"
-			line-class="org.xmind.branchConnection.curve" 
-			shape-class="org.xmind.topicShape.ellipse"/>
+		<style id="20imgh8165s0ch5i3r71bde560" name="" type="topic">
+			<topic-properties fo:color="#004080" fo:font-family="Verdana" fo:font-weight="normal" line-class="org.xmind.branchConnection.curve" line-color="#004080" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#68A3DF"/>
 		</style>
-		<style type="topic" id="STY@dXdQ_4xOxFKqRTIDI0nWCQ==">
-			<topic-properties svg:fill="#C2D6F1" line-class="org.xmind.branchConnection.roundedElbow"/>
+		<style id="3a9i9g231bi15sjip958ldvc2a" name="" type="topic">
+			<topic-properties fo:color="#004080" fo:font-family="Verdana" svg:fill="none"/>
 		</style>
-		<style type="topic" id="STY@CoHgLcQNT559V9zxlvKDHw==">
-			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.curve" line-color="#808080" shape-class="org.xmind.topicShape.ellipse"/>
+		<style id="1meu19hsvqff5e9aeeulslcega" name="" type="topic">
+			<topic-properties fo:color="#004080" fo:font-family="Verdana" fo:font-weight="normal" line-class="org.xmind.branchConnection.curve" line-color="#004080" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#D3DFFF"/>
 		</style>
-		<style type="topic" id="STY@6UFOsjZvoLJTY3O7BdF2iw==">
-			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.curve" line-color="#808080" shape-class="org.xmind.topicShape.noBorder" fo:font-size="10pt"/>
+		<style id="6haq0nnra20q2d6kq7pe4e8168" name="" type="topic">
+			<topic-properties fo:color="#004080" fo:font-family="Verdana" svg:fill="#D3DFFF"/>
 		</style>
-		<style type="topic" id="STY@ueZD3SnDubVbMR5OC4THpQ==">
-			<topic-properties svg:fill="$none$" line-color="#808080" fo:font-weight="bold"/>
+		<style id="7ba0jerumtm0ngq12oc01p3iih" name="" type="topic">
+			<topic-properties border-line-width="0pt" fo:color="#BF1E1B" fo:font-family="Comic Sans MS" fo:font-size="12pt" line-class="org.xmind.branchConnection.arrowedCurve" shape-class="org.xmind.topicShape.ellipse" svg:fill="none"/>
 		</style>
-		<style type="topic" id="STY@iRp-G-ReJcawr_r-fZxe5g==">
-			<topic-properties svg:fill="$none$" shape-class="org.xmind.topicShape.underline"/>
+		<style id="2fcia2jt9sobnapjdplqqkuusq" name="" type="boundary">
+			<boundary-properties fo:color="#535353" fo:font-family="Verdana" line-color="#999999" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#FFFFFF"/>
 		</style>
-		<style type="topic" id="STY@TqB2H0dF73WGxKamQ6mo3v==">
-			<topic-properties svg:fill="$none$"/>
+		
+		<style id="4vof6rq90qqhp78pkp3q7fd10m" name="" type="relationship">
+			<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#BF1E1B" fo:font-family="Tahoma" fo:font-size="12pt" line-color="#BF1E1B" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
 		</style>
-		<style type="topic" id="STY@-7dUJe5_7F8JM3WB6D07-Q==">
-			<topic-properties svg:fill="#F8EC9A" 
-			line-class="org.xmind.branchConnection.curve" 
-			line-color="#808080" line-width="2pt"
-			shape-class="org.xmind.topicShape.roundedRect"/>
+		<style id="0m957ufg3hoam1dm9uiavl68t6" name="" type="topic">
+			<topic-properties border-line-color="#999999" border-line-width="1pt" fo:color="#FFFFFF" fo:font-family="Arial" line-class="org.xmind.branchConnection.curve" line-color="#999999" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#BF1E1B"/>
 		</style>
-		<style type="topic" id="STY@ZIGzVGtoHF5wPBn0-4bGyw==">
-			<topic-properties svg:fill="#F8EC9A" line-color="#808080" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" fo:font-weight="normal"/>
+		<style id="0ku1t6v744vsimtm6ooejpl7r9" name="" type="topic">
+			<topic-properties border-line-color="#999999" border-line-width="1pt" fo:color="#FFFFFF" fo:font-family="Arial" line-class="org.xmind.branchConnection.curve" line-color="#999999" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#97BF32"/>
 		</style>
-		<style type="topic" id="STY@dIluG7wjTCUAZ7k2zO1RFQ==">
-			<topic-properties line-class="org.xmind.branchConnection.roundedElbow" line-width="2pt" shape-class="org.xmind.topicShape.rect"/>
+		<style id="0v283uabol3p3ljq5na7ev3bso" name="" type="boundary">
+			<boundary-properties fo:color="#BF1E1B" fo:font-family="Tahoma" fo:font-size="12pt" line-color="#999999" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#F0F0F0" svg:opacity="1.0"/>
 		</style>
-		<style type="topic" id="STY@cquE40Yc73SGWgrmFAnI3g==">
-			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.roundedElbow" line-width="2pt"/>
+		<style id="11jjqcd6btg8cu681ug7vpp39h" name="" type="topic">
+			<topic-properties border-line-color="#999999" border-line-width="1pt" fo:color="#FFFFFF" fo:font-family="Tahoma" fo:font-size="12pt" line-class="org.xmind.branchConnection.curve" line-color="#999999" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#BF1E1B"/>
 		</style>
-		<style type="topic" id="STY@6KSP5_auAo7OY7JxTcv_sQ==">
-			<topic-properties svg:fill="$none$" 
-			line-class="org.xmind.branchConnection.straight" 
-			line-color="#FFFFFF" line-width="3pt" 
-			shape-class="org.xmind.topicShape.rect" 
-			fo:color="#F0F0F0" fo:font-size="20pt"/>
+		
+		<style id="5ck0tn2usih7me4of9jeq6ci3b" name="" type="relationship">
+			<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" arrow-end-class="org.xmind.arrowShape.triangle" fo:color="#000080" fo:font-family="Verdana" fo:font-size="12pt" line-color="#004080" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
 		</style>
-		<style type="topic" id="STY@kmtZ8d33ciezYkS8kxfvlQ==">
-			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.curve" line-color="#FFFFFF" line-width="3pt" shape-class="org.xmind.topicShape.ellipse" fo:font-weight="true" fo:color="#F0F0F0"/>
+		<style id="6r787ka394927tm1anlkfdnl13" name="" type="topic">
+			<topic-properties fo:color="#004080" fo:font-family="Tahoma" fo:font-weight="normal" line-class="org.xmind.branchConnection.arrowedCurve" line-color="#004080" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFFFFF"/>
 		</style>
-		<style type="topic" id="STY@ZGbnmXqnQs3n64NFuxVoQA==">
-			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.roundedElbow" line-color="#FFFFFF" line-width="3pt" shape-class="org.xmind.topicShape.noBorder" fo:color="#F0F0F0"/>
+		<style id="3u16rdce7mcif2f9ij1k4140pe" name="" type="topic">
+			<topic-properties fo:font-family="Tahoma" shape-class="org.xmind.topicShape.roundedRect" svg:fill="$none$"/>
 		</style>
-		<style type="topic" id="STY@-WXUrloGIpiyFRdEcjf47Q==">
-			<topic-properties line-class="org.xmind.branchConnection.roundedElbow" svg:fill="$none$" fo:color="#F0F0F0"/>
+		<style id="5slt7su3g3rsi9u6neufg2n0ua" name="" type="boundary">
+			<boundary-properties fo:color="#000080" fo:font-family="Verdana" fo:font-size="12pt" line-color="#004080" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.waves"/>
 		</style>
-		<style type="topic" id="STY@zGBjelDfIWhQCJvBUH3ErQ==">
-			<topic-properties svg:fill="$none$" line-class="org.xmind.branchConnection.roundedElbow" shape-class="org.xmind.topicShape.ellipse" fo:color="#F0F0F0"/>
+		<style id="14v5i4rinv7lf27pa0kv0ahds0" name="" type="topic">
+			<topic-properties fo:color="#000080" fo:font-family="Verdana" fo:font-size="12pt" shape-class="org.xmind.topicShape.ellipse" svg:fill="#FFFFFF"/>
 		</style>
-		<style type="topic" id="STY@oE577J4Ej6Fd4-cCHdaUCA==">
-			<topic-properties svg:fill="#FF8000" 
-			line-class="org.xmind.branchConnection.roundedElbow" 
-			line-width="5pt"
-			shape-class="org.xmind.topicShape.ellipse" 
-			fo:font-size="16pt"/>
+		<style id="0ff6qfj1nd0fr0136mmmccut43" name="" type="summary">
+			<summary-properties line-color="#004080" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
 		</style>
-		<style type="topic" id="STY@e5WqwJpf2h4wZ9xEHlpmJw==">
-			<topic-properties fo:font-weight="false" fo:color="#9C3C1F" text-italic="normal" fo:font-size="10pt"/>
+		<style id="091uot6161iaq1r9ocvv4donlr" name="" type="topic">
+			<topic-properties border-line-color="#004080" line-color="#004080"/>
 		</style>
-		<style type="topic" id="STY@-EW4XZsso1ZfGrTz8U74zA==">
-			<topic-properties svg:fill="#A9BAE2" line-width="5pt" fo:font-weight="bold"/>
+		
+		<style id="2nt073j9v2j9rjv97bi50qid21" name="" type="summary">
+			<summary-properties line-color="#808080"/>
 		</style>
-		<style type="topic" id="STY@Rfj3nQprNQx3yIzN170UfA==">
-			<topic-properties svg:fill="#F3CBEC" line-class="org.xmind.branchConnection.roundedElbow" line-width="5pt" fo:font-weight="bold"/>
+		<style id="4bi7g7rc7m1fiib40d45h6ljq8" name="" type="relationship">
+			<relationship-properties fo:font-family="Comic Sans MS" fo:font-size="12pt" fo:font-style="italic" line-color="#40E0D0" line-pattern="dash" line-width="2pt"/>
 		</style>
-		<style type="topic" id="STY@UN6QwaRTa3q6ZK9ZJ9xC1Q==">
-			<topic-properties svg:fill="#DAEFCF" line-width="2pt" fo:font-weight="bold"/>
+		<style id="40oq5ic7b38mftn5v55em5v2h4" name="" type="topic">
+			<topic-properties border-line-width="0pt" fo:font-family="Georgia" line-class="org.xmind.branchConnection.curve" shape-class="org.xmind.topicShape.rect" svg:fill="none"/>
 		</style>
-		<style type="relationship" id="STY@rFVuO8z1st4AztwnToloDw==">
-			<relationship-properties line-color="#266BDF" line-pattern="dot"/>
+		<style id="0dkuu64ffcmg6t1c9vq9o99q9d" name="" type="map">
+			<map-properties multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac" svg:fill="#FFFFFF"/>
 		</style>
-		<style type="relationship" id="STY@My-8GGTxfuf4pE5XZvjp3w==">
-			<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" 
-			arrow-end-class="org.xmind.arrowShape.triangle" 
-			line-color="#A1A1A1" line-pattern="solid" line-width="1pt" 
-			shape-class="org.xmind.relationshipShape.curved"/>
+		<style id="717pnc21698p56r428rhrhephm" type="topic">
+			<topic-properties border-line-width="0pt" fo:font-family="Georgia" shape-class="org.xmind.topicShape.rect" svg:fill="none"/>
 		</style>
-		<style type="relationship" id="STY@QMfbEAqG-vJat3vjey9-iA==">
-			<relationship-properties line-color="#8B7C74" line-pattern="dash"/>
+		<style id="4im1m96v92psshv0s7544f3f81" name="" type="topic">
+			<topic-properties border-line-width="0pt" fo:font-family="Georgia" line-color="#CACACA" shape-class="org.xmind.topicShape.rect" svg:fill="none"/>
 		</style>
-		<style type="relationship" id="STY@fn0uclOtKS0KVYKxdEXz1g==">
-			<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" arrow-end-class="org.xmind.arrowShape.spearhead" line-color="#EFEB94" line-pattern="dash" line-width="4pt" shape-class="org.xmind.relationshipShape.curved"/>
+		<style id="2k3kv22000pd4ehf3vqv67u04f" name="" type="boundary">
+			<boundary-properties fo:font-family="Comic Sans MS" fo:font-size="12pt" fo:font-style="italic" line-color="#739E73" line-pattern="dash" line-width="2pt" shape-class="org.xmind.boundaryShape.roundedRect" svg:fill="none"/>
 		</style>
-		<style type="relationship" id="STY@8BEEGfuwXLDQYU_PGbUQMg==">
-			<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.triangle" line-color="#2FC19D" line-pattern="solid" line-width="5pt" shape-class="org.xmind.relationshipShape.angled"/>
+		<style id="6latuv8tbsk1p2uq8obennsgf2" type="topic">
+			<topic-properties border-line-width="0pt" fo:color="#739E73" fo:font-family="Comic Sans MS" fo:font-size="12pt" fo:font-style="italic" fo:font-weight="normal" fo:text-decoration="normal" line-class="org.xmind.branchConnection.roundedElbow" shape-class="org.xmind.topicShape.rect" svg:fill="none"/>
 		</style>
-		<style type="boundary" id="STY@-g9kCEtQds5Y-E-uf4WDQg==">
-			<boundary-properties svg:fill="#FFFF80" line-color="#E67B57" shape-class="org.xmind.boundaryShape.scallops" svg:opacity=".77"/>
+		
+		<style id="3j76kp0hu6q8447lirkocnrf3c" type="relationship">
+			<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" arrow-end-class="org.xmind.arrowShape.triangle" fo:color="#0083BF" fo:font-family="Comic Sans MS" fo:font-size="12pt" fo:font-style="italic" line-color="#0083BF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
 		</style>
-		<style type="boundary" id="STY@pDxSy7ZlOHxAb44NeGg0Jw==">
-			<boundary-properties line-pattern="dash" line-width="2pt" shape-class="org.xmind.boundaryShape.roundedRect"/>
+		<style id="3a6e6c1928gkqsppshd8tca764" type="summary">
+			<summary-properties line-color="#0083BF" line-width="1pt" shape-class="org.xmind.summaryShape.curly"/>
 		</style>
-		<style type="boundary" id="STY@t4lwkPF3eNkGLsz_soDKZA==">
-			<boundary-properties svg:fill="#EFEFEF" line-color="#808080" shape-class="org.xmind.boundaryShape.rect" svg:opacity=".77"/>
+		<style id="4dd80e2t1cfn1eceicu1m94eev" type="topic">
+			<topic-properties fo:color="#FFFFFF" fo:font-family="Verdana" fo:font-weight="normal" line-class="org.xmind.branchConnection.arrowedCurve" line-color="#535353" line-width="1pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#000000"/>
 		</style>
-		<style type="boundary" id="STY@zOfWuDnpBCh6abnij1_Rrw==">
-			<boundary-properties svg:fill="$none$" line-color="#AFC4CD" line-pattern="solid" line-width="4pt" shape-class="org.xmind.boundaryShape.scallops"/>
+		<style id="4id9h6fjpdilda5f341vl8p744" type="map">
+			<map-properties multi-line-colors="none" svg:fill="#CCCCCC"/>
 		</style>
-		<style type="boundary" id="STY@dLdhSBMOVCy62w65iFprSA==">
-			<boundary-properties svg:fill="#EEE311" line-color="#E24343" line-pattern="solid" line-width="5pt" shape-class="org.xmind.boundaryShape.scallops"/>
+		<style id="60ic95ea0aleu28dgdrmf5oc2s" type="topic">
+			<topic-properties fo:color="#000000" fo:font-family="Verdana" svg:fill="none"/>
 		</style>
-		<style type="map" id="STY@b7BMj28Mtid9kT-jx-wVBA==">
-			<map-properties svg:fill="#FFFFFF"/>
+		<style id="65995ln3il78d9acg7k86cl5ki" type="topic">
+			<topic-properties fo:color="#FFFFFF" fo:font-family="Verdana" fo:font-size="13pt" fo:font-weight="normal" line-class="org.xmind.branchConnection.curve" line-color="#666666" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#666666"/>
 		</style>
-		<style type="map" id="STY@WeIzZNOEjr569iL1qyoRVA==">
-			<map-properties svg:fill="#F5F5F5" spinylines="true" line-tapered="tapered"/>
+		<style id="66q64rsbn0f0c5tk4vshmoihab" type="topic">
+			<topic-properties fo:color="#FFFFFF" fo:font-family="Verdana" svg:fill="#666666"/>
 		</style>
-		<style type="map" id="STY@u5LwnyRMZhENtQP8ZsyWVg==">
-			<map-properties svg:fill="#4F606C" rainbowcolor="false" spinylines="false"/>
+		<style id="5m3q1lo73giktp5sfqkkfh80ka" type="topic">
+			<topic-properties border-line-width="0pt" fo:color="#0083BF" fo:font-family="Comic Sans MS" fo:font-size="12pt" line-class="org.xmind.branchConnection.arrowedCurve" line-width="1pt" shape-class="org.xmind.topicShape.ellipse" svg:fill="none"/>
 		</style>
-		<style type="map" id="STY@YBnXdk7SzMEqE1nrfNIgQw==">
-			<map-properties svg:fill="#E9EBC7" rainbowcolor="true" spinylines="true" line-tapered="tapered" multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac"/>
+		<style id="7a89fn2kmjg5bamvvsj8tj9ts2" type="boundary">
+			<boundary-properties fo:color="#0083BF" fo:font-family="Comic Sans MS" fo:font-size="12pt" fo:font-style="italic" line-color="#999999" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#FFFFFF"/>
 		</style>
-		<style type="map" id="STY@Gg3WAk2cLjVgnlYGtxG31w==">
-			<map-properties svg:fill="#FCFCE9" rainbowcolor="true" spinylines="true" line-tapered="tapered" multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac"/>
+		
+		<style id="675i6ojk7fo2bmf1nnf61ohtp2" name="" type="relationship">
+			<relationship-properties fo:color="#404040" fo:font-family="Tahoma" fo:font-size="12pt" line-color="#808080" line-pattern="dash" line-width="1pt"/>
+		</style>
+		<style id="1rgsvid1tho7ivvgk90dvhg2cm" type="summary">
+			<summary-properties line-color="#0083BF" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="24508g9mjkht9rmrlbqp517lv4" name="" type="topic">
+			<topic-properties fo:font-family="Verdana" fo:font-weight="normal" line-class="org.xmind.branchConnection.curve" line-color="#BF1E1B" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FF9D96"/>
+		</style>
+		<style id="45imvol0dgoomfdqlr2qng5d6p" type="map">
+			<map-properties multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac" svg:fill="#DCEBC1" svg:opacity="0.0"/>
+		</style>
+		<style id="24pcg0d9t24ngjr7hbc6ucu4uc" name="" type="topic">
+			<topic-properties fo:font-family="Verdana"/>
+		</style>
+		<style id="24g4fkc478m8pn41pqndviv7p8" name="" type="topic">
+			<topic-properties fo:font-family="Verdana" line-color="#0083BF" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#93CBE3"/>
+		</style>
+		<style id="1635v2a39okjlnj0hbm3q0j1g6" name="" type="topic">
+			<topic-properties fo:font-family="Verdana" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FBFAD8"/>
+		</style>
+		<style id="13ar2jgmf4kma7oqm512d3s2g4" name="Style 1" type="topic">
+			<topic-properties fo:color="#404040" fo:font-family="Tahoma" fo:font-size="12pt" fo:font-style="normal" fo:font-weight="normal" fo:text-align="center" fo:text-decoration="none" line-class="org.xmind.branchConnection.curve" line-color="#C0C0C0" org.xmind.core.name="Style 1" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#87cde5"/>
+		</style>
+		<style id="1n83490eurkhdn04q2jbq0c29r" name="Style 3" type="boundary">
+			<boundary-properties fo:color="#404040" fo:font-family="Tahoma" fo:font-size="12pt" fo:font-style="normal" fo:font-weight="normal" fo:text-align="center" fo:text-decoration="none" line-color="#808080" line-pattern="dash" line-width="1pt" org.xmind.core.name="Style 3" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#FFFFFF" svg:opacity="0.51"/>
+		</style>
+		
+		<style id="4g4kd5lpd84ofldah7ge7nd5v3" type="relationship">
+			<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#FFFFFF" fo:font-family="Comic Sans MS" fo:font-size="12pt" line-color="#FFFFFF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="26emm0epb458spsv8bkc6vjmf2" type="summary">
+			<summary-properties line-color="#C0C0C0" line-width="1pt"/>
+		</style>
+		<style id="5e8pi5kf6j0sklrub3bq8ohm2j" type="topic">
+			<topic-properties fo:color="#F0F0F0" fo:font-family="Trebuchet MS" line-class="org.xmind.branchConnection.arrowedCurve" line-color="#FFFFFF" line-width="1pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="$none$"/>
+		</style>
+		<style id="3f37abbqt1e9o4kvf3u1emhqud" type="map">
+			<map-properties rainbowcolor="false" spinylines="false" svg:fill="#60801D" svg:opacity="0.0"/>
+		</style>
+		<style id="2bo16iqcce0g5v8ujc1u8n3349" type="topic">
+			<topic-properties fo:color="#F0F0F0" fo:font-family="Trebuchet MS" line-class="org.xmind.branchConnection.roundedElbow" shape-class="org.xmind.topicShape.roundedRect" svg:fill="$none$"/>
+		</style>
+		<style id="0713dar80ba5fg15f0fi04gunr" type="boundary">
+			<boundary-properties fo:color="#FFFFFF" fo:font-family="Comic Sans MS" fo:font-size="12pt" line-color="#AFC4CD" line-pattern="dash" line-width="2pt" shape-class="org.xmind.boundaryShape.roundedRect" svg:fill="$none$"/>
+		</style>
+		<style id="0qpfbe9c2l3l2hvc1g19vumftn" type="topic">
+			<topic-properties border-line-color="#EDF9CC" fo:color="#008000" fo:font-family="Comic Sans MS" fo:font-size="12pt" line-color="#FFFFFF" shape-class="org.xmind.topicShape.callout.ellipse" svg:fill="#FFFFFF"/>
+		</style>
+		
+		<style id="4t7ev0dkev77n1t86gp6evqsqj" type="relationship">
+			<relationship-properties fo:color="#60801D" fo:font-family="Comic Sans MS" fo:font-size="12pt" fo:font-style="italic" fo:font-weight="normal" line-color="#739E73" line-pattern="dash" line-width="1pt"/>
+		</style>
+		<style id="1k544titqu94spifrjb8ktrjtp" type="summary">
+			<summary-properties line-color="#60801D" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="7omkb05k0h1v24rpst58feluuu" type="topic">
+			<topic-properties border-line-color="#37507E" fo:font-family="Verdana" fo:font-weight="normal" line-class="org.xmind.branchConnection.curve" line-width="1pt" shape-class="org.xmind.topicShape.ellipse" svg:fill="#9EB0CE"/>
+		</style>
+		<style id="24j8pscbem702vce6j6htjn92u" type="map">
+			<map-properties multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac" svg:fill="#F4F2F5" svg:opacity="0.0"/>
+		</style>
+		<style id="3vu6k121ksjv43puvglegpb0bs" type="topic">
+			<topic-properties border-line-width="0pt" fo:font-family="Verdana" fo:font-weight="normal" shape-class="org.xmind.topicShape.roundedRect"/>
+		</style>
+		<style id="5hal5p1ugtdm76ocbmkfn3irdl" type="topic">
+			<topic-properties fo:font-family="Verdana" line-color="#BFA306" line-width="1pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFF7CC"/>
+		</style>
+		<style id="2pk2ju453jr3vmiun6vml8prt7" type="topic">
+			<topic-properties border-line-color="#BFA306" fo:font-family="Verdana" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFF7CC"/>
+		</style>
+		<style id="3tcjt72jo1kdku9qkfrsjbau7k" type="topic">
+			<topic-properties fo:color="#008000" fo:font-family="Comic Sans MS" fo:font-size="12pt" fo:font-style="italic" line-class="org.xmind.branchConnection.roundedElbow" line-color="#739E73" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#9EB0CE"/>
+		</style>
+		<style id="01epea2msk2d3sllkncoh9pg36" type="boundary">
+			<boundary-properties fo:color="#60801D" fo:font-family="Comic Sans MS" fo:font-size="12pt" fo:font-style="italic" fo:font-weight="normal" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.waves" svg:fill="#CCCCCC"/>
+		</style>
+		
+		<style id="68fnvo51eqfotkhk6e4javiubs" type="relationship">
+		<relationship-properties line-color="#266BDF" line-pattern="dot"/>
+		</style>
+		<style id="4p5drhfqnpjlsopf2hj0rb40b2" type="topic">
+		<topic-properties line-class="org.xmind.branchConnection.curve" shape-class="org.xmind.topicShape.ellipse" svg:fill="#ADF3A3"/>
+		</style>
+		<style id="2go6p4jun1r00jtfttqrpfo4b8" type="map">
+		<map-properties color-gradient="gradient" line-tapered="tapered" multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac" rainbowcolor="true" spinylines="true" svg:fill="#FCFCE9"/>
+		</style>
+		<style id="6hhiai49lt5411a930de6io80h" type="topic">
+		<topic-properties svg:fill="#F5F1BC"/>
+		</style>
+		<style id="0i7ve28r7t6nfftbk6ea7mch85" type="topic">
+		<topic-properties line-class="org.xmind.branchConnection.roundedElbow" svg:fill="#C2D6F1"/>
+		</style>
+		<style id="1m03fjtlv0d9bl7832tqlib7h4" type="boundary">
+		<boundary-properties line-color="#E67B57" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#FFFF80" svg:opacity=".77"/>
+		</style>
+		
+		<style id="5ddj2r50k2obkrbndhgdlepopb" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" arrow-end-class="org.xmind.arrowShape.triangle" line-color="#A1A1A1" line-pattern="solid" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="25k8uv4kjljk4e32pvgs52c9u7" type="topic">
+		<topic-properties line-class="org.xmind.branchConnection.curve" line-color="#808080" shape-class="org.xmind.topicShape.ellipse" svg:fill="$none$"/>
+		</style>
+		<style id="1gajo4sc5v51tdtqphhn4c9gqb" type="map">
+		<map-properties color-gradient="gradient" svg:fill="#FFFFFF"/>
+		</style>
+		<style id="2aasnmhu3ugalein5pl42no8h3" type="topic">
+		<topic-properties border-line-width="0pt" fo:font-size="10pt" line-class="org.xmind.branchConnection.curve" line-color="#808080" shape-class="org.xmind.topicShape.rect" svg:fill="$none$"/>
+		</style>
+		<style id="2ek8itdrkvqffi9s6vi9jegbc5" type="topic">
+		<topic-properties shape-class="org.xmind.topicShape.underline" svg:fill="$none$"/>
+		</style>
+		<style id="5e09pp402gg8q8bmvmfirri8pp" type="topic">
+		<topic-properties svg:fill="$none$"/>
+		</style>
+		<style id="56p86l6j8m3vf15a3jh461ed1h" type="boundary">
+		<boundary-properties line-pattern="dash" line-width="2pt" shape-class="org.xmind.boundaryShape.roundedRect"/>
+		</style>
+		
+		<style id="3f6vmtrog8p35udetuj4hrffkm" type="relationship">
+		<relationship-properties line-color="#8B7C74" line-pattern="dash"/>
+		</style>
+		<style id="6p50ulsvsv4i4c2obkjd3e35l3" type="topic">
+		<topic-properties line-class="org.xmind.branchConnection.curve" line-color="#808080" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#F8EC9A"/>
+		</style>
+		<style id="7j0umrrhrfpge17odjegsod5f8" type="map">
+		<map-properties color-gradient="gradient" line-tapered="tapered" spinylines="true" svg:fill="#F5F5F5"/>
+		</style>
+		<style id="6jvlnc0ichgkjeaq5qf9g4svtu" type="topic">
+		<topic-properties line-class="org.xmind.branchConnection.roundedElbow" line-width="2pt" svg:fill="$none$"/>
+		</style>
+		<style id="0g3v6i06c1gbsc1j1v2e0tj7bc" type="topic">
+		<topic-properties line-class="org.xmind.branchConnection.roundedElbow" line-width="2pt" shape-class="org.xmind.topicShape.rect"/>
+		</style>
+		<style id="5mg4cu8u7dn3ikhtitnh86ss07" type="boundary">
+		<boundary-properties line-color="#808080" shape-class="org.xmind.boundaryShape.rect" svg:fill="#EFEFEF" svg:opacity=".77"/>
+		</style>
+		
+		<style id="3b0kuvt2hcu8vbia8j9ugsla79" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.none" arrow-end-class="org.xmind.arrowShape.spearhead" line-color="#EFEB94" line-pattern="dash" line-width="4pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="7ct8g8ql2q3o18v39ml48o5s0s" type="topic">
+		<topic-properties fo:color="#F0F0F0" fo:font-size="20pt" line-class="org.xmind.branchConnection.straight" line-color="#FFFFFF" line-width="3pt" shape-class="org.xmind.topicShape.rect" svg:fill="$none$"/>
+		</style>
+		<style id="6a9q5j0tup1i8lbqhn3692r456" type="map">
+		<map-properties color-gradient="gradient" rainbowcolor="false" spinylines="false" svg:fill="#4F606C"/>
+		</style>
+		<style id="2mafvoacvrbvetlqo6fq5h788i" type="topic">
+		<topic-properties fo:color="#F0F0F0" line-class="org.xmind.branchConnection.roundedElbow" svg:fill="$none$"/>
+		</style>
+		<style id="7v3ue8srgvtcv1799suvigu1ke" type="topic">
+		<topic-properties border-line-width="0pt" fo:color="#F0F0F0" line-class="org.xmind.branchConnection.roundedElbow" line-color="#FFFFFF" line-width="3pt" shape-class="org.xmind.topicShape.rect" svg:fill="$none$"/>
+		</style>
+		<style id="1dh8tubv0eru2gq5u7l7n438tv" type="topic">
+		<topic-properties fo:color="#F0F0F0" line-class="org.xmind.branchConnection.roundedElbow" shape-class="org.xmind.topicShape.ellipse" svg:fill="$none$"/>
+		</style>
+		<style id="2duu8ke7pmtf21tcqh2i039i5t" type="boundary">
+		<boundary-properties line-color="#AFC4CD" line-pattern="solid" line-width="4pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="$none$"/>
+		</style>
+		
+		<style id="48vkitqg7e8avlab4tcnmkgv00" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.triangle" line-color="#2FC19D" line-pattern="solid" line-width="5pt" shape-class="org.xmind.relationshipShape.angled"/>
+		</style>
+		<style id="74imu686fbaq5vafguc3p45cag" type="topic">
+		<topic-properties fo:font-size="16pt" line-class="org.xmind.branchConnection.roundedElbow" line-width="5pt" shape-class="org.xmind.topicShape.ellipse" svg:fill="#FF8000"/>
+		</style>
+		<style id="4r8j9pq2aei1jcl2b8srdha79r" type="map">
+		<map-properties color-gradient="gradient" line-tapered="tapered" multi-line-colors="#ac6060 #acac60 #60ac60 #60acac #6060ac #ac60ac" rainbowcolor="true" spinylines="true" svg:fill="#E9EBC7"/>
+		</style>
+		<style id="1o9bini033qobmuogu2s8cvbl1" type="topic">
+		<topic-properties fo:font-weight="bold" line-width="5pt" svg:fill="#A9BAE2"/>
+		</style>
+		<style id="04aqtshdpt6674663glqdjvber" type="topic">
+		<topic-properties fo:color="#9C3C1F" fo:font-size="10pt" fo:font-weight="false" text-italic="normal"/>
+		</style>
+		<style id="6v519nft454islq1fqvo76orr8" type="topic">
+		<topic-properties fo:font-weight="bold" line-width="2pt" svg:fill="#DAEFCF"/>
+		</style>
+		<style id="2j24f3m3246h8boelu6qhpckbm" type="boundary">
+		<boundary-properties line-color="#E24343" line-pattern="solid" line-width="5pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#EEE311"/>
+		</style>
+		
+		<style id="4vasntqrt9rijtsvgc7aediba6" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#FFFFFF" line-color="#FFFFFF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="1labpr231gmq7nhq2pr9v6m2ne" name="" type="topic">
+		<topic-properties border-line-color="#999999" border-line-width="1pt" fo:color="#535353" line-class="org.xmind.branchConnection.curve" line-color="#999999" line-width="3pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFFFFF"/>
+		</style>
+		<style id="0k1vj7tjgafhig25rohko35r1o" name="" type="map">
+		<map-properties background="platform:/plugin/org.xmind.ui.resources/wallpaper/new_wall001.png" svg:fill="#535353"/>
+		</style>
+		<style id="1h879ecb1ii4ls5g39dkk6jtfp" name="" type="topic">
+		<topic-properties border-line-color="#999999" border-line-width="1pt" fo:color="#535353" line-class="org.xmind.branchConnection.curve" line-color="#999999" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFFFFF"/>
+		</style>
+		<style id="6d8vr79uhe3lqer5rj203olk42" type="boundary">
+		<boundary-properties fo:color="#FFFFFF" line-color="#FFFFFF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#999999" svg:opacity="1.0"/>
+		</style>
+		<style id="2019k01q39t36917am44tj26sq" name="" type="summary">
+		<summary-properties shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		
+		<style id="6dkgqr7emuosi22er55efblgr0" name="" type="summary">
+		<summary-properties line-color="#FFB966" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="0vjjbsp3ql38q1g2evchag5dm6" name="" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#FFE8CC" line-color="#FFB966" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="6p3dolm42pah9uejpo00rcc37c" name="" type="topic">
+		<topic-properties border-line-color="#FFB966" border-line-width="1pt" fo:color="#800A04" line-class="org.xmind.branchConnection.curve" line-color="#FFB966" line-width="3pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFE8CC"/>
+		</style>
+		<style id="3ip1dpa9ih5k96l4sa0qoov8ia" name="" type="map">
+		<map-properties background="platform:/plugin/org.xmind.ui.resources/wallpaper/wall012.png" svg:fill="#804701" svg:opacity=".4"/>
+		</style>
+		<style id="1sls5g6kiblj99ed2ec5jrs0gh" name="" type="topic">
+		<topic-properties border-line-color="#FFB966" border-line-width="1pt" fo:color="#800A04" line-class="org.xmind.branchConnection.curve" line-color="#FFB966" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFE8CC"/>
+		</style>
+		<style id="0m0v4673codjnnjtdesf5sifna" name="" type="topic">
+		<topic-properties border-line-color="#FFB966" border-line-width="1pt" fo:color="#804701" line-class="org.xmind.branchConnection.curve" line-color="#FFB966" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFE8CC"/>
+		</style>
+		<style id="2u4g7ktkvrnq96rnb4cieqk266" name="" type="boundary">
+		<boundary-properties fo:color="#804701" line-color="#FFB966" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#FFB966" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="6924nqodh8pnac0udfcmela12u" name="" type="summary">
+		<summary-properties line-color="#66CEFF" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="50b1cthnouf7c30lt4k3a99s2l" name="" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#CCEFFF" line-color="#66CEFF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="1t99m1fi57oab77vq5qnt30moh" name="" type="topic">
+		<topic-properties border-line-color="#66CEFF" border-line-width="1pt" fo:color="#005780" line-class="org.xmind.branchConnection.curve" line-color="#66CEFF" line-width="3pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#CCEFFF"/>
+		</style>
+		<style id="6u1q0fgdeim2umeq786q3pa1tk" name="" type="map">
+		<map-properties background="platform:/plugin/org.xmind.ui.resources/wallpaper/wall014.png" color-gradient="none" line-tapered="none" svg:fill="#005780" svg:opacity=".1"/>
+		</style>
+		<style id="7lg2vh71bpcscorcuphkm4vc6i" name="" type="topic">
+		<topic-properties border-line-color="#66CEFF" border-line-width="1pt" fo:color="#005780" line-class="org.xmind.branchConnection.curve" line-color="#66CEFF" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#CCEFFF"/>
+		</style>
+		<style id="4o2u2tm1l8elnvd668hiuif0fm" name="" type="boundary">
+		<boundary-properties fo:color="#005780" line-color="#66CEFF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#66CEFF" svg:opacity="0.6"/>
+		</style>
+		<style id="2e2h4mcgvsqbj9bjplsc9lja1v" name="" type="topic">
+		<topic-properties border-line-color="#7C9EFF" border-line-width="1pt" fo:color="#012180" line-class="org.xmind.branchConnection.curve" line-color="#7C9EFF" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#CCEFFF"/>
+		</style>
+		
+		<style id="39m796fsav3riknnknkc30jqca" type="summary">
+		<summary-properties line-color="#B980FF" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="7lohee7ss9rfmn9fu2p53vlu96" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#E8D5FF" line-color="#E8D5FF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="118bv93m60l37r9350jigoe2ur" name="" type="topic">
+		<topic-properties border-line-color="#B980FF" border-line-width="1pt" fo:color="#451680" line-class="org.xmind.branchConnection.curve" line-color="#B980FF" line-width="3pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#E8D5FF"/>
+		</style>
+		<style id="6l6mee01nddqkj71el276h1gjs" name="" type="map">
+		<map-properties background="platform:/plugin/org.xmind.ui.resources/wallpaper/new_wall001.png" color-gradient="none" svg:fill="#451680" svg:opacity=".7"/>
+		</style>
+		<style id="1glrch73vj490ca3l5m62n51d4" name="" type="topic">
+		<topic-properties border-line-color="#B980FF" border-line-width="1pt" fo:color="#451680" line-class="org.xmind.branchConnection.curve" line-color="#B980FF" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#E8D5FF"/>
+		</style>
+		<style id="72jb9uu2hnurgdr88litn9j1di" type="boundary">
+		<boundary-properties fo:color="#451680" line-color="#B980FF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#B980FF" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="6i02a5n5onv9efvi31c4pr02f9" type="summary">
+		<summary-properties line-color="#C8ED66" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="4e1lrepjrptmsf6cs9llrkk3pt" name="" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#EDF9CC" line-color="#C8ED66" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="1f4rt725164lncu58nhsb9r0a5" name="" type="topic">
+		<topic-properties border-line-color="#C8ED66" border-line-width="1pt" fo:color="#60801D" line-class="org.xmind.branchConnection.curve" line-color="#C8ED66" line-width="3pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#EDF9CC"/>
+		</style>
+		<style id="2tnunlj5d5s4p053lgrjf2er52" name="" type="map">
+		<map-properties background="platform:/plugin/org.xmind.ui.resources/wallpaper/new_wall009.png" svg:fill="#60801D" svg:opacity=".3"/>
+		</style>
+		<style id="40v1gih6jvpsvi5g82iv4b2bf1" name="" type="topic">
+		<topic-properties border-line-color="#C8ED66" border-line-width="1pt" fo:color="#60801D" line-class="org.xmind.branchConnection.curve" line-color="#C8ED66" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#EDF9CC"/>
+		</style>
+		<style id="3enfilibciupe69b3tlnd33mbl" type="boundary">
+		<boundary-properties fo:color="#60801D" line-color="#C8ED66" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#C8ED66" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="33e1qkmmshqnboc572uc25hcjk" type="summary">
+		<summary-properties line-color="#FFE866" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="44q11fgpt75buots2aks144nmm" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#FFF7CC" line-color="#FFE866" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="4g84c9lcdk9ne1d2k40fur77r1" name="" type="topic">
+		<topic-properties border-line-color="#FFE866" border-line-width="1pt" fo:color="#806E00" line-class="org.xmind.branchConnection.curve" line-color="#FFE866" line-width="3pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFF7CC"/>
+		</style>
+		<style id="6d4sh30dnp23j9660m33gttroa" name="" type="map">
+		<map-properties background="platform:/plugin/org.xmind.ui.resources/wallpaper/wall001.png" svg:fill="#806E00" svg:opacity=".3"/>
+		</style>
+		<style id="0poijrut9pbjss726im1shaorl" name="" type="topic">
+		<topic-properties border-line-color="#FFE866" border-line-width="1pt" fo:color="#806E00" line-class="org.xmind.branchConnection.curve" line-color="#FFE866" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFF7CC"/>
+		</style>
+		<style id="46td847ltfifjk7fds4es96k08" type="boundary">
+		<boundary-properties fo:color="#806E00" line-color="#FFE866" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#FFE866" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="6drl533dhqdrotjr39601gr0fn" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#535353" line-color="#999999" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="39m796fsav3riknnknkc30jqca" type="summary">
+		<summary-properties line-color="#B980FF" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="3ueaabd1d8i7v990bl554p6r96" name="" type="topic">
+		<topic-properties border-line-color="#999999" border-line-width="1pt" fo:color="#535353" line-class="org.xmind.branchConnection.curve" line-color="#999999" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#CCCCCC"/>
+		</style>
+		<style id="11l9hkicj1ilo62aaf7f7sq2kt" name="" type="map">
+		<map-properties color-gradient="none" svg:fill="#FFFFFF"/>
+		</style>
+		<style id="3hajnm1ts5e9srjdvsonqod7gf" name="" type="topic">
+		<topic-properties border-line-color="#999999" border-line-width="1pt" fo:color="#535353" line-class="org.xmind.branchConnection.curve" line-color="#999999" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#CCCCCC"/>
+		</style>
+		<style id="6mpm4sktbms85b71b350e9n5gj" type="boundary">
+		<boundary-properties fo:color="#535353" line-color="#999999" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#CCCCCC" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="1t9l3snb4f1pgm1omcrtgv8egh" name="" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#804701" line-color="#FFB966" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="6dkgqr7emuosi22er55efblgr0" name="" type="summary">
+		<summary-properties line-color="#FFB966" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="2hcprpdej2u375754d6fi1gj1n" name="" type="topic">
+		<topic-properties border-line-color="#FFB966" border-line-width="1pt" fo:color="#800A04" line-class="org.xmind.branchConnection.curve" line-color="#FFB966" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFE8CC"/>
+		</style>
+		<style id="0jmc9hqcgg8lc4958fgfjpcq14" type="map">
+		<map-properties svg:fill="#FFFFFF"/>
+		</style>
+		<style id="1sls5g6kiblj99ed2ec5jrs0gh" name="" type="topic">
+		<topic-properties border-line-color="#FFB966" border-line-width="1pt" fo:color="#800A04" line-class="org.xmind.branchConnection.curve" line-color="#FFB966" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFE8CC"/>
+		</style>
+		<style id="0m0v4673codjnnjtdesf5sifna" name="" type="topic">
+		<topic-properties border-line-color="#FFB966" border-line-width="1pt" fo:color="#804701" line-class="org.xmind.branchConnection.curve" line-color="#FFB966" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFE8CC"/>
+		</style>
+		<style id="2u4g7ktkvrnq96rnb4cieqk266" name="" type="boundary">
+		<boundary-properties fo:color="#804701" line-color="#FFB966" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#FFB966" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="50b1cthnouf7c30lt4k3a99s2l" name="" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#CCEFFF" line-color="#66CEFF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="6924nqodh8pnac0udfcmela12u" name="" type="summary">
+		<summary-properties line-color="#66CEFF" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="6jriq1rqimhjcfvr7ggsmgll7i" name="" type="topic">
+		<topic-properties border-line-color="#66CEFF" border-line-width="1pt" fo:color="#005780" line-class="org.xmind.branchConnection.curve" line-color="#66CEFF" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#CCEFFF"/>
+		</style>
+		<style id="29qrag5h86ugdd041qmavsqusi" name="" type="map">
+		<map-properties color-gradient="none" line-tapered="none" svg:fill="#FFFFFF"/>
+		</style>
+		<style id="7lg2vh71bpcscorcuphkm4vc6i" name="" type="topic">
+		<topic-properties border-line-color="#66CEFF" border-line-width="1pt" fo:color="#005780" line-class="org.xmind.branchConnection.curve" line-color="#66CEFF" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#CCEFFF"/>
+		</style>
+		<style id="2e2h4mcgvsqbj9bjplsc9lja1v" name="" type="topic">
+		<topic-properties border-line-color="#7C9EFF" border-line-width="1pt" fo:color="#012180" line-class="org.xmind.branchConnection.curve" line-color="#7C9EFF" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#CCEFFF"/>
+		</style>
+		<style id="4o2u2tm1l8elnvd668hiuif0fm" name="" type="boundary">
+		<boundary-properties fo:color="#005780" line-color="#66CEFF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#66CEFF" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="7lohee7ss9rfmn9fu2p53vlu96" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#E8D5FF" line-color="#E8D5FF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="39m796fsav3riknnknkc30jqca" type="summary">
+		<summary-properties line-color="#B980FF" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="71ju95on9o0d118a81mjnt06rp" name="" type="topic">
+		<topic-properties border-line-color="#B980FF" border-line-width="1pt" fo:color="#451680" line-class="org.xmind.branchConnection.curve" line-color="#B980FF" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#E8D5FF"/>
+		</style>
+		<style id="11l9hkicj1ilo62aaf7f7sq2kt" name="" type="map">
+		<map-properties color-gradient="none" svg:fill="#FFFFFF"/>
+		</style>
+		<style id="1glrch73vj490ca3l5m62n51d4" name="" type="topic">
+		<topic-properties border-line-color="#B980FF" border-line-width="1pt" fo:color="#451680" line-class="org.xmind.branchConnection.curve" line-color="#B980FF" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#E8D5FF"/>
+		</style>
+		<style id="72jb9uu2hnurgdr88litn9j1di" type="boundary">
+		<boundary-properties fo:color="#451680" line-color="#B980FF" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#B980FF" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="58dtpo4tft3ab68ddp7udlldnt" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#60801D" line-color="#C8ED66" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="6i02a5n5onv9efvi31c4pr02f9" type="summary">
+		<summary-properties line-color="#C8ED66" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="2bqcvlmpjsds4sltfuungghg3o" name="" type="topic">
+		<topic-properties border-line-color="#C8ED66" border-line-width="1pt" fo:color="#60801D" line-class="org.xmind.branchConnection.curve" line-color="#C8ED66" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#EDF9CC"/>
+		</style>
+		<style id="0jmc9hqcgg8lc4958fgfjpcq14" type="map">
+		<map-properties svg:fill="#FFFFFF"/>
+		</style>
+		<style id="40v1gih6jvpsvi5g82iv4b2bf1" name="" type="topic">
+		<topic-properties border-line-color="#C8ED66" border-line-width="1pt" fo:color="#60801D" line-class="org.xmind.branchConnection.curve" line-color="#C8ED66" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#EDF9CC"/>
+		</style>
+		<style id="3enfilibciupe69b3tlnd33mbl" type="boundary">
+		<boundary-properties fo:color="#60801D" line-color="#C8ED66" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#C8ED66" svg:opacity="0.6"/>
+		</style>
+		
+		<style id="44q11fgpt75buots2aks144nmm" type="relationship">
+		<relationship-properties arrow-begin-class="org.xmind.arrowShape.dot" arrow-end-class="org.xmind.arrowShape.spearhead" fo:color="#FFF7CC" line-color="#FFE866" line-pattern="dash" line-width="1pt" shape-class="org.xmind.relationshipShape.curved"/>
+		</style>
+		<style id="33e1qkmmshqnboc572uc25hcjk" type="summary">
+		<summary-properties line-color="#FFE866" line-width="1pt" shape-class="org.xmind.summaryShape.round"/>
+		</style>
+		<style id="79oqgmldqcdlqodeltcqa95sbl" name="" type="topic">
+		<topic-properties border-line-color="#FFE866" border-line-width="1pt" fo:color="#806E00" line-class="org.xmind.branchConnection.curve" line-color="#FFE866" line-width="2pt" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFF7CC"/>
+		</style>
+		<style id="0jmc9hqcgg8lc4958fgfjpcq14" type="map">
+		<map-properties svg:fill="#FFFFFF"/>
+		</style>
+		<style id="0poijrut9pbjss726im1shaorl" name="" type="topic">
+		<topic-properties border-line-color="#FFE866" border-line-width="1pt" fo:color="#806E00" line-class="org.xmind.branchConnection.curve" line-color="#FFE866" shape-class="org.xmind.topicShape.roundedRect" svg:fill="#FFF7CC"/>
+		</style>
+		<style id="46td847ltfifjk7fds4es96k08" type="boundary">
+		<boundary-properties fo:color="#806E00" line-color="#FFE866" line-pattern="dash" line-width="1pt" shape-class="org.xmind.boundaryShape.scallops" svg:fill="#FFE866" svg:opacity="0.6"/>
 		</style>
 	</automatic-styles>
 	
 	<master-styles>
-		<style type="theme" id="brainy.defaultGenre.classic" name="%classic"><theme-properties>
-			<default-style style-family="relationship" style-id="STY@rFVuO8z1st4AztwnToloDw=="/>
-			<default-style style-family="centralTopic" style-id="STY@UUvY02qjMoQz67j4h73q6A=="/>
-			<default-style style-family="map" style-id="STY@Gg3WAk2cLjVgnlYGtxG31w=="/>
-			<default-style style-family="floatingTopic" style-id="STY@LDC48Uvs-ZcI28NX4edkSg=="/>
-			<default-style style-family="mainTopic" style-id="STY@dXdQ_4xOxFKqRTIDI0nWCQ=="/>
-			<default-style style-family="boundary" style-id="STY@-g9kCEtQds5Y-E-uf4WDQg=="/>
+		<style id="xminddefaultthemeid2014" name="%professional" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="2ci8evjkhmr5m5tkgafaumb35m"/>
+				<default-style style-family="centralTopic" style-id="20imgh8165s0ch5i3r71bde560"/>
+				<default-style style-family="subTopic" style-id="3a9i9g231bi15sjip958ldvc2a"/>
+				<default-style style-family="floatingTopic" style-id="1meu19hsvqff5e9aeeulslcega"/>
+				<default-style style-family="mainTopic" style-id="6haq0nnra20q2d6kq7pe4e8168"/>
+				<default-style style-family="summaryTopic" style-id="7ba0jerumtm0ngq12oc01p3iih"/>
+				<default-style style-family="boundary" style-id="2fcia2jt9sobnapjdplqqkuusq"/>
+			</theme-properties>
+		</style>
+		
+		<style id="1a1m0h5k8g6l6buub3nb2dk6db" name="%young" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="4vof6rq90qqhp78pkp3q7fd10m"/>
+				<default-style style-family="centralTopic" style-id="0m957ufg3hoam1dm9uiavl68t6"/>
+				<default-style style-family="subTopic" style-id="0ku1t6v744vsimtm6ooejpl7r9"/>
+				<default-style style-family="floatingTopic" style-id="0m957ufg3hoam1dm9uiavl68t6"/>
+				<default-style style-family="mainTopic" style-id="0ku1t6v744vsimtm6ooejpl7r9"/>
+				<default-style style-family="boundary" style-id="0v283uabol3p3ljq5na7ev3bso"/>
+				<default-style style-family="summaryTopic" style-id="11jjqcd6btg8cu681ug7vpp39h"/>
+			</theme-properties>
+		</style>
+		
+		<style id="6dl8vaflf7qvhj2oeq8e855ap3" name="%mature" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="5ck0tn2usih7me4of9jeq6ci3b"/>
+				<default-style style-family="centralTopic" style-id="6r787ka394927tm1anlkfdnl13"/>
+				<default-style style-family="subTopic" style-id="3u16rdce7mcif2f9ij1k4140pe"/>
+				<default-style style-family="mainTopic" style-id="3u16rdce7mcif2f9ij1k4140pe"/>
+				<default-style style-family="boundary" style-id="5slt7su3g3rsi9u6neufg2n0ua"/>
+				<default-style style-family="summaryTopic" style-id="14v5i4rinv7lf27pa0kv0ahds0"/>
+				<default-style style-family="summary" style-id="0ff6qfj1nd0fr0136mmmccut43"/>
+				<default-style style-family="floatingTopic" style-id="091uot6161iaq1r9ocvv4donlr"/>
+			</theme-properties>
+		</style>
+		
+		<style id="5p6knej2gp1mp2m1gpss50q54j" name="%light" type="theme">
+			<theme-properties>
+				<default-style style-family="summary" style-id="2nt073j9v2j9rjv97bi50qid21"/>
+				<default-style style-family="relationship" style-id="4bi7g7rc7m1fiib40d45h6ljq8"/>
+				<default-style style-family="centralTopic" style-id="40oq5ic7b38mftn5v55em5v2h4"/>
+				<default-style style-family="map" style-id="0dkuu64ffcmg6t1c9vq9o99q9d"/>
+				<default-style style-family="subTopic" style-id="717pnc21698p56r428rhrhephm"/>
+				<default-style style-family="floatingTopic" style-id="4im1m96v92psshv0s7544f3f81"/>
+				<default-style style-family="mainTopic" style-id="717pnc21698p56r428rhrhephm"/>
+				<default-style style-family="boundary" style-id="2k3kv22000pd4ehf3vqv67u04f"/>
+				<default-style style-family="summaryTopic" style-id="6latuv8tbsk1p2uq8obennsgf2"/>
+			</theme-properties>
+		</style>
+		
+		<style id="61k80u8ad0p7819uai6hoamde0" name="%grey" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="3j76kp0hu6q8447lirkocnrf3c"/>
+				<default-style style-family="summary" style-id="3a6e6c1928gkqsppshd8tca764"/>
+				<default-style style-family="centralTopic" style-id="4dd80e2t1cfn1eceicu1m94eev"/>
+				<default-style style-family="map" style-id="4id9h6fjpdilda5f341vl8p744"/>
+				<default-style style-family="subTopic" style-id="60ic95ea0aleu28dgdrmf5oc2s"/>
+				<default-style style-family="floatingTopic" style-id="65995ln3il78d9acg7k86cl5ki"/>
+				<default-style style-family="mainTopic" style-id="66q64rsbn0f0c5tk4vshmoihab"/>
+				<default-style style-family="summaryTopic" style-id="5m3q1lo73giktp5sfqkkfh80ka"/>
+				<default-style style-family="boundary" style-id="7a89fn2kmjg5bamvvsj8tj9ts2"/>
+			</theme-properties>
+		</style>
+		
+		<style id="20u8m1qrde5h9m3kiku01gp3j9" name="%bright" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="675i6ojk7fo2bmf1nnf61ohtp2"/>
+				<default-style style-family="summary" style-id="1rgsvid1tho7ivvgk90dvhg2cm"/>
+				<default-style style-family="centralTopic" style-id="24508g9mjkht9rmrlbqp517lv4"/>
+				<default-style style-family="map" style-id="45imvol0dgoomfdqlr2qng5d6p"/>
+				<default-style style-family="subTopic" style-id="24pcg0d9t24ngjr7hbc6ucu4uc"/>
+				<default-style style-family="floatingTopic" style-id="24g4fkc478m8pn41pqndviv7p8"/>
+				<default-style style-family="mainTopic" style-id="1635v2a39okjlnj0hbm3q0j1g6"/>
+				<default-style style-family="summaryTopic" style-id="13ar2jgmf4kma7oqm512d3s2g4"/>
+				<default-style style-family="boundary" style-id="1n83490eurkhdn04q2jbq0c29r"/>
+			</theme-properties>
+		</style>
+		
+		<style id="55al0mlugctfvkj0bprv3uumrd" name="%grass" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="4g4kd5lpd84ofldah7ge7nd5v3"/>
+				<default-style style-family="summary" style-id="26emm0epb458spsv8bkc6vjmf2"/>
+				<default-style style-family="centralTopic" style-id="5e8pi5kf6j0sklrub3bq8ohm2j"/>
+				<default-style style-family="map" style-id="3f37abbqt1e9o4kvf3u1emhqud"/>
+				<default-style style-family="subTopic" style-id="2bo16iqcce0g5v8ujc1u8n3349"/>
+				<default-style style-family="mainTopic" style-id="2bo16iqcce0g5v8ujc1u8n3349"/>
+				<default-style style-family="boundary" style-id="0713dar80ba5fg15f0fi04gunr"/>
+				<default-style style-family="summaryTopic" style-id="0qpfbe9c2l3l2hvc1g19vumftn"/>
+			</theme-properties>
+		</style>
+		
+		<style id="3fdfb145gj7gj3cc8trkel8t73" name="%peaceful" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="4t7ev0dkev77n1t86gp6evqsqj"/>
+				<default-style style-family="summary" style-id="1k544titqu94spifrjb8ktrjtp"/>
+				<default-style style-family="centralTopic" style-id="7omkb05k0h1v24rpst58feluuu"/>
+				<default-style style-family="map" style-id="24j8pscbem702vce6j6htjn92u"/>
+				<default-style style-family="subTopic" style-id="3vu6k121ksjv43puvglegpb0bs"/>
+				<default-style style-family="floatingTopic" style-id="5hal5p1ugtdm76ocbmkfn3irdl"/>
+				<default-style style-family="mainTopic" style-id="2pk2ju453jr3vmiun6vml8prt7"/>
+				<default-style style-family="summaryTopic" style-id="3tcjt72jo1kdku9qkfrsjbau7k"/>
+				<default-style style-family="boundary" style-id="01epea2msk2d3sllkncoh9pg36"/>
+			</theme-properties>
+		</style>
+	
+		<style type="theme" id="brainy.defaultGenre.classic" name="%classic">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="68fnvo51eqfotkhk6e4javiubs"/>
+				<default-style style-family="centralTopic" style-id="4p5drhfqnpjlsopf2hj0rb40b2"/>
+				<default-style style-family="map" style-id="2go6p4jun1r00jtfttqrpfo4b8"/>
+				<default-style style-family="floatingTopic" style-id="6hhiai49lt5411a930de6io80h"/>
+				<default-style style-family="mainTopic" style-id="0i7ve28r7t6nfftbk6ea7mch85"/>
+				<default-style style-family="boundary" style-id="1m03fjtlv0d9bl7832tqlib7h4"/>
+			</theme-properties>
+		</style>
+		
+		<style type="theme" id="brainy.defaultGenre.simple" name="%simple">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="5ddj2r50k2obkrbndhgdlepopb"/>
+				<default-style style-family="centralTopic" style-id="25k8uv4kjljk4e32pvgs52c9u7"/>
+				<default-style style-family="map" style-id="1gajo4sc5v51tdtqphhn4c9gqb"/>
+				<default-style style-family="floatingTopic" style-id="2aasnmhu3ugalein5pl42no8h3"/>
+				<default-style style-family="mainTopic" style-id="2ek8itdrkvqffi9s6vi9jegbc5"/>
+				<default-style style-family="subTopic" style-id="5e09pp402gg8q8bmvmfirri8pp"/>
+				<default-style style-family="boundary" style-id="56p86l6j8m3vf15a3jh461ed1h"/>
+			</theme-properties>
+		</style>
+		
+		<style type="theme" id="brainy.defaultGenre.Business" name="%business"><theme-properties>
+			<default-style style-family="relationship" style-id="3f6vmtrog8p35udetuj4hrffkm"/>
+			<default-style style-family="centralTopic" style-id="6p50ulsvsv4i4c2obkjd3e35l3"/>
+			<default-style style-family="map" style-id="7j0umrrhrfpge17odjegsod5f8"/>
+			<default-style style-family="subTopic" style-id="6jvlnc0ichgkjeaq5qf9g4svtu"/>
+			<default-style style-family="floatingTopic" style-id="0g3v6i06c1gbsc1j1v2e0tj7bc"/>
+			<default-style style-family="mainTopic" style-id="0g3v6i06c1gbsc1j1v2e0tj7bc"/>
+			<default-style style-family="boundary" style-id="5mg4cu8u7dn3ikhtitnh86ss07"/>
 		</theme-properties></style>
-		<style type="theme" id="brainy.defaultGenre.simple" name="%simple"><theme-properties>
-			<default-style style-family="relationship" style-id="STY@My-8GGTxfuf4pE5XZvjp3w=="/>
-			<default-style style-family="centralTopic" style-id="STY@CoHgLcQNT559V9zxlvKDHw=="/>
-			<default-style style-family="map" style-id="STY@b7BMj28Mtid9kT-jx-wVBA=="/>
-			<default-style style-family="floatingTopic" style-id="STY@6UFOsjZvoLJTY3O7BdF2iw=="/>
-			<default-style style-family="mainTopic" style-id="STY@iRp-G-ReJcawr_r-fZxe5g=="/>
-			<default-style style-family="subTopic" style-id="STY@TqB2H0dF73WGxKamQ6mo3v=="/>
-			<default-style style-family="boundary" style-id="STY@pDxSy7ZlOHxAb44NeGg0Jw=="/>
+		
+		<style type="theme" id="brainy.defaultGenre.academese" name="%academies"><theme-properties>
+			<default-style style-family="relationship" style-id="3b0kuvt2hcu8vbia8j9ugsla79"/>
+			<default-style style-family="centralTopic" style-id="7ct8g8ql2q3o18v39ml48o5s0s"/>
+			<default-style style-family="map" style-id="6a9q5j0tup1i8lbqhn3692r456"/>
+			<default-style style-family="subTopic" style-id="2mafvoacvrbvetlqo6fq5h788i"/>
+			<default-style style-family="floatingTopic" style-id="7v3ue8srgvtcv1799suvigu1ke"/>
+			<default-style style-family="mainTopic" style-id="1dh8tubv0eru2gq5u7l7n438tv"/>
+			<default-style style-family="boundary" style-id="2duu8ke7pmtf21tcqh2i039i5t"/>
 		</theme-properties></style>
-		<style type="theme" id="brainy.defaultGenre.Business" name="%bussiness"><theme-properties>
-			<default-style style-family="relationship" style-id="STY@QMfbEAqG-vJat3vjey9-iA=="/>
-			<default-style style-family="centralTopic" style-id="STY@-7dUJe5_7F8JM3WB6D07-Q=="/>
-			<default-style style-family="map" style-id="STY@WeIzZNOEjr569iL1qyoRVA=="/>
-			<default-style style-family="subTopic" style-id="STY@cquE40Yc73SGWgrmFAnI3g=="/>
-			<default-style style-family="floatingTopic" style-id="STY@dIluG7wjTCUAZ7k2zO1RFQ=="/>
-			<default-style style-family="mainTopic" style-id="STY@dIluG7wjTCUAZ7k2zO1RFQ=="/>
-			<default-style style-family="boundary" style-id="STY@t4lwkPF3eNkGLsz_soDKZA=="/>
-		</theme-properties></style>
-		<style type="theme" id="brainy.defaultGenre.academese" name="%academese"><theme-properties>
-			<default-style style-family="relationship" style-id="STY@fn0uclOtKS0KVYKxdEXz1g=="/>
-			<default-style style-family="centralTopic" style-id="STY@6KSP5_auAo7OY7JxTcv_sQ=="/>
-			<default-style style-family="map" style-id="STY@u5LwnyRMZhENtQP8ZsyWVg=="/>
-			<default-style style-family="subTopic" style-id="STY@-WXUrloGIpiyFRdEcjf47Q=="/>
-			<default-style style-family="floatingTopic" style-id="STY@ZGbnmXqnQs3n64NFuxVoQA=="/>
-			<default-style style-family="mainTopic" style-id="STY@zGBjelDfIWhQCJvBUH3ErQ=="/>
-			<default-style style-family="boundary" style-id="STY@zOfWuDnpBCh6abnij1_Rrw=="/>
-		</theme-properties></style>
+		
 		<style type="theme" id="brainy.defaultGenre.comic" name="%comic"><theme-properties>
-			<default-style style-family="relationship" style-id="STY@8BEEGfuwXLDQYU_PGbUQMg=="/>
-			<default-style style-family="centralTopic" style-id="STY@oE577J4Ej6Fd4-cCHdaUCA=="/>
-			<default-style style-family="map" style-id="STY@YBnXdk7SzMEqE1nrfNIgQw=="/>
-			<default-style style-family="floatingTopic" style-id="STY@-EW4XZsso1ZfGrTz8U74zA=="/>
-			<default-style style-family="subTopic" style-id="STY@e5WqwJpf2h4wZ9xEHlpmJw=="/>
-			<default-style style-family="mainTopic" style-id="STY@UN6QwaRTa3q6ZK9ZJ9xC1Q=="/>
-			<default-style style-family="boundary" style-id="STY@dLdhSBMOVCy62w65iFprSA=="/>
+			<default-style style-family="relationship" style-id="48vkitqg7e8avlab4tcnmkgv00"/>
+			<default-style style-family="centralTopic" style-id="74imu686fbaq5vafguc3p45cag"/>
+			<default-style style-family="map" style-id="4r8j9pq2aei1jcl2b8srdha79r"/>
+			<default-style style-family="floatingTopic" style-id="1o9bini033qobmuogu2s8cvbl1"/>
+			<default-style style-family="subTopic" style-id="04aqtshdpt6674663glqdjvber"/>
+			<default-style style-family="mainTopic" style-id="6v519nft454islq1fqvo76orr8"/>
+			<default-style style-family="boundary" style-id="2j24f3m3246h8boelu6qhpckbm"/>
 		</theme-properties></style>
-	</master-styles>
+		
+	    <style id="3hh1ni298144vh43953hsqrij2" name="%dark" type="theme">
+		    <theme-properties>
+				<default-style style-family="relationship" style-id="4vasntqrt9rijtsvgc7aediba6"/>
+				<default-style style-family="centralTopic" style-id="1labpr231gmq7nhq2pr9v6m2ne"/>
+				<default-style style-family="map" style-id="0k1vj7tjgafhig25rohko35r1o"/>
+				<default-style style-family="subTopic" style-id="1h879ecb1ii4ls5g39dkk6jtfp"/>
+				<default-style style-family="floatingTopic" style-id="1h879ecb1ii4ls5g39dkk6jtfp"/>
+				<default-style style-family="mainTopic" style-id="1h879ecb1ii4ls5g39dkk6jtfp"/>
+				<default-style style-family="summaryTopic" style-id="1h879ecb1ii4ls5g39dkk6jtfp"/>
+				<default-style style-family="boundary" style-id="6d8vr79uhe3lqer5rj203olk42"/>
+				<default-style style-family="summary" style-id="2019k01q39t36917am44tj26sq"/>
+			</theme-properties>
+		</style>
+		
+		<style id="59hqn9i9j0e004s39mcirpl5b0" name="%orange" type="theme">
+			<theme-properties>
+				<default-style style-family="summary" style-id="6dkgqr7emuosi22er55efblgr0"/>
+				<default-style style-family="relationship" style-id="0vjjbsp3ql38q1g2evchag5dm6"/>
+				<default-style style-family="centralTopic" style-id="6p3dolm42pah9uejpo00rcc37c"/>
+				<default-style style-family="map" style-id="3ip1dpa9ih5k96l4sa0qoov8ia"/>
+				<default-style style-family="subTopic" style-id="1sls5g6kiblj99ed2ec5jrs0gh"/>
+				<default-style style-family="floatingTopic" style-id="0m0v4673codjnnjtdesf5sifna"/>
+				<default-style style-family="mainTopic" style-id="1sls5g6kiblj99ed2ec5jrs0gh"/>
+				<default-style style-family="summaryTopic" style-id="0m0v4673codjnnjtdesf5sifna"/>
+				<default-style style-family="boundary" style-id="2u4g7ktkvrnq96rnb4cieqk266"/>
+			</theme-properties>
+		</style>
+		
+		<style id="1uoup75ruaav8sgta5b1lkbvjt" name="%blue" type="theme"><theme-properties>
+			<default-style style-family="summary" style-id="6924nqodh8pnac0udfcmela12u"/>
+			<default-style style-family="relationship" style-id="50b1cthnouf7c30lt4k3a99s2l"/>
+			<default-style style-family="centralTopic" style-id="1t99m1fi57oab77vq5qnt30moh"/>
+			<default-style style-family="map" style-id="6u1q0fgdeim2umeq786q3pa1tk"/>
+			<default-style style-family="subTopic" style-id="7lg2vh71bpcscorcuphkm4vc6i"/>
+			<default-style style-family="floatingTopic" style-id="7lg2vh71bpcscorcuphkm4vc6i"/>
+			<default-style style-family="mainTopic" style-id="7lg2vh71bpcscorcuphkm4vc6i"/>
+			<default-style style-family="boundary" style-id="4o2u2tm1l8elnvd668hiuif0fm"/>
+			<default-style style-family="summaryTopic" style-id="2e2h4mcgvsqbj9bjplsc9lja1v"/>
+		</theme-properties></style>
+		
+		<style id="6ec4jd8jr2gs5ibdvnkvh68cfg" name="%purple" type="theme">
+			<theme-properties>
+				<default-style style-family="summary" style-id="39m796fsav3riknnknkc30jqca"/>
+				<default-style style-family="relationship" style-id="7lohee7ss9rfmn9fu2p53vlu96"/>
+				<default-style style-family="centralTopic" style-id="118bv93m60l37r9350jigoe2ur"/>
+				<default-style style-family="map" style-id="6l6mee01nddqkj71el276h1gjs"/>
+				<default-style style-family="subTopic" style-id="1glrch73vj490ca3l5m62n51d4"/>
+				<default-style style-family="floatingTopic" style-id="1glrch73vj490ca3l5m62n51d4"/>
+				<default-style style-family="mainTopic" style-id="1glrch73vj490ca3l5m62n51d4"/>
+				<default-style style-family="boundary" style-id="72jb9uu2hnurgdr88litn9j1di"/>
+				<default-style style-family="summaryTopic" style-id="1glrch73vj490ca3l5m62n51d4"/>
+			</theme-properties>
+		</style>
+		
+		<style id="0a98mi8eub8uqn5mdb01ed8bkk" name="%green" type="theme">
+			<theme-properties>
+				<default-style style-family="summary" style-id="6i02a5n5onv9efvi31c4pr02f9"/>
+				<default-style style-family="relationship" style-id="4e1lrepjrptmsf6cs9llrkk3pt"/>
+				<default-style style-family="centralTopic" style-id="1f4rt725164lncu58nhsb9r0a5"/>
+				<default-style style-family="map" style-id="2tnunlj5d5s4p053lgrjf2er52"/>
+				<default-style style-family="subTopic" style-id="40v1gih6jvpsvi5g82iv4b2bf1"/>
+				<default-style style-family="floatingTopic" style-id="40v1gih6jvpsvi5g82iv4b2bf1"/>
+				<default-style style-family="mainTopic" style-id="40v1gih6jvpsvi5g82iv4b2bf1"/>
+				<default-style style-family="boundary" style-id="3enfilibciupe69b3tlnd33mbl"/>
+				<default-style style-family="summaryTopic" style-id="40v1gih6jvpsvi5g82iv4b2bf1"/>
+			</theme-properties>
+		</style>
+		
+		<style id="57cochmadj87tau8p6bsismgfs" name="%yellow" type="theme">
+			<theme-properties>
+				<default-style style-family="summary" style-id="33e1qkmmshqnboc572uc25hcjk"/>
+				<default-style style-family="relationship" style-id="44q11fgpt75buots2aks144nmm"/>
+				<default-style style-family="centralTopic" style-id="4g84c9lcdk9ne1d2k40fur77r1"/>
+				<default-style style-family="map" style-id="6d4sh30dnp23j9660m33gttroa"/>
+				<default-style style-family="subTopic" style-id="0poijrut9pbjss726im1shaorl"/>
+				<default-style style-family="floatingTopic" style-id="0poijrut9pbjss726im1shaorl"/>
+				<default-style style-family="mainTopic" style-id="0poijrut9pbjss726im1shaorl"/>
+				<default-style style-family="boundary" style-id="46td847ltfifjk7fds4es96k08"/>
+				<default-style style-family="summaryTopic" style-id="0poijrut9pbjss726im1shaorl"/>
+			</theme-properties>
+		</style>
+		
+		<style id="48saqf259fn5dblc4gmh4ucdhr" name="%dark_light" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="6drl533dhqdrotjr39601gr0fn"/>
+				<default-style style-family="summary" style-id="39m796fsav3riknnknkc30jqca"/>
+				<default-style style-family="centralTopic" style-id="3ueaabd1d8i7v990bl554p6r96"/>
+				<default-style style-family="map" style-id="11l9hkicj1ilo62aaf7f7sq2kt"/>
+				<default-style style-family="subTopic" style-id="3hajnm1ts5e9srjdvsonqod7gf"/>
+				<default-style style-family="floatingTopic" style-id="3hajnm1ts5e9srjdvsonqod7gf"/>
+				<default-style style-family="mainTopic" style-id="3hajnm1ts5e9srjdvsonqod7gf"/>
+				<default-style style-family="summaryTopic" style-id="3hajnm1ts5e9srjdvsonqod7gf"/>
+				<default-style style-family="boundary" style-id="6mpm4sktbms85b71b350e9n5gj"/>
+			</theme-properties>
+		</style>
+
+		<style id="27h6cbkokt9aarm5a9rna5dume" name="%orange_light" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="1t9l3snb4f1pgm1omcrtgv8egh"/>
+				<default-style style-family="summary" style-id="6dkgqr7emuosi22er55efblgr0"/>
+				<default-style style-family="centralTopic" style-id="2hcprpdej2u375754d6fi1gj1n"/>
+				<default-style style-family="map" style-id="0jmc9hqcgg8lc4958fgfjpcq14"/>
+				<default-style style-family="subTopic" style-id="1sls5g6kiblj99ed2ec5jrs0gh"/>
+				<default-style style-family="floatingTopic" style-id="0m0v4673codjnnjtdesf5sifna"/>
+				<default-style style-family="mainTopic" style-id="1sls5g6kiblj99ed2ec5jrs0gh"/>
+				<default-style style-family="boundary" style-id="2u4g7ktkvrnq96rnb4cieqk266"/>
+				<default-style style-family="summaryTopic" style-id="0m0v4673codjnnjtdesf5sifna"/>
+			</theme-properties>
+		</style>
+
+		<style id="4vq4a0u73l9pg3p523fi7q4soo" name="%blue_light" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="50b1cthnouf7c30lt4k3a99s2l"/>
+				<default-style style-family="summary" style-id="6924nqodh8pnac0udfcmela12u"/>
+				<default-style style-family="centralTopic" style-id="6jriq1rqimhjcfvr7ggsmgll7i"/>
+				<default-style style-family="map" style-id="29qrag5h86ugdd041qmavsqusi"/>
+				<default-style style-family="subTopic" style-id="7lg2vh71bpcscorcuphkm4vc6i"/>
+				<default-style style-family="floatingTopic" style-id="7lg2vh71bpcscorcuphkm4vc6i"/>
+				<default-style style-family="mainTopic" style-id="7lg2vh71bpcscorcuphkm4vc6i"/>
+				<default-style style-family="summaryTopic" style-id="2e2h4mcgvsqbj9bjplsc9lja1v"/>
+				<default-style style-family="boundary" style-id="4o2u2tm1l8elnvd668hiuif0fm"/>
+			</theme-properties>
+		</style>
+
+		<style id="0ebcs2f41s561gl6a6129ufe5u" name="%purple_light" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="7lohee7ss9rfmn9fu2p53vlu96"/>
+				<default-style style-family="summary" style-id="39m796fsav3riknnknkc30jqca"/>
+				<default-style style-family="centralTopic" style-id="71ju95on9o0d118a81mjnt06rp"/>
+				<default-style style-family="map" style-id="11l9hkicj1ilo62aaf7f7sq2kt"/>
+				<default-style style-family="subTopic" style-id="1glrch73vj490ca3l5m62n51d4"/>
+				<default-style style-family="floatingTopic" style-id="1glrch73vj490ca3l5m62n51d4"/>
+				<default-style style-family="mainTopic" style-id="1glrch73vj490ca3l5m62n51d4"/>
+				<default-style style-family="summaryTopic" style-id="1glrch73vj490ca3l5m62n51d4"/>
+				<default-style style-family="boundary" style-id="72jb9uu2hnurgdr88litn9j1di"/>
+			</theme-properties>
+		</style>
+		
+		<style id="4a1lp9us4b8pj8dk7ak7t4rt4g" name="%green_light" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="58dtpo4tft3ab68ddp7udlldnt"/>
+				<default-style style-family="summary" style-id="6i02a5n5onv9efvi31c4pr02f9"/>
+				<default-style style-family="centralTopic" style-id="2bqcvlmpjsds4sltfuungghg3o"/>
+				<default-style style-family="map" style-id="0jmc9hqcgg8lc4958fgfjpcq14"/>
+				<default-style style-family="subTopic" style-id="40v1gih6jvpsvi5g82iv4b2bf1"/>
+				<default-style style-family="floatingTopic" style-id="40v1gih6jvpsvi5g82iv4b2bf1"/>
+				<default-style style-family="mainTopic" style-id="40v1gih6jvpsvi5g82iv4b2bf1"/>
+				<default-style style-family="boundary" style-id="3enfilibciupe69b3tlnd33mbl"/>
+				<default-style style-family="summaryTopic" style-id="40v1gih6jvpsvi5g82iv4b2bf1"/>
+			</theme-properties>
+		</style>
+		
+		<style id="7rnmn1ok8lgctid7pg7hh5cipe" name="%yellow_light" type="theme">
+			<theme-properties>
+				<default-style style-family="relationship" style-id="44q11fgpt75buots2aks144nmm"/>
+				<default-style style-family="summary" style-id="33e1qkmmshqnboc572uc25hcjk"/>
+				<default-style style-family="centralTopic" style-id="79oqgmldqcdlqodeltcqa95sbl"/>
+				<default-style style-family="map" style-id="0jmc9hqcgg8lc4958fgfjpcq14"/>
+				<default-style style-family="subTopic" style-id="0poijrut9pbjss726im1shaorl"/>
+				<default-style style-family="floatingTopic" style-id="0poijrut9pbjss726im1shaorl"/>
+				<default-style style-family="mainTopic" style-id="0poijrut9pbjss726im1shaorl"/>
+				<default-style style-family="summaryTopic" style-id="0poijrut9pbjss726im1shaorl"/>
+				<default-style style-family="boundary" style-id="46td847ltfifjk7fds4es96k08"/>
+			</theme-properties>
+		</style>
+		
+		</master-styles>
 </xmap-styles>

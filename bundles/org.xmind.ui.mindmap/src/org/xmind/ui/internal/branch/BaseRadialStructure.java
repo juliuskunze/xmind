@@ -60,8 +60,7 @@ public abstract class BaseRadialStructure extends AbstractBranchStructure
     }
 
     public static final String CACHE_NUMBER_RIGHT_BRANCHES = RadialStructure.class
-            .getName()
-            + ".numberRightBranches"; //$NON-NLS-1$
+            .getName() + ".numberRightBranches"; //$NON-NLS-1$
     public Set<IBranchPart> calculatingBranches = new HashSet<IBranchPart>();
 
     public BaseRadialStructure() {
@@ -201,8 +200,7 @@ public abstract class BaseRadialStructure extends AbstractBranchStructure
         Point childRef = key.getFigure().getReference();
         Rectangle childBounds = key.getFigure().getBounds();
         Point childAnc = RadialUtils.isLeft(parentRef.x, childRef.x) ? childBounds
-                .getRight()
-                : childBounds.getLeft();
+                .getRight() : childBounds.getLeft();
         int d = (int) childAnc.getDistance(parentRef);
         Dimension ovalSize = getRadialData(branch).getOvalSize();
         int r = Math.max(ovalSize.width, ovalSize.height);

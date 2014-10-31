@@ -40,7 +40,6 @@ import org.xmind.core.INumbering;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.Request;
 import org.xmind.gef.draw2d.graphics.GraphicsUtils;
 import org.xmind.ui.mindmap.IMindMapImages;
@@ -399,25 +398,21 @@ public class NumberingPropertySectionPart extends
         }
     }
 
-    protected void registerEventListener(ICoreEventSource source,
+    protected void registerEventListener(Object source,
             ICoreEventRegister register) {
         if (source instanceof ITopic) {
             ITopic parent = ((ITopic) source).getParent();
             if (parent == null)
                 parent = (ITopic) source;
-            if (parent instanceof ICoreEventSource) {
-                register.setNextSource((ICoreEventSource) parent);
-                register.register(Core.TopicAdd);
-                register.register(Core.TopicRemove);
-            }
+            register.setNextSourceFrom(parent);
+            register.register(Core.TopicAdd);
+            register.register(Core.TopicRemove);
             INumbering numbering = parent.getNumbering();
-            if (numbering instanceof ICoreEventSource) {
-                register.setNextSource((ICoreEventSource) numbering);
-                register.register(Core.NumberFormat);
-                register.register(Core.NumberingPrefix);
-                register.register(Core.NumberingSuffix);
-                register.register(Core.NumberPrepending);
-            }
+            register.setNextSourceFrom(numbering);
+            register.register(Core.NumberFormat);
+            register.register(Core.NumberingPrefix);
+            register.register(Core.NumberingSuffix);
+            register.register(Core.NumberPrepending);
         }
     }
 
@@ -438,7 +433,8 @@ public class NumberingPropertySectionPart extends
                 ITopic topic = ((ITopic) o).getParent();
                 if (topic == null)
                     topic = (ITopic) o;
-                if (formatId.equals(topic.getNumbering().getParentFormat()))
+//                if (formatId.equals(topic.getNumbering().getParentFormat()))
+                if (formatId.equals(topic.getNumbering().getNumberFormat()))
                     formatId = null;
             }
         }

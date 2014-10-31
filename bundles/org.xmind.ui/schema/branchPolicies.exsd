@@ -2,9 +2,9 @@
 <!-- Schema file written by PDE -->
 <schema targetNamespace="org.xmind.ui" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
-      <appinfo>
+      <appInfo>
          <meta.schema plugin="org.xmind.ui" id="branchPolicies" name="Branch Policies"/>
-      </appinfo>
+      </appInfo>
       <documentation>
          [Enter description of this extension point.]
       </documentation>
@@ -14,9 +14,9 @@
 
    <element name="extension">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element />
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <sequence minOccurs="0" maxOccurs="unbounded">
@@ -24,6 +24,7 @@
             <element ref="structure" minOccurs="0" maxOccurs="unbounded"/>
             <element ref="propertyTester" minOccurs="0" maxOccurs="unbounded"/>
             <element ref="styleValueProvider" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="branchPolicyCategory" minOccurs="0" maxOccurs="unbounded"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -44,9 +45,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute translatable="true"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>
@@ -54,9 +55,9 @@
 
    <element name="branchPolicy">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element labelAttribute="name" icon="icon"/>
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <sequence>
@@ -81,9 +82,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute translatable="true"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="icon" type="string" use="required">
@@ -91,9 +92,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="resource"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="defaultStructureId" type="string" use="required">
@@ -101,9 +102,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="identifier" basedOn="org.xmind.ui.branchPolicies/structure/@id"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="class" type="string">
@@ -111,9 +112,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="java" basedOn=":org.xmind.ui.branch.IBranchPolicy" deprecated="true"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="propertyTesterId" type="string">
@@ -121,9 +122,19 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="identifier" basedOn="org.xmind.ui.branchPolicies/propertyTester/@id"/>
-               </appinfo>
+               </appInfo>
+            </annotation>
+         </attribute>
+         <attribute name="categoryId" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="identifier" basedOn="org.xmind.ui.branchPolicies/@id"/>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>
@@ -131,9 +142,9 @@
 
    <element name="structure">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element labelAttribute="id" icon="icon"/>
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <attribute name="id" type="string" use="required">
@@ -148,9 +159,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute translatable="true"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="icon" type="string">
@@ -158,9 +169,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="resource"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="class" type="string" use="required">
@@ -168,9 +179,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="java" basedOn="org.xmind.ui.branch.AbstractBranchStructure:"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>
@@ -186,9 +197,9 @@
 
    <element name="additionalStructure">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element labelAttribute="structureId" icon="icon"/>
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <sequence>
@@ -199,9 +210,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="identifier" basedOn="org.xmind.ui.branchPolicies/structure/@id"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="name" type="string">
@@ -209,9 +220,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute translatable="true"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="icon" type="string">
@@ -219,9 +230,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="resource"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>
@@ -229,9 +240,9 @@
 
    <element name="propertyTester">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element labelAttribute="id"/>
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <attribute name="id" type="string" use="required">
@@ -246,9 +257,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="java" basedOn=":org.xmind.ui.branch.IBranchPropertyTester"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>
@@ -256,9 +267,9 @@
 
    <element name="branchHook">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element labelAttribute="class"/>
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <sequence>
@@ -269,9 +280,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="java" basedOn=":org.xmind.ui.branch.IBranchHook"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="singleton" type="boolean">
@@ -294,9 +305,9 @@
 
    <element name="overridedStyle">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element labelAttribute="key"/>
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <sequence>
@@ -322,9 +333,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="identifier" basedOn="org.xmind.ui.branchPolicies/styleValueProvider/@id"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>
@@ -340,9 +351,9 @@
 
    <element name="unmodifiableProperty">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element labelAttribute="primaryKey"/>
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <sequence>
@@ -367,9 +378,9 @@
 
    <element name="styleValueProvider">
       <annotation>
-         <appinfo>
+         <appInfo>
             <meta.element labelAttribute="id"/>
-         </appinfo>
+         </appInfo>
       </annotation>
       <complexType>
          <attribute name="id" type="string" use="required">
@@ -384,9 +395,9 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="java" basedOn=":org.xmind.ui.branch.IBranchStyleValueProvider"/>
-               </appinfo>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>
@@ -456,45 +467,77 @@
                <documentation>
                   
                </documentation>
-               <appinfo>
+               <appInfo>
                   <meta.attribute kind="java" basedOn=":org.xmind.ui.branch.IBranchPolicyAdvisor"/>
-               </appinfo>
+               </appInfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="branchPolicyCategory">
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute translatable="true"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+         <attribute name="icon" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="resource"/>
+               </appInfo>
             </annotation>
          </attribute>
       </complexType>
    </element>
 
    <annotation>
-      <appinfo>
+      <appInfo>
          <meta.section type="since"/>
-      </appinfo>
+      </appInfo>
       <documentation>
          [Enter the first release in which this extension point appears.]
       </documentation>
    </annotation>
 
    <annotation>
-      <appinfo>
+      <appInfo>
          <meta.section type="examples"/>
-      </appinfo>
+      </appInfo>
       <documentation>
          [Enter extension point usage example here.]
       </documentation>
    </annotation>
 
    <annotation>
-      <appinfo>
+      <appInfo>
          <meta.section type="apiInfo"/>
-      </appinfo>
+      </appInfo>
       <documentation>
          [Enter API information here.]
       </documentation>
    </annotation>
 
    <annotation>
-      <appinfo>
+      <appInfo>
          <meta.section type="implementation"/>
-      </appinfo>
+      </appInfo>
       <documentation>
          [Enter information about supplied implementation of this extension point.]
       </documentation>
@@ -502,4 +545,3 @@
 
 
 </schema>
-

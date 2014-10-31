@@ -18,6 +18,7 @@ import static org.xmind.core.internal.sharing.AbstractSharedMap.MAP_COMPARATOR;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.core.runtime.Platform;
@@ -35,6 +36,8 @@ public class RemoteSharedLibrary implements IRemoteSharedLibrary {
     private IRemoteCommandService remoteService;
 
     private String name;
+
+    private String contactID;
 
     private List<ISharedMap> maps = new ArrayList<ISharedMap>();
 
@@ -84,6 +87,14 @@ public class RemoteSharedLibrary implements IRemoteSharedLibrary {
         this.name = name;
     }
 
+    public String getContactID() {
+        return contactID;
+    }
+
+    public void setContactID(String contactID) {
+        this.contactID = contactID;
+    }
+
     public ISharedMap[] getMaps() {
         return maps.toArray(new ISharedMap[maps.size()]);
     }
@@ -109,6 +120,10 @@ public class RemoteSharedLibrary implements IRemoteSharedLibrary {
             }
         }
         return null;
+    }
+
+    public void sortMaps(Comparator<ISharedMap> c) {
+        Collections.sort(maps, c);
     }
 
 }

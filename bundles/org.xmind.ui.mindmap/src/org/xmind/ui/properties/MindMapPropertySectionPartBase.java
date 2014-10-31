@@ -25,7 +25,6 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.ISourceProvider;
@@ -158,14 +157,11 @@ public abstract class MindMapPropertySectionPartBase extends
 
     protected void hookSelection(ISelection selection) {
         super.hookSelection(selection);
-        for (Object o : getSelectedElements()) {
-            if (o instanceof ICoreEventSource) {
-                if (eventRegister == null)
-                    eventRegister = new CoreEventRegister(this);
-                ICoreEventSource source = (ICoreEventSource) o;
-                eventRegister.setNextSource(source);
-                registerEventListener(source, eventRegister);
-            }
+        for (Object source : getSelectedElements()) {
+            if (eventRegister == null)
+                eventRegister = new CoreEventRegister(this);
+            eventRegister.setNextSourceFrom(source);
+            registerEventListener(source, eventRegister);
         }
     }
 
@@ -185,7 +181,7 @@ public abstract class MindMapPropertySectionPartBase extends
 
     protected abstract void createContent(Composite parent);
 
-    protected abstract void registerEventListener(ICoreEventSource source,
+    protected abstract void registerEventListener(Object source,
             ICoreEventRegister register);
 
     protected void unhookSelection(ISelection selection) {

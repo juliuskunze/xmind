@@ -552,7 +552,7 @@ public class MindMapUtils {
                 return parentNumber + NUMBER_SEPARATOR + number;
             }
         }
-        return number + NUMBER_SEPARATOR;
+        return number;
     }
 
     public static String getFullNumberingText(ITopic topic, String defaultFormat) {

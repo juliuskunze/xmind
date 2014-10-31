@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.core.event;
 
+
 public interface ICoreEventRegister {
 
     ICoreEventRegistration register(String eventType);
@@ -26,5 +27,7 @@ public interface ICoreEventRegister {
     void setNextSupport(ICoreEventSupport support);
 
     void setNextListener(ICoreEventListener listener);
+
+    void setNextSourceFrom(Object source);
 
 }

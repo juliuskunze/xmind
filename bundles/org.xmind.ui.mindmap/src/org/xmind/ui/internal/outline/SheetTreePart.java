@@ -42,8 +42,8 @@ public class SheetTreePart extends MindMapTreePartBase {
         return list.toArray();
     }
 
-    protected void registerCoreEvents(ICoreEventRegister register) {
-        super.registerCoreEvents(register);
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
+        super.registerCoreEvents(source, register);
         register.register(Core.TitleText);
         register.register(Core.RelationshipAdd);
         register.register(Core.RelationshipRemove);

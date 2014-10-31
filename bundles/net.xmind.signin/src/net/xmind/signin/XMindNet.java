@@ -15,6 +15,9 @@ package net.xmind.signin;
 
 import net.xmind.signin.internal.InternalXMindNet;
 
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.xmind.ui.internal.browser.BrowserUtil;
 
 public class XMindNet {
@@ -137,6 +140,15 @@ public class XMindNet {
     public static void removeLicenseListener(ILicenseListener listener) {
         InternalXMindNet.getInstance().getLicenseAgent()
                 .removeLicenseListener(listener);
+    }
+
+    public static Image createBannerLogo() {
+        ImageDescriptor imageDes = AbstractUIPlugin.imageDescriptorFromPlugin(
+                "net.xmind.signin", "icons/logo.png"); //$NON-NLS-1$ //$NON-NLS-2$
+        if (imageDes != null)
+            return imageDes.createImage();
+
+        return null;
     }
 
 }

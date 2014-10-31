@@ -20,7 +20,6 @@ import org.eclipse.draw2d.IFigure;
 import org.xmind.core.Core;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.draw2d.ITextFigure;
 import org.xmind.gef.draw2d.RotatableWrapLabel;
@@ -44,7 +43,7 @@ public class TitleTextPart extends MindMapPartBase implements ITitleTextPart,
         return (ITextFigure) super.getFigure();
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
+    protected void registerCoreEvents(Object source,
             ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
         register.register(Core.TitleText);

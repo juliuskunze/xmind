@@ -80,6 +80,11 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor implements
         return PERSPECTIVE_ID;
     }
 
+    @Override
+    public String getMainPreferencePageId() {
+        return "org.eclipse.ui.preferencePages.Workbench"; //$NON-NLS-1$
+    }
+
     public void initialize(IWorkbenchConfigurer configurer) {
         super.initialize(configurer);
         configurer.setSaveAndRestore(true);
@@ -302,11 +307,15 @@ public class CathyWorkbenchAdvisor extends WorkbenchAdvisor implements
 
         int type = info.getType();
         ILicenseKeyHeader header = info.getLicenseKeyHeader();
+        String brandingVersion = System.getProperty(
+                "org.xmind.product.brandingVersion", ""); //$NON-NLS-1$ //$NON-NLS-2$
         String licenseType;
         if ((type & ILicenseInfo.VALID_PRO_LICENSE_KEY) != 0) {
-            licenseType = WorkbenchMessages.About_ProTitle;
+            licenseType = NLS.bind(WorkbenchMessages.About_ProTitle,
+                    brandingVersion);
         } else if ((type & ILicenseInfo.VALID_PLUS_LICENSE_KEY) != 0) {
-            licenseType = WorkbenchMessages.About_PlusTitle;
+            licenseType = NLS.bind(WorkbenchMessages.About_PlusTitle,
+                    brandingVersion);
         } else if ((type & ILicenseInfo.VALID_PRO_SUBSCRIPTION) != 0) {
             licenseType = WorkbenchMessages.About_ProSubscriptionTitle;
         } else {

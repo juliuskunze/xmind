@@ -30,6 +30,10 @@ public class WorkbenchMessages extends NLS {
     public static String GeneralPrefPage_title;
     public static String RecentFiles_label;
     public static String RestoreLastSession_label;
+    public static String CathyWorkbenchWindowAdvisor_menu_lockAction_text;
+
+    public static String CathyWorkbenchWindowAdvisor_menu_resetAction_text;
+
     public static String CheckUpdates_label;
     public static String AutoBackup_label;
 
@@ -107,7 +111,27 @@ public class WorkbenchMessages extends NLS {
     public static String DownloadAndOpenFileJob_Error_FailedToLoadWorkbook_with_url;
     public static String DownloadAndOpenFileJob_DownloadJob_jobName;
 
+    public static String OpenXMindCommandFileJob_failed_fileIsNotReadable;
+
+    public static String OpenXMindCommandFileJob_failed_noCommandFilePath_text;
+
+    public static String OpenXMindCommandFileJob_failed_openXMindCommandFile;
+
+    public static String OpenXMindCommandFileJob_name;
+
+    public static String WelcomeToXMindHandler_welcomeToXMind_templatedName;
+
     public static String WorkbookFilterName;
+
+    public static String BetaVerifier_BetaExpiredPromptDialog_windowTitle;
+    public static String BetaVerifier_BetaExpiredPromptDialog_message_withBrandingVersion_andBuildId;
+    public static String BetaVerifier_BetaExpiredPromptDialog_CheckAndInstallButton_text;
+    public static String BetaVerifier_BetaExpiredPromptDialog_ExitButton_text;
+    public static String BetaVerifier_BetaExpiredPromptDialog_DownloadFailure_message;
+
+    public static String About_Copyright;
+    public static String About_Homepage;
+    public static String About_BetaExpiryMessage_withExpiryTime;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, WorkbenchMessages.class);

@@ -78,7 +78,6 @@ import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
 import org.xmind.core.event.ICoreEventRegistration;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.command.CompoundCommand;
@@ -839,14 +838,11 @@ public class NotesView extends ViewPart implements IPartListener,
     private void hookTopic() {
         if (currentTopicPart != null) {
             ITopic topic = currentTopicPart.getTopic();
-            if (topic instanceof ICoreEventSource) {
-                if (eventRegister == null)
-                    eventRegister = new CoreEventRegister(
-                            (ICoreEventSource) topic, this);
-                eventRegister.register(Core.TopicNotes);
-                if (DEBUG)
-                    System.out.println("Model listeners installed"); //$NON-NLS-1$
-            }
+            if (eventRegister == null)
+                eventRegister = new CoreEventRegister(topic, this);
+            eventRegister.register(Core.TopicNotes);
+            if (DEBUG)
+                System.out.println("Model listeners installed"); //$NON-NLS-1$
         }
     }
 

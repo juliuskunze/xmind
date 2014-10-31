@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.eclipse.ui.PlatformUI;
 
@@ -58,6 +59,7 @@ public class BonjourInstaller implements ISchedulingRule {
         }
 
         Job installJob = new Job(SharingMessages.InstallBonjourJob_jobName) {
+            @Override
             protected IStatus run(IProgressMonitor monitor) {
                 final File installer = findBonjourInstallerFile();
                 if (installer == null)
@@ -132,11 +134,23 @@ public class BonjourInstaller implements ISchedulingRule {
         };
         installJob.setRule(this);
         installJob.addJobChangeListener(new JobChangeAdapter() {
+            @Override
             public void done(IJobChangeEvent event) {
                 super.done(event);
                 synchronized (lock) {
                     installing = false;
                     currentJob = null;
+
+                    if (event.getResult().getSeverity() == IStatus.CANCEL) {
+                        IPreferenceStore prefStore = LocalNetworkSharingUI
+                                .getDefault().getPreferenceStore();
+                        prefStore.setValue(
+                                LocalNetworkSharingUI.PREF_FEATURE_ENABLED,
+                                false);
+                        prefStore.setValue(
+                                LocalNetworkSharingUI.PREF_SERVICE_ACTIVATED,
+                                false);
+                    }
                 }
             }
         });

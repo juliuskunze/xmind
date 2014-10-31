@@ -72,8 +72,6 @@ public class XMind2008ExportWizard extends AbstractMindMapExportWizard {
             Control fileGroup = createFileControls(composite);
             fileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                     false));
-
-            updateStatus();
         }
 
         /*
@@ -89,20 +87,6 @@ public class XMind2008ExportWizard extends AbstractMindMapExportWizard {
             filterNames.add(0, WizardMessages.XMind2008ExportPage_filterName);
             filterExtensions.add(0, FILTER);
             super.setDialogFilters(dialog, filterNames, filterExtensions);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.xmind.ui.wizards.AbstractExportPage#getSuggestedFileName()
-         */
-        @Override
-        protected String getSuggestedFileName() {
-            String file = sourceWorkbook.getFile();
-            if (file == null)
-                file = getSourceEditor().getTitle();
-            return FileUtils.getNoExtensionFileName(new File(file).getName())
-                    + FILE_EXT;
         }
 
     }
@@ -180,6 +164,15 @@ public class XMind2008ExportWizard extends AbstractMindMapExportWizard {
                 getTargetPath());
         exporter.setMonitor(monitor);
         exporter.export();
+    }
+
+    @Override
+    protected String getSuggestedFileName() {
+        String file = sourceWorkbook.getFile();
+        if (file == null)
+            file = getSourceEditor().getTitle();
+        return FileUtils.getNoExtensionFileName(new File(file).getName())
+                + FILE_EXT;
     }
 
 }

@@ -21,6 +21,8 @@ import net.xmind.signin.ILicenseListener;
 
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.services.IEvaluationService;
 
 public class XMindLicenseAgent {
 
@@ -49,6 +51,26 @@ public class XMindLicenseAgent {
             return;
         this.info = info;
         fireLicenseVerified(info);
+
+        int type = info.getType();
+        String licenseType;
+        if ((type & ILicenseInfo.VALID_PRO_LICENSE_KEY) != 0) {
+            licenseType = "Pro"; //$NON-NLS-1$
+        } else if ((type & ILicenseInfo.VALID_PLUS_LICENSE_KEY) != 0) {
+            licenseType = "Plus"; //$NON-NLS-1$
+        } else if ((type & ILicenseInfo.VALID_PRO_SUBSCRIPTION) != 0) {
+            licenseType = "Sub"; //$NON-NLS-1$
+        } else {
+            licenseType = "Free"; //$NON-NLS-1$
+        }
+        IEvaluationService evaluationService = (IEvaluationService) PlatformUI
+                .getWorkbench().getService(IEvaluationService.class);
+        if (evaluationService == null)
+            return;
+
+        System.setProperty("org.xmind.product.license_type", licenseType); //$NON-NLS-1$
+        evaluationService.requestEvaluation("org.xmind.product.license_type"); //$NON-NLS-1$
+
     }
 
     private void fireLicenseVerified(final ILicenseInfo info) {

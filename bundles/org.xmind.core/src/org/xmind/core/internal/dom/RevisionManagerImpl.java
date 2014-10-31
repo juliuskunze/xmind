@@ -92,6 +92,8 @@ public class RevisionManagerImpl extends RevisionManager implements
 
     @Override
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == Node.class || adapter == Document.class)
             return getImplementation();
         return super.getAdapter(adapter);

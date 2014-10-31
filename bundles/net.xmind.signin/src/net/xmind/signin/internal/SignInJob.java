@@ -40,7 +40,7 @@ public class SignInJob extends Job {
 
     private IDataStore data;
 
-    private SignInDialog2 dialog;
+    private SignInDialog3 dialog;
 
     public static final String REMEMBER = "remember"; //$NON-NLS-1$
 
@@ -93,13 +93,13 @@ public class SignInJob extends Job {
                 if (shell != null)
                     shell.setActive();
 
-                dialog = new SignInDialog2(shell, message, extension);
+                dialog = new SignInDialog3(shell, message, extension);
                 int code = dialog.open();
 
                 if (monitor.isCanceled())
                     return;
 
-                if (code == SignInDialog2.OK) {
+                if (code == SignInDialog3.OK) {
                     data = new PropertyStore(dialog.getData());
 //                    if (dialog.shouldRemember()) {
                     setCookies(dialog.getUserID(), dialog.getToken());

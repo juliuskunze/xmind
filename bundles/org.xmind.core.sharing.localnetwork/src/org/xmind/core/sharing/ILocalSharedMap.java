@@ -13,20 +13,14 @@
  *******************************************************************************/
 package org.xmind.core.sharing;
 
+import java.util.List;
+
 /**
  * 
  * @author Frank Shaka
  * 
  */
 public interface ILocalSharedMap extends ISharedMap {
-
-    /**
-     * Returns the most recent time (in milliseconds) when this map was
-     * modified.
-     * 
-     * @return the modified time in milliseconds
-     */
-    long getResourceModifiedTime();
 
     /**
      * Returns the time (in milliseconds) when this map was added into the
@@ -42,5 +36,9 @@ public interface ILocalSharedMap extends ISharedMap {
      * @return the absolute path
      */
     String getResourcePath();
+
+    List<String> getReceiverIDs();
+
+    boolean hasAccessRight(String remoteID);
 
 }

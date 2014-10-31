@@ -1,13 +1,13 @@
 /* ******************************************************************************
  * Copyright (c) 2006-2012 XMind Ltd. and others.
- * 
+ *
  * This file is a part of XMind 3. XMind releases 3 and
  * above are dual-licensed under the Eclipse Public License (EPL),
  * which is available at http://www.eclipse.org/legal/epl-v10.html
- * and the GNU Lesser General Public License (LGPL), 
+ * and the GNU Lesser General Public License (LGPL),
  * which is available at http://www.gnu.org/licenses/lgpl.html
  * See http://www.xmind.net/license.html for details.
- * 
+ *
  * Contributors:
  *     XMind Ltd. - initial API and implementation
  *******************************************************************************/
@@ -96,7 +96,6 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.core.internal.InternalCore;
 import org.xmind.core.internal.dom.WorkbookImpl;
@@ -140,6 +139,7 @@ import org.xmind.ui.internal.statushandlers.RuntimeErrorDialog;
 import org.xmind.ui.internal.views.BlackBoxView;
 import org.xmind.ui.mindmap.IMindMap;
 import org.xmind.ui.mindmap.IMindMapImages;
+import org.xmind.ui.mindmap.IMindMapViewer;
 import org.xmind.ui.mindmap.IWorkbookRef;
 import org.xmind.ui.mindmap.MindMap;
 import org.xmind.ui.mindmap.MindMapImageExporter;
@@ -251,7 +251,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see org.xmind.ui.internal.editor.DialogPaneContainer#close()
          */
         @Override
@@ -270,7 +270,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see
          * org.xmind.ui.internal.editor.DialogPaneContainer#showDialog(org.xmind
          * .ui.internal.editor.IDialogPane)
@@ -290,7 +290,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
             MultiPageSelectionProvider {
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see
          * org.xmind.ui.tabfolder.DelegatedSelectionProvider#setSelection(org
          * .eclipse.jface.viewers.ISelection)
@@ -438,7 +438,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
         // Update editor pane title:
         updateNames();
 
-        // Add helpers to handle moving pages, editing page title, showing 
+        // Add helpers to handle moving pages, editing page title, showing
         // page popup preview, creating new page, etc.:
         if (getContainer() instanceof CTabFolder) {
             final CTabFolder tabFolder = (CTabFolder) getContainer();
@@ -693,7 +693,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
     }
 
     /**
-     * 
+     *
      * @param fileName
      * @return 0 for Save As, 1 for Cancel, -1 for Save
      */
@@ -872,21 +872,26 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
             return backCover;
         } else if (adapter == LoadWorkbookJob.class) {
             return loadWorkbookJob;
+        } else if (adapter == IMindMapViewer.class) {
+            IGraphicalEditorPage page = getActivePageInstance();
+            if (page != null) {
+                IGraphicalViewer activeViewer = page.getViewer();
+                if (activeViewer instanceof IMindMapViewer)
+                    return activeViewer;
+            }
+            return null;
         }
         return super.getAdapter(adapter);
     }
 
     protected void installModelListener() {
         IWorkbook workbook = getWorkbook();
-        if (workbook instanceof ICoreEventSource) {
-            eventRegister = new CoreEventRegister((ICoreEventSource) workbook,
-                    this);
-            eventRegister.register(Core.SheetAdd);
-            eventRegister.register(Core.SheetRemove);
-            eventRegister.register(Core.SheetMove);
-            eventRegister.register(Core.PasswordChange);
-            eventRegister.register(Core.WorkbookPreSaveOnce);
-        }
+        eventRegister = new CoreEventRegister(workbook, this);
+        eventRegister.register(Core.SheetAdd);
+        eventRegister.register(Core.SheetRemove);
+        eventRegister.register(Core.SheetMove);
+        eventRegister.register(Core.PasswordChange);
+        eventRegister.register(Core.WorkbookPreSaveOnce);
     }
 
     protected void uninstallModelListener() {
@@ -1147,7 +1152,7 @@ public class MindMapEditor extends GraphicalEditor implements ISaveablePart2,
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.xmind.gef.ui.editor.GraphicalEditor#findOwnedInput(org.eclipse.jface
      * .viewers.ISelection)

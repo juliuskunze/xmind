@@ -47,7 +47,7 @@
 		<marker id="star-blue" name="%colorBlue" resource="star_blue.png" />
 		<marker id="star-green" name="%colorGreen" resource="star_green.png" />
 		<marker id="star-purple" name="%colorPurple" resource="star_purple.png" />
-		<marker id="star-gray" name="%colorGray" resource="star_gray.png" hidden="true"/>
+		<marker id="star-gray" name="%colorGray" resource="star_gray.png"/>
 	</marker-group>
 	<marker-group id="peopleMakers" name="%peopleMarkers" singleton="true">
 		<marker id="people-red" name="%colorRed" resource="people_red.png" />
@@ -76,6 +76,13 @@
 		<marker id="symbol-info" name="%symbolInfo" resource="symbol_information.png" />
 		<marker id="symbol-wrong" name="%symbolWrong" resource="symbol_wrong.png" />
 		<marker id="symbol-right" name="%symbolRight" resource="symbol_right.png" />
+		<marker id="c_simbol-plus" name="%symbolPlus" resource="c_simbol_plus.png" />
+		<marker id="c_simbol-minus" name="%symbolMinus" resource="c_simbol_minus.png" />
+		<marker id="c_simbol-question" name="%symbolQuestion" resource="c_simbol_question.png" />
+		<marker id="c_simbol-exclam" name="%symbolExclam" resource="c_simbol_exclamation.png" />
+		<marker id="c_simbol-info" name="%symbolInfo" resource="c_simbol_information.png" />
+		<marker id="c_simbol-wrong" name="%symbolWrong" resource="c_simbol_wrong.png" />
+		<marker id="c_simbol-right" name="%symbolRight" resource="c_simbol_right.png" />
 	</marker-group>
 	<marker-group id="monthMakers" name="%monthMarkers" singleton="true">
 		<marker id="month-jan" name="%monthJan" resource="month_jan.png" />

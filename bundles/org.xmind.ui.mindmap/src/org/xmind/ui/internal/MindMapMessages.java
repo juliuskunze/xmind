@@ -37,6 +37,14 @@ public class MindMapMessages extends NLS {
     public static String SortMenu;
 
     public static String TopicProtocol_GoToTopic_text;
+    public static String MindMapActionFactory_Duplicate_text;
+
+    public static String MindMapActionFactory_Duplicate_tooltip;
+
+    public static String MindMapActionFactory_NewSheetFromTemplate_tooltip;
+
+    public static String MindMapActionFactory_NewSheetFromTemplte_text;
+
     public static String MindMapMenu;
     public static String AlignmentMenu;
 
@@ -86,6 +94,14 @@ public class MindMapMessages extends NLS {
     public static String DeleteStyleHandler_DeleteStytles;
 
     public static String DeleteStyleHandler_DeleteStytlesConfirm;
+    public static String DeleteStyleHandler_MessageDialog_description;
+
+    public static String DeleteStyleHandler_MessageDialog_styles;
+
+    public static String DeleteStyleHandler_MessageDialog_themes;
+
+    public static String DeleteStyleHandler_MessageDialog_title;
+
     public static String Delete_OtherSheets_text;
     public static String Delete_OtherSheets_toolTip;
 
@@ -183,6 +199,8 @@ public class MindMapMessages extends NLS {
 
     public static String MindMapEditor_SaveWorkbookErrorMessageAndReport;
 
+    public static String MindMapPropertySheetPage_ResetStyle_text;
+
     public static String NotesHyperlinkDialog_display_text;
     public static String NotesHyperlinkDialog_hyperlinkReference_text;
     public static String NotesHyperlinkDialog_title;
@@ -195,6 +213,12 @@ public class MindMapMessages extends NLS {
     public static String ModifyWrapWidth_toolTip0;
     public static String NewSheet_text;
     public static String NewSheet_toolTip;
+    public static String NewSheetFromTemplateDialog_button_Choose;
+
+    public static String NewSheetFromTemplateDialog_NewSheetFromTemplteCommand_label;
+
+    public static String NewSheetFromTemplateDialog_text;
+
     public static String OpenWorkbook_text;
     public static String OpenWorkbook_toolTip;
     public static String OpenHomeMap_text;
@@ -273,6 +297,10 @@ public class MindMapMessages extends NLS {
     public static String AlignMiddle_text;
     public static String AlignMiddle_toolTip;
 
+    public static String AllMarkersMenu_Markers_More_text;
+
+    public static String AllMarkersMenu_Markers_tooltip;
+
     public static String AllowOverlaps_text;
 
     public static String AllowOverlaps_toolTip;
@@ -288,8 +316,16 @@ public class MindMapMessages extends NLS {
     public static String DownloadImageJob_pattern;
 
     public static String MarkerView_XMindMarkers_label;
+    public static String MarkerView_UntitledGroup_name;
+
     public static String MarkerView_UserMarkers_label;
     public static String MarkerView_RecentlyUsed_label;
+
+    public static String StylePropertySectionPart_ShowStyleEditorDialogButton_text;
+
+    public static String StylePropertySectionPart_text;
+
+    public static String StylePropertySectionPart_tooltip;
 
     public static String StylesViewer_Topic_label;
     public static String StylesViewer_Boundary_label;

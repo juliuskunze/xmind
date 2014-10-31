@@ -15,10 +15,14 @@ package org.xmind.ui.internal.views;
 
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Graphics;
+import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 import org.xmind.core.internal.dom.NumberUtils;
 import org.xmind.core.style.IStyle;
@@ -28,6 +32,7 @@ import org.xmind.gef.draw2d.geometry.PrecisionPoint;
 import org.xmind.gef.draw2d.geometry.PrecisionPointPair;
 import org.xmind.gef.draw2d.geometry.PrecisionRectangle;
 import org.xmind.gef.draw2d.graphics.GradientPattern;
+import org.xmind.gef.draw2d.graphics.GraphicsUtils;
 import org.xmind.gef.draw2d.graphics.Path;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.resources.ColorUtils;
@@ -226,6 +231,7 @@ public class StyleFigureUtils {
         Color lineColor = getLineColor(style, template, ColorConstants.gray);
 
         String lineWidthValue = getValue(Styles.LineWidth, style, template);
+        lineWidthValue = StyleUtils.trimNumber(lineWidthValue);
         int lineWidth = NumberUtils.safeParseInt(lineWidthValue, 3);
         graphics.setLineWidth(lineWidth);
 
@@ -336,6 +342,7 @@ public class StyleFigureUtils {
         Color lineColor = getLineColor(style, template, ColorConstants.gray);
 
         String lineWidthValue = getValue(Styles.LineWidth, style, template);
+        lineWidthValue = StyleUtils.trimNumber(lineWidthValue);
         int lineWidth = NumberUtils.safeParseInt(lineWidthValue, 3);
         graphics.setLineWidth(lineWidth);
 
@@ -421,10 +428,11 @@ public class StyleFigureUtils {
             return;
 
         String lineWidth = getValue(Styles.LineWidth, srcStyle, srcTemplate);
+        lineWidth = StyleUtils.trimNumber(lineWidth);
         int width = NumberUtils.safeParseInt(lineWidth, 1);
         srcBounds = srcBounds.getExpanded(-width / 2, -width / 2);
-        int tgtWidth = NumberUtils.safeParseInt(getValue(Styles.LineWidth,
-                tgtStyle, tgtTemplate), 1);
+        int tgtWidth = NumberUtils.safeParseInt(StyleUtils.trimNumber(getValue(
+                Styles.LineWidth, tgtStyle, tgtTemplate)), 1);
         tgtBounds = tgtBounds.getExpanded(-tgtWidth / 2, -tgtWidth / 2);
 
         String srcShape = getValue(Styles.ShapeClass, srcStyle, srcTemplate);
@@ -495,6 +503,12 @@ public class StyleFigureUtils {
 
     public static void drawTopic(Graphics graphics, Rectangle bounds,
             IStyle style, IStyle template, boolean centerUnderline) {
+        drawTopic(graphics, bounds, style, template, centerUnderline, false);
+    }
+
+    public static void drawTopic(Graphics graphics, Rectangle bounds,
+            IStyle style, IStyle template, boolean centerUnderline,
+            boolean isGradientColor) {
         Path shape = new Path(Display.getCurrent());
 
         boolean outline = true;
@@ -533,24 +547,39 @@ public class StyleFigureUtils {
                 int x = bounds.x;
                 int y1 = bounds.y - bounds.height / 4;
                 int y2 = bounds.y + bounds.height;
-                GradientPattern bgPattern = new GradientPattern(Display
-                        .getCurrent(), x, y1, x, y2, ColorConstants.white,
-                        0xff, fillColor, 0xff);
-                graphics.setBackgroundPattern(bgPattern);
-                graphics.fillPath(shape);
-                bgPattern.dispose();
+                if (isGradientColor) {
+                    GradientPattern bgPattern = new GradientPattern(
+                            Display.getCurrent(), x, y1, x, y2,
+                            ColorConstants.white, 0xff, fillColor, 0xff);
+                    graphics.setBackgroundPattern(bgPattern);
+                    graphics.fillPath(shape);
+                    bgPattern.dispose();
+                } else {
+                    graphics.setBackgroundColor(fillColor);
+                    graphics.fillPath(shape);
+                }
             }
         }
 
         if (outline) {
             Color lineColor = getLineColor(style, template, ColorConstants.gray);
+            String lineColorValue = getValue(Styles.BorderLineColor, style,
+                    template);
+            if (lineColorValue != null)
+                lineColor = ColorUtils.getColor(lineColorValue);
 
-            String lineWidthValue = getValue(Styles.LineWidth, style, template);
+            String lineWidthValue = getValue(Styles.BorderLineWidth, style,
+                    template);
+            lineWidthValue = StyleUtils.trimNumber(lineWidthValue);
+            if (lineWidthValue == null)
+                lineWidthValue = getValue(Styles.LineWidth, style, template);
             int lineWidth = NumberUtils.safeParseInt(lineWidthValue, 1);
-            graphics.setLineWidth(lineWidth);
-            graphics.setLineStyle(SWT.LINE_SOLID);
-            graphics.setForegroundColor(lineColor);
-            graphics.drawPath(shape);
+            if (lineWidth > 0) {
+                graphics.setLineWidth(lineWidth);
+                graphics.setLineStyle(SWT.LINE_SOLID);
+                graphics.setForegroundColor(lineColor);
+                graphics.drawPath(shape);
+            }
         }
         shape.dispose();
     }
@@ -948,4 +977,64 @@ public class StyleFigureUtils {
         shape.close();
     }
 
+    public static void drawtext(Graphics graphics, String text,
+            Rectangle parentRect, IStyle style, IStyle template) {
+        String fontColor = getValue(Styles.TextColor, style, template);
+        RGB fontColorRGB = ColorUtils.toRGB(fontColor);
+        graphics.setForegroundColor(ColorUtils.getColor(fontColorRGB));
+
+        String textAlign = getValue(Styles.TextAlign, style, template);
+
+        String fontName = getValue(Styles.FontFamily, style, template);
+        if (Styles.SYSTEM.equals(fontName)) {
+            fontName = JFaceResources.getDefaultFont().getFontData()[0]
+                    .getName();
+        }
+
+        boolean isBold = StyleUtils.isBold(style);
+        boolean isItalic = StyleUtils.isItalic(style);
+        boolean isStrikedThrough = StyleUtils.isStrikeout(style);
+        boolean isUnderlined = StyleUtils.isUnderline(style);
+
+        int fontDataStyle = SWT.NORMAL;
+        if (isBold)
+            fontDataStyle |= SWT.BOLD;
+        if (isItalic)
+            fontDataStyle |= SWT.ITALIC;
+        Font font = new Font(null, fontName, 7, fontDataStyle);
+
+        Dimension textSize = GraphicsUtils.getAdvanced()
+                .getTextSize(text, font);
+        graphics.setFont(font);
+        int x = parentRect.x + (parentRect.width - textSize.width) / 4;
+        int y = parentRect.y + (parentRect.height - textSize.height) / 2;
+
+        if (Styles.ALIGN_CENTER.equals(textAlign)) {
+            x += (parentRect.width - textSize.width) / 4;
+        } else if (Styles.ALIGN_RIGHT.equals(textAlign)) {
+            x += (parentRect.width - textSize.width) / 2;
+        }
+
+        graphics.drawText(text, x, y);
+
+        y += textSize.height;
+
+        if (isUnderlined) {
+            Path underline = new Path(Display.getCurrent());
+            underline.moveTo(x, y - 1);
+            underline.lineTo(x + textSize.width, y - 1);
+            graphics.drawPath(underline);
+            underline.dispose();
+        }
+        if (isStrikedThrough) {
+            Path strikeOutLine = new Path(Display.getCurrent());
+            strikeOutLine.moveTo(x, y - textSize.height / 2);
+            strikeOutLine.lineTo(x + textSize.width, y - textSize.height / 2);
+            graphics.drawPath(strikeOutLine);
+            strikeOutLine.dispose();
+        }
+
+        font.dispose();
+
+    }
 }

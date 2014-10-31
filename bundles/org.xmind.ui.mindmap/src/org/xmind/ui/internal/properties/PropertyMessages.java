@@ -27,6 +27,7 @@ public class PropertyMessages extends NLS {
     public static String LineWdith_Fat;
     public static String LineWidth_Fattest;
     public static String LineWidth_Medium;
+    public static String LineWidth_None;
     public static String LineWidth_Thin;
     public static String LineWidth_Thinnest;
     public static String ShowLegend_text;

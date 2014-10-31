@@ -79,6 +79,8 @@ public class MetaImpl extends Meta implements ICoreEventSource {
     }
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == Node.class || adapter == Document.class)
             return implementation;
         if (adapter == ElementRegistry.class)

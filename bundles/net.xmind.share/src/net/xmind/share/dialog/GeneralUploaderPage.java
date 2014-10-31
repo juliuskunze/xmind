@@ -39,7 +39,7 @@ public class GeneralUploaderPage extends UploaderPage implements
 
     private static final String LANGUAGE_CHANNEL = "net.xmind.share.dialog.defaultLanguageChannel"; //$NON-NLS-1$
 
-    private InfoField titleField;
+    private TitleInfoField titleField;
 
     private InfoField descriptionField;
 
@@ -57,13 +57,21 @@ public class GeneralUploaderPage extends UploaderPage implements
         layout.verticalSpacing = 10;
         composite.setLayout(layout);
 
-        titleField = new InfoField(false, true, true);
+        titleField = new TitleInfoField(false, true, true);
         titleField.fill(composite);
         titleField.setName(Messages.UploaderDialog_Title_text);
         titleField.setText(getInfo().getString(Info.TITLE));
-        titleField.getTextWidget().addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent e) {
-                getInfo().setProperty(Info.TITLE, titleField.getText());
+//        titleField.getTextWidget().addModifyListener(new ModifyListener() {
+//            public void modifyText(ModifyEvent e) {
+//                getInfo().setProperty(Info.TITLE, titleField.getText());
+//            }
+//        });
+
+        titleField.getCanvas().addListener(SWT.Resize, new Listener() {
+
+            public void handleEvent(Event event) {
+                titleField.getTitleLabel().setPrefWidth(
+                        titleField.getCanvas().getSize().x);
             }
         });
 

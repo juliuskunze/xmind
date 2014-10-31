@@ -360,8 +360,9 @@ public class TopicMoveTool extends DummyMoveTool implements IStatusListener {
 //        fillTargets(request, getTargetViewer(), false);
         request.setPrimaryTarget(getSourceTopic());
         request.setParameter(GEF.PARAM_POSITION, position);
-        request.setParameter(GEF.PARAM_POSITION_RELATIVE, Boolean
-                .valueOf(relative));
+        request.setParameter(GEF.PARAM_POSITION_ABSOLUTE, getAbsolutePosition());
+        request.setParameter(GEF.PARAM_POSITION_RELATIVE,
+                Boolean.valueOf(relative));
         request.setParameter(GEF.PARAM_PARENT, targetParent);
         request.setParameter(GEF.PARAM_INDEX, Integer.valueOf(index));
         request.setParameter(MindMapUI.PARAM_COPY, Boolean.valueOf(copy));

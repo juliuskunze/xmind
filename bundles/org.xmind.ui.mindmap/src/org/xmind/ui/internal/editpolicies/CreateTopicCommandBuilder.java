@@ -85,7 +85,8 @@ public class CreateTopicCommandBuilder extends CommandBuilder {
                     this.targetIndex = sourceTopic.getIndex() + 1;
                     this.targetType = sourceTopic.getType();
                 } else if (MindMapUI.REQ_CREATE_BEFORE.equals(createType)
-                        || MindMapUI.REQ_CREATE_PARENT.equals(createType)) {
+                        || MindMapUI.REQ_CREATE_PARENT.equals(createType)
+                        || MindMapUI.REQ_DUPLICATE_TOPIC.equals(createType)) {
                     this.targetIndex = sourceTopic.getIndex();
                     this.targetType = sourceTopic.getType();
                 } else {
@@ -131,8 +132,8 @@ public class CreateTopicCommandBuilder extends CommandBuilder {
         if (!canStart())
             return;
 
-        CreateTopicCommand create = new CreateTopicCommand(sourceTopic
-                .getOwnedWorkbook());
+        CreateTopicCommand create = new CreateTopicCommand(
+                sourceTopic.getOwnedWorkbook());
         add(create, true);
 
         createdTopic = (ITopic) create.getSource();
@@ -140,6 +141,20 @@ public class CreateTopicCommandBuilder extends CommandBuilder {
             return;
 
         preAdd();
+        add(new AddTopicCommand(createdTopic, targetParent, targetIndex,
+                targetType), true);
+        postAdded();
+    }
+
+    public void createDuplicateTopic() {
+        if (!canStart())
+            return;
+
+        createdTopic = sourceTopic.getOwnedWorkbook().cloneTopic(sourceTopic);
+        if (createdTopic == null)
+            return;
+
+        ensureParentUnfolded();
         add(new AddTopicCommand(createdTopic, targetParent, targetIndex,
                 targetType), true);
         postAdded();
@@ -157,8 +172,8 @@ public class CreateTopicCommandBuilder extends CommandBuilder {
     private void postAdded() {
         if (MindMapUI.REQ_CREATE_PARENT.equals(createType)) {
             if (ITopic.DETACHED.equals(targetType)) {
-                add(new ModifyPositionCommand(createdTopic, sourceTopic
-                        .getPosition()), false);
+                add(new ModifyPositionCommand(createdTopic,
+                        sourceTopic.getPosition()), false);
                 add(new ModifyPositionCommand(sourceTopic, null), false);
             }
             add(new DeleteTopicCommand(sourceTopic), false);
@@ -167,7 +182,8 @@ public class CreateTopicCommandBuilder extends CommandBuilder {
         } else {
             if (ITopic.ATTACHED.equals(targetType)) {
                 if (GEF.REQ_CREATE.equals(createType)
-                        || MindMapUI.REQ_CREATE_BEFORE.equals(createType)) {
+                        || MindMapUI.REQ_CREATE_BEFORE.equals(createType)
+                        || MindMapUI.REQ_DUPLICATE_TOPIC.equals(createType)) {
                     if (sourceIndex >= 0)
                         modifyRanges();
                 }
@@ -252,7 +268,8 @@ public class CreateTopicCommandBuilder extends CommandBuilder {
         if (ITopic.DETACHED.equals(targetType)) {
             if (GEF.REQ_CREATE.equals(createType)) {
                 setNewPosition(true);
-            } else if (MindMapUI.REQ_CREATE_BEFORE.equals(createType)) {
+            } else if (MindMapUI.REQ_CREATE_BEFORE.equals(createType)
+                    || MindMapUI.REQ_DUPLICATE_TOPIC.equals(createType)) {
                 setNewPosition(false);
             }
         }
@@ -260,8 +277,8 @@ public class CreateTopicCommandBuilder extends CommandBuilder {
 
     private void setNewPosition(boolean lowerOrUpper) {
         Point newPosition = calcNewPosition(lowerOrUpper);
-        add(new ModifyPositionCommand(createdTopic, MindMapUtils
-                .toModelPosition(newPosition)), false);
+        add(new ModifyPositionCommand(createdTopic,
+                MindMapUtils.toModelPosition(newPosition)), false);
     }
 
     private Point calcNewPosition(boolean lowerOrUpper) {

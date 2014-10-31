@@ -1,5 +1,7 @@
-0=$org.xmind.product.buildid$
-1=$org.xmind.product.license.restrictions$
-2=$org.xmind.product.license.type$
-3=$org.xmind.product.license.licensee$
-4=$org.xmind.product.thirdPartySoftwareProviders$
+0=$org.xmind.product.brandingVersion$
+1=$org.xmind.product.buildid$
+2=$org.xmind.product.license.restrictions$
+3=$org.xmind.product.license.type$
+4=$org.xmind.product.license.licensee$
+5=$org.xmind.product.about.copyright$
+6=$org.xmind.product.about.homepage$

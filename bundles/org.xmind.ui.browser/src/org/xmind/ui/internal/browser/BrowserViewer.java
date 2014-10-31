@@ -616,7 +616,7 @@ public class BrowserViewer implements IBrowserViewer {
 //            b = createBrowser(browserContainer, SWT.MOZILLA | SWT.BORDER);
 //            mozilla = true;
 //        } catch (SWTError e) {
-        mozilla = false;
+//        mozilla = false;
         try {
             // try default browser
             b = createBrowser(browserContainer, SWT.NONE);
@@ -632,6 +632,7 @@ public class BrowserViewer implements IBrowserViewer {
             this.browser = b;
         }
 
+        mozilla = b != null && "mozilla".equals(b.getBrowserType()); //$NON-NLS-1$
         if (mozilla)
             new MozillaPref(this);
 

@@ -24,6 +24,8 @@ public interface IBranchPolicyDescriptor {
 
     ImageDescriptor getIcon();
 
+    String getCategoryId();
+
     String getName(IBranchPart branch);
 
     ImageDescriptor getIcon(IBranchPart branch);

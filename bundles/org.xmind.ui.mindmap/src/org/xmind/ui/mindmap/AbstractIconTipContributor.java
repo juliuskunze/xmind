@@ -19,7 +19,6 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.ui.util.MindMapUtils;
 
 public abstract class AbstractIconTipContributor implements IIconTipContributor {
@@ -43,21 +42,19 @@ public abstract class AbstractIconTipContributor implements IIconTipContributor 
                 .getAdapter(ICacheManager.class);
         if (cacheManager != null) {
             ITopic topic = topicPart.getTopic();
-            if (topic instanceof ICoreEventSource) {
-                ICoreEventRegister register = new CoreEventRegister(
-                        (ICoreEventSource) topic, new ICoreEventListener() {
-                            public void handleCoreEvent(final CoreEvent event) {
-                                Display.getDefault().syncExec(new Runnable() {
-                                    public void run() {
-                                        handleTopicEvent(topicPart, event);
-                                    }
-                                });
-                            }
-                        });
-                registerTopicEvent(topicPart, topic, register);
-                if (register.hasRegistration()) {
-                    cacheManager.setCache(regCacheKey, register);
-                }
+            ICoreEventRegister register = new CoreEventRegister(topic,
+                    new ICoreEventListener() {
+                        public void handleCoreEvent(final CoreEvent event) {
+                            Display.getDefault().syncExec(new Runnable() {
+                                public void run() {
+                                    handleTopicEvent(topicPart, event);
+                                }
+                            });
+                        }
+                    });
+            registerTopicEvent(topicPart, topic, register);
+            if (register.hasRegistration()) {
+                cacheManager.setCache(regCacheKey, register);
             }
         }
     }

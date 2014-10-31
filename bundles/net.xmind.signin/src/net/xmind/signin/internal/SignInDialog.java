@@ -43,7 +43,7 @@ import org.xmind.ui.internal.browser.InternalBrowserView;
 
 /**
  * @author briansun
- * @deprecated {@link SignInDialog2} uses local widgets instead of web page.
+ * @deprecated {@link SignInDialog3} uses local widgets instead of web page.
  */
 public class SignInDialog extends Dialog implements StatusTextListener,
         OpenWindowListener {

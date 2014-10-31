@@ -106,12 +106,15 @@ public abstract class AbstractExportPage extends WizardPage {
 
         pathInput = new Combo(group, SWT.DROP_DOWN | SWT.SIMPLE | SWT.SINGLE
                 | SWT.BORDER);
+
         for (String path : getCastedWizard().getPathHistory()) {
             pathInput.add(path, 0);
         }
-        if (getTargetPath() != null) {
-            pathInput.setText(getTargetPath());
-        }
+
+        String targetPath = getTargetPath();
+        if (targetPath != null)
+            pathInput.setText(targetPath);
+
         pathInput.setLayoutData(new GridData(GridData.FILL, GridData.CENTER,
                 true, true));
         hookWidget(pathInput, SWT.Modify);
@@ -134,6 +137,8 @@ public abstract class AbstractExportPage extends WizardPage {
         overwriteCheckButton.setSelection(getCastedWizard()
                 .isOverwriteWithoutPrompt());
         hookWidget(overwriteCheckButton, SWT.Selection);
+
+        updateStatus();
 
         return composite;
     }
@@ -202,7 +207,7 @@ public abstract class AbstractExportPage extends WizardPage {
             dialog.setFilterPath(file.getParent());
             dialog.setFileName(file.getName());
         } else {
-            dialog.setFileName(getSuggestedFileName());
+            dialog.setFileName(getCastedWizard().getSuggestedFileName());
         }
         return dialog;
     }
@@ -213,8 +218,6 @@ public abstract class AbstractExportPage extends WizardPage {
         dialog.setFilterExtensions(filterExtensions
                 .toArray(new String[filterExtensions.size()]));
     }
-
-    protected abstract String getSuggestedFileName();
 
     protected void updateStatus() {
         setPageComplete(isPageCompletable());

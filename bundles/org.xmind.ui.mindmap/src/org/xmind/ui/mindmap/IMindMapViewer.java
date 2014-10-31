@@ -92,6 +92,16 @@ public interface IMindMapViewer extends IGraphicalViewer {
      */
     String VIEWER_GRADIENT = "gradient"; //$NON-NLS-1$
 
+    /**
+     * Viewer property indicating whether to select central topic when current
+     * page changed.
+     * <dl>
+     * <dt>Values:</dt>
+     * <dd>{@link Boolean}</dd>
+     * </dl>
+     */
+    String VIEWER_SELECT_CENTRALTOPIC = "selectCentralTopic"; //$NON-NLS-1$
+
     IMindMap getMindMap();
 
     void setMindMap(IMindMap mindMap);

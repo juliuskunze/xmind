@@ -15,15 +15,21 @@ package org.xmind.ui.internal.spelling;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.xmind.core.Core;
-import org.xmind.core.util.FileUtils;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.osgi.service.datalocation.Location;
 
 /**
  * @author Frank Shaka
@@ -99,22 +105,57 @@ public class SpellCheckerRegistry {
         }
     }
 
-    private File getUserDictDir() {
-        return new File(Core.getWorkspace().getAbsolutePath("spelling/user")); //$NON-NLS-1$
+    private static File getUserDictDir() {
+        return new File(SpellingPlugin.getBundleDataPath("user")); //$NON-NLS-1$
+//        return new File(Core.getWorkspace().getAbsolutePath("spelling/user")); //$NON-NLS-1$
     }
 
     public ISpellCheckerDescriptor importDictFile(File sourceDictFile)
             throws IOException {
         String name = sourceDictFile.getName();
-        File targetFile = FileUtils.ensureFileParent(createFile(
-                getUserDictDir(), FileUtils.getNoExtensionFileName(name),
-                FileUtils.getExtension(name)));
-        FileUtils.copy(sourceDictFile, targetFile);
+        int sepIndex = name.lastIndexOf('.');
+        String prefix, suffix;
+        if (sepIndex < 0) {
+            prefix = name;
+            suffix = ""; //$NON-NLS-1$
+        } else {
+            prefix = name.substring(0, sepIndex);
+            suffix = name.substring(sepIndex);
+        }
+//        File targetFile = FileUtils.ensureFileParent(createFile(
+//                getUserDictDir(), FileUtils.getNoExtensionFileName(name),
+//                FileUtils.getExtension(name)));
+        File targetDictFile = createFile(getUserDictDir(), prefix, suffix);
+        if (targetDictFile.getParentFile() != null) {
+            targetDictFile.getParentFile().mkdirs();
+        }
+//        FileUtils.copy(sourceDictFile, targetFile);
+        try {
+            InputStream inp = new FileInputStream(sourceDictFile);
+            try {
+                OutputStream out = new FileOutputStream(targetDictFile);
+                try {
+                    byte[] buffer = new byte[4096];
+                    int numRead;
+                    while ((numRead = inp.read(buffer)) > 0) {
+                        out.write(buffer, 0, numRead);
+                    }
+                } finally {
+                    out.close();
+                }
+            } finally {
+                inp.close();
+            }
+        } catch (IOException e) {
+            SpellingPlugin
+                    .log(e,
+                            "Failed to copy dict file into workspace while importing it."); //$NON-NLS-1$
+        }
         if (descriptors == null || descriptors.isEmpty()) {
             descriptors = new ArrayList<ISpellCheckerDescriptor>();
         }
         FileSpellCheckerDescriptor descriptor = new FileSpellCheckerDescriptor(
-                targetFile);
+                targetDictFile);
         descriptors.add(descriptor);
         return descriptor;
     }
@@ -137,6 +178,57 @@ public class SpellCheckerRegistry {
         File file = fileDescriptor.getFile();
         file.delete();
         SpellCheckerAgent.resetSpellChecker();
+    }
+
+    public static void migrateUserDictDir() {
+        File newDir = getUserDictDir();
+        if (newDir.exists() && newDir.isDirectory())
+            return;
+
+        Location instanceLocation = Platform.getInstanceLocation();
+        if (instanceLocation == null)
+            return;
+
+        URL instanceURL = instanceLocation.getURL();
+        if (instanceURL == null)
+            return;
+
+        try {
+            instanceURL = FileLocator.toFileURL(instanceURL);
+        } catch (IOException e) {
+        }
+        File instanceDir = new File(instanceURL.getFile());
+        if (!instanceDir.exists())
+            return;
+
+        File oldDir = new File(new File(instanceDir, ".xmind"), //$NON-NLS-1$
+                "spelling/user"); //$NON-NLS-1$
+        if (oldDir.exists() && oldDir.isDirectory()) {
+            moveUserDictDir(oldDir, newDir);
+            return;
+        }
+
+        oldDir = new File(instanceDir, "spelling/user.dict"); //$NON-NLS-1$
+        if (oldDir.exists() && oldDir.isDirectory()) {
+            moveUserDictDir(oldDir, newDir);
+            return;
+        }
+
+    }
+
+    private static void moveUserDictDir(File oldDir, File newDir) {
+        if (newDir.getParentFile() != null) {
+            newDir.getParentFile().mkdirs();
+        }
+        boolean moved = oldDir.renameTo(newDir);
+        if (!moved) {
+            SpellingPlugin
+                    .getDefault()
+                    .getLog()
+                    .log(new Status(IStatus.WARNING, SpellingPlugin.PLUGIN_ID,
+                            "Failed to migrate old user added dict directory: " //$NON-NLS-1$
+                                    + oldDir.getAbsolutePath()));
+        }
     }
 
     /**

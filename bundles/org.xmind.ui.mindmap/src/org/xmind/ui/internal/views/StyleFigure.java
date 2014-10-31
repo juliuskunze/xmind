@@ -67,6 +67,8 @@ public class StyleFigure extends Figure {
         if (IStyle.TOPIC.equalsIgnoreCase(type)) {
             StyleFigureUtils.drawTopic(graphics, topicBounds(r), style, null,
                     false);
+            StyleFigureUtils.drawtext(graphics, "Topic", topicBounds(r), style, //$NON-NLS-1$
+                    StyleFigureUtils.defaultMainStyle);
         } else if (IStyle.BOUNDARY.equalsIgnoreCase(type)) {
             StyleFigureUtils.drawBoundary(graphics, boundaryBounds(r), style,
                     null);

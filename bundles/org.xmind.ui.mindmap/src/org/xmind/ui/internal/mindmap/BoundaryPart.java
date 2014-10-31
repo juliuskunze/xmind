@@ -30,7 +30,6 @@ import org.xmind.core.ITitled;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.draw2d.IAnchor;
@@ -189,7 +188,7 @@ public class BoundaryPart extends NodePart implements IBoundaryPart {
                 MindMapUI.POLICY_TOPIC_NAVIGABLE);
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
+    protected void registerCoreEvents(Object source,
             ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
         register.register(Core.StartIndex);

@@ -81,6 +81,12 @@ public class LegendImpl extends Legend implements ICoreEventSource {
                 || getImplementation() == null;
     }
 
+    public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
+        return super.getAdapter(adapter);
+    }
+
     public Element getImplementation() {
         return DOMUtils.getFirstChildElementByTag(sheetElement,
                 DOMConstants.TAG_LEGEND);

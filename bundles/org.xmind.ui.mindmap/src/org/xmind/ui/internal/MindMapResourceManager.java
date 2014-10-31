@@ -62,6 +62,8 @@ import org.xmind.ui.util.ResourceFinder;
 
 public class MindMapResourceManager implements IResourceManager {
 
+    private static final String DEFAULT_THEME_ID = "xminddefaultthemeid2014"; //$NON-NLS-1$
+
     private static final String PATH_MARKERS = "markers/"; //$NON-NLS-1$
 
     private static final String PATH_USER_MARKERS = "markers/"; //$NON-NLS-1$
@@ -263,6 +265,12 @@ public class MindMapResourceManager implements IResourceManager {
             eventSupport.dispatchTargetChange(this, Core.MarkerAdd, marker);
         }
 
+        public Object getAdapter(Class adapter) {
+            if (adapter == ICoreEventSource.class)
+                return this;
+            return super.getAdapter(adapter);
+        }
+
         public List<IMarker> getMarkers() {
             return markers;
         }
@@ -393,10 +401,19 @@ public class MindMapResourceManager implements IResourceManager {
             String path = Core.getWorkspace().getAbsolutePath(
                     PATH_USER_MARKERS + MARKER_SHEET_XML);
             File file = FileUtils.ensureFileParent(new File(path));
+            FileOutputStream out = null;
             try {
-                userMarkerSheet.save(new FileOutputStream(file));
+                out = new FileOutputStream(file);
+                userMarkerSheet.save(out);
             } catch (Exception e) {
                 Logger.log(e);
+            } finally {
+                if (out != null)
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        Logger.log(e);
+                    }
             }
         }
     }
@@ -537,26 +554,33 @@ public class MindMapResourceManager implements IResourceManager {
 //                    theme = getUserStyleSheet().findStyle(defaultId);
                     theme = getUserThemeSheet().findStyle(defaultId);
                 }
+                if (theme == null && defaultId.equals(getBlankTheme().getId()))
+                    theme = getBlankTheme();
+
                 if (theme != null)
                     return theme;
             }
         }
-        return getBlankTheme();
+        return getSystemThemeSheet().findStyle(DEFAULT_THEME_ID);
     }
 
     public void setDefaultTheme(String id) {
         IStyle theme = null;
         if (id != null && !"".equals(id)) { //$NON-NLS-1$
-            theme = getBlankTheme();
+            theme = getSystemThemeSheet().findStyle(DEFAULT_THEME_ID);
             if (!id.equals(theme.getId())) {
                 theme = getSystemThemeSheet().findStyle(id);
                 if (theme == null) {
                     theme = getUserThemeSheet().findStyle(id);
                 }
+                if (theme == null && id.equals(getBlankTheme().getId())) {
+                    theme = getBlankTheme();
+                }
             }
         }
         if (theme == null)
             id = null;
+
         this.defaultTheme = theme;
         MindMapUIPlugin.getDefault().getPreferenceStore()
                 .setValue(PrefConstants.DEFUALT_THEME, id);

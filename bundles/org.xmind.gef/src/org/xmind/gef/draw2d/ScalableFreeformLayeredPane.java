@@ -25,7 +25,8 @@ public class ScalableFreeformLayeredPane extends
         if (getScale() == 1.0) {
             super.paintClientArea(graphics);
         } else {
-            ScaledGraphics g = createScaledGraphics(graphics);
+//            ScaledGraphics g = createScaledGraphics(graphics);
+            Graphics g = graphics;
             boolean optimizeClip = getBorder() == null
                     || getBorder().isOpaque();
             if (!optimizeClip)
@@ -33,7 +34,8 @@ public class ScalableFreeformLayeredPane extends
             g.scale(getScale());
             g.pushState();
             paintChildren(g);
-            g.dispose();
+//            g.dispose();
+            g.popState();
             graphics.restoreState();
         }
     }

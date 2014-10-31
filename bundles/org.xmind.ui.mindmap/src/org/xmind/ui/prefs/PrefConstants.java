@@ -85,4 +85,6 @@ public class PrefConstants {
 
     public static final String AUTO_BACKUP_ENABLE = "autoBackupEnable"; //$NON-NLS-1$
 
+    public static final String HIDE_PRO_FEATURES = "hideProFeatures"; //$NON-NLS-1$
+
 }

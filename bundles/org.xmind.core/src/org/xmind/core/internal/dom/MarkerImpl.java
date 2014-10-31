@@ -54,6 +54,8 @@ public class MarkerImpl extends Marker implements ICoreEventSource {
     }
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == Element.class || adapter == Node.class)
             return implementation;
         return super.getAdapter(adapter);

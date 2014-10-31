@@ -28,7 +28,7 @@ public interface ISharedMap {
      * The unique identifier of this map. This should at least be unique amongst
      * all maps shared by the same user.
      * 
-     * @return the unqieu identifier of this map
+     * @return the unique identifier of this map
      */
     String getID();
 
@@ -68,5 +68,13 @@ public interface ISharedMap {
      *         if the map exists
      */
     boolean isMissing();
+
+    /**
+     * Returns the most recent time (in milliseconds) when this map was
+     * modified.
+     * 
+     * @return the modified time in milliseconds
+     */
+    long getResourceModifiedTime();
 
 }

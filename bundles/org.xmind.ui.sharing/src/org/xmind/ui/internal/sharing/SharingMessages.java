@@ -28,6 +28,7 @@ public class SharingMessages extends NLS {
     public static String MindMapSharingStatusItem_Shared_buttonText_withLocalUserName;
     public static String MindMapSharingStatusItem_Shared_buttonText_withRemoteUserName;
     public static String MindMapSharingStatusItem_ToShare_buttonText;
+    public static String MindMapSharingStatusItem_Shared_popupMenuItem_stopSharingLabel;
     public static String OpenedEditorHasNoXMindFileToShare_dialogMessage;
     public static String OpenRemoteSharedMapJob_ErrorOccurredWhileOpeningSharedMap_errorMessage_withSharedMapName_and_ErrorDetails;
     public static String OpenRemoteSharedMapJob_jobName_withSharedMapName;
@@ -51,13 +52,21 @@ public class SharingMessages extends NLS {
     public static String SendSharingMessageDialog_UserSelection_AllAvailableUsers_text;
     public static String SendSharingMessageDialog_UserSelection_SendTo_label;
     public static String SharedLibrariesViewer_LibrarySection_NoSharedMaps_warningText;
+
+    public static String SharedLibrariesViewer_previousVersionTipText;
     public static String SharedLibrary_title_withLibraryName_and_MoreThanOneMaps;
     public static String SharedLibrary_title_withLibraryName_and_OneMap;
     public static String SharedLibrary_title_withLibraryName_and_ZeroMaps;
+    public static String SharedLibrary_ConnectButton_text;
+    public static String SharedLibrary_ConnectingButton_text;
     public static String SharedMap_tooltip_AddedTime_text_withTime;
     public static String SharedMap_tooltip_MapIsMissing_warningText;
     public static String SharedMap_tooltip_ModifiedTime_text_withTime;
+    public static String SharedMapsContentProvider_remoteLibraryName;
+
     public static String SharedMapsDropSupport_DropToShare_toolTip;
+    public static String ShareLibraryMapHandler_mapMissingTipText;
+
     public static String ShareLocalFilesJob_jobName;
     public static String ShareLocalFilesJob_DetectedMultipleNonXMindFiles_dialogMessage;
     public static String ShareLocalFilesJob_DetectedSingleNonXMindFile_dialogMessage;
@@ -72,9 +81,45 @@ public class SharingMessages extends NLS {
     public static String SharingServiceStatusItem_ShowLocalNetworkSharingViewAction_text;
     public static String SharingServiceStatusItem_ShowPreferencesAction_text;
     public static String SharingServiceStatusItem_tooltip_withLocalUserName;
+
+    public static String SharingUtils_connectRemoteLibraryTipText_withRemoteName;
+    public static String SharingUtils_saveRemoteMapJob_errorText_withMapName_and_ErrorMessage;
+    public static String SharingUtils_saveRemoteMapJob_loadingText;
+    public static String SharingUtils_saveRemoteMapJob_name_withMapName;
+    public static String SharingUtils_saveRemoteMapJob_savingText;
+
     public static String ToggleLocalNetworkSharingServiceStatusJob_NoSupportForYourOperatingSystem_dialogMessage;
     public static String TurnLocalNetworkSharingServiceOfflineJob_jobName;
     public static String TurnLocalNetworkSharingServiceOnlineJob_jobName;
+
+    public static String ConnectionDialog_ContentMessage_withRemoteName;
+
+    public static String SendSharingMapDialog_alreadySharedLabel;
+    public static String SendSharingMapDialog_ShareButton_text;
+    public static String SendSharingMapDialog_dialogMessage;
+    public static String SendSharingMapDialog_ShareAllRadioButton_text;
+    public static String SendSharingMapDialog_ShareSelectRadioButton_text;
+    public static String SendSharingMapDialog_SendMessageLabel_text;
+    public static String SendSharingMapDialog_SelectAllButton_text;
+    public static String SendSharingMapDialog_tipText_withMapsCount;
+
+    public static String ConnectRemoteLibraryJob_name;
+    public static String ReturnConnectionInfoJob_name;
+
+    public static String ShareOpenedFileHandler_SaveTipMessageDialog_text;
+
+    public static String ShowConnectionCommandHandler_acceptAction_name;
+    public static String ShowConnectionCommandHandler_ignoreAction_name;
+
+    public static String ShowConnectionResultCommandHandler_okAction_name;
+    public static String ShowConnectionResultHandler_ResultDialog_dialogMessage_withRemoteName;
+
+    public static String ShowMessageCommandHandler_openAction_name;
+    public static String ShowMessageCommandHandler_sharedMap_tipText_withRemoteName_and_MapName;
+    public static String ShowMessageCommandHandler_sharedMapWithMessage_tipText_withRemoteName_and_MapName;
+    public static String ShowMessageCommandHandler_shareMap_tipText_withRemoteName_and_mapsCount_and_mapsNameList;
+    public static String ShowMessageCommandHandler_shareMultipleMap_tipText_withRemoteName_and_mapsCount_and_mapsNameList;
+
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, SharingMessages.class);

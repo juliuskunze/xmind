@@ -52,6 +52,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchCommandConstants;
 import org.eclipse.ui.IWorkbenchPage;
@@ -62,9 +63,14 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.keys.IBindingService;
+import org.xmind.core.Core;
 import org.xmind.core.INotes;
 import org.xmind.core.INotesContent;
 import org.xmind.core.ITopic;
+import org.xmind.core.IWorkbook;
+import org.xmind.core.event.ICoreEventListener;
+import org.xmind.core.event.ICoreEventRegistration;
+import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.gef.EditDomain;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.IViewer;
@@ -76,6 +82,7 @@ import org.xmind.ui.commands.ModifyNotesCommand;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.MindMapUIPlugin;
 import org.xmind.ui.internal.dialogs.DialogMessages;
+import org.xmind.ui.internal.editor.MindMapEditor;
 import org.xmind.ui.internal.spellsupport.SpellingSupport;
 import org.xmind.ui.mindmap.IMindMapImages;
 import org.xmind.ui.mindmap.ITopicPart;
@@ -422,6 +429,8 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
 
     private ISpellingActivation spellingActivation;
 
+    private ICoreEventRegistration saveNotesReg;
+
     public NotesPopup(IWorkbenchWindow window, ITopicPart topicPart,
             boolean editable, boolean showGotoNotesView) {
         super(window.getShell(), SWT.RESIZE, true, true, true, false, false,
@@ -558,8 +567,29 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
                 registerDialogCommands();
             }
         }
+        activateJob();
 
         return ret;
+    }
+
+    private void activateJob() {
+        if (saveNotesReg != null && saveNotesReg.isValid())
+            return;
+
+        saveNotesReg = null;
+        if (window != null) {
+            IEditorPart editorPart = window.getActivePage().getActiveEditor();
+            if (editorPart != null && editorPart instanceof MindMapEditor) {
+                IWorkbook workbook = ((MindMapEditor) editorPart).getWorkbook();
+                if (workbook instanceof ICoreEventSource2) {
+                    saveNotesReg = ((ICoreEventSource2) workbook)
+                            .registerOnceCoreEventListener(
+                                    Core.WorkbookPreSaveOnce,
+                                    ICoreEventListener.NULL);
+                }
+            }
+
+        }
     }
 
     protected void registerDialogCommands() {
@@ -631,9 +661,17 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
             contextService.deactivateContext(contextActivation);
             contextActivation = null;
         }
+        deactivateJob();
         if (getReturnCode() == OK)
             saveNotes();
         return super.close();
+    }
+
+    private void deactivateJob() {
+        if (saveNotesReg != null) {
+            saveNotesReg.unregister();
+            saveNotesReg = null;
+        }
     }
 
     private void saveNotes() {

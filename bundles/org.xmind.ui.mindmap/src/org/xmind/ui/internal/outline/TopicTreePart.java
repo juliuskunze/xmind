@@ -32,8 +32,8 @@ public class TopicTreePart extends MindMapTreePartBase {
         return getTopic().getAllChildren().toArray();
     }
 
-    protected void registerCoreEvents(ICoreEventRegister register) {
-        super.registerCoreEvents(register);
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
+        super.registerCoreEvents(source, register);
         register.register(Core.TitleText);
         register.register(Core.TopicAdd);
         register.register(Core.TopicRemove);

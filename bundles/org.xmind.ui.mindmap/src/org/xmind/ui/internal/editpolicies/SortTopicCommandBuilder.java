@@ -331,7 +331,6 @@ public class SortTopicCommandBuilder extends DeleteCommandBuilder {
                 String number = markerId.substring(index + 1);
                 return Integer.parseInt(number);
             }
-            return Integer.MAX_VALUE;
         }
         return Integer.MAX_VALUE;
     }

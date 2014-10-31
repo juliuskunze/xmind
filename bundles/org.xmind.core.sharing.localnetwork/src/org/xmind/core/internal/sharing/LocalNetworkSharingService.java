@@ -15,13 +15,16 @@ package org.xmind.core.internal.sharing;
 
 import static org.xmind.core.sharing.SharingConstants.COMMAND_SOURCE;
 import static org.xmind.core.sharing.SharingConstants.PLUGIN_ID;
+import static org.xmind.core.sharing.SharingConstants.PROP_CONTACT_ID;
 import static org.xmind.core.sharing.SharingConstants.PROP_ID;
 import static org.xmind.core.sharing.SharingConstants.PROP_MAP;
 import static org.xmind.core.sharing.SharingConstants.PROP_MAPS;
 import static org.xmind.core.sharing.SharingConstants.PROP_MISSING;
+import static org.xmind.core.sharing.SharingConstants.PROP_MODIFIED_TIME;
 import static org.xmind.core.sharing.SharingConstants.PROP_NAME;
 import static org.xmind.core.sharing.SharingConstants.PROP_REMOTE;
 import static org.xmind.core.sharing.SharingConstants.PROP_THUMBNAIL;
+import static org.xmind.core.sharing.SharingConstants.PROP_VERSION;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,7 +58,9 @@ import org.xmind.core.command.remote.IIdentifier;
 import org.xmind.core.command.remote.IRemoteCommandService;
 import org.xmind.core.command.remote.IRemoteCommandServiceListener;
 import org.xmind.core.command.remote.RemoteCommandJob;
+import org.xmind.core.sharing.IContactManager;
 import org.xmind.core.sharing.ILocalSharedLibrary;
+import org.xmind.core.sharing.ILocalSharedMap;
 import org.xmind.core.sharing.IRemoteSharedLibrary;
 import org.xmind.core.sharing.ISharedLibrary;
 import org.xmind.core.sharing.ISharedMap;
@@ -88,6 +93,10 @@ public class LocalNetworkSharingService implements ISharingService,
 
     private class RemoteLibraryAdder extends RemoteCommandJob {
 
+        public static final String SYS_VERSION = "org.xmind.product.version"; //$NON-NLS-1$
+
+        public static final String HANDSHAKE_PREFIX = "sharing/handshake"; //$NON-NLS-1$
+
         private IRemoteCommandService remoteService;
 
         /**
@@ -101,11 +110,22 @@ public class LocalNetworkSharingService implements ISharingService,
             this.remoteService = remoteService;
         }
 
+        @Override
         protected ICommand createCommand(IProgressMonitor monitor)
                 throws CoreException {
-            return new Command(COMMAND_SOURCE, "sharing/handshake"); //$NON-NLS-1$
+            String version = System.getProperty(SYS_VERSION);
+            String id = LocalNetworkSharing.getDefault().getSharingService()
+                    .getLocalLibrary().getContactID();
+
+            Attributes data = new Attributes();
+            data.with(PROP_VERSION, version);
+            data.with(PROP_CONTACT_ID, id);
+
+            return new Command(COMMAND_SOURCE, HANDSHAKE_PREFIX, data, null,
+                    null);
         }
 
+        @Override
         protected IStatus executeCommand(IProgressMonitor sendCommandMonitor,
                 ICommand command) {
             IStatus status = super.executeCommand(sendCommandMonitor, command);
@@ -123,8 +143,11 @@ public class LocalNetworkSharingService implements ISharingService,
                 return returnValue;
             Attributes p = ((ReturnValue) returnValue).getAttributes();
             String libraryName = p.get(PROP_NAME);
+            String contactID = p.get(PROP_CONTACT_ID);
+
             RemoteSharedLibrary remoteLibrary = new RemoteSharedLibrary(
                     remoteService, libraryName);
+            remoteLibrary.setContactID(contactID);
             ArrayMapper mapsReader = new ArrayMapper(p.getRawMap(), PROP_MAPS);
             List<ISharedMap> maps = new ArrayList<ISharedMap>(
                     mapsReader.getSize());
@@ -134,21 +157,30 @@ public class LocalNetworkSharingService implements ISharingService,
                 String mapName = (String) mapsReader.get(PROP_NAME);
                 String thumbnailData = (String) mapsReader.get(PROP_THUMBNAIL);
                 String missing = (String) mapsReader.get(PROP_MISSING);
-                maps.add(new RemoteSharedMap(remoteService, remoteLibrary,
-                        mapID, mapName,
-                        Base64.base64ToByteArray(thumbnailData), Boolean
-                                .parseBoolean(missing)));
+
+                long modifiedTime = 0;
+                String time = (String) mapsReader.get(PROP_MODIFIED_TIME);
+                if (time != null) {
+                    modifiedTime = Long.parseLong(time);
+                }
+                RemoteSharedMap map = new RemoteSharedMap(remoteService,
+                        remoteLibrary, mapID, mapName,
+                        Base64.base64ToByteArray(thumbnailData),
+                        Boolean.parseBoolean(missing));
+                map.setResourceModifiedTime(modifiedTime);
+                maps.add(map);
             }
             remoteLibrary.addMaps(maps);
             addRemoteLibrary(remoteLibrary);
             return returnValue;
         }
-
     }
 
     private class BroadcastLocalEventJob extends RemoteCommandJob {
 
         private SharingEvent event;
+
+        private IRemoteSharedLibrary remoteLibrary;
 
         /**
          * @param name
@@ -162,6 +194,13 @@ public class LocalNetworkSharingService implements ISharingService,
             this.event = event;
         }
 
+        public BroadcastLocalEventJob(IRemoteCommandService remoteService,
+                SharingEvent event, IRemoteSharedLibrary remoteLibrary) {
+            this(remoteService, event);
+            this.remoteLibrary = remoteLibrary;
+        }
+
+        @Override
         protected IStatus executeCommand(IProgressMonitor sendCommandMonitor,
                 ICommand command) {
             IStatus status = super.executeCommand(sendCommandMonitor, command);
@@ -177,6 +216,7 @@ public class LocalNetworkSharingService implements ISharingService,
             return returnValue;
         }
 
+        @Override
         protected ICommand createCommand(IProgressMonitor monitor)
                 throws CoreException {
             ICommandServiceDomain theDomain;
@@ -202,15 +242,51 @@ public class LocalNetworkSharingService implements ISharingService,
                 return null;
             }
             data.with(PROP_REMOTE, serverId.getName());
-            ISharedMap map = event.getMap();
-            if (map != null) {
-                data.with(PROP_MAP, map.getID());
-                data.with(PROP_NAME, map.getResourceName());
-                data.with(PROP_THUMBNAIL,
-                        ((LocalSharedMap) map).getEncodedThumbnailData());
-                data.with(PROP_MISSING, map.isMissing() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+
+            if (event.getType() == SharingEvent.Type.CONTACT_ADDED) {
+                ArrayMapper mapsWriter = new ArrayMapper(data.getRawMap(),
+                        PROP_MAPS);
+                for (ISharedMap map : event.getMaps()) {
+                    String remoteID = event.getContactID();
+                    boolean hasAccessRight = ((ILocalSharedMap) map)
+                            .hasAccessRight(remoteID);
+                    if (!hasAccessRight)
+                        continue;
+
+                    mapsWriter.next();
+                    mapsWriter.set(PROP_MAP, map.getID());
+                    mapsWriter.set(PROP_NAME, map.getResourceName());
+                    mapsWriter.set(PROP_THUMBNAIL,
+                            ((LocalSharedMap) map).getEncodedThumbnailData());
+                    mapsWriter.set(PROP_MISSING,
+                            map.isMissing() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+                    mapsWriter.set(PROP_MODIFIED_TIME,
+                            String.valueOf(map.getResourceModifiedTime()));
+                }
+                mapsWriter.setSize();
             } else {
-                data.with(PROP_NAME, getLocalLibrary().getName());
+                ISharedMap map = event.getMap();
+                if (map != null) {
+                    data.with(PROP_MAP, map.getID());
+                    data.with(PROP_NAME, map.getResourceName());
+                    data.with(PROP_MODIFIED_TIME,
+                            String.valueOf(map.getResourceModifiedTime()));
+
+                    if (remoteLibrary != null
+                            && remoteLibrary.getContactID() == null) {
+                        String thumbnail = ((LocalSharedLibrary) getLocalLibrary())
+                                .getEncodedXMind2014Thumbnail();
+                        data.with(PROP_THUMBNAIL, thumbnail);
+                        data.with(PROP_MISSING, "true"); //$NON-NLS-1$
+                    } else {
+                        data.with(PROP_THUMBNAIL, ((LocalSharedMap) map)
+                                .getEncodedThumbnailData());
+                        data.with(PROP_MISSING,
+                                map.isMissing() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+                    }
+                } else {
+                    data.with(PROP_NAME, getLocalLibrary().getName());
+                }
             }
             return new Command(COMMAND_SOURCE, commandName, data, null, null);
         }
@@ -221,6 +297,8 @@ public class LocalNetworkSharingService implements ISharingService,
     private ICommandServiceDomain domain;
 
     private LocalSharedLibrary localLibrary = null;
+
+    private ContactManager contactManager = null;
 
     private Map<IRemoteCommandService, IRemoteSharedLibrary> remoteLibraries = new HashMap<IRemoteCommandService, IRemoteSharedLibrary>();
 
@@ -357,6 +435,13 @@ public class LocalNetworkSharingService implements ISharingService,
         return this.localLibrary;
     }
 
+    public synchronized IContactManager getContactManager() {
+        if (this.contactManager == null && !disposed) {
+            this.contactManager = new ContactManager(this);
+        }
+        return this.contactManager;
+    }
+
     public synchronized Collection<IRemoteSharedLibrary> getRemoteLibraries() {
         ICommandServiceDomain theDomain = domain;
         SortedSet<IRemoteSharedLibrary> result = new TreeSet<IRemoteSharedLibrary>(
@@ -392,6 +477,19 @@ public class LocalNetworkSharingService implements ISharingService,
         return remoteLibraries.get(service);
     }
 
+    public synchronized IRemoteSharedLibrary findRemoteLibraryByID(
+            String contactID) {
+        if (contactID == null || "".equals(contactID)) //$NON-NLS-1$
+            return null;
+
+        for (IRemoteSharedLibrary remoteLibrary : remoteLibraries.values()) {
+            String id = remoteLibrary.getContactID();
+            if (contactID.equals(id))
+                return remoteLibrary;
+        }
+        return null;
+    }
+
     public IStatus refresh(IProgressMonitor monitor) {
         if (this.status != ACTIVE)
             return Status.CANCEL_STATUS;
@@ -416,6 +514,7 @@ public class LocalNetworkSharingService implements ISharingService,
             return;
         jobs.add(job);
         job.addJobChangeListener(new JobChangeAdapter() {
+            @Override
             public void done(IJobChangeEvent event) {
                 jobs.remove(event.getJob());
             }
@@ -441,6 +540,9 @@ public class LocalNetworkSharingService implements ISharingService,
         if (this.localLibrary != null) {
             this.localLibrary.dispose();
             this.localLibrary = null;
+        }
+        if (this.contactManager != null) {
+            this.contactManager = null;
         }
         this.remoteLibraries.clear();
     }
@@ -498,17 +600,43 @@ public class LocalNetworkSharingService implements ISharingService,
         if (!event.isLocal())
             return;
 
-        for (IRemoteSharedLibrary remoteLibrary : remoteLibraries.values()) {
-            BroadcastLocalEventJob job = new BroadcastLocalEventJob(
-                    (IRemoteCommandService) remoteLibrary
-                            .getAdapter(IRemoteCommandService.class),
-                    event);
-            job.setRule(this);
-            job.setUser(false);
-            job.setSystem(true);
-            registerJob(job);
-            job.schedule();
+        if (event.getType() == SharingEvent.Type.CONTACT_ADDED) {
+            String contactID = event.getContactID();
+            if (contactID == null || "".equals(contactID)) //$NON-NLS-1$
+                return;
+
+            IRemoteSharedLibrary remoteLibrary = findRemoteLibraryByID(contactID);
+            if (remoteLibrary != null)
+                startBroadcastEventJob(remoteLibrary, event);
+
+            return;
         }
+
+        ISharedMap map = event.getMap();
+        for (IRemoteSharedLibrary remoteLibrary : remoteLibraries.values()) {
+            String remoteID = remoteLibrary.getContactID();
+            if (map != null) {
+                boolean hasAccessRight = ((ILocalSharedMap) map)
+                        .hasAccessRight(remoteID);
+                if (!hasAccessRight)
+                    continue;
+            }
+
+            startBroadcastEventJob(remoteLibrary, event);
+        }
+    }
+
+    private void startBroadcastEventJob(IRemoteSharedLibrary remoteLibrary,
+            SharingEvent event) {
+        BroadcastLocalEventJob job = new BroadcastLocalEventJob(
+                (IRemoteCommandService) remoteLibrary
+                        .getAdapter(IRemoteCommandService.class),
+                event, remoteLibrary);
+        job.setRule(this);
+        job.setUser(false);
+        job.setSystem(true);
+        registerJob(job);
+        job.schedule();
     }
 
     public boolean contains(ISchedulingRule rule) {

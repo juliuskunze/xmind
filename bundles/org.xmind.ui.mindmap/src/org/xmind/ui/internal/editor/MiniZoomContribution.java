@@ -66,61 +66,85 @@ public class MiniZoomContribution extends ContributionItem implements
 
     private static class ZoomPopup extends PopupDialog {
 
+        private static final double[] directSelectorInput = { 2.0, 1.5, 1.2,
+                1.0, 0.8, 0.5 };
+
         private static class ZoomSliderContentProvider implements
                 ISliderContentProvider {
 
-            private final double center = 1.0;
-
-            private double min = 0.5;
-
-            private double max = 2.0;
+            private static final int intervalNum = directSelectorInput.length - 1;
 
             public double getRatio(Object input, Object value) {
                 if (value instanceof Double) {
-                    return calcPortion(((Double) value).doubleValue());
+                    double doubleValue = ((Double) value).doubleValue();
+                    return transformValueToRatio(doubleValue);
                 }
-                return center;
+                return 0;
             }
 
-            private double calcPortion(double v) {
-                if (v == center)
-                    return 0.5;
-                if (v < min)
-                    return 0;
-                if (v > max)
+            private double transformValueToRatio(double value) {
+                if (value > directSelectorInput[0])
                     return 1.0;
-                if (v < center) {
-                    double d = center - min;
-                    if (d == 0)
-                        return min;
-                    return (v - min) * 0.5 / d;
+
+                if (value < directSelectorInput[intervalNum])
+                    return 0;
+
+                for (int index = intervalNum; index > 0; index--) {
+                    if (isInternal(value, directSelectorInput[index],
+                            directSelectorInput[index - 1])) {
+                        double minRatio = (intervalNum - index) * 1.0
+                                / intervalNum;
+                        double maxRatio = minRatio + 1.0 / intervalNum;
+                        return calRatio(value, directSelectorInput[index],
+                                directSelectorInput[index - 1], minRatio,
+                                maxRatio);
+                    }
                 }
-                double d = max - center;
-                if (d == 0)
-                    return max;
-                return (v - center) * 0.5 / d + 0.5;
+                return 0;
+            }
+
+            private boolean isInternal(double value, double minValue,
+                    double maxValue) {
+                return value <= maxValue && value >= minValue;
+            }
+
+            private double calRatio(double value, double minValue,
+                    double maxValue, double minRatio, double maxRatio) {
+                return minRatio + (value - minValue) / (maxValue - minValue)
+                        * (maxRatio - minRatio);
+            }
+
+            private double calValue(double ratio, double minRatio,
+                    double maxRatio, double minValue, double maxValue) {
+                return minValue + (ratio - minRatio) / (maxRatio - minRatio)
+                        * (maxValue - minValue);
             }
 
             public Object getValue(Object input, double ratio) {
-                return Double.valueOf(calcValue(ratio));
+                return transformRatioToValue(ratio);
             }
 
-            private double calcValue(double ratio) {
-                if (ratio < 0.5)
-                    return ((center - min) * ratio / 0.5 + min);
-                return ((max - center) * (ratio - 0.5) / 0.5 + center);
+            private double transformRatioToValue(double ratio) {
+                if (ratio > 1)
+                    return directSelectorInput[0] * ratio;
+
+                if (ratio < 0)
+                    return 0;
+
+                for (int index = intervalNum; index > 0; index--) {
+                    double minRatio = (intervalNum - index) * 1.0 / intervalNum;
+                    double maxRatio = minRatio + 1.0 / intervalNum;
+                    if (isInternal(ratio, minRatio, maxRatio)) {
+                        return calValue(ratio, minRatio, maxRatio,
+                                directSelectorInput[index],
+                                directSelectorInput[index - 1]);
+                    }
+                }
+                return 0.5;
             }
 
             public void inputChanged(Viewer viewer, Object oldInput,
                     Object newInput) {
-                if (newInput != null && newInput instanceof ZoomManager) {
-                    ZoomManager zm = (ZoomManager) newInput;
-                    min = zm.getMin();
-                    max = zm.getMax();
-                } else {
-                    min = 0.5;
-                    max = 2.0;
-                }
             }
 
             public void dispose() {
@@ -239,11 +263,13 @@ public class MiniZoomContribution extends ContributionItem implements
             ToolBar toolbar = new ToolBar(parent, SWT.VERTICAL);
             toolbar.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-            addDirectSelectorItem(toolbar, 2.0);
-            addDirectSelectorItem(toolbar, 1.5);
-            addDirectSelectorItem(toolbar, 1.0);
-            addDirectSelectorItem(toolbar, 0.8);
-            addDirectSelectorItem(toolbar, 0.5);
+            addDirectSelectorItems(toolbar, directSelectorInput);
+        }
+
+        private void addDirectSelectorItems(ToolBar parent, double[] values) {
+            for (double value : values) {
+                addDirectSelectorItem(parent, value);
+            }
         }
 
         private void addDirectSelectorItem(ToolBar parent, double value) {

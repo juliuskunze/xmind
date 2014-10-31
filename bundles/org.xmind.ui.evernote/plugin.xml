@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.xmind.ui.category.mindmap"
+            id="org.xmind.ui.command.evernote.save"
+            name="%command.saveToEvernote.label">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="menu:file?end=save.ext">
+         <command
+               commandId="org.xmind.ui.command.evernote.save"
+               icon="icons/evernote_menu.png"
+               label="%command.saveToEvernote.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="true">
+            </visibleWhen>
+         </command>
+         <separator
+               name="org.xmind.ui.evernote.separator"
+               visible="true">
+         </separator>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="org.xmind.ui.internal.evernote.export.EvernoteExportHandler"
+            commandId="org.xmind.ui.command.evernote.save">
+         <enabledWhen>
+            <with
+                  variable="activeEditorId">
+               <equals
+                     value="org.xmind.ui.MindMapEditor">
+               </equals>
+            </with>
+         </enabledWhen>
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="org.xmind.ui.internal.evernote.EvernotePrefPage"
+            id="org.xmind.ui.evernotePrefPage"
+            name="%preferencePage.Evernote.name">
+      </page>
+   </extension>
+
+</plugin>

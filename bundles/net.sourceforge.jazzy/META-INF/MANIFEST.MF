@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Jazzy Plug-in
-Bundle-SymbolicName: net.sourceforge.jazzy
+Bundle-SymbolicName: net.sourceforge.jazzy;singleton:=true
 Bundle-Version: 0.5.0
 Bundle-Vendor: Mindaugas Idzelis and others
 Export-Package: com.swabunga.spell.engine,
@@ -10,6 +10,5 @@ Export-Package: com.swabunga.spell.engine,
  net.sourceforge.jazzy
 Bundle-Activator: net.sourceforge.jazzy.Activator
 Require-Bundle: org.eclipse.core.runtime
-Eclipse-LazyStart: true
+Eclipse-LazyStart: false
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
-Bundle-ActivationPolicy: lazy

@@ -38,22 +38,38 @@ public class CathyApplication implements IApplication {
 
     public static final String SYS_BUILDID = "org.xmind.product.buildid"; //$NON-NLS-1$
 
+    public static final String SYS_BRANDING_VERSION = "org.xmind.product.brandingVersion"; //$NON-NLS-1$
+
     public static final String SYS_APP_STATUS = "org.xmind.cathy.app.status"; //$NON-NLS-1$
-
-    public static final String APP_VERSION = "3.4.1"; //$NON-NLS-1$
-
-    public static final String ARG_ACTIVATE = "--activate"; //$NON-NLS-1$
 
     /**
      * @see org.eclipse.equinox.app.IApplication#start(org.eclipse.equinox.app.IApplicationContext)
      */
     public Object start(IApplicationContext context) throws Exception {
-        // Add product information to system properties:
-        System.setProperty(SYS_VERSION, APP_VERSION);
-        System.setProperty(SYS_BUILDID, getBuildId(context));
+        // Check product information.
+        // Product build id and version may have been set in config.ini.
+        // If not set, calculate them using runtime properties.
+        String buildId = System.getProperty(SYS_BUILDID);
+        if (buildId == null || "".equals(buildId)) { //$NON-NLS-1$
+            buildId = calculateBuildId(context);
+            System.setProperty(SYS_BUILDID, buildId);
+        }
+        String appVersion = System.getProperty(SYS_VERSION);
+        if (appVersion == null || "".equals(appVersion)) { //$NON-NLS-1$
+            appVersion = extractVersionNumber(buildId);
+            System.setProperty(SYS_VERSION, appVersion);
+        }
+
+        System.setProperty("org.xmind.product.about.copyright", //$NON-NLS-1$
+                WorkbenchMessages.About_Copyright);
+        System.setProperty("org.xmind.product.about.homepage", //$NON-NLS-1$
+                WorkbenchMessages.About_Homepage);
+
+        // Configure the default error reporter.
         IErrorReporter.Default.setDelegate(new XMindNetErrorReporter());
-        Core.getWorkbookBuilder().setCreator("XMind", //$NON-NLS-1$
-                System.getProperty(SYS_BUILDID));
+
+        // Set Cathy product as the workbook creator.
+        Core.getWorkbookBuilder().setCreator("XMind", buildId); //$NON-NLS-1$
 
         // Check if there's already a running XMind instance:
         if (shouldExitEarly()) {
@@ -63,8 +79,13 @@ public class CathyApplication implements IApplication {
             return EXIT_OK;
         }
 
+        // Create the default display instance.
         Display display = PlatformUI.createDisplay();
         try {
+            // Check if we are in beta and should quit due to beta expiry.
+            if (new BetaVerifier(display).shouldExitAfterBetaExpired())
+                return EXIT_OK;
+
             // Install global OpenDocument listener:
             OpenDocumentQueue.getInstance().hook(display);
 
@@ -99,16 +120,31 @@ public class CathyApplication implements IApplication {
         }
     }
 
-    private String getBuildId(IApplicationContext context) {
+    private static String calculateBuildId(IApplicationContext context) {
         String buildId = System.getProperty("eclipse.buildId"); //$NON-NLS-1$
         if (buildId != null && !"".equals(buildId)) //$NON-NLS-1$
             return buildId;
         return context.getBrandingBundle().getVersion().toString();
     }
 
+    private static String extractVersionNumber(String buildId) {
+        String[] numbers = buildId.split("\\."); //$NON-NLS-1$
+        StringBuilder buffer = new StringBuilder(10);
+        for (int i = 0; i < 3; i++) {
+            if (i >= numbers.length)
+                break;
+            if (buffer.length() > 0) {
+                buffer.append('.');
+            }
+            buffer.append(numbers[i]);
+        }
+        return buffer.toString();
+    }
+
     private void initializeInternalBrowserCookies() {
-        Browser.setCookie(
-                "_env=xmind_" + APP_VERSION + "; path=/; domain=.xmind.net", //$NON-NLS-1$ //$NON-NLS-2$
+        String appVersion = System.getProperty(SYS_VERSION);
+        Browser.setCookie("_env=xmind_" + appVersion //$NON-NLS-1$
+                + "; path=/; domain=.xmind.net", //$NON-NLS-1$
                 "http://www.xmind.net/"); //$NON-NLS-1$
     }
 

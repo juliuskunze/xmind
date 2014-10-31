@@ -23,7 +23,8 @@ public class SharingEvent {
     public static enum Type {
         SERVICE_STATUS_CHANGED, //
         LIBRARY_ADDED, LIBRARY_REMOVED, LIBRARY_NAME_CHANGED, //
-        SHARED_MAP_ADDED, SHARED_MAP_REMOVED, SHARED_MAP_UPDATED;
+        SHARED_MAP_ADDED, SHARED_MAP_REMOVED, SHARED_MAP_UPDATED, //
+        CONTACT_ADDED;
     }
 
     private Type eventType;
@@ -34,7 +35,11 @@ public class SharingEvent {
 
     private ISharedLibrary library;
 
+    private String contactID;
+
     private ISharedMap map;
+
+    private ISharedMap[] maps;
 
     public SharingEvent(Type eventType) {
         this(eventType, null, null);
@@ -48,6 +53,13 @@ public class SharingEvent {
         this.eventType = eventType;
         this.library = library;
         this.map = map;
+    }
+
+    public SharingEvent(Type eventType, ISharedLibrary library,
+            String contactID, ISharedMap[] maps) {
+        this(eventType, library, null);
+        this.contactID = contactID;
+        this.maps = maps;
     }
 
     public SharingEvent(int oldStatus, int newStatus) {
@@ -68,8 +80,16 @@ public class SharingEvent {
         return library;
     }
 
+    public String getContactID() {
+        return contactID;
+    }
+
     public ISharedMap getMap() {
         return map;
+    }
+
+    public ISharedMap[] getMaps() {
+        return maps;
     }
 
     public int getOldStatus() {

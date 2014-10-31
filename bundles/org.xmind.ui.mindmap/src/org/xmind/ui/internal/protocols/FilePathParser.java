@@ -62,10 +62,14 @@ public class FilePathParser {
             path = uri.substring(FILE_PROTOCOL.length());
         else
             path = uri;
+
         if (path.startsWith(PROTOCOL_SEP))
             path = path.substring(2);
         if (isWindows() && path.startsWith(PATH_SEP)) {
             path = path.substring(1);
+        }
+        if (isWindows()) {
+            path = path.replaceAll(PATH_SEP, WIN_NETWORK_PATH_PREFIX);
         }
         return path;
     }
@@ -73,8 +77,11 @@ public class FilePathParser {
     public static String toURI(String path, boolean relative) {
         if (path == null)
             return null;
-        if (isWindows())
+
+        if (isWindows()) {
+            path = path.replaceAll(WIN_NETWORK_PATH_PREFIX, PATH_SEP);
             return encode(FILE_PROTOCOL + path, true);
+        }
         return encode(relative ? FILE_PROTOCOL + path : FILE_PROTOCOL
                 + PROTOCOL_SEP + path, true);
     }

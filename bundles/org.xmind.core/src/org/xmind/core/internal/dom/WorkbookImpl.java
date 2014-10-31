@@ -180,6 +180,8 @@ public class WorkbookImpl extends Workbook implements ICoreEventSource,
     }
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == Document.class || adapter == Node.class)
             return implementation;
         if (adapter == IMarkerSheet.class)

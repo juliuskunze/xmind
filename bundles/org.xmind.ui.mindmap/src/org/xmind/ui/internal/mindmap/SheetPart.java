@@ -29,7 +29,6 @@ import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.GEF;
 import org.xmind.gef.part.IGraphicalEditPart;
 import org.xmind.gef.part.IPart;
@@ -208,8 +207,8 @@ public class SheetPart extends MindMapPartBase implements ISheetPart,
     }
 
     private boolean isOverMaxLevel(ITopic t, ITopic rootTopic) {
-        int maxLevel = getSite().getViewer().getProperties().getInteger(
-                IMindMapViewer.VIEWER_MAX_TOPIC_LEVEL, -1);
+        int maxLevel = getSite().getViewer().getProperties()
+                .getInteger(IMindMapViewer.VIEWER_MAX_TOPIC_LEVEL, -1);
         if (maxLevel < 0)
             return false;
         int level = MindMapUtils.getLevel(t, rootTopic);
@@ -240,25 +239,19 @@ public class SheetPart extends MindMapPartBase implements ISheetPart,
         reqHandler.installEditPolicy(MindMapUI.ROLE_MAP, MindMapUI.POLICY_MAP);
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
-            ICoreEventRegister register) {
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
         register.register(Core.RelationshipAdd);
         register.register(Core.RelationshipRemove);
         register.register(Core.Style);
         register.register(Core.ThemeId);
         ITopic rootTopic = getCentralTopic();
-        if (rootTopic instanceof ICoreEventSource) {
-            register.setNextSource((ICoreEventSource) rootTopic);
-            register.register(Core.TopicAdd);
-            register.register(Core.TopicRemove);
-        }
+        register.setNextSourceFrom(rootTopic);
+        register.register(Core.TopicAdd);
+        register.register(Core.TopicRemove);
         ILegend legend = getSheet().getLegend();
-        if (legend instanceof ICoreEventSource) {
-            register.setNextSource((ICoreEventSource) legend);
-            register.register(Core.Visibility);
-        }
-
+        register.setNextSourceFrom(legend);
+        register.register(Core.Visibility);
     }
 
     public void handleCoreEvent(CoreEvent event) {

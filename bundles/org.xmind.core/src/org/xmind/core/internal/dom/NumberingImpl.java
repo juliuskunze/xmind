@@ -49,6 +49,8 @@ public class NumberingImpl extends Numbering implements ICoreEventSource {
     }
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == Node.class || adapter == Element.class)
             return getNumberingElement();
         return super.getAdapter(adapter);

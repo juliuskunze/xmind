@@ -22,6 +22,7 @@ import org.xmind.gef.GraphicalViewer;
 import org.xmind.gef.IGraphicalViewer;
 import org.xmind.gef.part.IGraphicalPart;
 import org.xmind.gef.service.ZoomingAndPanningRevealService;
+import org.xmind.ui.mindmap.IMindMapViewer;
 import org.xmind.ui.mindmap.ISheetPart;
 import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -84,7 +85,11 @@ public class MindMapRevealService extends ZoomingAndPanningRevealService {
     }
 
     private void centerOnCentralTopic(ITopicPart centralTopic) {
-        getViewer().setSelection(new StructuredSelection(centralTopic), false);
+        boolean selected = getViewer().getProperties().getBoolean(
+                IMindMapViewer.VIEWER_SELECT_CENTRALTOPIC, Boolean.TRUE);
+        if (selected)
+            getViewer().setSelection(new StructuredSelection(centralTopic),
+                    false);
         getViewer().center(centralTopic.getFigure().getBounds());
     }
 

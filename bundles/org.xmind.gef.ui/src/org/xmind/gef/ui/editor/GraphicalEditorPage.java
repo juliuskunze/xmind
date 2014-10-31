@@ -231,8 +231,8 @@ public abstract class GraphicalEditorPage extends Disposable implements
     private void createContentPopupMenu(Control control) {
         if (contentPopupMenu == null) {
             contentPopupMenu = createContentPopupMenu();
-            String menuId = getParentEditor().getSite().getId()
-                    + "-" + hashCode() + ".content"; //$NON-NLS-1$ //$NON-NLS-2$
+            String menuId = getParentEditor().getSite().getId() + ".content"; //$NON-NLS-1$
+//                    + "-" + hashCode() + ".content"; //$NON-NLS-1$ //$NON-NLS-2$
             initContentPopupMenu(contentPopupMenu);
             registerContentPopupMenu(menuId, contentPopupMenu);
         }

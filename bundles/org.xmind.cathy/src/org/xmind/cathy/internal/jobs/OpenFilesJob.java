@@ -29,6 +29,7 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbench;
+import org.xmind.cathy.internal.CathyPlugin;
 import org.xmind.cathy.internal.WorkbenchMessages;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.command.Command;
@@ -54,6 +55,8 @@ public class OpenFilesJob extends AbstractCheckFilesJob {
     private List<String> filesToOpen;
 
     private boolean markersImported = false;
+
+    private List<String> commandFilesToOpen = new ArrayList<String>(1);
 
     public OpenFilesJob(IWorkbench workbench, String jobName) {
         super(workbench, jobName);
@@ -125,6 +128,9 @@ public class OpenFilesJob extends AbstractCheckFilesJob {
         monitor.beginTask(null, 1);
         if (markersImported)
             showMarkersPrefPage();
+        if (!commandFilesToOpen.isEmpty()) {
+            openXMindCommandFiles();
+        }
         monitor.done();
     }
 
@@ -184,7 +190,9 @@ public class OpenFilesJob extends AbstractCheckFilesJob {
         final String path = fileName;
         String extension = FileUtils.getExtension(path);
 
-        if (MindMapUI.FILE_EXT_TEMPLATE.equalsIgnoreCase(extension)) {
+        if (CathyPlugin.COMMAND_FILE_EXT.equalsIgnoreCase(extension)) {
+            return openXMindCommandFile(path);
+        } else if (MindMapUI.FILE_EXT_TEMPLATE.equalsIgnoreCase(extension)) {
             return newFromTemplate(path);
         } else if (".mmap".equalsIgnoreCase(extension)) { //$NON-NLS-1$
             return importMindManagerFile(path);
@@ -233,6 +241,17 @@ public class OpenFilesJob extends AbstractCheckFilesJob {
                 PrefUtils.openPrefDialog(null, MarkerManagerPrefPage.ID);
             }
         });
+    }
+
+    private IEditorInput openXMindCommandFile(String path) {
+        commandFilesToOpen.add(path);
+        return null;
+    }
+
+    private void openXMindCommandFiles() {
+        for (String path : commandFilesToOpen) {
+            new OpenXMindCommandFileJob(path).schedule(500);
+        }
     }
 
 }

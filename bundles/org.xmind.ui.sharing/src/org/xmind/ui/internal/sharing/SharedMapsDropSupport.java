@@ -40,7 +40,9 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
-import org.xmind.core.sharing.ILocalSharedLibrary;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.xmind.core.sharing.ISharingService;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.resources.FontUtils;
@@ -133,10 +135,11 @@ public class SharedMapsDropSupport implements DropTargetListener {
             return;
 
         Job shareJob = new Job(SharingMessages.ShareLocalFilesJob_jobName) {
+            @Override
             protected IStatus run(IProgressMonitor monitor) {
                 monitor.beginTask(null, filePaths.length);
                 final List<String> nonXMindFiles = new ArrayList<String>();
-                ILocalSharedLibrary library = sharingService.getLocalLibrary();
+                final List<File> files = new ArrayList<File>();
                 for (int i = 0; i < filePaths.length; i++) {
                     if (monitor.isCanceled())
                         return Status.CANCEL_STATUS;
@@ -144,7 +147,8 @@ public class SharedMapsDropSupport implements DropTargetListener {
                     monitor.subTask(path);
                     File file = new File(path);
                     if (file.getName().endsWith(MindMapUI.FILE_EXT_XMIND)) {
-                        library.addSharedMap(file);
+//                        library.addSharedMap(file);
+                        files.add(file);
                     } else {
                         nonXMindFiles.add(path);
                     }
@@ -170,6 +174,23 @@ public class SharedMapsDropSupport implements DropTargetListener {
                         }
                     });
                 }
+
+                final IWorkbench workbench = PlatformUI.getWorkbench();
+                if (workbench != null) {
+                    display.asyncExec(new Runnable() {
+                        public void run() {
+                            File[] filesArr = files.toArray(new File[files
+                                    .size()]);
+                            IWorkbenchWindow window = workbench
+                                    .getActiveWorkbenchWindow();
+                            if (window != null) {
+                                SharingUtils.addSharedMaps(window.getShell(),
+                                        sharingService, filesArr);
+                            }
+                        }
+                    });
+                }
+
                 return Status.OK_STATUS;
             }
         };

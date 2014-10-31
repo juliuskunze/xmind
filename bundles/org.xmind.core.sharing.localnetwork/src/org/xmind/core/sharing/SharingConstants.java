@@ -32,6 +32,8 @@ public interface SharingConstants {
 
     String PROP_NAME = "name"; //$NON-NLS-1$
 
+    String PROP_CONTACT_ID = "contact-id"; //$NON-NLS-1$
+
     String PROP_MAPS = "maps"; //$NON-NLS-1$
 
     String PROP_ID = "id"; //$NON-NLS-1$
@@ -46,10 +48,24 @@ public interface SharingConstants {
 
     String PROP_CONTENT = "content"; //$NON-NLS-1$
 
+    String PROP_REMOTE_ID = "remote-id"; //$NON-NLS-1$
+
+    String PROP_VERIFICATION_CODE = "verification-code"; //$NON-NLS-1$
+
+    String PROP_ACCESS_LEVEL = "access-level"; //$NON-NLS-1$
+
+    String PROP_MODIFIED_TIME = "modified-time"; //$NON-NLS-1$
+
+    String PREF_ARRANGE_MODE = "LNS_ARRANGE_MODE"; //$NON-NLS-1$
+
+    String ARRANGE_MODE_PEOPLE = "people"; //$NON-NLS-1$
+
+    String ARRANGE_MODE_NAME = "name"; //$NON-NLS-1$
+
+    String ARRANGE_MODE_TIME = "time"; //$NON-NLS-1$
+
     int CODE_NOT_FOUND = 404;
 
     int CODE_MISSING_ARGUMENT = 400;
-
-    String PREF_LOCAL_LIBRARY_NAME = "localLibraryName"; //$NON-NLS-1$
 
 }

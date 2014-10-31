@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.xmind.ui.internal.decorators;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -47,33 +49,7 @@ public class SheetDecorator extends Decorator {
     private static final String CACHE_WALLPAPER_KEY = "org.xmind.ui.cache.wallpaperKey"; //$NON-NLS-1$
 
     protected static class WallpaperImageRegistry {
-        private static class Key {
-            IWorkbook workbook;
-            String entryPath;
-
-            public Key(IWorkbook workbook, String entryPath) {
-                this.workbook = workbook;
-                this.entryPath = entryPath;
-            }
-
-            public int hashCode() {
-                return workbook.hashCode() ^ entryPath.hashCode();
-            }
-
-            public boolean equals(Object obj) {
-                if (obj == this)
-                    return true;
-                if (obj == null || !(obj instanceof Key))
-                    return false;
-                Key that = (Key) obj;
-                return this.workbook.equals(that.workbook)
-                        && this.entryPath.equals(that.entryPath);
-            }
-        }
-
         private static class Entry {
-
-            Key key;
 
             ImageDescriptor imageDescriptor;
 
@@ -81,14 +57,8 @@ public class SheetDecorator extends Decorator {
 
             Set<IGraphicalPart> hosts;
 
-            public Entry(Key key) {
-                this.key = key;
-                this.imageDescriptor = createImageDescriptor();
-            }
-
-            private ImageDescriptor createImageDescriptor() {
-                return AttachmentImageDescriptor.createFromEntryPath(
-                        key.workbook, key.entryPath);
+            public Entry(ImageDescriptor key) {
+                this.imageDescriptor = key;
             }
 
             public Image getImage(IGraphicalPart host) {
@@ -119,11 +89,11 @@ public class SheetDecorator extends Decorator {
 
         }
 
-        private Map<Key, Entry> map = new HashMap<Key, Entry>();
+        private Map<Object, Entry> map = new HashMap<Object, Entry>();
 
         public Image getImage(IGraphicalPart host, IStyleSelector ss) {
-            Key oldKey = (Key) MindMapUtils.getCache(host, CACHE_WALLPAPER_KEY);
-            Key newKey = createKey(host, ss);
+            Object oldKey = MindMapUtils.getCache(host, CACHE_WALLPAPER_KEY);
+            Object newKey = generateKey(host, ss);
             MindMapUtils.setCache(host, CACHE_WALLPAPER_KEY, newKey);
             if (oldKey != null && !oldKey.equals(newKey)) {
                 remove(host, oldKey);
@@ -131,33 +101,52 @@ public class SheetDecorator extends Decorator {
             if (newKey != null) {
                 Entry entry = map.get(newKey);
                 if (entry == null) {
-                    entry = new Entry(newKey);
+                    if (newKey instanceof ImageDescriptor) {
+                        entry = new Entry((ImageDescriptor) newKey);
+                    } else if (newKey instanceof String) {
+                        ImageDescriptor entryKey = null;
+                        try {
+                            entryKey = ImageDescriptor.createFromURL(new URL(
+                                    (String) newKey));
+                        } catch (MalformedURLException e) {
+                            entryKey = ImageDescriptor
+                                    .getMissingImageDescriptor();
+                        }
+                        entry = new Entry(entryKey);
+                    }
                     map.put(newKey, entry);
                 }
                 if (entry != null)
                     return entry.getImage(host);
             }
+
             return null;
         }
 
-        private Key createKey(IGraphicalPart host, IStyleSelector ss) {
-            String entryPath = getWallpaperAttachmentPath(host, ss);
-            if (entryPath != null) {
-                IWorkbook workbook = getWorkbook(host);
-                if (workbook != null)
-                    return new Key(workbook, entryPath);
+        private Object generateKey(IGraphicalPart host, IStyleSelector ss) {
+            String value = ss.getStyleValue(host, Styles.Background);
+            if (value != null) {
+                if (HyperlinkUtils.isAttachmentURL(value)) {
+                    String attachmentPath = HyperlinkUtils
+                            .toAttachmentPath(value);
+                    IWorkbook workbook = getWorkbook(host);
+                    return AttachmentImageDescriptor.createFromEntryPath(
+                            workbook, attachmentPath);
+                } else if (HyperlinkUtils.isInternalAttachmentURL(value)) {
+                    return value;
+                }
             }
             return null;
         }
 
         public void removeHost(IGraphicalPart host, IStyleSelector ss) {
-            Key key = createKey(host, ss);
+            Object key = generateKey(host, ss);
             if (key != null) {
                 remove(host, key);
             }
         }
 
-        private void remove(IGraphicalPart host, Key key) {
+        private void remove(IGraphicalPart host, Object key) {
             Entry entry = map.get(key);
             if (entry != null) {
                 entry.remove(host);
@@ -166,17 +155,6 @@ public class SheetDecorator extends Decorator {
                     entry.dispose();
                 }
             }
-        }
-
-        private String getWallpaperAttachmentPath(IGraphicalPart host,
-                IStyleSelector ss) {
-            String value = ss.getStyleValue(host, Styles.Background);
-            if (value != null) {
-                if (HyperlinkUtils.isAttachmentURL(value)) {
-                    return HyperlinkUtils.toAttachmentPath(value);
-                }
-            }
-            return null;
         }
 
         private IWorkbook getWorkbook(IGraphicalPart host) {

@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.ui.internal.registry.RegistryReader;
 import org.xmind.ui.branch.IBranchPolicy;
+import org.xmind.ui.branch.IBranchPolicyCategoryDescriptor;
 import org.xmind.ui.branch.IBranchPolicyDescriptor;
 import org.xmind.ui.branch.IBranchPolicyManager;
 import org.xmind.ui.branch.IBranchPropertyTester;
@@ -51,7 +52,7 @@ import org.xmind.ui.util.Logger;
 public class BranchPolicyManager extends RegistryReader implements
         IBranchPolicyManager {
 
-    private static final String DEFAULT_BRANCH_POLICY_ID = "org.xmind.ui.map"; //$NON-NLS-1$
+    private static final String DEFAULT_BRANCH_POLICY_ID = "org.xmind.ui.map.unbalanced"; //$NON-NLS-1$
 
     private static final String V_PARENT_BRANCH = "parentBranch"; //$NON-NLS-1$
 
@@ -91,6 +92,10 @@ public class BranchPolicyManager extends RegistryReader implements
 
     private IBranchPolicy defaultBranchPolicy = null;
 
+    private List<IBranchPolicyCategoryDescriptor> categoryList = null;
+
+    private Map<String, BranchPolicyCategoryDescriptor> categoryMap = null;
+
     /**
      * This class is not intended to be instantiate by clients.
      */
@@ -107,6 +112,11 @@ public class BranchPolicyManager extends RegistryReader implements
         return policyList;
     }
 
+    public List<IBranchPolicyCategoryDescriptor> getBranchPolicyCategoryDescriptors() {
+        ensureLoaded();
+        return categoryList;
+    }
+
     private Map<String, BranchPolicy> getPolicyMap() {
         ensureLoaded();
         return policyMap;
@@ -115,6 +125,11 @@ public class BranchPolicyManager extends RegistryReader implements
     private Map<String, StructureDescriptor> getStructureMap() {
         ensureLoaded();
         return structureMap;
+    }
+
+    private Map<String, BranchPolicyCategoryDescriptor> getCategoryMap() {
+        ensureLoaded();
+        return categoryMap;
     }
 
     public IStructureDescriptor getStructureDescriptor(String id) {
@@ -138,6 +153,14 @@ public class BranchPolicyManager extends RegistryReader implements
 
     private BranchPolicy getPolicy(String id) {
         return getPolicyMap().get(id);
+    }
+
+    public IBranchPolicyCategoryDescriptor getBranchPolicyCategoryDescriptor(
+            String categoryId) {
+        if (categoryId != null) {
+            return getCategoryMap().get(categoryId);
+        }
+        return null;
     }
 
     /*
@@ -207,7 +230,8 @@ public class BranchPolicyManager extends RegistryReader implements
 
     private void ensureLoaded() {
         if (policyMap == null || policyList == null || structureMap == null
-                || testerMap == null || valueProviderMap == null)
+                || testerMap == null || valueProviderMap == null
+                || categoryList == null || categoryMap == null)
             lazyLoad();
         if (policyList == null)
             policyList = Collections.emptyList();
@@ -219,6 +243,10 @@ public class BranchPolicyManager extends RegistryReader implements
             testerMap = Collections.emptyMap();
         if (valueProviderMap == null)
             valueProviderMap = Collections.emptyMap();
+        if (categoryList == null)
+            categoryList = Collections.emptyList();
+        if (categoryMap == null)
+            categoryMap = Collections.emptyMap();
     }
 
     private void lazyLoad() {
@@ -287,6 +315,10 @@ public class BranchPolicyManager extends RegistryReader implements
             return true;
         } else if (TAG_ENABLEMENT.equals(name)) {
             return true;
+        } else if (RegistryConstants.TAG_BRANCH_POLICY_CATEGORY.equals(name)) {
+            readBranchPolicyCategory(element);
+            readElementChildren(element);
+            return true;
         }
         return false;
     }
@@ -333,6 +365,17 @@ public class BranchPolicyManager extends RegistryReader implements
         }
     }
 
+    private void readBranchPolicyCategory(IConfigurationElement element) {
+        try {
+            BranchPolicyCategoryDescriptor descriptor = new BranchPolicyCategoryDescriptor(
+                    element);
+            registerBranchPolicyCategory(descriptor);
+        } catch (CoreException e) {
+            Logger.log(e, "Failed to load branch policy category: " //$NON-NLS-1$
+                    + element.toString());
+        }
+    }
+
     private void registerBranchPolicy(BranchPolicy descriptor) {
         if (policyList == null)
             policyList = new ArrayList<IBranchPolicyDescriptor>();
@@ -359,6 +402,16 @@ public class BranchPolicyManager extends RegistryReader implements
         if (valueProviderMap == null)
             valueProviderMap = new HashMap<String, ContributedStyleValueProvider>();
         valueProviderMap.put(valueProvider.getId(), valueProvider);
+    }
+
+    private void registerBranchPolicyCategory(
+            BranchPolicyCategoryDescriptor descriptor) {
+        if (categoryList == null)
+            categoryList = new ArrayList<IBranchPolicyCategoryDescriptor>();
+        categoryList.add(descriptor);
+        if (categoryMap == null)
+            categoryMap = new HashMap<String, BranchPolicyCategoryDescriptor>();
+        categoryMap.put(descriptor.getId(), descriptor);
     }
 
     /**

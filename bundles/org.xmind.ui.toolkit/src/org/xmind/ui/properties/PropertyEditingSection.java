@@ -16,13 +16,9 @@ package org.xmind.ui.properties;
 import java.beans.PropertyChangeSupport;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -30,7 +26,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Listener;
 
 public class PropertyEditingSection {
@@ -47,7 +42,7 @@ public class PropertyEditingSection {
 
     private Label titleLabel = null;
 
-    private Composite chevron = null;
+//    private Composite chevron = null;
 
     private Control separator = null;
 
@@ -90,19 +85,19 @@ public class PropertyEditingSection {
 
     private Control createTitle(Composite parent) {
         title = new Composite(parent, SWT.NONE);
-        GridLayout gridLayout = new GridLayout(2, false);
+        GridLayout gridLayout = new GridLayout(1, false);
         gridLayout.marginWidth = 5;
         gridLayout.marginHeight = 5;
         gridLayout.verticalSpacing = 0;
         gridLayout.horizontalSpacing = 3;
         title.setLayout(gridLayout);
 
-        Control chevronControl = createChevron(title);
-        GridData chevronLayoutData = new GridData(SWT.FILL, SWT.FILL, false,
-                true);
-        chevronLayoutData.widthHint = SWT.DEFAULT;
-        chevronLayoutData.heightHint = SWT.DEFAULT;
-        chevronControl.setLayoutData(chevronLayoutData);
+//        Control chevronControl = createChevron(title);
+//        GridData chevronLayoutData = new GridData(SWT.FILL, SWT.FILL, false,
+//                true);
+//        chevronLayoutData.widthHint = SWT.DEFAULT;
+//        chevronLayoutData.heightHint = SWT.DEFAULT;
+//        chevronControl.setLayoutData(chevronLayoutData);
 
         Control labelControl = createTitleLabel(title);
         GridData labelLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -112,33 +107,33 @@ public class PropertyEditingSection {
 
         enableClickListener(title, new Listener() {
             public void handleEvent(Event event) {
-                toggleExpanded();
+//                toggleExpanded();
             }
         });
 
         return title;
     }
 
-    private Control createChevron(Composite parent) {
-        chevron = new Composite(parent, SWT.NO_FOCUS);
-        chevron.setLayout(new Layout() {
-            protected void layout(Composite composite, boolean flushCache) {
-            }
-
-            protected Point computeSize(Composite composite, int wHint,
-                    int hHint, boolean flushCache) {
-                return new Point(12, hHint < 0 ? 12 : hHint);
-            }
-        });
-        chevron.addPaintListener(new PaintListener() {
-            public void paintControl(PaintEvent e) {
-                Rectangle bounds = chevron.getBounds();
-                paintChevron(e.display, e.gc, 0, 0, bounds.width,
-                        bounds.height, chevron.getForeground());
-            }
-        });
-        return chevron;
-    }
+//    private Control createChevron(Composite parent) {
+//        chevron = new Composite(parent, SWT.NO_FOCUS);
+//        chevron.setLayout(new Layout() {
+//            protected void layout(Composite composite, boolean flushCache) {
+//            }
+//
+//            protected Point computeSize(Composite composite, int wHint,
+//                    int hHint, boolean flushCache) {
+//                return new Point(12, hHint < 0 ? 12 : hHint);
+//            }
+//        });
+//        chevron.addPaintListener(new PaintListener() {
+//            public void paintControl(PaintEvent e) {
+//                Rectangle bounds = chevron.getBounds();
+//                paintChevron(e.display, e.gc, 0, 0, bounds.width,
+//                        bounds.height, chevron.getForeground());
+//            }
+//        });
+//        return chevron;
+//    }
 
     private Control createTitleLabel(Composite parent) {
         titleLabel = new Label(parent, SWT.WRAP);
@@ -200,7 +195,7 @@ public class PropertyEditingSection {
         client.setBackground(color);
         title.setBackground(color);
         titleLabel.setBackground(color);
-        chevron.setBackground(color);
+//        chevron.setBackground(color);
         separator.setBackground(color);
     }
 
@@ -227,7 +222,7 @@ public class PropertyEditingSection {
         ((GridData) client.getLayoutData()).exclude = !expanded;
         ((GridData) separator.getLayoutData()).exclude = !expanded;
         composite.layout(true);
-        chevron.redraw();
+//        chevron.redraw();
         eventSupport.firePropertyChange(PROP_EXPANDED, oldExpanded, expanded);
     }
 
@@ -240,7 +235,8 @@ public class PropertyEditingSection {
         if (titleLabel == null || titleLabel.isDisposed())
             return;
         if ("".equals(this.titleText)) { //$NON-NLS-1$
-            titleLabel.setText(Messages.PropertyEditingSection_UntitledCategory);
+            titleLabel
+                    .setText(Messages.PropertyEditingSection_UntitledCategory);
             titleLabel.setForeground(Display.getCurrent().getSystemColor(
                     SWT.COLOR_GRAY));
         } else {
@@ -259,9 +255,9 @@ public class PropertyEditingSection {
                 titleLabel.setForeground(color);
             }
         }
-        if (chevron != null && !chevron.isDisposed()) {
-            chevron.setForeground(color);
-        }
+//        if (chevron != null && !chevron.isDisposed()) {
+//            chevron.setForeground(color);
+//        }
     }
 
     public void setTitleFont(Font font) {

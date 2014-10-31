@@ -47,7 +47,6 @@ import org.xmind.core.IWorkbook;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.event.ICoreEventSource2;
 import org.xmind.ui.blackbox.BlackBox;
 import org.xmind.ui.blackbox.BlackBoxManager;
@@ -309,8 +308,8 @@ public class BlackBoxView extends ViewPart implements ICoreEventListener {
     }
 
     private void registerCoreEvent() {
-        coreEventRegister.setNextSource((ICoreEventSource) BlackBoxManager
-                .getInstance().getLibrary());
+        coreEventRegister.setNextSourceFrom(BlackBoxManager.getInstance()
+                .getLibrary());
         coreEventRegister.register(VERSION_ADD);
         coreEventRegister.register(VERSION_REMOVE);
         coreEventRegister.register(MAP_REMOVE);

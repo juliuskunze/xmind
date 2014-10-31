@@ -56,6 +56,12 @@ public class HyperlinkUtils {
         return trimURLContent(url);
     }
 
+    public static boolean isInternalAttachmentURL(String url) {
+        if (url == null || "".equals(url)) //$NON-NLS-1$
+            return false;
+        return url.startsWith("platform:/plugin"); //$NON-NLS-1$
+    }
+
     public static String getInternalProtocolName() {
         return "xmind"; //$NON-NLS-1$
     }
@@ -124,6 +130,18 @@ public class HyperlinkUtils {
 
     private static boolean isAttach(ITopic topic) {
         return topic.getPath().getWorkbook() == topic.getOwnedWorkbook();
+    }
+
+    @SuppressWarnings("nls")
+    public static boolean isLinkToWeb(String urlOrBookmark) {
+        if (urlOrBookmark.contains("www.") || urlOrBookmark.contains(".com")
+                || urlOrBookmark.contains(".cn")
+                || urlOrBookmark.contains(".org")
+                || urlOrBookmark.contains(".cc")
+                || urlOrBookmark.contains(".net")) {
+            return true;
+        }
+        return false;
     }
 
 }

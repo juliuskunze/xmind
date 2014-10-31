@@ -248,4 +248,11 @@ public abstract class AbstractMindMapExportWizard extends AbstractExportWizard {
         return true;
     }
 
+    @Override
+    protected String getSuggestedFileName() {
+        String fileName = getSourceMindMap().getCentralTopic().getTitleText();
+        String replacedFileName = fileName.replaceAll("\\r\\n|\\r|\\n", " "); //$NON-NLS-1$//$NON-NLS-2$
+        return replacedFileName;
+    }
+
 }

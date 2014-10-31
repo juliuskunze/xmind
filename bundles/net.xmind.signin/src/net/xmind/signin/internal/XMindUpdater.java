@@ -64,6 +64,9 @@ import org.xmind.ui.viewers.FileUtils;
 
 public class XMindUpdater {
 
+    public static final String SKIPPABLE_YES = "yes"; //$NON-NLS-1$
+    public static final String SKIPPABLE_NO = "no"; //$NON-NLS-1$
+
     private static final String PLUGIN_ID = Activator.PLUGIN_ID;
 
     private static final IStatus OK = new Status(IStatus.OK, PLUGIN_ID,
@@ -258,37 +261,47 @@ public class XMindUpdater {
 
     }
 
-    private Display display;
+    private final Display display;
 
-    private IWorkbench workbench;
+    private final IWorkbench workbench;
 
     private UpdateData data;
 
-    private boolean installPermitted;
+    private final boolean installPermitted;
 
-    private String skippable = "no"; //$NON-NLS-1$
+    private final boolean downloadPermitted;
+
+    private final String skippable;
 
     private XMindNetRequest checkVersionRequest = null;
 
     private XMindNetRequest downloadRequest = null;
 
     public XMindUpdater(IWorkbench workbench) {
-        this(workbench, null, "no", false); //$NON-NLS-1$
+        this(workbench, Display.getCurrent(), null, SKIPPABLE_NO, false, false);
     }
 
     public XMindUpdater(IWorkbench workbench, String skippable) {
-        this(workbench, null, skippable, false);
+        this(workbench, Display.getCurrent(), null, skippable, false, false);
     }
 
     public XMindUpdater(IWorkbench workbench, UpdateData data,
             String skippable, boolean installPermitted) {
+        this(workbench, Display.getCurrent(), data, skippable,
+                installPermitted, false);
+    }
+
+    public XMindUpdater(IWorkbench workbench, Display display, UpdateData data,
+            String skippable, boolean installPermitted,
+            boolean downloadPermitted) {
         this.workbench = workbench;
-        this.display = Display.getCurrent();
-        if (this.display == null && workbench != null)
-            this.display = workbench.getDisplay();
+        if (display == null && workbench != null)
+            display = workbench.getDisplay();
+        this.display = display;
 
         this.data = data;
         this.installPermitted = installPermitted;
+        this.downloadPermitted = downloadPermitted;
         this.skippable = skippable;
     }
 
@@ -458,13 +471,17 @@ public class XMindUpdater {
     private IStatus confirmDownload(IProgressMonitor monitor) {
         if (monitor.isCanceled())
             return CANCELED;
+
+        if (downloadPermitted)
+            return OK;
+
         monitor.subTask(Messages.XMindUpdater_Task_ConfirmDownloading);
         return runInUI(monitor, new IRunnable() {
             public IStatus run(IProgressMonitor monitor) throws Exception {
                 ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(
                         InstanceScope.INSTANCE, "org.xmind.cathy"); //$NON-NLS-1$
                 String version = data.getBuildId();
-                if ("yes".equalsIgnoreCase(skippable) //$NON-NLS-1$
+                if (SKIPPABLE_YES.equalsIgnoreCase(skippable)
                         && preferenceStore.getString("needSkipVersion").equals( //$NON-NLS-1$
                                 version))
                     return CANCELED;
@@ -545,6 +562,7 @@ public class XMindUpdater {
             public void run() {
                 request.get();
                 finished[0] = true;
+
             }
         });
         thread.setDaemon(true);
@@ -630,6 +648,25 @@ public class XMindUpdater {
 
         if (monitor.isCanceled())
             return CANCELED;
+
+        int status = request.getStatusCode();
+        Throwable error = request.getError();
+        if (error != null) {
+            return error(
+                    error,
+                    NLS.bind(
+                            Messages.XMindUpdater_Error_FailedToDownload_with_errorDescription,
+                            error.getLocalizedMessage()));
+        } else if (status == XMindNetRequest.HTTP_ERROR) {
+            return error(request.getError(),
+                    Messages.XMindUpdater_Error_FailedToDownloadUnknownError);
+        } else if (status != XMindNetRequest.HTTP_OK) {
+            return error(
+                    request.getError(),
+                    NLS.bind(
+                            Messages.XMindUpdater_Error_FailedToDownloadUnknownError_with_responseCode,
+                            status));
+        }
 
         data.save();
 
@@ -1068,7 +1105,7 @@ public class XMindUpdater {
         if (choice != 0)
             return false;
 
-        return new XMindUpdater(null, data, "no", true).run( //$NON-NLS-1$
+        return new XMindUpdater(null, data, SKIPPABLE_NO, true).run(
                 new NullProgressMonitor()).isOK();
     }
 

@@ -140,6 +140,8 @@ public class TopicImpl extends Topic implements ICoreEventSource {
     }
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == Element.class || adapter == Node.class)
             return implementation;
         return super.getAdapter(adapter);
@@ -385,8 +387,10 @@ public class TopicImpl extends Topic implements ICoreEventSource {
                 if (p == implementation) {
                     int index = child.getIndex();
                     String type = DOMUtils.getAttribute(ts, ATTR_TYPE);
-                    ((TopicImpl) child).removeNotify(getRealizedWorkbook(),
-                            getRealizedSheet(), null);
+                    if (!isOrphan()) {
+                        ((TopicImpl) child).removeNotify(getRealizedWorkbook(),
+                                getRealizedSheet(), null);
+                    }
                     Node n = ts.removeChild(t);
                     if (!ts.hasChildNodes()) {
                         c.removeChild(ts);

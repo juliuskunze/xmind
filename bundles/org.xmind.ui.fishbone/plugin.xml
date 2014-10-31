@@ -4,6 +4,7 @@
    <extension
          point="org.xmind.ui.branchPolicies">
       <branchPolicy
+            categoryId="org.xmind.ui.structureCategory.fishbone"
             defaultStructureId="org.xmind.ui.fishbone.structure.leftHeaded"
             icon="icons/fishbone_left.gif"
             id="org.xmind.ui.fishbone.leftHeaded"
@@ -224,6 +225,7 @@
          </styleSelector>
       </branchPolicy>
       <branchPolicy
+            categoryId="org.xmind.ui.structureCategory.fishbone"
             defaultStructureId="org.xmind.ui.fishbone.structure.rightHeaded"
             icon="icons/fishbone_right.gif"
             id="org.xmind.ui.fishbone.rightHeaded"
@@ -485,6 +487,11 @@
             class="org.xmind.ui.internal.fishbone.FishbonePropertyTester"
             id="org.xmind.ui.FishbonePropertyTester">
       </propertyTester>
+      <branchPolicyCategory
+            icon="icons/fishbone_left.gif"
+            id="org.xmind.ui.structureCategory.fishbone"
+            name="Fishbone Diagram">
+      </branchPolicyCategory>
    </extension>
    <extension
          point="org.xmind.ui.decorations">

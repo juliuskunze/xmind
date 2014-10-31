@@ -28,7 +28,7 @@ public class DefaultBranchPolicy extends AbstractBranchPolicy {
     protected static IBranchStructure radial = null;
 
     DefaultBranchPolicy(BranchPolicyManager manager) {
-        super(manager, "org.xmind.ui.map"); //$NON-NLS-1$
+        super(manager, "org.xmind.ui.map.unbalanced"); //$NON-NLS-1$
     }
 
     protected IBranchHook createHook(IBranchPart branch) {

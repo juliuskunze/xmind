@@ -5,7 +5,6 @@
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
-            category="org.xmind.ui.MindMapPrefPage"
             class="org.xmind.ui.internal.browser.BrowserPrefPage"
             id="org.xmind.ui.WebBrowserPreferencePage"
             name="%prefPage.browser.name">

@@ -473,22 +473,29 @@ public class WorkbookUtilsImpl {
                         sourceMarkerId))
             return clonedMarkerId;
 
+        //When id equals,adopt override strategy.
+
         IMarkerSheet sourceMarkerSheet = sourceWorkbook.getMarkerSheet();
-        IMarker sourceMarker = sourceMarkerSheet.getMarker(sourceMarkerId);
-        if (sourceMarker != null) {
-            MarkerSheetImpl targetMarkerSheet = (MarkerSheetImpl) targetWorkbook
-                    .getMarkerSheet();
-            IMarker existingMarker = targetMarkerSheet
-                    .getMarker(sourceMarkerId);
-            if (existingMarker == null) {
-                IMarker clonedMarker = cloneMarker(targetWorkbook,
-                        targetMarkerSheet, sourceMarkerId, sourceMarker,
-                        sourceMarkerSheet, data);
-                if (clonedMarker != null) {
-                    clonedMarkerId = clonedMarker.getId();
-                }
-            }
-        }
+        MarkerSheetImpl targetMarkerSheet = (MarkerSheetImpl) targetWorkbook
+                .getMarkerSheet();
+        targetMarkerSheet.importFrom(sourceMarkerSheet);
+
+//        IMarkerSheet sourceMarkerSheet = sourceWorkbook.getMarkerSheet();
+//        IMarker sourceMarker = sourceMarkerSheet.getMarker(sourceMarkerId);
+//        if (sourceMarker != null) {
+//            MarkerSheetImpl targetMarkerSheet = (MarkerSheetImpl) targetWorkbook
+//                    .getMarkerSheet();
+//            IMarker existingMarker = targetMarkerSheet
+//                    .getMarker(sourceMarkerId);
+//            if (existingMarker == null) {
+//                IMarker clonedMarker = cloneMarker(targetWorkbook,
+//                        targetMarkerSheet, sourceMarkerId, sourceMarker,
+//                        sourceMarkerSheet, data);
+//                if (clonedMarker != null) {
+//                    clonedMarkerId = clonedMarker.getId();
+//                }
+//            }
+//        }
         if (clonedMarkerId == null) {
             clonedMarkerId = sourceMarkerId;
         }
@@ -726,10 +733,6 @@ public class WorkbookUtilsImpl {
         if (sourceSheet != null && sourceSheet.equals(targetSheet))
             return sourceStyle;
 
-        IStyle targetStyle = targetSheet.findStyle(sourceStyle.getId());
-        if (targetStyle != null)
-            return targetStyle;
-
         if (sourceSheet == null)
             return importNoParentStyle(targetSheet, sourceStyle);
 
@@ -740,8 +743,8 @@ public class WorkbookUtilsImpl {
             return null;
 
         String sourceGroup = sourceSheet.findOwnedGroup(sourceStyle);
-        targetStyle = findSimilarStyle(targetSheet, sourceGroup, sourceProp,
-                data);
+        IStyle targetStyle = findSimilarStyle(targetSheet, sourceGroup,
+                sourceProp, data);
         if (targetStyle != null)
             return targetStyle;
 
@@ -776,6 +779,8 @@ public class WorkbookUtilsImpl {
         Map<String, StyleProperties> defaultStyles = new HashMap<String, StyleProperties>();
 
         public StyleProperties(IStyle style, CloneData data) {
+            if (style == null)
+                return;
             Iterator<Property> propIt = style.properties();
             while (propIt.hasNext()) {
                 Property next = propIt.next();
@@ -828,6 +833,10 @@ public class WorkbookUtilsImpl {
         Element sourceEle = sourceStyle.getImplementation();
         Node targetEle = clone(targetSheet.getImplementation(), sourceEle);
         if (targetEle instanceof Element) {
+            IStyle sameIdStyle = targetSheet.findStyle(sourceStyle.getId());
+            if (sameIdStyle != null) {
+                DOMUtils.replaceId((Element) targetEle);
+            }
             replaceStyleProperties(targetSheet, (Element) targetEle, sourceEle,
                     sourceStyle, sourceSheet, data);
         }

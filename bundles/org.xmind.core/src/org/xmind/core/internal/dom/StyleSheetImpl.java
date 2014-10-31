@@ -78,6 +78,8 @@ public class StyleSheetImpl extends StyleSheet implements
     }
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == ElementRegistry.class)
             return getElementRegistry();
         if (adapter == ICoreEventSupport.class)

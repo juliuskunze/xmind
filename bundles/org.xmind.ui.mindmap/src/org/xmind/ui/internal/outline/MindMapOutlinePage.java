@@ -139,7 +139,9 @@ public class MindMapOutlinePage extends GraphicalOutlinePage {
     }
 
     protected TreeViewer createEditorTreeViewer() {
-        return new MindMapTreeViewer();
+        MindMapTreeViewer viewer = new MindMapTreeViewer();
+        viewer.getProperties().set(ITreeViewer.PROP_HEADER_VISIBLE, false);
+        return viewer;
     }
 
     protected Control createEditorTreeViewerControl(ITreeViewer viewer,
@@ -155,7 +157,9 @@ public class MindMapOutlinePage extends GraphicalOutlinePage {
     }
 
     protected ITreeViewer createPageTreeViewer() {
-        return new MindMapTreeViewer();
+        MindMapTreeViewer viewer = new MindMapTreeViewer();
+        viewer.getProperties().set(ITreeViewer.PROP_HEADER_VISIBLE, false);
+        return viewer;
     }
 
     protected Control createPageTreeViewerControl(ITreeViewer viewer,
@@ -352,11 +356,11 @@ public class MindMapOutlinePage extends GraphicalOutlinePage {
         Object o = item.getData();
         if (o instanceof IPart) {
             IPart part = (IPart) o;
-            part
-                    .handleRequest(new Request(GEF.REQ_MODIFY).setViewer(
-                            part.getSite().getViewer()).setParameter(
-                            GEF.PARAM_TEXT, item.getText()).setPrimaryTarget(
-                            part), GEF.ROLE_MODIFIABLE);
+            part.handleRequest(
+                    new Request(GEF.REQ_MODIFY)
+                            .setViewer(part.getSite().getViewer())
+                            .setParameter(GEF.PARAM_TEXT, item.getText())
+                            .setPrimaryTarget(part), GEF.ROLE_MODIFIABLE);
         }
     }
 

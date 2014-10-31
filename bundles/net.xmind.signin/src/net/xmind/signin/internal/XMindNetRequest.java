@@ -28,12 +28,25 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import net.xmind.signin.IDataStore;
 
@@ -246,6 +259,9 @@ public class XMindNetRequest {
     private static final boolean DEBUG_TO_STDOUT = DEBUG_ALL
             || Activator.getDefault().isDebugging("/debug/requests/stdout"); //$NON-NLS-1$
 
+    private static final boolean DEBUG_ASSC = Activator.getDefault()
+            .isDebugging("/debug/requests/assc"); //$NON-NLS-1$
+
     private static final String DEFAULT_DOMAIN = "www.xmind.net"; //$NON-NLS-1$
 
     private static final String HEAD = "HEAD"; //$NON-NLS-1$
@@ -296,7 +312,7 @@ public class XMindNetRequest {
 
         /*
          * (non-Javadoc)
-         *
+         * 
          * @see java.lang.Object#toString()
          */
         @Override
@@ -619,7 +635,7 @@ public class XMindNetRequest {
      * <p>
      * Note that setting this value will override all <code>https</code> /
      * <code>domain</code> / <code>path</code> settings.
-     *
+     * 
      * @param uri
      * @return
      */
@@ -634,7 +650,7 @@ public class XMindNetRequest {
      * The <code>path</code> should start with a "/", and may contain formatting
      * tags supported by <code>java.util.Formatter</code>. The URI will be
      * formatted as "[scheme]://[domain][path]".
-     *
+     * 
      * @param path
      *            the path of this request's URI
      * @param values
@@ -730,7 +746,7 @@ public class XMindNetRequest {
      * <p>
      * Note that setting the target file to non-null will cause both
      * getResponseText() and getData() return null should the request succeed.
-     *
+     * 
      * @param file
      *            the target file
      * @return this request
@@ -900,6 +916,11 @@ public class XMindNetRequest {
         }
         if (isAborted())
             throw new OperationCanceledException();
+        if (DEBUG_ASSC) {
+            assc(connection);
+            if (isAborted())
+                throw new OperationCanceledException();
+        }
 
         setStatusCode(HTTP_SENDING);
         debug("HTTP Request: (Sending data...) %s %s", method, uri); //$NON-NLS-1$
@@ -1241,4 +1262,90 @@ public class XMindNetRequest {
             Activator.log(String.format(format, values));
         }
     }
+
+    private static void assc(HttpURLConnection connection) {
+        try {
+            TrustModifier.relaxHostChecking(connection);
+        } catch (Exception e) {
+            if (DEBUG_TO_STDOUT) {
+                e.printStackTrace();
+                System.err.println("Failed to relax host checking."); //$NON-NLS-1$
+            } else {
+                Activator
+                        .getDefault()
+                        .getLog()
+                        .log(new Status(IStatus.WARNING, Activator.PLUGIN_ID,
+                                "Failed to relax host checking.", e)); //$NON-NLS-1$
+            }
+        }
+    }
+
+    /**
+     * A solution to accept self-signed SSL certificates.
+     * 
+     * <p>
+     * Source came from Craig Flichel's post <a href=
+     * "http://www.javacodegeeks.com/2011/12/ignoring-self-signed-certificates-in.html"
+     * >Ignoring Self-Signed Certificates in Java</a> on Dec 1, 2011.
+     * </p>
+     * 
+     * @author Craig Flichel
+     */
+    private static class TrustModifier {
+        private static final TrustingHostnameVerifier TRUSTING_HOSTNAME_VERIFIER = new TrustingHostnameVerifier();
+        private static SSLSocketFactory factory;
+
+        /**
+         * Call this with any HttpURLConnection, and it will modify the trust
+         * settings if it is an HTTPS connection.
+         */
+        public static void relaxHostChecking(HttpURLConnection conn)
+                throws KeyManagementException, NoSuchAlgorithmException,
+                KeyStoreException {
+
+            if (conn instanceof HttpsURLConnection) {
+                HttpsURLConnection httpsConnection = (HttpsURLConnection) conn;
+                SSLSocketFactory factory = prepFactory(httpsConnection);
+                httpsConnection.setSSLSocketFactory(factory);
+                httpsConnection.setHostnameVerifier(TRUSTING_HOSTNAME_VERIFIER);
+            }
+        }
+
+        static synchronized SSLSocketFactory prepFactory(
+                HttpsURLConnection httpsConnection)
+                throws NoSuchAlgorithmException, KeyStoreException,
+                KeyManagementException {
+
+            if (factory == null) {
+                SSLContext ctx = SSLContext.getInstance("TLS"); //$NON-NLS-1$
+                ctx.init(null, new TrustManager[] { new AlwaysTrustManager() },
+                        null);
+                factory = ctx.getSocketFactory();
+            }
+            return factory;
+        }
+
+        private static final class TrustingHostnameVerifier implements
+                HostnameVerifier {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        }
+
+        private static class AlwaysTrustManager implements X509TrustManager {
+            public void checkClientTrusted(X509Certificate[] arg0, String arg1)
+                    throws CertificateException {
+            }
+
+            public void checkServerTrusted(X509Certificate[] arg0, String arg1)
+                    throws CertificateException {
+            }
+
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        }
+
+    }
+
 }

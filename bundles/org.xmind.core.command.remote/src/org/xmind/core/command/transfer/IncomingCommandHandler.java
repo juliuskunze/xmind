@@ -16,7 +16,6 @@
  */
 package org.xmind.core.command.transfer;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -129,7 +128,8 @@ public class IncomingCommandHandler {
 
         try {
             // Execute command:
-            monitor.subTask(NLS.bind(Messages.IncomingCommandHandler_ExcuteCommand, command));
+            monitor.subTask(NLS.bind(
+                    Messages.IncomingCommandHandler_ExcuteCommand, command));
             IProgressMonitor executeMonitor = new SubProgressMonitor(monitor,
                     90);
             IStatus returnValue = executeCommand(executeMonitor, command,
@@ -158,6 +158,10 @@ public class IncomingCommandHandler {
                     + remoteLocation);
         // Read command:
         String uri = reader.readText();
+        if (uri == null)
+            // No command available
+            return null;
+
         if (DEBUGGING)
             System.out.println("Request received: " + uri); //$NON-NLS-1$
         if (monitor.isCanceled())
@@ -317,13 +321,13 @@ public class IncomingCommandHandler {
     }
 
     protected IStatus createReadingErrorStatus(Throwable e) {
-        if (e instanceof EOFException) {
-            return new Status(
-                    IStatus.WARNING,
-                    getPluginId(),
-                    Messages.IncomingCommandHandler_ConnectionClose,
-                    e);
-        }
+//        if (e instanceof EOFException) {
+//            return new Status(
+//                    IStatus.WARNING,
+//                    getPluginId(),
+//                    Messages.IncomingCommandHandler_ConnectionClose,
+//                    e);
+//        }
         return new Status(IStatus.ERROR, getPluginId(), null, e);
     }
 

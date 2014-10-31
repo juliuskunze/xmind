@@ -19,7 +19,6 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.tree.TreePart;
 import org.xmind.ui.util.MindMapUtils;
 
@@ -34,13 +33,11 @@ public class MindMapTreePartBase extends TreePart implements ICoreEventListener 
     protected void installModelListeners() {
         super.installModelListeners();
         Object m = getModel();
-        if (m instanceof ICoreEventSource) {
-            eventRegister = new CoreEventRegister((ICoreEventSource) m, this);
-            registerCoreEvents(eventRegister);
-        }
+        eventRegister = new CoreEventRegister(m, this);
+        registerCoreEvents(m, eventRegister);
     }
 
-    protected void registerCoreEvents(ICoreEventRegister register) {
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
     }
 
     public void handleCoreEvent(CoreEvent event) {

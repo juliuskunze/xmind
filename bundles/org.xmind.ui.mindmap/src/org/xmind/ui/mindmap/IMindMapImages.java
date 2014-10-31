@@ -59,8 +59,8 @@ public interface IMindMapImages {
     String DELETE = "delete_edit.gif"; //$NON-NLS-1$
     String DONE = "step_done.gif"; //$NON-NLS-1$
     String DOWN_TRIANGLE = "down_triangle.gif"; //$NON-NLS-1$
-    String DRILL_UP = "drill_up.gif"; //$NON-NLS-1$
-    String DRILL_DOWN = "drill_down.gif"; //$NON-NLS-1$
+    String DRILL_UP = "drill_up.png"; //$NON-NLS-1$
+    String DRILL_DOWN = "drill_down.png"; //$NON-NLS-1$
     String FILTER = "filter.gif"; //$NON-NLS-1$
     String FIT_SELECTION = "fitselection.gif"; //$NON-NLS-1$
     String FIT_SIZE = "fitsize.gif"; //$NON-NLS-1$
@@ -82,10 +82,12 @@ public interface IMindMapImages {
     String MAIN = "main.gif"; //$NON-NLS-1$
     String MAP = "map.gif"; //$NON-NLS-1$
     String MARKERS = "markers.gif"; //$NON-NLS-1$
+    String MARKER_SHORTCUT = "marker_shortcut.png"; //$NON-NLS-1$
     String NEW = "new.gif"; //$NON-NLS-1$
     String NEW_DIALOG = "new_dialog.gif"; //$NON-NLS-1$
     String NEW_SHEET_AS = "new_sheet_as.gif"; //$NON-NLS-1$
     String NEWMAP = "newmap.gif"; //$NON-NLS-1$
+    String NEW_SHEET_FROM_TEMPLATE = "new_sheet_from_template.gif"; //$NON-NLS-1$
     String NEWMAP_DIALOG = "newmap_dialog.gif"; //$NON-NLS-1$
     String NOTES = "notes.gif"; //$NON-NLS-1$
     String OPEN = "fldr_obj.gif"; //$NON-NLS-1$

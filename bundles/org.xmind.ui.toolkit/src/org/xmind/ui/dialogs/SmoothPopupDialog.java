@@ -45,6 +45,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.xmind.ui.resources.ColorUtils;
 import org.xmind.ui.util.UITimer;
 import org.xmind.ui.viewers.ImageButton;
 
@@ -137,7 +138,8 @@ public class SmoothPopupDialog extends Window {
             int height = clientArea.height;
             Control[] children = composite.getChildren();
             for (Control c : children) {
-                c.setBounds(x, y, width, height);
+                c.setBounds(x, y, width - 2 * borderWidth, height - 2
+                        * borderWidth);
             }
         }
 
@@ -168,6 +170,8 @@ public class SmoothPopupDialog extends Window {
         }
     }
 
+    protected static final String DEFAULT_BACKGROUDCOLOR_VALUE = "#e9e8e9"; //$NON-NLS-1$
+
     private static final int VERTICAL_SPEED = 5;
 
     private static final int ANIM_INTERVALS = 15;
@@ -182,8 +186,8 @@ public class SmoothPopupDialog extends Window {
             .fillDefaults().align(SWT.END, SWT.CENTER);
 
     private static final GridLayoutFactory LAYOUT_CONTENTS = GridLayoutFactory
-            .fillDefaults().numColumns(1).margins(1, 1).extendedMargins(0, 0,
-                    0, 0).spacing(1, 1);
+            .fillDefaults().numColumns(1).margins(1, 1)
+            .extendedMargins(0, 0, 0, 0).spacing(1, 1);
 
     /**
      * Margin width (in pixels) to be used in layouts inside popup dialogs
@@ -223,22 +227,23 @@ public class SmoothPopupDialog extends Window {
      */
     private static final int BORDER_THICKNESS = 1;
 
-    private static final Point DEFAULT_TARGET_SIZE = new Point(200, 120);
-
     private static int STAY_DURATION = 5000;
 
     protected static ImageDescriptor IMG_CLOSE_NORMAL = null;
 
+    private Point DEFAULT_TARGET_SIZE;
+
     private boolean showCloseButton = false;
 
-    private Point targetSize = new Point(DEFAULT_TARGET_SIZE.x,
-            DEFAULT_TARGET_SIZE.y);
+    private Point targetSize = null;
 
     private String titleText = null;
 
     private Control dialogArea = null;
 
     private Point startingBottomRight = null;
+
+    private boolean centerPopUp = false;
 
     private boolean popup = false;
 
@@ -263,10 +268,13 @@ public class SmoothPopupDialog extends Window {
     public SmoothPopupDialog(Shell parent, boolean showCloseButton,
             String titleText) {
         super(parent);
-        setShellStyle(SWT.NO_TRIM | SWT.ON_TOP);
+        setShellStyle(SWT.TOOL);
         setBlockOnOpen(false);
         this.showCloseButton = showCloseButton;
         this.titleText = titleText;
+
+        Point size = parent.getSize();
+        DEFAULT_TARGET_SIZE = new Point(size.x * 70 / 100, -1);
     }
 
     /**
@@ -363,8 +371,8 @@ public class SmoothPopupDialog extends Window {
         Composite titleAreaComposite = new Composite(parent, SWT.NONE);
 
         boolean hasTitle = titleText != null;
-        GridLayoutFactory.fillDefaults().numColumns(
-                hasTitle && showCloseButton ? 2 : 1)
+        GridLayoutFactory.fillDefaults()
+                .numColumns(hasTitle && showCloseButton ? 2 : 1)
                 .applyTo(titleAreaComposite);
 
         if (hasTitle) {
@@ -410,6 +418,8 @@ public class SmoothPopupDialog extends Window {
         Image img = new Image(display, 16, 16);
         GC gc = new GC(img);
         gc.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
+        gc.setBackground(ColorUtils.getColor(DEFAULT_BACKGROUDCOLOR_VALUE));
+        gc.fillRectangle(0, 0, 16, 16);
         gc.setLineWidth(2);
         gc.drawLine(4, 4, 11, 11);
         gc.drawLine(4, 11, 11, 4);
@@ -455,7 +465,7 @@ public class SmoothPopupDialog extends Window {
         Display display = getShell().getDisplay();
         applyForegroundColor(display.getSystemColor(SWT.COLOR_DARK_GRAY),
                 composite, getForegroundColorExclusions());
-        applyBackgroundColor(display.getSystemColor(SWT.COLOR_WHITE),
+        applyBackgroundColor(ColorUtils.getColor(DEFAULT_BACKGROUDCOLOR_VALUE),
                 composite, getBackgroundColorExclusions());
     }
 
@@ -579,6 +589,10 @@ public class SmoothPopupDialog extends Window {
         this.targetSize = targetSize;
     }
 
+    protected void setCenterPopUp(boolean centerPopUp) {
+        this.centerPopUp = centerPopUp;
+    }
+
     public void setGroupId(String groupId) {
         if (groupId == null) {
             if (group != null) {
@@ -656,17 +670,24 @@ public class SmoothPopupDialog extends Window {
     private Point getBottomRight(Control sourceControl) {
         Rectangle bounds = getSourceArea(sourceControl);
         Point loc = sourceControl.toDisplay(bounds.x, bounds.y);
-        return new Point(loc.x + bounds.width - POPUP_GAP, loc.y
-                + bounds.height - POPUP_GAP);
+        int pointX = loc.x + bounds.width - POPUP_GAP;
+        if (centerPopUp) {
+            pointX = pointX - bounds.width / 2 + POPUP_GAP;
+            if (targetSize != null)
+                pointX += targetSize.x / 2;
+            else
+                pointX += DEFAULT_TARGET_SIZE.x / 2;
+        }
+        return new Point(pointX, loc.y + bounds.height - POPUP_GAP);
     }
 
     private Rectangle getSourceArea(Control sourceControl) {
+
         Rectangle bounds = sourceControl.getBounds();
-        bounds.x = 0;
-        bounds.y = 0;
         if (sourceControl instanceof Composite) {
-            Composite composite = (Composite) sourceControl;
-            return composite.getClientArea();
+            Rectangle computedSize = ((Composite) sourceControl)
+                    .getClientArea();
+            return computedSize;
         }
         return bounds;
     }

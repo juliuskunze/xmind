@@ -20,7 +20,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
 import org.xmind.core.Core;
 import org.xmind.core.command.ICommandService;
-import org.xmind.core.internal.XmindCore;
 import org.xmind.ui.internal.editor.BackgroundWorkbookSaver;
 
 public class MindMapUIPlugin extends AbstractUIPlugin {
@@ -53,8 +52,6 @@ public class MindMapUIPlugin extends AbstractUIPlugin {
         super.start(context);
         plugin = this;
 
-        // activate core runtime
-        XmindCore.getDefault();
         //Shell shell = plugin.getWorkbench().getDisplay().getActiveShell();
         Core.getWorkbookBuilder().setDefaultEncryptionHandler(
                 new PasswordProvider());

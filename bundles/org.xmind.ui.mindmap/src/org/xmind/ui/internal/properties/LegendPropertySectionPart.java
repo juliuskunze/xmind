@@ -23,7 +23,6 @@ import org.xmind.core.Core;
 import org.xmind.core.ILegend;
 import org.xmind.core.ISheet;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.Request;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.properties.MindMapPropertySectionPartBase;
@@ -45,15 +44,12 @@ public class LegendPropertySectionPart extends MindMapPropertySectionPartBase {
         });
     }
 
-    protected void registerEventListener(ICoreEventSource source,
+    protected void registerEventListener(Object source,
             ICoreEventRegister register) {
         if (source instanceof ISheet) {
             ILegend legend = ((ISheet) source).getLegend();
-            if (legend instanceof ICoreEventSource) {
-                source = (ICoreEventSource) legend;
-                register.setNextSource(source);
-                register.register(Core.Visibility);
-            }
+            register.setNextSourceFrom(legend);
+            register.register(Core.Visibility);
         }
     }
 

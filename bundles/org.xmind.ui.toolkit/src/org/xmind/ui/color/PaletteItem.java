@@ -62,65 +62,99 @@ public class PaletteItem {
         return o1 == o2 || (o1 != null && o1.equals(o2));
     }
 
-    public static final PaletteItem Black = new PaletteItem(0,
-            PaletteMessages.PaletteItem_Black);
-    public static final PaletteItem Red = new PaletteItem(0xff0000,
-            PaletteMessages.PaletteItem_Red);
-    public static final PaletteItem Yellow = new PaletteItem(0xffff00,
-            PaletteMessages.PaletteItem_Yellow);
-    public static final PaletteItem Green = new PaletteItem(0x00ff00,
-            PaletteMessages.PaletteItem_Green);
-    public static final PaletteItem Blue = new PaletteItem(0x0000ff,
-            PaletteMessages.PaletteItem_Blue);
-    public static final PaletteItem Purple = new PaletteItem(0xff00ff,
-            PaletteMessages.PaletteItem_Purple);
-    public static final PaletteItem DarkGray = new PaletteItem(0x404040,
-            PaletteMessages.PaletteItem_DarkGray);
-    public static final PaletteItem DarkRed = new PaletteItem(0x800000,
-            PaletteMessages.PaletteItem_DarkRed);
-    public static final PaletteItem DarkYellow = new PaletteItem(0x808000,
-            PaletteMessages.PaletteItem_DarkYellow);
-    public static final PaletteItem DarkGreen = new PaletteItem(0x008000,
-            PaletteMessages.PaletteItem_DarkGreen);
-    public static final PaletteItem DarkBlue = new PaletteItem(0x000080,
-            PaletteMessages.PaletteItem_DarkBlue);
-    public static final PaletteItem DarkPurple = new PaletteItem(0x800080,
-            PaletteMessages.PaletteItem_DarkPurple);
-    public static final PaletteItem Gray = new PaletteItem(0x808080,
-            PaletteMessages.PaletteItem_Gray);
-    public static final PaletteItem Rose = new PaletteItem(0xFF9D96,
-            PaletteMessages.PaletteItem_Rose);
-    public static final PaletteItem Orange = new PaletteItem(0xffa500,
-            PaletteMessages.PaletteItem_Orange);
-    public static final PaletteItem Lemon = new PaletteItem(0xFFE76D,
-            PaletteMessages.PaletteItem_Lemon);
-    public static final PaletteItem LimeGreen = new PaletteItem(0x32cd32,
-            PaletteMessages.PaletteItem_LimeGreen);
-    public static final PaletteItem Turquoise = new PaletteItem(0x40e0d0,
-            PaletteMessages.PaletteItem_Turquoise);
-    public static final PaletteItem LightGray = new PaletteItem(0xc0c0c0,
-            PaletteMessages.PaletteItem_LightGray);
-    public static final PaletteItem Copper = new PaletteItem(0xcd853f,
-            PaletteMessages.PaletteItem_Copper);
-    public static final PaletteItem GoldenOlive = new PaletteItem(0xB27737,
-            PaletteMessages.PaletteItem_GoldenOlive);
-    public static final PaletteItem Beige = new PaletteItem(0xFbFad8,
-            PaletteMessages.PaletteItem_Beige);
-    public static final PaletteItem Sapphire = new PaletteItem(0x9EB0CE,
-            PaletteMessages.PaletteItem_Sapphire);
-    public static final PaletteItem Lavender = new PaletteItem(0xCE94BA,
-            PaletteMessages.PaletteItem_Lavender);
-    public static final PaletteItem White = new PaletteItem(0xffffff,
-            PaletteMessages.PaletteItem_White);
-    public static final PaletteItem Khaki = new PaletteItem(0x7B5B40,
-            PaletteMessages.PaletteItem_Khaki);
-    public static final PaletteItem ForestGreen = new PaletteItem(0x739E73,
-            PaletteMessages.PaletteItem_ForestGreen);
-    public static final PaletteItem AntiqueBlue = new PaletteItem(0x667A8C,
-            PaletteMessages.PaletteItem_AntiqueBlue);
-    public static final PaletteItem Indigo = new PaletteItem(0x6B00a2,
-            PaletteMessages.PaletteItem_Indigo);
-    public static final PaletteItem Violet = new PaletteItem(0x9d6b84,
-            PaletteMessages.PaletteItem_Violet);
+    public static final PaletteItem Black = new PaletteItem(0, PaletteMessages.PaletteItem_Black);
+    public static final PaletteItem White = new PaletteItem(0xffffff, PaletteMessages.PaletteItem_White);
+    public static final PaletteItem Black80 = new PaletteItem(0xcccccc,
+            PaletteMessages.PaletteItem_Black_Lighter80);
+    public static final PaletteItem Black60 = new PaletteItem(0x999999,
+            PaletteMessages.PaletteItem_Black_Lighter60);
+    public static final PaletteItem Black40 = new PaletteItem(0x666666,
+            PaletteMessages.PaletteItem_Black_Lighter40);
+    public static final PaletteItem Black20 = new PaletteItem(0x535353,
+            PaletteMessages.PaletteItem_Black_Lighter20);
+
+    public static final PaletteItem Red = new PaletteItem(0xff0d00, PaletteMessages.PaletteItem_Red);
+    public static final PaletteItem Red80 = new PaletteItem(0xfdcfcd,
+            PaletteMessages.PaletteItem_Red_Lighter80);
+    public static final PaletteItem Red60 = new PaletteItem(0xff9e99,
+            PaletteMessages.PaletteItem_Red_Lighter60);
+    public static final PaletteItem Red40 = new PaletteItem(0xff6e66,
+            PaletteMessages.PaletteItem_Red_Lighter40);
+    public static final PaletteItem Red25 = new PaletteItem(0xbf1e1b,
+            PaletteMessages.PaletteItem_Red_Darker25);
+    public static final PaletteItem Red50 = new PaletteItem(0x800a04,
+            PaletteMessages.PaletteItem_Red_Darker50);
+
+    public static final PaletteItem Orange = new PaletteItem(0xff8a00, PaletteMessages.PaletteItem_Orange);
+    public static final PaletteItem Orange80 = new PaletteItem(0xffe8cc,
+            PaletteMessages.PaletteItem_Orange_Lighter80);
+    public static final PaletteItem Orange60 = new PaletteItem(0xffd099,
+            PaletteMessages.PaletteItem_Orange_Lighter60);
+    public static final PaletteItem Orange40 = new PaletteItem(0xffb966,
+            PaletteMessages.PaletteItem_Orange_Lighter40);
+    public static final PaletteItem Orange25 = new PaletteItem(0xbf6a15,
+            PaletteMessages.PaletteItem_Orange_Darker25);
+    public static final PaletteItem Orange50 = new PaletteItem(0x804701,
+            PaletteMessages.PaletteItem_Orange_Darker50);
+
+    public static final PaletteItem Yellow = new PaletteItem(0xffd800, PaletteMessages.PaletteItem_Yellow);
+    public static final PaletteItem Yellow80 = new PaletteItem(0xfff7cc,
+            PaletteMessages.PaletteItem_Yellow_Lighter80);
+    public static final PaletteItem Yellow60 = new PaletteItem(0xffef99,
+            PaletteMessages.PaletteItem_Yellow_Lighter60);
+    public static final PaletteItem Yellow40 = new PaletteItem(0xffe866,
+            PaletteMessages.PaletteItem_Yellow_Lighter40);
+    public static final PaletteItem Yellow25 = new PaletteItem(0xbfa306,
+            PaletteMessages.PaletteItem_Yellow_Darker25);
+    public static final PaletteItem Yellow50 = new PaletteItem(0x806e00,
+            PaletteMessages.PaletteItem_Yellow_Darker50);
+
+    public static final PaletteItem Green = new PaletteItem(0xa4e100, PaletteMessages.PaletteItem_Green);
+    public static final PaletteItem Green80 = new PaletteItem(0xedf9cc,
+            PaletteMessages.PaletteItem_Green_Lighter80);
+    public static final PaletteItem Green60 = new PaletteItem(0xdbf399,
+            PaletteMessages.PaletteItem_Green_Lighter60);
+    public static final PaletteItem Green40 = new PaletteItem(0xc8ed66,
+            PaletteMessages.PaletteItem_Green_Lighter40);
+    public static final PaletteItem Green25 = new PaletteItem(0x97bf32,
+            PaletteMessages.PaletteItem_Green_Darker25);
+    public static final PaletteItem Green50 = new PaletteItem(0x60801d,
+            PaletteMessages.PaletteItem_Green_Darker50);
+
+    public static final PaletteItem Blue = new PaletteItem(0x00aeff, PaletteMessages.PaletteItem_Blue);
+    public static final PaletteItem Blue80 = new PaletteItem(0xccefff,
+            PaletteMessages.PaletteItem_Blue_Lighter80);
+    public static final PaletteItem Blue60 = new PaletteItem(0x99dfff,
+            PaletteMessages.PaletteItem_Blue_Lighter60);
+    public static final PaletteItem Blue40 = new PaletteItem(0x66ceff,
+            PaletteMessages.PaletteItem_Blue_Lighter40);
+    public static final PaletteItem Blue25 = new PaletteItem(0x0083bf,
+            PaletteMessages.PaletteItem_Blue_Darker25);
+    public static final PaletteItem Blue50 = new PaletteItem(0x005780,
+            PaletteMessages.PaletteItem_Blue_Darker50);
+
+    public static final PaletteItem Indigo = new PaletteItem(0x245dff, PaletteMessages.PaletteItem_Indigo);
+    public static final PaletteItem Indigo80 = new PaletteItem(0xd3dfff,
+            PaletteMessages.PaletteItem_Indigo_Lighter80);
+    public static final PaletteItem Indigo60 = new PaletteItem(0xa7beff,
+            PaletteMessages.PaletteItem_Indigo_Lighter60);
+    public static final PaletteItem Indigo40 = new PaletteItem(0x7c9eff,
+            PaletteMessages.PaletteItem_Indigo_Lighter40);
+    public static final PaletteItem Indigo25 = new PaletteItem(0x1b47bf,
+            PaletteMessages.PaletteItem_Indigo_Darker25);
+    public static final PaletteItem Indigo50 = new PaletteItem(0x012180,
+            PaletteMessages.PaletteItem_Indigo_Darker50);
+
+    public static final PaletteItem Purple = new PaletteItem(0x8a2bff, PaletteMessages.PaletteItem_Purple);
+    public static final PaletteItem Purple80 = new PaletteItem(0xe8d5ff,
+            PaletteMessages.PaletteItem_Purple_Lighter80);
+    public static final PaletteItem Purple60 = new PaletteItem(0xd0aaff,
+            PaletteMessages.PaletteItem_Purple_Lighter60);
+    public static final PaletteItem Purple40 = new PaletteItem(0xb980ff,
+            PaletteMessages.PaletteItem_Purple_Lighter40);
+    public static final PaletteItem Purple25 = new PaletteItem(0x6821bf,
+            PaletteMessages.PaletteItem_Purple_Darker25);
+    public static final PaletteItem Purple50 = new PaletteItem(0x451680,
+            PaletteMessages.PaletteItem_Purple_Darker50);
 
 }

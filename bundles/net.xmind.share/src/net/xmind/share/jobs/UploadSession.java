@@ -1,7 +1,6 @@
 package net.xmind.share.jobs;
 
 import java.io.File;
-import java.io.IOException;
 
 import net.xmind.share.Info;
 import net.xmind.share.Uploader;
@@ -12,7 +11,6 @@ import net.xmind.signin.internal.XMindNetRequest;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.json.JSONException;
 
 /**
  * The whole process:
@@ -132,9 +130,6 @@ public class UploadSession {
      * 200: OK<br>
      * session: {SESSION}<br>
      * url: {URL}
-     * 
-     * @throws IOException
-     * @throws JSONException
      */
     public IStatus prepare() {
         setStatus(PREPARING);
@@ -194,8 +189,6 @@ public class UploadSession {
      * cancel uploading process.<br>
      * 500: Server error.<br>
      * 200: OK
-     * 
-     * @throws IOException
      */
     public IStatus transfer() {
         setStatus(UPLOADING);
@@ -253,8 +246,6 @@ public class UploadSession {
      * progress: {PROGRESS} // 0 ~ 1
      * 
      * @return
-     * @throws IOException
-     * @throws JSONException
      */
     public IStatus retrieveProgress() {
         debug("[upload][progress] userName=%s, sessionId=%s", //$NON-NLS-1$
@@ -315,7 +306,6 @@ public class UploadSession {
      * upload process.<br>
      * 200: OK
      * 
-     * @throws IOException
      */
     public IStatus cancel() {
         if (prepareRequest != null)

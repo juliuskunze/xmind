@@ -26,7 +26,7 @@ public class CheckForUpdatesJob extends Job {
 
     private XMindUpdater updater = null;
 
-    private String skippable = "no"; //$NON-NLS-1$
+    private String skippable = XMindUpdater.SKIPPABLE_NO;
 
     public CheckForUpdatesJob(IWorkbench workbench) {
         super(Messages.CheckForUpdatesJob_jobName);

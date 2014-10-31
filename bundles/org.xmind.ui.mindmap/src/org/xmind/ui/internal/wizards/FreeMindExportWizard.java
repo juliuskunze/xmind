@@ -51,13 +51,6 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
             setDescription(WizardMessages.FreeMindPage_description);
         }
 
-        @Override
-        protected String getSuggestedFileName() {
-            IMindMap mindMap = getCastedWizard().getSourceMindMap();
-            String fileName = mindMap.getCentralTopic().getTitleText();
-            return fileName + FILE_EXT;
-        }
-
         protected FreeMindExportWizard getCastedWizard() {
             return (FreeMindExportWizard) super.getCastedWizard();
         }
@@ -72,7 +65,6 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
             Control fileGroup = createFileControls(composite);
             fileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                     false));
-            updateStatus();
         }
 
         @Override
@@ -126,5 +118,12 @@ public class FreeMindExportWizard extends AbstractMindMapExportWizard {
     protected void handleExportException(Throwable e) {
         super.handleExportException(e);
         page.setErrorMessage(e.getLocalizedMessage());
+    }
+
+    @Override
+    protected String getSuggestedFileName() {
+        IMindMap mindMap = getSourceMindMap();
+        String fileName = mindMap.getCentralTopic().getTitleText();
+        return fileName + FILE_EXT;
     }
 }

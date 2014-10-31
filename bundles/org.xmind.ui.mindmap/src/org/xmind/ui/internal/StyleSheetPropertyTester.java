@@ -36,9 +36,13 @@ public class StyleSheetPropertyTester extends PropertyTester {
                     .getDefaultStyleSheet())
                 return TYPE_DEFAULT.equals(expectedValue);
             if (receiver == MindMapUI.getResourceManager()
-                    .getSystemStyleSheet())
+                    .getSystemStyleSheet()
+                    || receiver == MindMapUI.getResourceManager()
+                            .getSystemThemeSheet())
                 return TYPE_SYSTEM.equals(expectedValue);
-            if (receiver == MindMapUI.getResourceManager().getUserStyleSheet())
+            if (receiver == MindMapUI.getResourceManager().getUserStyleSheet()
+                    || receiver == MindMapUI.getResourceManager()
+                            .getUserThemeSheet())
                 return TYPE_USER.equals(expectedValue);
             return TYPE_WORKBOOK.equals(expectedValue);
         }

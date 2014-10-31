@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.xmind.ui.internal.spelling;
 
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -53,6 +54,10 @@ public class SpellingPlugin extends AbstractUIPlugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
+
+        // Migrate old settings
+        SpellCheckerAgent.migrateUserDictFile();
+        SpellCheckerRegistry.migrateUserDictDir();
     }
 
     /*
@@ -88,6 +93,11 @@ public class SpellingPlugin extends AbstractUIPlugin {
     public static boolean isSpellingCheckEnabled() {
         return getDefault().getPreferenceStore().getBoolean(
                 SPELLING_CHECK_ENABLED);
+    }
+
+    public static String getBundleDataPath(String subPath) {
+        IPath stateLocation = getDefault().getStateLocation();
+        return stateLocation.append(subPath).makeAbsolute().toOSString();
     }
 
 }

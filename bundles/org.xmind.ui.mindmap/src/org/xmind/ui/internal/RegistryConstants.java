@@ -39,6 +39,7 @@ public class RegistryConstants implements IWorkbenchRegistryConstants {
     public static final String TAG_STRUCTURE_CACHE = "structureCache"; //$NON-NLS-1$
     public static final String TAG_OVERRIDE = "override"; //$NON-NLS-1$
     public static final String TAG_ADVISOR = "advisor"; //$NON-NLS-1$
+    public static final String TAG_BRANCH_POLICY_CATEGORY = "branchPolicyCategory"; //$NON-NLS-1$
 
     public static final String ATT_DEFAULT_STRUCTURE_ID = "defaultStructureId"; //$NON-NLS-1$
     public static final String ATT_STRUCTURE_ID = "structureId"; //$NON-NLS-1$

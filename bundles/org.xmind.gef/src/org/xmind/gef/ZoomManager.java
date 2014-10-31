@@ -62,15 +62,26 @@ public class ZoomManager extends ZoomObject {
 
     public void zoomIn() {
         double scale = getScale();
-        setScale(scale >= 1 ? forceMultiple(scale + 0.5, 0.5) : Math.min(1.0,
-                forceMultiple(scale + 0.1, 0.1)));
+        if (scale >= 1 && scale < 1.2) {
+            scale = forceMultiple(scale + 0.2, 0.2);
+        } else if (scale < 1) {
+            scale = Math.min(1.0, forceMultiple(scale + 0.1, 0.1));
+        } else {
+            scale = forceMultiple(scale + 0.5, 0.5);
+        }
+        setScale(scale);
     }
 
     public void zoomOut() {
         double scale = getScale();
-        setScale(scale > 1 ? Math.max(1.0,
-                forceMultiple(scale + 0.49, 0.5) - 0.5) : forceMultiple(
-                scale + 0.09, 0.1) - 0.1);
+        if (scale <= 1) {
+            scale = forceMultiple(scale + 0.09, 0.1) - 0.1;
+        } else if (scale > 1 && scale <= 1.2) {
+            scale = forceMultiple(scale + 0.19, 0.2) - 0.2;
+        } else {
+            scale = Math.max(1.2, forceMultiple(scale + 0.49, 0.5) - 0.5);
+        }
+        setScale(scale);
     }
 
     private static double forceMultiple(double a, double m) {

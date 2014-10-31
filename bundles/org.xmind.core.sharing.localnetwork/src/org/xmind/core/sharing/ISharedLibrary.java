@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.xmind.core.sharing;
 
+import java.util.Comparator;
+
 import org.eclipse.core.runtime.IAdaptable;
 
 /**
@@ -71,5 +73,9 @@ public interface ISharedLibrary extends IAdaptable {
      * @return <code>null</code> if the shared map is not found
      */
     ISharedMap findMapByID(String mapID);
+
+    String getContactID();
+
+    void sortMaps(Comparator<ISharedMap> c);
 
 }

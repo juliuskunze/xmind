@@ -17,6 +17,8 @@ public class Messages extends NLS {
 
     private static final String BUNDLE_NAME = "net.xmind.share.messages"; //$NON-NLS-1$
 
+    public static String Uploader_openAction_text;
+
     public static String UploaderDialog_containUnupload_text;
 
     public static String UploaderDialog_CreateError_Text;

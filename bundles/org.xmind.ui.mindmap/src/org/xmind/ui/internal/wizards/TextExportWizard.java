@@ -206,8 +206,6 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
             Control fileGroup = createFileControls(composite);
             fileGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL,
                     true, false));
-
-            updateStatus();
         }
 
         private void createPreviewGroup(Composite parent) {
@@ -248,10 +246,6 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
             dialog.setFilterExtensions(new String[] { FILTER_TEXT,
                     FILTER_ALL_FILES });
             return dialog;
-        }
-
-        protected String getSuggestedFileName() {
-            return super.getSuggestedFileName() + EXT_TEXT_FILE;
         }
 
         public void dispose() {
@@ -373,6 +367,10 @@ public class TextExportWizard extends AbstractMindMapExportWizard {
 
     protected String getFormatName() {
         return WizardMessages.TextExportWizard_formatName;
+    }
+
+    protected String getSuggestedFileName() {
+        return super.getSuggestedFileName() + EXT_TEXT_FILE;
     }
 
 }

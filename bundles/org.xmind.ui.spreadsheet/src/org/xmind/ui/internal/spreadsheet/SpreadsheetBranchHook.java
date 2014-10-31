@@ -19,7 +19,6 @@ import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.ui.branch.IBranchHook;
 import org.xmind.ui.mindmap.IBranchPart;
 
@@ -32,10 +31,8 @@ public class SpreadsheetBranchHook implements IBranchHook, ICoreEventListener {
     public void hook(IBranchPart branch) {
         this.branch = branch;
         ITopic topic = branch.getTopic();
-        if (topic instanceof ICoreEventSource) {
-            register = new CoreEventRegister((ICoreEventSource) topic, this);
-            register.register(Spreadsheet.EVENT_MODIFY_COLUMN_ORDER);
-        }
+        register = new CoreEventRegister(topic, this);
+        register.register(Spreadsheet.EVENT_MODIFY_COLUMN_ORDER);
     }
 
     public void unhook(IBranchPart branch) {

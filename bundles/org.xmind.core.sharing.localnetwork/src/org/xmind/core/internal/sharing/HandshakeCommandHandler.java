@@ -15,8 +15,11 @@ package org.xmind.core.internal.sharing;
 
 import static org.xmind.core.sharing.SharingConstants.COMMAND_VERSION;
 import static org.xmind.core.sharing.SharingConstants.PLUGIN_ID;
+import static org.xmind.core.sharing.SharingConstants.PROP_CONTACT_ID;
 import static org.xmind.core.sharing.SharingConstants.PROP_ID;
 import static org.xmind.core.sharing.SharingConstants.PROP_MAPS;
+import static org.xmind.core.sharing.SharingConstants.PROP_MISSING;
+import static org.xmind.core.sharing.SharingConstants.PROP_MODIFIED_TIME;
 import static org.xmind.core.sharing.SharingConstants.PROP_NAME;
 import static org.xmind.core.sharing.SharingConstants.PROP_THUMBNAIL;
 import static org.xmind.core.sharing.SharingConstants.PROP_VERSION;
@@ -28,9 +31,9 @@ import org.xmind.core.command.ICommandHandler;
 import org.xmind.core.command.ReturnValue;
 import org.xmind.core.command.arguments.ArrayMapper;
 import org.xmind.core.command.arguments.Attributes;
-import org.xmind.core.sharing.ISharedLibrary;
+import org.xmind.core.sharing.ILocalSharedLibrary;
+import org.xmind.core.sharing.ILocalSharedMap;
 import org.xmind.core.sharing.ISharedMap;
-import org.xmind.core.sharing.SharingConstants;
 
 /**
  * 
@@ -44,24 +47,44 @@ public class HandshakeCommandHandler implements ICommandHandler {
 
     public IStatus execute(IProgressMonitor monitor, ICommand command,
             String[] matches) {
-        ISharedLibrary localLibrary = LocalNetworkSharing.getDefault()
+        ILocalSharedLibrary localLibrary = LocalNetworkSharing.getDefault()
                 .getSharingService().getLocalLibrary();
+
         Attributes attrs = new Attributes();
         attrs.with(PROP_VERSION, COMMAND_VERSION);
         attrs.with(PROP_NAME, localLibrary.getName());
+        attrs.with(PROP_CONTACT_ID, localLibrary.getContactID());
         ArrayMapper mapsWriter = new ArrayMapper(attrs.getRawMap(), PROP_MAPS);
+        Attributes data = command.getArguments();
         for (ISharedMap map : localLibrary.getMaps()) {
+            String remoteID = data.get(PROP_CONTACT_ID);
+            boolean hasAccessRight = ((ILocalSharedMap) map)
+                    .hasAccessRight(remoteID);
+            if (!hasAccessRight)
+                continue;
+
             mapsWriter.next();
             mapsWriter.set(PROP_ID, map.getID());
             mapsWriter.set(PROP_NAME, map.getResourceName());
-            String thumbnail = ((LocalSharedMap) map).getEncodedThumbnailData();
-            mapsWriter.set(PROP_THUMBNAIL, thumbnail);
-            mapsWriter.set(SharingConstants.PROP_MISSING,
-                    map.isMissing() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            long modifiedTime = map.getResourceModifiedTime();
+            mapsWriter.set(PROP_MODIFIED_TIME, String.valueOf(modifiedTime));
+
+            if (remoteID == null) {
+                String thumbnail = ((LocalSharedLibrary) localLibrary)
+                        .getEncodedXMind2014Thumbnail();
+                mapsWriter.set(PROP_THUMBNAIL, thumbnail);
+                mapsWriter.set(PROP_MISSING, "true"); //$NON-NLS-1$
+            } else {
+                String thumbnail = ((LocalSharedMap) map)
+                        .getEncodedThumbnailData();
+                mapsWriter.set(PROP_THUMBNAIL, thumbnail);
+                mapsWriter
+                        .set(PROP_MISSING, map.isMissing() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+
         }
         mapsWriter.setSize();
         monitor.done();
         return new ReturnValue(PLUGIN_ID, attrs);
     }
-
 }

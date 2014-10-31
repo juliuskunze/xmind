@@ -27,6 +27,8 @@ public class Messages extends NLS {
     public static String SiteEventNotificationService_View_text;
     public static String SiteEventNotificationService_More_text;
 
+    public static String SiteEventNotificationService_openAction_text;
+
     public static String CheckForUpdatesJob_jobName;
 
     public static String NewsletterSubscriptionReminder_DialogMessage;
@@ -34,6 +36,8 @@ public class Messages extends NLS {
     public static String NewsletterSubscriptionReminder_DialogTitle;
 
     public static String NewsletterSubscriptionReminder_message;
+
+    public static String NewsletterSubscriptionReminder_TitleMessage;
 
     public static String WelcomeToXMind_editorTitle;
 

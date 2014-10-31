@@ -115,6 +115,7 @@ public class DownloadAndOpenFileJob extends Job {
         monitor.subTask(NLS
                 .bind(WorkbenchMessages.DownloadAndOpenFileJob_Task_OpenDownloadedFile_with_url,
                         url));
+
         try {
             IStorage tempStorage = createTempStorage();
             final IWorkbook workbook = loadWorkbook(monitor, tempStorage);

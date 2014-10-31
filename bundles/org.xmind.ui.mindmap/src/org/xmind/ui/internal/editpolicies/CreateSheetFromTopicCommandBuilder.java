@@ -132,7 +132,7 @@ public class CreateSheetFromTopicCommandBuilder extends CommandBuilder {
         String structure = topic.getStructureClass();
         if (structure != null) {
             if ("org.xmind.ui.map.floating".equals(structure)) {//$NON-NLS-1$
-                structure = "org.xmind.ui.map"; //$NON-NLS-1$
+                structure = "org.xmind.ui.map.unbalanced"; //$NON-NLS-1$
             } else if ("org.xmind.ui.map.floating.clockwise".equals(structure)) { //$NON-NLS-1$
                 structure = "org.xmind.ui.map.clockwise"; //$NON-NLS-1$
             } else if ("org.xmind.ui.map.floating.anticlockwise".equals(structure)) { //$NON-NLS-1$

@@ -32,7 +32,6 @@ import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.SafeRunnable;
-import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.ContentViewer;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
@@ -256,10 +255,6 @@ public class SliderViewer extends ContentViewer implements
     }
 
     protected Control createControl(Composite parent, int style) {
-        if (Util.isMac()) {
-            return new Scale(parent, style);
-        }
-
         int canvasStyle = SWT.NO_REDRAW_RESIZE | SWT.V_SCROLL | SWT.H_SCROLL
                 | SWT.DOUBLE_BUFFERED;
         FigureCanvas fc = new SliderFigureCanvas(canvasStyle, parent);

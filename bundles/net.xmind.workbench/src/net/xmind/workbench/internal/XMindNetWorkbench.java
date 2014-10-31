@@ -1,5 +1,8 @@
 package net.xmind.workbench.internal;
 
+import net.xmind.workbench.internal.notification.SiteEventNotificationService;
+
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.service.debug.DebugOptions;
@@ -90,6 +93,8 @@ public class XMindNetWorkbench extends AbstractUIPlugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
+
+        SiteEventNotificationService.migrateLocalStoreFile();
     }
 
     /*
@@ -143,6 +148,11 @@ public class XMindNetWorkbench extends AbstractUIPlugin {
         if (options == null)
             return false;
         return options.getBooleanOption(PLUGIN_ID + option, false);
+    }
+
+    public static String getStatePath(String subPath) {
+        IPath base = getDefault().getStateLocation();
+        return base.append(subPath).makeAbsolute().toOSString();
     }
 
 }

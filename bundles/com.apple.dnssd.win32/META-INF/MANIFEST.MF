@@ -6,7 +6,6 @@ Bundle-Version: 1.0.0
 Bundle-Vendor: Apple Inc.
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Eclipse-PlatformFilter: (osgi.os=win32)
-Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: dns_sd.jar,
  .
 Export-Package: com.apple.dnssd

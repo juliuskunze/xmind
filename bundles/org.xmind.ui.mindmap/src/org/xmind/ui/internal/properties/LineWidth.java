@@ -19,6 +19,8 @@ import org.xmind.ui.mindmap.MindMapUI;
 
 public enum LineWidth {
 
+    None("0pt", PropertyMessages.LineWidth_None, null), //$NON-NLS-1$
+
     Thinnest(
             "1pt", PropertyMessages.LineWidth_Thinnest, IMindMapImages.LINE_THINNEST), // //$NON-NLS-1$
     Thin("2pt", PropertyMessages.LineWidth_Thin, IMindMapImages.LINE_THIN), // //$NON-NLS-1$
@@ -48,6 +50,8 @@ public enum LineWidth {
     }
 
     public ImageDescriptor getIcon() {
+        if (iconName == null)
+            return null;
         return MindMapUI.getImages().get(iconName);
     }
 

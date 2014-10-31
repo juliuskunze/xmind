@@ -17,10 +17,14 @@ import static org.xmind.core.sharing.SharingConstants.COMMAND_SOURCE;
 import static org.xmind.core.sharing.SharingConstants.PROP_CONTENT;
 import static org.xmind.core.sharing.SharingConstants.PROP_ID;
 import static org.xmind.core.sharing.SharingConstants.PROP_MAPS;
+import static org.xmind.core.sharing.SharingConstants.PROP_NAME;
 import static org.xmind.core.sharing.SharingConstants.PROP_REMOTE;
+import static org.xmind.core.sharing.SharingConstants.PROP_REMOTE_ID;
+import static org.xmind.core.sharing.SharingConstants.PROP_VERIFICATION_CODE;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -37,6 +41,7 @@ import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -70,9 +75,12 @@ import org.xmind.core.command.remote.RemoteCommandJob;
 import org.xmind.core.internal.sharing.LocalSharedMap;
 import org.xmind.core.io.DirectoryStorage;
 import org.xmind.core.sharing.ILocalSharedLibrary;
+import org.xmind.core.sharing.ILocalSharedMap;
+import org.xmind.core.sharing.IRemoteSharedLibrary;
 import org.xmind.core.sharing.ISharedLibrary;
 import org.xmind.core.sharing.ISharedMap;
 import org.xmind.core.sharing.ISharingService;
+import org.xmind.core.util.FileUtils;
 import org.xmind.ui.dialogs.IDialogConstants;
 import org.xmind.ui.internal.editor.FileEditorInput;
 import org.xmind.ui.mindmap.MindMapUI;
@@ -147,6 +155,7 @@ public class SharingUtils {
                     NLS.bind(
                             SharingMessages.OpenRemoteSharedMapJob_jobName_withSharedMapName,
                             map.getResourceName())) {
+                @Override
                 protected IStatus run(IProgressMonitor monitor) {
                     monitor.beginTask(null, 100);
 
@@ -244,6 +253,14 @@ public class SharingUtils {
 
     private static void openLocalMap(IWorkbenchPage page, ISharedMap map) {
         String path = ((LocalSharedMap) map).getResourcePath();
+
+        if (map.isMissing()) {
+            showDialog(DIALOG_INFO,
+                    SharingMessages.CommonDialogTitle_LocalNetworkSharing,
+                    SharingMessages.ShareLibraryMapHandler_mapMissingTipText);
+            return;
+        }
+
         IEditorInput editorInput = new FileEditorInput(new File(path));
         try {
             page.openEditor(editorInput, MindMapUI.MINDMAP_EDITOR_ID);
@@ -257,7 +274,7 @@ public class SharingUtils {
             final String message, final String[] mapIDs) {
         ISharingService service = LocalNetworkSharingUI.getDefault()
                 .getSharingService();
-        if (service == null)
+        if (service == null || remoteLibraries == null)
             return;
 
         ICommandServiceDomain domain = (ICommandServiceDomain) service
@@ -299,6 +316,7 @@ public class SharingUtils {
                         return Status.OK_STATUS;
                     }
 
+                    @Override
                     protected ICommand createCommand(IProgressMonitor monitor)
                             throws CoreException {
                         Attributes data = new Attributes();
@@ -322,6 +340,113 @@ public class SharingUtils {
                 service.registerJob(job);
                 job.schedule();
             }
+        }
+    }
+
+    public static boolean connectRemoteLibrary(
+            final ISharedLibrary remoteLibrary) {
+        ISharingService service = LocalNetworkSharingUI.getDefault()
+                .getSharingService();
+        if (service == null || remoteLibrary == null)
+            return false;
+
+        if (!PlatformUI.isWorkbenchRunning())
+            return false;
+
+        final IWorkbench workbench = PlatformUI.getWorkbench();
+        if (workbench == null)
+            return false;
+
+        Display display = workbench.getDisplay();
+        if (display == null || display.isDisposed())
+            return false;
+
+        final boolean[] answer = new boolean[] { false };
+        display.syncExec(new Runnable() {
+            public void run() {
+                ConnectionDialog dialog = new ConnectionDialog(
+                        getDialogParent(workbench),
+                        NLS.bind(
+                                SharingMessages.SharingUtils_connectRemoteLibraryTipText_withRemoteName,
+                                remoteLibrary.getName()));
+                int code = dialog.open();
+                if (code == Dialog.OK) {
+                    answer[0] = true;
+                }
+            }
+        });
+
+        if (!answer[0])
+            return false;
+
+        final String id = service.getLocalLibrary().getContactID();
+        final String verificationCode = service.getContactManager()
+                .getVerificationCode();
+        IRemoteCommandService remoteService = (IRemoteCommandService) remoteLibrary
+                .getAdapter(IRemoteCommandService.class);
+        if (remoteService == null)
+            return false;
+
+        RemoteCommandJob job = new RemoteCommandJob(
+                SharingMessages.ConnectRemoteLibraryJob_name,
+                LocalNetworkSharingUI.PLUGIN_ID, remoteService) {
+
+            public IStatus consumeReturnValue(IProgressMonitor monitor,
+                    IStatus returnValue) {
+                return Status.OK_STATUS;
+            }
+
+            @Override
+            protected ICommand createCommand(IProgressMonitor monitor)
+                    throws CoreException {
+                Attributes data = new Attributes();
+                data.with(PROP_REMOTE_ID, id);
+                data.with(PROP_VERIFICATION_CODE, verificationCode);
+                return new Command(COMMAND_SOURCE,
+                        "sharing/connection", data, null, null); //$NON-NLS-1$
+            }
+        };
+        job.setRule(service);
+        service.registerJob(job);
+        job.schedule();
+        return true;
+    }
+
+    public static void returnConnectionInfo(final ISharedLibrary remoteLibrary,
+            final String verificationCode) {
+        final ISharingService service = LocalNetworkSharingUI.getDefault()
+                .getSharingService();
+        if (service == null || remoteLibrary == null)
+            return;
+
+        IRemoteCommandService remoteService = (IRemoteCommandService) remoteLibrary
+                .getAdapter(IRemoteCommandService.class);
+        if (remoteService != null) {
+            RemoteCommandJob job = new RemoteCommandJob(
+                    SharingMessages.ReturnConnectionInfoJob_name,
+                    LocalNetworkSharingUI.PLUGIN_ID, remoteService) {
+                public IStatus consumeReturnValue(IProgressMonitor monitor,
+                        IStatus returnValue) {
+                    return Status.OK_STATUS;
+                }
+
+                @Override
+                protected ICommand createCommand(IProgressMonitor monitor)
+                        throws CoreException {
+                    ILocalSharedLibrary localLibrary = service
+                            .getLocalLibrary();
+
+                    Attributes data = new Attributes();
+                    data.with(PROP_REMOTE_ID, localLibrary.getContactID());
+                    data.with(PROP_NAME, localLibrary.getName());
+                    data.with(PROP_VERIFICATION_CODE, verificationCode);
+                    return new Command(COMMAND_SOURCE,
+                            "sharing/connectionResult", data, null, null); //$NON-NLS-1$
+                }
+            };
+            job.setRule(service);
+            service.registerJob(job);
+            job.schedule();
         }
     }
 
@@ -392,12 +517,133 @@ public class SharingUtils {
         final File[] files = chooseLocalFiles(Display.getCurrent()
                 .getActiveShell());
         if (files != null && files.length > 0) {
-            BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
-                public void run() {
-                    addSharedMaps(sharingService, files);
-                }
-            });
+//            BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
+//                public void run() {
+//                    addSharedMaps(sharingService, files);
+//                }
+//            });
+            addSharedMaps(Display.getCurrent().getActiveShell(),
+                    sharingService, files);
         }
+    }
+
+    public static void updateSharedMaps(Shell shell,
+            ISharingService sharingService, ILocalSharedMap map) {
+        File file = new File(map.getResourcePath());
+        if (!file.exists())
+            return;
+
+        SendSharingMapDialog dialog = new SendSharingMapDialog(shell,
+                sharingService, map);
+        int code = dialog.open();
+        if (code != Dialog.OK)
+            return;
+
+        sharingMap(sharingService, file, dialog.getReceivers(),
+                dialog.getMessage());
+    }
+
+    public static void addSharedMaps(Shell shell,
+            ISharingService sharingService, final File[] files) {
+        if (shell == null || files == null || !(files.length > 0))
+            return;
+
+        SendSharingMapDialog dialog = new SendSharingMapDialog(shell,
+                sharingService, files);
+        int code = dialog.open();
+        if (code != Dialog.OK)
+            return;
+
+        sharingMap(sharingService, files, dialog.getReceivers(),
+                dialog.getMessage());
+    }
+
+    private static void sharingMap(final ISharingService sharingService,
+            final File[] files, final List<String> receivers, String message) {
+        final String[] mapIDs = new String[files.length];
+        BusyIndicator.showWhile(Display.getDefault(), new Runnable() {
+            public void run() {
+                ILocalSharedLibrary library = sharingService.getLocalLibrary();
+                for (int i = 0; i < files.length; i++) {
+                    File file = files[i];
+                    ISharedMap map = library.addSharedMap(file, receivers);
+                    mapIDs[i] = map.getID();
+                }
+            }
+        });
+
+        SharingUtils.sendMessage(getMessageReceiver(sharingService, receivers),
+                message, mapIDs);
+    }
+
+    private static void sharingMap(final ISharingService sharingService,
+            final File file, final List<String> receivers, String message) {
+        final String[] mapID = new String[1];
+        final ILocalSharedLibrary library = sharingService.getLocalLibrary();
+        List<String> alreadySharedReceivers = getAlreadySharedReceivers(
+                library, file);
+        BusyIndicator.showWhile(Display.getDefault(), new Runnable() {
+            public void run() {
+                ISharedMap map = library.addSharedMap(file, receivers);
+                mapID[0] = map.getID();
+            }
+        });
+
+        SharingUtils.sendMessage(
+                getMessageReceiver(sharingService, receivers,
+                        alreadySharedReceivers), message, mapID);
+    }
+
+    private static List<String> getAlreadySharedReceivers(
+            ILocalSharedLibrary library, File file) {
+        ISharedMap maps[] = library.getMaps();
+        for (ISharedMap map : maps) {
+            String filePath = file.getAbsolutePath();
+            ILocalSharedMap m = (ILocalSharedMap) map;
+            if (filePath.equals(m.getResourcePath())) {
+                List<String> receivers = new ArrayList<String>();
+                for (String receiver : m.getReceiverIDs()) {
+                    receivers.add(receiver);
+                }
+                return receivers;
+            }
+        }
+        return new ArrayList<String>();
+    }
+
+    private static ISharedLibrary[] getMessageReceiver(
+            ISharingService sharingService, List<String> receivers) {
+        Collection<IRemoteSharedLibrary> remotes = sharingService
+                .getRemoteLibraries();
+
+        ISharedLibrary[] receiverLibraries;
+        if (receivers.size() > 0) { //Share to select
+            receiverLibraries = new ISharedLibrary[receivers.size()];
+            int i = 0;
+            for (IRemoteSharedLibrary remote : remotes) {
+                if (receivers.contains(remote.getContactID())) {
+                    receiverLibraries[i++] = remote;
+                }
+
+            }
+        } else { //Share to all
+            receiverLibraries = remotes.toArray(new ISharedLibrary[remotes
+                    .size()]);
+        }
+        return receiverLibraries;
+    }
+
+    private static ISharedLibrary[] getMessageReceiver(
+            ISharingService sharingService, List<String> receivers,
+            List<String> alreadySharedReceivers) {
+        for (String rec : alreadySharedReceivers) {
+            receivers.remove(rec);
+        }
+
+        if (receivers.size() == 0)
+            return null;
+
+        return getMessageReceiver(sharingService, receivers);
     }
 
     private static File[] chooseLocalFiles(Shell parentShell) {
@@ -458,6 +704,8 @@ public class SharingUtils {
                 .getDialogSettingsSection(SETTINGS_SHARE_LOCAL_FILES_DIALOG);
     }
 
+    @SuppressWarnings("unused")
+    @Deprecated
     private static void addSharedMaps(ISharingService sharingService,
             File[] files) {
         ILocalSharedLibrary library = sharingService.getLocalLibrary();
@@ -635,6 +883,136 @@ public class SharingUtils {
                     exception[0]);
 
         }
+    }
+
+    public static void saveRemoteMaps(IWorkbenchPage page,
+            Collection<? extends ISharedMap> maps) {
+        for (ISharedMap map : maps) {
+            saveRemoteMap(page, map);
+        }
+    }
+
+    public static void saveRemoteMap(final IWorkbenchPage page,
+            final ISharedMap map) {
+        if (map.getSharedLibrary().isLocal())
+            return;
+
+        FileDialog dialog = new FileDialog(
+                page.getWorkbenchWindow().getShell(), SWT.SAVE);
+        dialog.setFileName(map.getResourceName());
+        initializeSaveFileDialog(dialog);
+        final String[] filePath = new String[1];
+        filePath[0] = dialog.open();
+        if (filePath[0] == null)
+            return;
+
+        final Display display = Display.getCurrent();
+        Job saveRemoteMapJob = new Job(NLS.bind(
+                SharingMessages.SharingUtils_saveRemoteMapJob_name_withMapName,
+                map.getResourceName())) {
+            @Override
+            protected IStatus run(IProgressMonitor monitor) {
+                monitor.beginTask(null, 100);
+
+                monitor.subTask(SharingMessages.SharingUtils_saveRemoteMapJob_loadingText);
+                SubProgressMonitor monitor1 = new SubProgressMonitor(monitor,
+                        90, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL);
+                InputStream stream = map.getResourceAsStream(monitor1);
+                if (monitor1.isCanceled())
+                    return Status.CANCEL_STATUS;
+                monitor1.done();
+
+                if (stream == null) {
+                    display.asyncExec(new Runnable() {
+                        public void run() {
+                            MessageDialog
+                                    .openInformation(
+                                            page.getWorkbenchWindow()
+                                                    .getShell(),
+                                            SharingMessages.CommonDialogTitle_LocalNetworkSharing,
+                                            NLS.bind(
+                                                    SharingMessages.OpenRemoteSharedMapJob_SharedMapNotAvailable_errorMessage_withSharedMapName,
+                                                    map.getResourceName()));
+                        }
+                    });
+                    return new Status(IStatus.WARNING,
+                            LocalNetworkSharingUI.PLUGIN_ID,
+                            "Failed to load shared map content from remote client."); //$NON-NLS-1$
+                }
+
+                monitor.subTask(SharingMessages.SharingUtils_saveRemoteMapJob_savingText);
+                final IWorkbook workbook;
+                try {
+                    File tempPath = Core.getWorkspace().createTempFile(
+                            "remoteMaps", //$NON-NLS-1$
+                            "", ".temp"); //$NON-NLS-1$ //$NON-NLS-2$
+                    tempPath.mkdirs();
+                    DirectoryStorage storage = new DirectoryStorage(tempPath);
+                    try {
+                        workbook = Core.getWorkbookBuilder().loadFromStream(
+                                stream, storage);
+                    } catch (Throwable e) {
+                        final String errorMessage = e.getLocalizedMessage();
+                        display.asyncExec(new Runnable() {
+                            public void run() {
+                                MessageDialog
+                                        .openInformation(
+                                                page.getWorkbenchWindow()
+                                                        .getShell(),
+                                                SharingMessages.CommonDialogTitle_LocalNetworkSharing,
+                                                NLS.bind(
+                                                        SharingMessages.SharingUtils_saveRemoteMapJob_errorText_withMapName_and_ErrorMessage,
+                                                        map.getResourceName(),
+                                                        errorMessage));
+                            }
+                        });
+                        return new Status(IStatus.WARNING,
+                                LocalNetworkSharingUI.PLUGIN_ID, null, e);
+                    }
+                } finally {
+                    try {
+                        stream.close();
+                    } catch (IOException e) {
+                    }
+                }
+
+                if (monitor.isCanceled())
+                    return Status.CANCEL_STATUS;
+
+                if (!filePath[0].endsWith(MindMapUI.FILE_EXT_XMIND))
+                    filePath[0] += MindMapUI.FILE_EXT_XMIND;
+                File file = new File(filePath[0]);
+                FileUtils.ensureFileParent(file);
+                try {
+                    FileOutputStream fos = new FileOutputStream(file);
+                    try {
+                        workbook.save(fos);
+                    } finally {
+                        fos.close();
+                    }
+                } catch (Exception e) {
+                }
+
+                return Status.OK_STATUS;
+            }
+        };
+
+        saveRemoteMapJob.setUser(true);
+        ISharingService sharingService = LocalNetworkSharingUI.getDefault()
+                .getSharingService();
+        sharingService.registerJob(saveRemoteMapJob);
+        saveRemoteMapJob.setRule(sharingService);
+        saveRemoteMapJob.schedule();
+    }
+
+    private static void initializeSaveFileDialog(FileDialog fileDialog) {
+        fileDialog.setFilterExtensions(new String[] { "*" //$NON-NLS-1$
+                + MindMapUI.FILE_EXT_XMIND });
+        fileDialog.setFilterNames(new String[] { NLS.bind(
+                "{0} (*{1})", //$NON-NLS-1$
+                IDialogConstants.FILE_DIALOG_FILTER_WORKBOOK,
+                MindMapUI.FILE_EXT_XMIND) });
+        fileDialog.setFilterIndex(0);
     }
 
 }

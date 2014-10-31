@@ -2,39 +2,24 @@
 <feature
       id="net.xmind.workbench.feature"
       label="XMind.net Workbench Contributions"
-      version="3.4.1.qualifier"
+      version="3.5.0.qualifier"
       provider-name="XMind Ltd.">
 
-   <description url="http://www.example.com/description">
-      [Enter Feature Description here.]
+   <description>
+      XMind.net Workbench Contributions
    </description>
 
-   <copyright url="http://www.example.com/copyright">
-      [Enter Copyright Description here.]
+   <copyright>
+      Copyright(C) 2006-2012, XMind Ltd. and others.
    </copyright>
 
-   <license url="http://www.example.com/license">
-      [Enter License Description here.]
+   <license url="license.html">
+      XMind 3 is dual licensed under 2 open source licenses:
+the Eclipse Public License v1.0 (EPL),
+which is available at http://www.eclipse.org/legal/epl-v10.html ,
+and the GNU Lesser General Public License v3 (LGPL),
+which is available at http://www.gnu.org/licenses/lgpl.html .
    </license>
-
-   <requires>
-      <import plugin="org.eclipse.ui"/>
-      <import plugin="org.eclipse.core.runtime"/>
-      <import plugin="org.xmind.ui"/>
-      <import plugin="org.xmind.ui.browser"/>
-      <import plugin="org.eclipse.draw2d"/>
-      <import plugin="org.json"/>
-      <import plugin="net.xmind.signin"/>
-      <import plugin="org.xmind.ui.toolkit"/>
-      <import plugin="org.eclipse.ui.forms"/>
-      <import plugin="org.xmind.ui.mindmap"/>
-      <import plugin="net.xmind.signin" version="3.4.1" match="equivalent"/>
-      <import plugin="org.xmind.ui.toolkit" version="3.4.1" match="equivalent"/>
-      <import plugin="org.xmind.core" version="3.4.1" match="equivalent"/>
-      <import plugin="org.xmind.ui" version="3.4.1" match="equivalent"/>
-      <import plugin="org.xmind.ui.browser" version="3.4.1" match="equivalent"/>
-      <import plugin="org.xmind.core.command" version="3.4.1" match="equivalent"/>
-   </requires>
 
    <plugin
          id="net.xmind.share"

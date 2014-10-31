@@ -31,6 +31,7 @@ import org.xmind.core.command.binary.BinaryStore;
 import org.xmind.core.command.binary.IBinaryEntry;
 import org.xmind.core.command.binary.IBinaryStore;
 import org.xmind.core.sharing.ISharedMap;
+import org.xmind.core.sharing.SharingConstants;
 
 /**
  * 
@@ -44,6 +45,10 @@ public class FileContentCommandHandler implements ICommandHandler {
 
     public IStatus execute(IProgressMonitor monitor, ICommand command,
             String[] matches) {
+        if (command.getArgument(SharingConstants.PROP_CONTACT_ID) == null)
+            return new Status(IStatus.WARNING, PLUGIN_ID,
+                    CODE_MISSING_ARGUMENT, "Missing contact ID.", null); //$NON-NLS-1$
+
         if (matches.length < 1)
             return new Status(IStatus.WARNING, PLUGIN_ID,
                     CODE_MISSING_ARGUMENT, "Missing map ID.", null); //$NON-NLS-1$

@@ -296,8 +296,6 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
             fileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                     false));
 
-            updateStatus();
-
             generatePreview(getFormat());
         }
 
@@ -427,11 +425,6 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
             return dialog;
         }
 
-        protected String getSuggestedFileName() {
-            return super.getSuggestedFileName()
-                    + getFormat().getExtensions().get(0);
-        }
-
         private void formatChanged() {
             if (hasTargetPath() && hasFormat()) {
                 List<String> exts = getFormat().getExtensions();
@@ -534,11 +527,11 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
     }
 
     protected void loadDialogSettings(IDialogSettings settings) {
-        super.loadDialogSettings(settings);
         String mediaType = settings.get(PROP_FORMAT);
         ImageFormat lastFormat = ImageFormat.findByMediaType(mediaType,
                 ImageFormat.BMP);
         setFormat(lastFormat);
+        super.loadDialogSettings(settings);
     }
 
     protected void saveDialogSettings(IDialogSettings settings) {
@@ -746,6 +739,11 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
     protected void handleExportException(Throwable e) {
         super.handleExportException(e);
         page.setErrorMessage(e.getLocalizedMessage());
+    }
+
+    protected String getSuggestedFileName() {
+        return super.getSuggestedFileName()
+                + getFormat().getExtensions().get(0);
     }
 
 }

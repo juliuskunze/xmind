@@ -35,6 +35,21 @@ public abstract class AbstractSharedMap implements ISharedMap {
         }
     };
 
+    public static final Comparator<ISharedMap> MAP_COMPARATOR_BY_MODIFIED_TIME = new Comparator<ISharedMap>() {
+        public int compare(ISharedMap o1, ISharedMap o2) {
+            Long modifiedTime1 = o1.getResourceModifiedTime();
+            Long modifiedTime2 = o2.getResourceModifiedTime();
+            int d = modifiedTime2.compareTo(modifiedTime1);
+            if (d == 0) {
+                d = o1.getResourceName().compareTo(o2.getResourceName());
+                if (d == 0) {
+                    d = o1.getID().compareTo(o2.getID());
+                }
+            }
+            return d;
+        }
+    };
+
     private ISharedLibrary library;
 
     private String id;
@@ -44,6 +59,8 @@ public abstract class AbstractSharedMap implements ISharedMap {
     private byte[] thumbnailData;
 
     private boolean missing;
+
+    private long modifiedTime = 0;
 
     public AbstractSharedMap(ISharedLibrary library, String id) {
         this(library, id, null, null);
@@ -80,6 +97,14 @@ public abstract class AbstractSharedMap implements ISharedMap {
 
     public void setThumbnailData(byte[] thumbnailData) {
         this.thumbnailData = thumbnailData;
+    }
+
+    public long getResourceModifiedTime() {
+        return modifiedTime;
+    }
+
+    public void setResourceModifiedTime(long time) {
+        this.modifiedTime = time;
     }
 
     public boolean isMissing() {

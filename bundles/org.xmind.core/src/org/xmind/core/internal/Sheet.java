@@ -36,7 +36,7 @@ public abstract class Sheet implements ISheet {
      */
     public String getTitleText() {
         String t = getLocalTitleText();
-        return t == null ? "" : getLocalTitleText(); //$NON-NLS-1$
+        return t == null ? "" : t; //$NON-NLS-1$
     }
 
     /**

@@ -84,6 +84,8 @@ public class ControlPointImpl extends ControlPoint implements ICoreEventSource {
     }
 
     public Object getAdapter(Class adapter) {
+        if (adapter == ICoreEventSource.class)
+            return this;
         if (adapter == Node.class || adapter == Element.class)
             return getImplementation();
         if (adapter == IRelationship.class)
@@ -122,8 +124,8 @@ public class ControlPointImpl extends ControlPoint implements ICoreEventSource {
     public double getPolarAmount() {
         Element ele = getImplementation();
         if (ele != null) {
-            return NumberUtils.safeParseDouble(DOMUtils.getAttribute(ele,
-                    ATTR_AMOUNT), 0.3);
+            return NumberUtils.safeParseDouble(
+                    DOMUtils.getAttribute(ele, ATTR_AMOUNT), 0.3);
         }
         return 0.3;
     }
@@ -131,8 +133,8 @@ public class ControlPointImpl extends ControlPoint implements ICoreEventSource {
     public double getPolarAngle() {
         Element ele = getImplementation();
         if (ele != null) {
-            return NumberUtils.safeParseDouble(DOMUtils.getAttribute(ele,
-                    ATTR_ANGLE), 0);
+            return NumberUtils.safeParseDouble(
+                    DOMUtils.getAttribute(ele, ATTR_ANGLE), 0);
         }
         return 0;
     }

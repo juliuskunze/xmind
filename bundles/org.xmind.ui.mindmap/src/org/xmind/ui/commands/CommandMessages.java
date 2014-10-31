@@ -56,6 +56,10 @@ public class CommandMessages extends NLS {
     public static String Command_HideLegend;
     public static String Command_InsertAttachment;
     public static String Command_InsertImage;
+    public static String Command_ModifyBorderColor;
+
+    public static String Command_ModifyBorderShape;
+
     public static String Command_ModifyBoundaryRange;
     public static String Command_ModifyBoundaryTitle;
     public static String Command_ModifyLabels;
@@ -109,6 +113,7 @@ public class CommandMessages extends NLS {
     public static String Command_ModifyWallpaperOpacity;
     public static String Command_ToggleMultiLineColors;
     public static String Command_ToggleTaperedLines;
+    public static String Command_ToggleGradientColor;
 
     public static String Command_TextAlignLeft;
     public static String Command_TextAlignCenter;

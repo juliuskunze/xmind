@@ -2,26 +2,22 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.xmind.ui.mindmap;singleton:=true
-Bundle-Version: 3.4.1.qualifier
+Bundle-Version: 3.5.0.qualifier
 Bundle-Vendor: %providerName
 Eclipse-LazyStart: true
 Bundle-ClassPath: .
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- org.xmind.gef.ui,
- org.eclipse.draw2d,
- org.eclipse.jface.text,
- org.eclipse.jface,
  org.eclipse.ui.views,
- org.eclipse.ui.forms,
  org.eclipse.core.expressions,
  org.eclipse.core.filesystem,
  org.eclipse.core.resources,
- org.xmind.ui.toolkit,
- org.xmind.core.runtime,
- org.xmind.ui.browser,
- org.xmind.ui.spelling,
- org.xmind.core.command;bundle-version="[3.4.0,3.5.0)"
+ org.xmind.core.runtime;bundle-version="[3.5.0,3.6.0)";visibility:=reexport,
+ org.xmind.gef.ui;bundle-version="[3.5.0,3.6.0)";visibility:=reexport,
+ org.xmind.ui.toolkit;bundle-version="[3.5.0,3.6.0)",
+ org.xmind.ui.browser;bundle-version="[3.5.0,3.6.0)",
+ org.xmind.ui.spelling;bundle-version="[3.5.0,3.6.0)",
+ org.xmind.core.command;bundle-version="[3.5.0,3.6.0)"
 Bundle-Activator: org.xmind.ui.internal.MindMapUIPlugin
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy

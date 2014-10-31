@@ -30,7 +30,6 @@ import org.xmind.core.IRelationship;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerGroup;
 import org.xmind.core.marker.IMarkerRef;
@@ -404,8 +403,7 @@ public class TopicPart extends NodePart implements ITopicPart {
         return actionRegistry;
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
-            ICoreEventRegister register) {
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
         register.register(Core.MarkerRefAdd);
         register.register(Core.MarkerRefRemove);
@@ -413,27 +411,21 @@ public class TopicPart extends NodePart implements ITopicPart {
         if (source instanceof ITopic) {
             ITopic parent = ((ITopic) source).getParent();
             if (parent != null) {
-                if (parent instanceof ICoreEventSource) {
-                    register.setNextSource((ICoreEventSource) parent);
-                    register.register(Core.TopicAdd);
-                    register.register(Core.TopicRemove);
-                }
+                register.setNextSourceFrom(parent);
+                register.register(Core.TopicAdd);
+                register.register(Core.TopicRemove);
                 INumbering parentNumbering = parent.getNumbering();
-                if (parentNumbering instanceof ICoreEventSource) {
-                    register.setNextSource((ICoreEventSource) parentNumbering);
-                    register.register(Core.NumberFormat);
-                    register.register(Core.NumberingPrefix);
-                    register.register(Core.NumberingSuffix);
-                    register.register(Core.NumberPrepending);
-                }
+                register.setNextSourceFrom(parentNumbering);
+                register.register(Core.NumberFormat);
+                register.register(Core.NumberingPrefix);
+                register.register(Core.NumberingSuffix);
+                register.register(Core.NumberPrepending);
             }
         }
 
         IImage imageModel = getTopic().getImage();
-        if (imageModel instanceof ICoreEventSource) {
-            register.setNextSource((ICoreEventSource) imageModel);
-            register.register(Core.ImageSource);
-        }
+        register.setNextSourceFrom(imageModel);
+        register.register(Core.ImageSource);
     }
 
     public void handleCoreEvent(CoreEvent event) {

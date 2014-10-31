@@ -121,7 +121,11 @@ public class ThemesViewer extends GalleryViewer {
 
     private static class ThemeSelectTool extends GallerySelectTool {
         protected boolean isTitleEditable(IPart p) {
-            IStyle theme = (IStyle) p.getModel();
+            Object model = p.getModel();
+            if (!(model instanceof IStyle))
+                return false;
+
+            IStyle theme = (IStyle) model;
             return theme != MindMapUI.getResourceManager().getBlankTheme()
                     && theme.getOwnedStyleSheet() != MindMapUI
                             .getResourceManager().getSystemThemeSheet();
@@ -188,6 +192,7 @@ public class ThemesViewer extends GalleryViewer {
         properties.set(GalleryViewer.FrameContentSize, new Dimension(128, 64));
         properties.set(GalleryViewer.TitlePlacement, GalleryViewer.TITLE_TOP);
         properties.set(GalleryViewer.SingleClickToOpen, Boolean.FALSE);
+        properties.set(GalleryViewer.FlatFrames, true);
     }
 
     public void setSelection(ISelection selection) {

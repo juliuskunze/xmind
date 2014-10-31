@@ -103,7 +103,8 @@ public class TopicHyperlinkPage extends HyperlinkPage {
                     return topic.getTitleText() + " (" //$NON-NLS-1$
                             + topic.getOwnedSheet().getTitleText() + ")"; //$NON-NLS-1$
                 }
-                return topic.getTitleText();
+                String titleText = topic.getTitleText();
+                return titleText.replaceAll("\\r\\n|\\n|\\r", " "); //$NON-NLS-1$ //$NON-NLS-2$
             }
             return super.getText(element);
         }

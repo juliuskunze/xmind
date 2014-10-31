@@ -14,9 +14,9 @@
 package org.xmind.core.internal.sharing;
 
 import static org.xmind.core.internal.sharing.AbstractSharedMap.MAP_COMPARATOR;
-import static org.xmind.core.util.DOMUtils.childElementIterByTag;
-import static org.xmind.core.util.DOMUtils.createElement;
-import static org.xmind.core.util.DOMUtils.getFirstChildElementByTag;
+import static org.xmind.core.internal.sharing.DOMUtils.childElementArrayByTag;
+import static org.xmind.core.internal.sharing.DOMUtils.createElement;
+import static org.xmind.core.internal.sharing.DOMUtils.getFirstChildElementByTag;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -24,10 +24,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
@@ -45,15 +46,13 @@ import org.xmind.core.sharing.ILocalSharedLibrary;
 import org.xmind.core.sharing.ISharedMap;
 import org.xmind.core.sharing.ISharingService;
 import org.xmind.core.sharing.SharingEvent;
-import org.xmind.core.util.DOMUtils;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
- * 
  * @author Frank Shaka
- * 
+ * @author Jason Wong
  */
 public class LocalSharedLibrary implements ILocalSharedLibrary {
 
@@ -69,6 +68,10 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
 
     private static final String TAG_THUMBNAIL = "thumbnail"; //$NON-NLS-1$
 
+    private static final String TAG_RECEIVERS = "receivers"; //$NON-NLS-1$
+
+    private static final String TAG_RECEIVER = "receiver"; //$NON-NLS-1$
+
     private static final String ATT_ID = "id"; //$NON-NLS-1$
 
     private static final String ATT_RESOURCE = "resource"; //$NON-NLS-1$
@@ -76,6 +79,8 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
     private static final String ATT_MODIFIED_TIME = "modified-time"; //$NON-NLS-1$
 
     private static final String ATT_ADDED_TIME = "added-time"; //$NON-NLS-1$
+
+    private static final String XMIND_2014_THUMBNAIL = "images/thumbnail.png"; //$NON-NLS-1$
 
     private static boolean DEBUGGING = LocalNetworkSharing
             .isDebugging(LocalNetworkSharing.DEBUG_OPTION);
@@ -86,11 +91,15 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
 
     private String name = null;
 
+    private String contactId = null;
+
     private List<ISharedMap> maps = new ArrayList<ISharedMap>();
 
     private Thread monitorThread = null;
 
     private File metaFile = null;
+
+    private String encodedXMind2014Thumbnail = null;
 
     public LocalSharedLibrary(LocalNetworkSharingService service) {
         this.service = service;
@@ -123,10 +132,20 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setAttribute(
                 "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                Boolean.TRUE);
+                true);
+        factory.setFeature(
+                "http://apache.org/xml/features/disallow-doctype-decl", true); //$NON-NLS-1$
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        factory.setFeature(
+                "http://xml.org/sax/features/external-parameter-entities", false); //$NON-NLS-1$
+        factory.setFeature(
+                "http://xml.org/sax/features/external-general-entities", false); //$NON-NLS-1$
         factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        builder.setErrorHandler(new ErrorHandler() {
+        factory.setIgnoringElementContentWhitespace(true);
+        DocumentBuilder documentBuilder = factory.newDocumentBuilder();
+        documentBuilder.setErrorHandler(new ErrorHandler() {
+
             public void warning(SAXParseException exception)
                     throws SAXException {
             }
@@ -137,8 +156,9 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
 
             public void error(SAXParseException exception) throws SAXException {
             }
+
         });
-        return builder;
+        return documentBuilder;
     }
 
     private void load() {
@@ -164,10 +184,10 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
 
                 Element mapsElement = getFirstChildElementByTag(root, TAG_MAPS);
                 if (mapsElement != null) {
-                    Iterator<Element> mapElements = childElementIterByTag(
-                            mapsElement, TAG_MAP);
-                    while (mapElements.hasNext()) {
-                        Element mapElement = mapElements.next();
+                    Element[] mapElements = childElementArrayByTag(mapsElement,
+                            TAG_MAP);
+
+                    for (Element mapElement : mapElements) {
                         LocalSharedMap map = new LocalSharedMap(this,
                                 mapElement.getAttribute(ATT_ID));
                         map.setResourcePath(mapElement
@@ -199,10 +219,23 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
                                 mapElement, TAG_THUMBNAIL);
                         map.setEncodedThumbnailData(thumbnailElement == null ? null
                                 : thumbnailElement.getTextContent());
+
+                        Element receiverIDsEle = getFirstChildElementByTag(
+                                mapElement, TAG_RECEIVERS);
+                        if (receiverIDsEle != null) {
+                            Element[] receiverIdEles = childElementArrayByTag(
+                                    receiverIDsEle, TAG_RECEIVER);
+                            for (Element receiverIdElement : receiverIdEles) {
+                                String id = receiverIdElement
+                                        .getAttribute(ATT_ID);
+                                if (id != null && !"".equals(id)) { //$NON-NLS-1$
+                                    map.addReceiver(id);
+                                }
+                            }
+                        }
                         this.maps.add(map);
                     }
                 }
-
             } catch (Throwable e) {
                 LocalNetworkSharing
                         .log("Error occurred while loading local shared library info.", //$NON-NLS-1$
@@ -270,6 +303,14 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
         return this.name;
     }
 
+    public String getContactID() {
+        if (this.contactId == null) {
+            this.contactId = service.getContactManager().getMyselfContact()
+                    .getID();
+        }
+        return this.contactId;
+    }
+
     public void setDefaultName(String name) {
         assert name != null;
         this.defaultName = name;
@@ -285,13 +326,21 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
     }
 
     public synchronized ISharedMap addSharedMap(File file) {
+        return addSharedMap(file, Collections.<String> emptyList());
+    }
+
+    public synchronized ISharedMap addSharedMap(File file,
+            List<String> receivers) {
         String resourcePath = file.getAbsolutePath();
         LocalSharedMap map = null;
 
         // Search for existing shared map:
         for (ISharedMap m : this.maps) {
             if (resourcePath.equals(((LocalSharedMap) m).getResourcePath())) {
+                removeSharedMap(m);
                 map = (LocalSharedMap) m;
+                map.getReceiverIDs().clear();
+                map.addReceivers(receivers);
                 break;
             }
         }
@@ -301,9 +350,13 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
             map = new LocalSharedMap(this, UUID.randomUUID().toString());
             map.setResourcePath(resourcePath);
             map.setAddedTime(System.currentTimeMillis());
-            this.maps.add(map);
-            Collections.sort(this.maps, MAP_COMPARATOR);
+            for (String receiver : receivers) {
+                map.addReceiver(receiver);
+            }
         }
+
+        this.maps.add(map);
+        Collections.sort(this.maps, MAP_COMPARATOR);
 
         // Check and update shared map descriptor:
         checkMap(map);
@@ -394,6 +447,17 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
                     Element thumbnailElement = createElement(mapElement,
                             TAG_THUMBNAIL);
                     thumbnailElement.setTextContent(thumbnailData);
+                }
+
+                List<String> receiverIds = localMap.getReceiverIDs();
+                if (!receiverIds.isEmpty()) {
+                    Element receiversElement = createElement(mapElement,
+                            TAG_RECEIVERS);
+                    for (String id : receiverIds) {
+                        Element receiverElement = createElement(
+                                receiversElement, TAG_RECEIVER);
+                        receiverElement.setAttribute(ATT_ID, id);
+                    }
                 }
             }
 
@@ -493,7 +557,42 @@ public class LocalSharedLibrary implements ILocalSharedLibrary {
             map.setThumbnailData(createThumbnailData(file));
             modified = true;
         }
+
         return modified;
+    }
+
+    public void sortMaps(Comparator<ISharedMap> c) {
+        Collections.sort(maps, c);
+    }
+
+    public String getEncodedXMind2014Thumbnail() {
+        if (encodedXMind2014Thumbnail == null) {
+            byte[] thumbnail = createXMind2014Thumbnail();
+            encodedXMind2014Thumbnail = Base64.byteArrayToBase64(thumbnail);
+        }
+        return encodedXMind2014Thumbnail;
+    }
+
+    private byte[] createXMind2014Thumbnail() {
+        URL url = Platform.getBundle(LocalNetworkSharing.ID).getEntry(
+                XMIND_2014_THUMBNAIL);
+        if (url != null) {
+            try {
+                InputStream input = url.openStream();
+                ByteArrayOutputStream output = new ByteArrayOutputStream(4096);
+
+                byte[] buff = new byte[4096];
+                int len = 0;
+                while ((len = input.read(buff, 0, buff.length)) > 0) {
+                    output.write(buff, 0, len);
+                }
+                return output.toByteArray();
+            } catch (IOException e) {
+                LocalNetworkSharing.log("Create XMind 2014 thumbnail failed: " //$NON-NLS-1$
+                        , e);
+            }
+        }
+        return new byte[0];
     }
 
 }

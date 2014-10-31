@@ -268,24 +268,16 @@ public class FontDialog extends Dialog implements IFontChooser {
 
     private static PaletteContents getDefaultPaletteContents() {
         if (DEFAULT_PALLETE == null) {
-            PaletteContents paletteContent = new PaletteContents(15, 3, 5);
+            PaletteContents paletteContent = new PaletteContents(9, 3, 3);
 
             paletteContent.addItem(PaletteItem.Red);
             paletteContent.addItem(PaletteItem.Orange);
-            paletteContent.addItem(PaletteItem.Lemon);
-            paletteContent.addItem(PaletteItem.LimeGreen);
+            paletteContent.addItem(PaletteItem.Green);
             paletteContent.addItem(PaletteItem.Blue);
-
-            paletteContent.addItem(PaletteItem.Turquoise);
+            paletteContent.addItem(PaletteItem.Yellow);
+            paletteContent.addItem(PaletteItem.Indigo);
             paletteContent.addItem(PaletteItem.Purple);
-            paletteContent.addItem(PaletteItem.Rose);
-            paletteContent.addItem(PaletteItem.Lavender);
-            paletteContent.addItem(PaletteItem.Violet);
-
             paletteContent.addItem(PaletteItem.Black);
-            paletteContent.addItem(PaletteItem.DarkGray);
-            paletteContent.addItem(PaletteItem.Gray);
-            paletteContent.addItem(PaletteItem.LightGray);
             paletteContent.addItem(PaletteItem.White);
             DEFAULT_PALLETE = paletteContent;
         }

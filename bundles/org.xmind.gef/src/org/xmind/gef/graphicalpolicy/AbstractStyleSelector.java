@@ -14,6 +14,7 @@
 package org.xmind.gef.graphicalpolicy;
 
 import org.xmind.gef.part.IGraphicalPart;
+import org.xmind.gef.service.StyleOverrideService;
 
 /**
  * @author Frank Shaka
@@ -21,11 +22,25 @@ import org.xmind.gef.part.IGraphicalPart;
 public abstract class AbstractStyleSelector implements IStyleSelector {
 
     public String getStyleValue(IGraphicalPart part, String key) {
+        StyleOverrideService styleOverrideService = (StyleOverrideService) part
+                .getSite().getViewer().getService(StyleOverrideService.class);
+        if (styleOverrideService != null && styleOverrideService.isActive()) {
+            String value = styleOverrideService.getValue(part, key);
+            if (isValidValue(part, key, value))
+                return value;
+        }
         return getStyleValue(part, key, null);
     }
 
     public String getStyleValue(IGraphicalPart part, String key,
             IStyleValueProvider defaultValueProvider) {
+        StyleOverrideService styleOverrideService = (StyleOverrideService) part
+                .getSite().getViewer().getService(StyleOverrideService.class);
+        if (styleOverrideService != null && styleOverrideService.isActive()) {
+            String value = styleOverrideService.getValue(part, key);
+            if (isValidValue(part, key, value))
+                return value;
+        }
         String value = getUserValue(part, key);
         if (!isValidValue(part, key, value) && !ignoresAutoValue(part, key))
             value = getAutoValue(part, key, defaultValueProvider);

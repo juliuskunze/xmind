@@ -64,7 +64,27 @@ public abstract class AbstractExportWizard extends Wizard implements
                     pathHistory.add(path);
             }
         }
+
+        if (!pathHistory.isEmpty()) {
+            String lastPath = pathHistory.get(pathHistory.size() - 1);
+            setTargetPath(exchangePath(lastPath, getSuggestedFileName()));
+        }
     }
+
+    private String exchangePath(String path, String suggestedFileName) {
+        StringBuffer sb = new StringBuffer();
+        int lastSeparatorIndex = path.lastIndexOf(File.separatorChar);
+        if (lastSeparatorIndex >= 0) {
+            sb.append(path, 0, lastSeparatorIndex + 1);
+        } else {
+            sb.append(File.separator);
+        }
+        sb.append(suggestedFileName);
+
+        return sb.toString();
+    }
+
+    protected abstract String getSuggestedFileName();
 
     public void dispose() {
         saveDialogSettings();
@@ -81,6 +101,9 @@ public abstract class AbstractExportWizard extends Wizard implements
     protected void saveDialogSettings(IDialogSettings settings) {
         if (targetPath != null) {
             if (!pathHistory.contains(targetPath)) {
+                pathHistory.add(targetPath);
+            } else {
+                pathHistory.remove(targetPath);
                 pathHistory.add(targetPath);
             }
             StringBuilder sb = new StringBuilder(pathHistory.size() * 20);

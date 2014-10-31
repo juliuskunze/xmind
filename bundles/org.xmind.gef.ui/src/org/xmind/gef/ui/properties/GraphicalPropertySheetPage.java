@@ -225,6 +225,7 @@ public abstract class GraphicalPropertySheetPage extends Page implements
         titleSeparator.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         this.widgetFactory = new WidgetFactory(composite.getDisplay());
+
         form = widgetFactory.createScrolledForm(composite);
         form.setLayoutData(new GridData(GridData.FILL_BOTH));
         form.setMinWidth(DEFAULT_SECTION_WIDTH); // TODO this not working???
@@ -236,8 +237,20 @@ public abstract class GraphicalPropertySheetPage extends Page implements
                 }
             }
         });
+
         createSectionControls(form, form.getBody());
+
+        Composite internalComposite = new Composite(form.getBody(), SWT.NONE);
+        internalComposite.setBackground(form.getBody().getBackground());
+        internalComposite.setLayout(new GridLayout(1, false));
+        internalComposite.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM,
+                true, true));
+        createExtendSectionControls(widgetFactory, internalComposite);
         form.reflow(true);
+    }
+
+    protected void createExtendSectionControls(WidgetFactory widgetFactory,
+            Composite parent) {
     }
 
     protected void createSectionControls(final ScrolledForm form,
@@ -272,7 +285,7 @@ public abstract class GraphicalPropertySheetPage extends Page implements
 
     private void createSectionControl(Composite parent, SectionRec rec) {
         rec.control = widgetFactory.createSection(parent, Section.TITLE_BAR
-                | Section.TWISTIE | Section.EXPANDED | SWT.BORDER);
+                | SWT.BORDER);
         Composite client = widgetFactory.createComposite(rec.control,
                 SWT.NO_FOCUS | SWT.WRAP);
         rec.control.setClient(client);

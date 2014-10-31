@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.xmind.core.event;
 
+import org.xmind.core.IAdaptable;
+import org.xmind.core.internal.event.NullCoreEventRegistration;
+
 public class CoreEventRegister extends CoreEventRegisterBase {
 
     private ICoreEventSource source;
@@ -26,31 +29,51 @@ public class CoreEventRegister extends CoreEventRegisterBase {
 
     public CoreEventRegister(ICoreEventSource source) {
         this.source = source;
+        this.support = null;
+        this.listener = null;
     }
 
     public CoreEventRegister(ICoreEventSupport support) {
         this.support = support;
+        this.source = null;
+        this.listener = null;
     }
 
     public CoreEventRegister(ICoreEventListener listener) {
+        this.source = null;
+        this.support = null;
         this.listener = listener;
     }
 
     public CoreEventRegister(ICoreEventSource source,
             ICoreEventListener listener) {
         this.source = source;
+        this.support = null;
         this.listener = listener;
     }
 
     public CoreEventRegister(ICoreEventSupport support,
             ICoreEventListener listener) {
+        this.source = null;
         this.support = support;
+        this.listener = listener;
+    }
+
+    public CoreEventRegister(Object source, ICoreEventListener listener) {
+        this.source = (ICoreEventSource) getAdapter(source,
+                ICoreEventSource.class);
+        if (this.source == null) {
+            this.support = (ICoreEventSupport) getAdapter(source,
+                    ICoreEventSupport.class);
+        } else {
+            this.support = null;
+        }
         this.listener = listener;
     }
 
     public ICoreEventRegistration register(String eventType) {
         if (listener == null)
-            return null;
+            return NullCoreEventRegistration.getInstance();
 
         ICoreEventRegistration reg;
         if (source != null) {
@@ -60,7 +83,7 @@ public class CoreEventRegister extends CoreEventRegisterBase {
             reg = support.registerGlobalListener(eventType, listener);
             addRegistration(reg);
         } else {
-            reg = null;
+            reg = NullCoreEventRegistration.getInstance();
         }
         return reg;
     }
@@ -77,6 +100,26 @@ public class CoreEventRegister extends CoreEventRegisterBase {
     public void setNextSupport(ICoreEventSupport support) {
         this.source = null;
         this.support = support;
+    }
+
+    public void setNextSourceFrom(Object source) {
+        this.source = (ICoreEventSource) getAdapter(source,
+                ICoreEventSource.class);
+        if (this.source == null) {
+            this.support = (ICoreEventSupport) getAdapter(source,
+                    ICoreEventSupport.class);
+        } else {
+            this.support = null;
+        }
+    }
+
+    private static Object getAdapter(Object adaptable, Class<?> adapter) {
+        if (adapter.isInstance(adaptable))
+            return adaptable;
+        if (IAdaptable.class.isInstance(adaptable)) {
+            return ((IAdaptable) adaptable).getAdapter(adapter);
+        }
+        return null;
     }
 
 }

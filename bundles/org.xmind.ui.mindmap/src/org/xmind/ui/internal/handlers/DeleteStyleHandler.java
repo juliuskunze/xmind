@@ -28,7 +28,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.xmind.core.style.IStyle;
 import org.xmind.core.style.IStyleSheet;
-import org.xmind.ui.dialogs.IDialogConstants;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.mindmap.MindMapUI;
 
@@ -36,6 +35,8 @@ import org.xmind.ui.mindmap.MindMapUI;
  * @author Frank Shaka
  */
 public class DeleteStyleHandler extends AbstractHandler {
+
+    private boolean enable = true;
 
     public Object execute(ExecutionEvent event) throws ExecutionException {
         deleteSelectedStyles(event);
@@ -58,16 +59,25 @@ public class DeleteStyleHandler extends AbstractHandler {
     }
 
     protected void deleteStyles(List<IStyle> styles) {
+        boolean isTheme = false;
         for (IStyle style : styles) {
+            if (IStyle.THEME.equals(style.getType()))
+                isTheme = true;
             IStyleSheet sheet = style.getOwnedStyleSheet();
             sheet.removeStyle(style);
         }
-        MindMapUI.getResourceManager().saveUserStyleSheet();
+        if (isTheme)
+            MindMapUI.getResourceManager().saveUserThemeSheet();
+        else
+            MindMapUI.getResourceManager().saveUserStyleSheet();
     }
 
     private boolean confirmDeletingStyles(Shell parentShell, List<IStyle> styles) {
         StringBuilder sb = new StringBuilder(styles.size() * 10);
+        boolean isTheme = false;
         for (IStyle style : styles) {
+            if (IStyle.THEME.equals(style.getType()))
+                isTheme = true;
             if (sb.length() > 0) {
                 sb.append(',');
                 sb.append(' ');
@@ -77,10 +87,20 @@ public class DeleteStyleHandler extends AbstractHandler {
             sb.append('\'');
         }
         String styleNames = sb.toString();
-        return MessageDialog.openConfirm(parentShell, NLS.bind(
-                IDialogConstants.COMMON_TITLE, MindMapMessages.DeleteStyleHandler_DeleteStytles), NLS.bind(
-                MindMapMessages.DeleteStyleHandler_DeleteStytlesConfirm,
-                styleNames));
+        return MessageDialog.openConfirm(parentShell, NLS.bind(MindMapMessages.DeleteStyleHandler_MessageDialog_title,
+                isTheme ? MindMapMessages.DeleteStyleHandler_MessageDialog_themes : MindMapMessages.DeleteStyleHandler_MessageDialog_styles), NLS.bind(
+                MindMapMessages.DeleteStyleHandler_MessageDialog_description, styleNames));
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enable;
+    }
+
+    @Override
+    public void setBaseEnabled(boolean state) {
+        enable = state;
+        super.setBaseEnabled(state);
     }
 
 }

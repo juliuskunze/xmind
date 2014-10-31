@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.draw2d.FigureCanvas;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.util.SafeRunnable;
@@ -42,7 +43,9 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.part.Page;
 import org.xmind.core.Core;
 import org.xmind.core.IRevision;
@@ -53,11 +56,12 @@ import org.xmind.core.IWorkbook;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.CoreEventRegister;
 import org.xmind.core.event.ICoreEventListener;
-import org.xmind.core.event.ICoreEventSource;
+import org.xmind.core.event.ICoreEventRegister;
 import org.xmind.core.internal.dom.SheetImpl;
 import org.xmind.gef.command.Command;
 import org.xmind.gef.command.CompoundCommand;
 import org.xmind.gef.command.ICommandStack;
+import org.xmind.gef.draw2d.RotatableWrapLabel;
 import org.xmind.gef.ui.editor.IGraphicalEditorPage;
 import org.xmind.ui.commands.AddSheetCommand;
 import org.xmind.ui.commands.DeleteRevisionCommand;
@@ -65,6 +69,7 @@ import org.xmind.ui.commands.DeleteSheetCommand;
 import org.xmind.ui.internal.MindMapMessages;
 import org.xmind.ui.internal.actions.ActionConstants;
 import org.xmind.ui.internal.dialogs.RevisionPreviewDialog;
+import org.xmind.ui.util.TextFormatter;
 import org.xmind.ui.viewers.SWTUtils;
 
 /**
@@ -283,13 +288,14 @@ public class RevisionsPage extends Page implements ICoreEventListener,
 
     private TableViewer viewer;
 
-    private Label titleLabel;
+//    private Label titleLabel;
+    private RotatableWrapLabel titleLabel;
 
     private IRevisionManager revisionManager;
 
-    private CoreEventRegister coreEventRegister = new CoreEventRegister(this);
+    private ICoreEventRegister coreEventRegister = new CoreEventRegister(this);
 
-    private CoreEventRegister topicEventRegister = new CoreEventRegister(this);
+    private ICoreEventRegister topicEventRegister = new CoreEventRegister(this);
 
     private List<IAction> actions = new ArrayList<IAction>(3);
 
@@ -312,7 +318,7 @@ public class RevisionsPage extends Page implements ICoreEventListener,
      */
     @Override
     public void createControl(Composite parent) {
-        Composite composite = new Composite(parent, SWT.NONE);
+        final Composite composite = new Composite(parent, SWT.NONE);
         GridLayout gridLayout = new GridLayout(1, false);
         gridLayout.marginWidth = 0;
         gridLayout.marginHeight = 0;
@@ -320,8 +326,9 @@ public class RevisionsPage extends Page implements ICoreEventListener,
         gridLayout.horizontalSpacing = 0;
         composite.setLayout(gridLayout);
 
-        Control control = createTitleLabel(composite);
-        control.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+//        Control control = createTitleLabel(composite);
+//        control.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        createTitleLabel(composite);
 
         Label separator = new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);
         separator.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -339,6 +346,13 @@ public class RevisionsPage extends Page implements ICoreEventListener,
         addAction(new RevertToRevisionAction());
         addAction(new PreviewRevisionAction());
         getSite().getActionBars().updateActionBars();
+
+        composite.addListener(SWT.Resize, new Listener() {
+
+            public void handleEvent(Event event) {
+                titleLabel.setPrefWidth(composite.getSize().x);
+            }
+        });
     }
 
     private void addAction(IAction action) {
@@ -357,10 +371,16 @@ public class RevisionsPage extends Page implements ICoreEventListener,
         this.control = control;
     }
 
-    private Control createTitleLabel(Composite parent) {
-        titleLabel = new Label(parent, SWT.NONE);
+    private void createTitleLabel(Composite parent) {
+        FigureCanvas canvas = new FigureCanvas(parent);
+        canvas.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        canvas.setVisible(true);
+        canvas.setScrollBarVisibility(FigureCanvas.NEVER);
+        titleLabel = new RotatableWrapLabel(RotatableWrapLabel.NORMAL);
+        titleLabel.setSingleLine(true);
+        titleLabel.setAbbreviated(true);
+        canvas.setContents(titleLabel);
         titleLabel.setText(getTitleText());
-        return titleLabel;
     }
 
     private Control createViewer(Composite parent) {
@@ -405,21 +425,15 @@ public class RevisionsPage extends Page implements ICoreEventListener,
      * 
      */
     private void registerCoreEvents() {
-        if (revisionManager instanceof ICoreEventSource) {
-            coreEventRegister.setNextSource((ICoreEventSource) revisionManager);
-            coreEventRegister.register(Core.RevisionAdd);
-            coreEventRegister.register(Core.RevisionRemove);
-        }
-        if (sheet instanceof ICoreEventSource) {
-            coreEventRegister.setNextSource((ICoreEventSource) sheet);
-            coreEventRegister.register(Core.TitleText);
-            coreEventRegister.register(Core.RootTopic);
-        }
+        coreEventRegister.setNextSourceFrom(revisionManager);
+        coreEventRegister.register(Core.RevisionAdd);
+        coreEventRegister.register(Core.RevisionRemove);
+        coreEventRegister.setNextSourceFrom(sheet);
+        coreEventRegister.register(Core.TitleText);
+        coreEventRegister.register(Core.RootTopic);
         ITopic rootTopic = sheet.getRootTopic();
-        if (rootTopic instanceof ICoreEventSource) {
-            topicEventRegister.setNextSource((ICoreEventSource) rootTopic);
-            topicEventRegister.register(Core.TitleText);
-        }
+        topicEventRegister.setNextSourceFrom(rootTopic);
+        topicEventRegister.register(Core.TitleText);
     }
 
     /*
@@ -497,7 +511,8 @@ public class RevisionsPage extends Page implements ICoreEventListener,
         } else if (Core.TitleText.equals(type)) {
             asyncExec(new Runnable() {
                 public void run() {
-                    if (titleLabel != null && !titleLabel.isDisposed()) {
+//                    if (titleLabel != null && !titleLabel.isDisposed()) {
+                    if (titleLabel != null) {
                         titleLabel.setText(getTitleText());
                     }
                 }
@@ -505,10 +520,8 @@ public class RevisionsPage extends Page implements ICoreEventListener,
         } else if (Core.RootTopic.equals(type)) {
             topicEventRegister.unregisterAll();
             ITopic rootTopic = sheet.getRootTopic();
-            if (rootTopic instanceof ICoreEventSource) {
-                topicEventRegister.setNextSource((ICoreEventSource) rootTopic);
-                topicEventRegister.register(Core.TitleText);
-            }
+            topicEventRegister.setNextSourceFrom(rootTopic);
+            topicEventRegister.register(Core.TitleText);
         }
     }
 
@@ -535,8 +548,9 @@ public class RevisionsPage extends Page implements ICoreEventListener,
     }
 
     private String getTitleText() {
-        return String
+        String text = String
                 .format("%s (%s)", sheet.getTitleText(), sheet.getRootTopic().getTitleText()); //$NON-NLS-1$
+        return TextFormatter.removeNewLineCharacter(text);
     }
 
 }

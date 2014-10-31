@@ -57,6 +57,8 @@ public class DOMConstants {
     public static final String ATTR_LINE_PATTERN = "line-pattern"; //$NON-NLS-1$
     public static final String ATTR_LINE_TAPERED = "line-tapered"; //$NON-NLS-1$
     public static final String ATTR_LINE_WIDTH = "line-width"; //$NON-NLS-1$
+    public static final String ATTR_BORDER_LINE_COLOR = "border-line-color"; //$NON-NLS-1$
+    public static final String ATTR_BORDER_LINE_WIDTH = "border-line-width"; //$NON-NLS-1$
     public static final String ATTR_MARGIN_BOTTOM = "fo:margin-bottom"; //$NON-NLS-1$
     public static final String ATTR_MARGIN_LEFT = "fo:margin-left"; //$NON-NLS-1$
     public static final String ATTR_MARGIN_RIGHT = "fo:margin-right"; //$NON-NLS-1$
@@ -64,6 +66,7 @@ public class DOMConstants {
     public static final String ATTR_MARKER_ID = "marker-id"; //$NON-NLS-1$
     public static final String ATTR_MEDIA_TYPE = "media-type"; //$NON-NLS-1$
     public static final String ATTR_MULTI_LINE_COLORS = "multi-line-colors"; //$NON-NLS-1$
+    public static final String ATTR_GRADIENT_COLOR = "color-gradient";//$NON-NLS-1$
     public static final String ATTR_NAME = "name"; //$NON-NLS-1$
     public static final String ATTR_NEXT_REVISION_NUMBER = "next-rev-num"; //$NON-NLS-1$
     public static final String ATTR_NUMBER_FORMAT = "number-format"; //$NON-NLS-1$
@@ -183,6 +186,7 @@ public class DOMConstants {
     public static final String VAL_RIGHT = "right"; //$NON-NLS-1$
     public static final String VAL_SYSTEM = "$system$"; //$NON-NLS-1$
     public static final String VAL_TAPERED = "tapered"; //$NON-NLS-1$
+    public static final String VAL_GRADIENT = "gradient"; //$NON-NLS-1$
     public static final String VAL_TOP = "top"; //$NON-NLS-1$
     public static final String VAL_UNDERLINE = "underline"; //$NON-NLS-1$
     public static final String VAL_VISIBLE = "visible"; //$NON-NLS-1$

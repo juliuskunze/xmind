@@ -22,7 +22,6 @@ import org.xmind.core.Core;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerRef;
 import org.xmind.gef.GEF;
@@ -178,15 +177,13 @@ public class MarkerPart extends MindMapPartBase implements IMarkerPart {
     @Override
     protected void installModelListeners() {
         super.installModelListeners();
-        ITopic topic = getMarkerRef().getParent();
-        if (topic instanceof ICoreEventSource) {
-            registerCoreEvents((ICoreEventSource) topic);
-        }
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
-            ICoreEventRegister register) {
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
+        register.register(Core.Style);
+        ITopic topic = getMarkerRef().getParent();
+        register.setNextSourceFrom(topic);
         register.register(Core.Style);
     }
 

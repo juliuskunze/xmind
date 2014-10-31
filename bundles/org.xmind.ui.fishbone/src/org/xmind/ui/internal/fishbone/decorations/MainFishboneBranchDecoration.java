@@ -81,8 +81,10 @@ public class MainFishboneBranchDecoration extends AbstractDecoration {
         double tailX = target.x
                 + (source.x < target.x ? MainFishboneBranchDecoration.TailLength
                         : -MainFishboneBranchDecoration.TailLength);
-        double tw = Math.max(0, Math.min(b.height / 2, Math.min(target.y - r.y,
-                r.bottom() - target.y)));
+        double tw = Math.max(
+                0,
+                Math.min(b.height / 2,
+                        Math.min(target.y - r.y, r.bottom() - target.y)));
 
         this.lineStart = source;
         this.lineEnd = target;
@@ -117,8 +119,8 @@ public class MainFishboneBranchDecoration extends AbstractDecoration {
     private PrecisionPoint getReference(IFigure figure) {
         ITopicPart topicPart = branch.getTopicPart();
         if (topicPart != null) {
-            return new PrecisionPoint(((IReferencedFigure) topicPart
-                    .getFigure()).getReference());
+            return new PrecisionPoint(
+                    ((IReferencedFigure) topicPart.getFigure()).getReference());
         }
         return new PrecisionPoint(figure.getBounds().getCenter());
     }
@@ -143,7 +145,7 @@ public class MainFishboneBranchDecoration extends AbstractDecoration {
         Color lineColor = topicDecoration.getLineColor();
         Color fillColor = topicDecoration.getFillColor();
 
-        if (lineColor == null || fillColor == null)
+        if (lineColor == null)
             return;
 
         int lineWidth = topicDecoration.getLineWidth();

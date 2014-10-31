@@ -35,7 +35,6 @@ import org.xmind.core.ISummary;
 import org.xmind.core.ITopic;
 import org.xmind.core.event.CoreEvent;
 import org.xmind.core.event.ICoreEventRegister;
-import org.xmind.core.event.ICoreEventSource;
 import org.xmind.gef.GEF;
 import org.xmind.gef.IViewer;
 import org.xmind.gef.draw2d.AbstractAnchor;
@@ -262,8 +261,8 @@ public class SummaryPart extends MindMapPartBase implements FigureListener,
 
     protected void declareEditPolicies(IRequestHandler reqHandler) {
         super.declareEditPolicies(reqHandler);
-        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_SELECTABLE,
+                NullEditPolicy.getInstance());
         reqHandler.installEditPolicy(GEF.ROLE_DELETABLE,
                 MindMapUI.POLICY_DELETABLE);
         reqHandler.installEditPolicy(GEF.ROLE_EDITABLE,
@@ -272,22 +271,19 @@ public class SummaryPart extends MindMapPartBase implements FigureListener,
                 MindMapUI.POLICY_MODIFIABLE);
 //        reqHandler.installEditPolicy(GEF.ROLE_CREATABLE,
 //                MindMapUI.POLICY_SUMMARY_CREATABLE);
-        reqHandler.installEditPolicy(GEF.ROLE_MOVABLE, NullEditPolicy
-                .getInstance());
+        reqHandler.installEditPolicy(GEF.ROLE_MOVABLE,
+                NullEditPolicy.getInstance());
     }
 
-    protected void registerCoreEvents(ICoreEventSource source,
-            ICoreEventRegister register) {
+    protected void registerCoreEvents(Object source, ICoreEventRegister register) {
         super.registerCoreEvents(source, register);
 
         ISummary summary = getSummary();
-        if (summary instanceof ICoreEventSource) {
-            register.setNextSource((ICoreEventSource) summary);
-            register.register(Core.StartIndex);
-            register.register(Core.EndIndex);
-            register.register(Core.TopicRefId);
-            register.register(Core.Style);
-        }
+        register.setNextSourceFrom(summary);
+        register.register(Core.StartIndex);
+        register.register(Core.EndIndex);
+        register.register(Core.TopicRefId);
+        register.register(Core.Style);
     }
 
     public void handleCoreEvent(CoreEvent event) {

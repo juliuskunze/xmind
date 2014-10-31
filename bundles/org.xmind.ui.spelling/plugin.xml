@@ -4,7 +4,6 @@
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
-            category="org.xmind.ui.MindMapPrefPage"
             class="org.xmind.ui.internal.spelling.SpellingCheckPrefPage"
             id="org.xmind.ui.SpellingCheckPrefPage"
             name="%prefPage.spelling.name">

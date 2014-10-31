@@ -18,7 +18,9 @@ import java.util.List;
 
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jface.action.ActionContributionItem;
+import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.ToolBarManager;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelection;
@@ -28,20 +30,28 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.ColorDialog;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 
 public class PaletteViewer extends Viewer implements IPaletteViewer {
 
     protected final class PaletteItemAction extends ColorAction {
 
+        private static final int DEFAULT_WIDTH = 16;
+        private static final int DEFAULT_HEIGHT = 16;
         private int type;
 
         public PaletteItemAction(int type, String text) {
@@ -58,6 +68,46 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
 
         public int getType() {
             return type;
+        }
+
+        public void setColor(RGB color) {
+            super.setColor(color);
+            if (getText() == PaletteMessages.PaletteViewer_MoreColors)
+                setImageDescriptor(new ImageDescriptor() {
+                    public ImageData getImageData() {
+                        Display display = Display.getCurrent();
+                        Image image = new Image(display, DEFAULT_WIDTH,
+                                DEFAULT_HEIGHT);
+                        GC gc = new GC(image);
+                        gc.setLineWidth(1);
+                        gc.setLineStyle(SWT.LINE_SOLID);
+                        gc.setAntialias(SWT.ON);
+                        int standardRadius = DEFAULT_WIDTH / 2;
+                        float brightness = 1.0f;
+                        for (int index = standardRadius; index > 1; index = index - 1) {
+                            drawCycle(gc, index, brightness);
+                        }
+
+                        gc.dispose();
+                        ImageData imageData = image.getImageData();
+                        image.dispose();
+                        return imageData;
+                    }
+                });
+        }
+
+        private void drawCycle(GC graphics, int radius, float brightness) {
+
+            int standardRadius = DEFAULT_WIDTH / 2;
+            int delta = standardRadius - radius;
+            float saturation = 1.0f - delta * 1.0f / standardRadius;
+            Color color = null;
+            for (int index = 0; index < 360; index++) {
+                color = new Color(null, new RGB(index, saturation, brightness));
+                graphics.setBackground(color);
+                graphics.fillArc(delta, delta, radius * 2, radius * 2, index, 1);
+                color.dispose();
+            }
         }
 
         public void run() {
@@ -89,13 +139,11 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
 
     private Control sep1 = null;
 
-    private ToolBarManager paletteToolBar = null;
+    private List<ToolBarManager> paletteToolBarManagers = null;
 
     private Control sep2 = null;
 
     private ToolBarManager noneToolBar = null;
-
-    private Control sep3 = null;
 
     private ToolBarManager customToolBar = null;
 
@@ -112,7 +160,7 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
         if (!controlExists() && parent != null) {
             control = new Composite(parent, SWT.NO_FOCUS);
             GridLayout layout = new GridLayout();
-            layout.verticalSpacing = 3;
+            layout.verticalSpacing = 0;
             layout.marginWidth = 0;
             layout.marginHeight = 0;
             control.setLayout(layout);
@@ -132,8 +180,15 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
             noneToolBar.dispose();
         if (customToolBar != null)
             customToolBar.dispose();
-        if (paletteToolBar != null)
-            paletteToolBar.dispose();
+        if (paletteToolBarManagers != null) {
+            for (ToolBarManager toolBarManager : paletteToolBarManagers) {
+                toolBarManager.dispose();
+            }
+            paletteToolBarManagers.clear();
+            paletteToolBarManagers = null;
+        }
+//        if (paletteToolBar != null)
+//            paletteToolBar.dispose();
         if (sep1 != null) {
             sep1.dispose();
             sep1 = null;
@@ -142,10 +197,10 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
             sep2.dispose();
             sep2 = null;
         }
-        if (sep3 != null) {
-            sep3.dispose();
-            sep3 = null;
-        }
+//        if (sep3 != null) {
+//            sep3.dispose();
+//            sep3 = null;
+//        }
     }
 
     private boolean controlExists() {
@@ -219,17 +274,13 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
             if (noneToolBar == null)
                 noneToolBar = createItemBar();
             if (noneAction == null)
-                noneAction = createItemAction(IColorSelection.NONE,
-                        PaletteMessages.PaletteViewer_None, null, noneToolBar);
+                noneAction = createItemAction(IColorSelection.NONE, null, null,
+                        noneToolBar);
         } else {
             noneAction = null;
             if (noneToolBar != null) {
                 noneToolBar.dispose();
                 noneToolBar = null;
-            }
-            if (sep2 != null) {
-                sep2.dispose();
-                sep2 = null;
             }
         }
         refresh();
@@ -244,7 +295,7 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
                 customToolBar = createItemBar();
             if (customAction == null)
                 customAction = createItemAction(IColorSelection.CUSTOM,
-                        PaletteMessages.PaletteViewer_Custom, null,
+                        PaletteMessages.PaletteViewer_MoreColors, null,
                         customToolBar);
         } else {
             customAction = null;
@@ -252,9 +303,9 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
                 customToolBar.dispose();
                 customToolBar = null;
             }
-            if (sep3 != null) {
-                sep3.dispose();
-                sep3 = null;
+            if (sep2 != null) {
+                sep2.dispose();
+                sep2 = null;
             }
         }
         refresh();
@@ -324,30 +375,38 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
                 paletteActions.clear();
                 paletteActions = null;
             }
-            if (paletteToolBar != null) {
-                paletteToolBar.dispose();
-                paletteToolBar = null;
+
+            if (paletteToolBarManagers != null) {
+                if (!paletteToolBarManagers.isEmpty())
+                    for (ToolBarManager toolBarManager : paletteToolBarManagers) {
+                        toolBarManager.removeAll();
+                        toolBarManager.dispose();
+                    }
+                paletteToolBarManagers.clear();
+                paletteToolBarManagers = null;
             }
         }
 
-        if (showNoneItem) {
-            if (showPaletteItems || showAutoItem) {
+        if (showCustomItem) {
+            if (showAutoItem || showPaletteItems || showNoneItem) {
                 if (sep2 == null || sep2.isDisposed()) {
                     sep2 = createSeparator(parent);
                 }
                 last = moveControl(sep2, last);
             }
-            last = showItemBar(noneToolBar, parent, last);
-        }
+            if (showNoneItem) {
+                Composite moreAndNone = new Composite(parent, SWT.NONE);
+                GridLayout layout = new GridLayout();
+                layout.numColumns = 2;
+                layout.marginLeft = 0;
+                layout.horizontalSpacing = 2;
+                moreAndNone.setLayout(layout);
 
-        if (showCustomItem) {
-            if (showAutoItem || showPaletteItems || showNoneItem) {
-                if (sep3 == null || sep3.isDisposed()) {
-                    sep3 = createSeparator(parent);
-                }
-                last = moveControl(sep3, last);
+                last = showItemBar(noneToolBar, moreAndNone, last);
+                last = showItemBar(customToolBar, moreAndNone, last);
+            } else {
+                last = showItemBar(customToolBar, parent, last);
             }
-            last = showItemBar(customToolBar, parent, last);
         }
 
         selection = findActionToSelect(selType, selColor);
@@ -357,8 +416,20 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
 
     private Control showPalette(Object newInput, PaletteItem[] newItems,
             boolean paletteChanged, Composite parent, Control currentControl) {
-        if (paletteToolBar == null) {
-            paletteToolBar = new ToolBarManager(SWT.RIGHT | SWT.FLAT | SWT.WRAP);
+        Composite paletteContainer = new Composite(parent, SWT.NONE);
+        GridLayout containerLayout = new GridLayout();
+        containerLayout.numColumns = ((PaletteContents) newInput)
+                .getPreferredColumns();
+        containerLayout.verticalSpacing = 0;
+        containerLayout.horizontalSpacing = 0;
+        if (newItems.length == 48) {
+            containerLayout.verticalSpacing = 0;
+            containerLayout.horizontalSpacing = 4;
+        }
+        paletteContainer.setLayout(containerLayout);
+
+        if (paletteToolBarManagers == null) {
+            paletteToolBarManagers = new ArrayList<ToolBarManager>();
             paletteChanged = true;
         }
         if (paletteActions == null) {
@@ -366,28 +437,74 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
             paletteChanged = true;
         }
         if (paletteChanged) {
-            paletteToolBar.removeAll();
+            for (ToolBarManager toolBarManager : paletteToolBarManagers) {
+                if (toolBarManager != null) {
+                    toolBarManager.removeAll();
+                    toolBarManager.dispose();
+                }
+            }
+            paletteToolBarManagers.clear();
             paletteActions.clear();
-            for (PaletteItem item : newItems) {
-                PaletteItemAction action = new PaletteItemAction(item);
-                paletteToolBar.add(action);
+            for (int i = 0; i < newItems.length; i++) {
+                PaletteItemAction action = new PaletteItemAction(newItems[i]);
+                ToolBar tb = new ToolBar(paletteContainer, SWT.FLAT | SWT.RIGHT);
+
+                GridData layoutData = new GridData(GridData.FILL_HORIZONTAL);
+                if (newItems.length == 48)
+                    if (i >= containerLayout.numColumns
+                            && i < containerLayout.numColumns * 2) {
+                        layoutData.verticalIndent = 10;
+                    }
+                tb.setLayoutData(layoutData);
+
+                ToolBarManager toolBar = new ToolBarManager(tb);
+                toolBar.add(action);
+                paletteToolBarManagers.add(toolBar);
                 paletteActions.add(action);
             }
+        }
 
+        for (int i = 0; i < paletteToolBarManagers.size(); i++) {
+            ToolBarManager toolBar = paletteToolBarManagers.get(i);
+            if (toolBar != null) {
+                ToolBar tb = toolBar.getControl();
+                if (tb == null) {
+                    tb = toolBar.createControl(paletteContainer);
+                    GridData layoutData = new GridData(GridData.FILL_HORIZONTAL);
+                    if (newItems.length == 48)
+                        if (i >= containerLayout.numColumns
+                                && i < containerLayout.numColumns * 2) {
+                            layoutData.verticalIndent = 10;
+                        }
+
+                    tb.setLayoutData(layoutData);
+
+                } else {
+//                    toolBar.update(false);
+                    updatePaletteToolBar(toolBar);
+                }
+            }
         }
-        ToolBar tb = paletteToolBar.getControl();
-        if (tb == null) {
-            tb = paletteToolBar.createControl(parent);
-            tb.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-            moveControl(tb, currentControl);
+        moveControl(paletteContainer, currentControl);
+
+        return paletteContainer;
+    }
+
+    private void updatePaletteToolBar(ToolBarManager toolBarManager) {
+        ToolBar toolBar = toolBarManager.getControl();
+
+        // clean contains all active items without double separators
+        IContributionItem item = toolBarManager.getItems()[0];
+        // determine obsolete items (removed or non active)
+        ToolItem[] mi = toolBar.getItems();
+        if (mi.length > 0 && mi[0].getData() == item) {
         } else {
-            paletteToolBar.update(true);
+            for (int i = 0; i < mi.length; i++) {
+                mi[i].dispose();
+            }
+            item.fill(toolBar, 0);
         }
-        // Calculate a preferred width to wrap the palette tool bar
-        int w = tb.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x
-                / ((PaletteContents) newInput).getPreferredRows();
-        ((GridData) tb.getLayoutData()).widthHint = w;
-        return tb;
+
     }
 
     private Control showItemBar(ToolBarManager tbm, Composite parent,
@@ -396,8 +513,8 @@ public class PaletteViewer extends Viewer implements IPaletteViewer {
             ToolBar tb = tbm.getControl();
             if (tb == null || tb.isDisposed()) {
                 tb = tbm.createControl(parent);
-                tb.setLayoutData(new GridData(GridData.CENTER, GridData.FILL,
-                        true, false));
+                tb.setLayoutData(new GridData(GridData.BEGINNING,
+                        GridData.FILL, true, false));
                 moveControl(tb, last);
             } else {
                 tbm.update(true);

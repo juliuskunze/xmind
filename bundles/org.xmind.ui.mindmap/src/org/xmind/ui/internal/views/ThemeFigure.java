@@ -101,6 +101,14 @@ public class ThemeFigure extends Figure {
 
         StyleFigureUtils.drawSheetBackground(graphics, r, sheetStyle,
                 StyleFigureUtils.defaultSheetStyle, false);
+        String value = sheetStyle == null ? null : sheetStyle
+                .getProperty(Styles.GradientColor);
+        if (value == null) {
+            value = StyleFigureUtils.defaultSheetStyle == null ? null
+                    : StyleFigureUtils.defaultSheetStyle
+                            .getProperty(Styles.GradientColor);
+        }
+        boolean isGradientColor = Styles.GRADIENT.equals(value);
 
         boolean tapered = true;
         Color lineColor1 = StyleFigureUtils.getBranchConnectionColor(mainStyle,
@@ -109,9 +117,11 @@ public class ThemeFigure extends Figure {
         graphics.setForegroundColor(lineColor1);
         StyleFigureUtils.drawLine(graphics, centralBounds, centralStyle,
                 StyleFigureUtils.defaultCentralStyle, false, mainBounds1,
-                mainStyle, StyleFigureUtils.defaultMainStyle, true, tapered);
+                mainStyle, StyleFigureUtils.defaultMainStyle, false, tapered);
         StyleFigureUtils.drawTopic(graphics, mainBounds1, mainStyle,
-                StyleFigureUtils.defaultMainStyle, true);
+                StyleFigureUtils.defaultMainStyle, false, isGradientColor);
+        StyleFigureUtils.drawtext(graphics, "M", mainBounds1, mainStyle, //$NON-NLS-1$
+                StyleFigureUtils.defaultMainStyle);
 
         Color lineColor2 = StyleFigureUtils.getBranchConnectionColor(mainStyle,
                 StyleFigureUtils.defaultMainStyle, centralStyle,
@@ -119,12 +129,16 @@ public class ThemeFigure extends Figure {
         graphics.setForegroundColor(lineColor2);
         StyleFigureUtils.drawLine(graphics, centralBounds, centralStyle,
                 StyleFigureUtils.defaultCentralStyle, false, mainBounds2,
-                mainStyle, StyleFigureUtils.defaultMainStyle, true, tapered);
+                mainStyle, StyleFigureUtils.defaultMainStyle, false, tapered);
         StyleFigureUtils.drawTopic(graphics, mainBounds2, mainStyle,
-                StyleFigureUtils.defaultMainStyle, true);
+                StyleFigureUtils.defaultMainStyle, false, isGradientColor);
+        StyleFigureUtils.drawtext(graphics, "M", mainBounds2, mainStyle, //$NON-NLS-1$
+                StyleFigureUtils.defaultMainStyle);
 
         StyleFigureUtils.drawTopic(graphics, centralBounds, centralStyle,
-                StyleFigureUtils.defaultCentralStyle, false);
+                StyleFigureUtils.defaultCentralStyle, false, isGradientColor);
+        StyleFigureUtils.drawtext(graphics, "C", centralBounds, centralStyle, //$NON-NLS-1$
+                StyleFigureUtils.defaultCentralStyle);
 
         if (defaultImage != null) {
 //            org.eclipse.swt.graphics.Rectangle imgBounds = defaultImage

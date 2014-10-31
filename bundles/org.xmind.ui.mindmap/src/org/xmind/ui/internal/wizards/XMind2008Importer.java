@@ -58,7 +58,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Attr;
@@ -145,8 +144,6 @@ public class XMind2008Importer extends MindMapImporter implements ErrorHandler {
     private IWorkbook targetWorkbook;
 
     private IStorage storage;
-
-    private DocumentBuilder builder;
 
     private MarkerSheetImpl markerSheet;
 
@@ -321,6 +318,8 @@ public class XMind2008Importer extends MindMapImporter implements ErrorHandler {
         String styleId = DOMUtils.getAttribute(sheetEle, ATTR_STYLE_ID);
         IStyleSheet styleSheet = targetWorkbook.getStyleSheet();
         IStyle style = styleSheet.findStyle(styleId);
+        if (style == null)
+            return;
         String type = style.getType();
         if ("map".equals(type)) { //$NON-NLS-1$
             String p = style.getProperty(PROP_BACKGROUND);
@@ -797,17 +796,11 @@ public class XMind2008Importer extends MindMapImporter implements ErrorHandler {
     }
 
     private DocumentBuilder getDocumentBuilder() {
-        if (builder == null) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory
-                    .newInstance();
-            factory.setAttribute(
-                    "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
-                    true);
-            try {
-                builder = factory.newDocumentBuilder();
-            } catch (ParserConfigurationException e) {
-                e.printStackTrace();
-            }
+        DocumentBuilder builder = null;
+        try {
+            builder = DOMUtils.getDefaultDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
         }
         return builder;
     }

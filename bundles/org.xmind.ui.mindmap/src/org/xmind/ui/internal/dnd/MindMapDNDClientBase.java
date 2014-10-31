@@ -5,12 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.swt.dnd.TransferData;
 import org.xmind.core.IBoundary;
 import org.xmind.core.IImage;
 import org.xmind.core.IRelationship;
 import org.xmind.core.ISheet;
 import org.xmind.core.ITopic;
+import org.xmind.core.ITopicExtension;
+import org.xmind.core.ITopicExtensionElement;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.marker.IMarker;
 import org.xmind.core.marker.IMarkerGroup;
@@ -30,7 +33,10 @@ import org.xmind.ui.commands.DeleteMarkerCommand;
 import org.xmind.ui.commands.ModifyImageAlignmentCommand;
 import org.xmind.ui.commands.ModifyImageSizeCommand;
 import org.xmind.ui.commands.ModifyImageSourceCommand;
+import org.xmind.ui.commands.ModifyRightNumberOfUnbalancedStructureCommand;
 import org.xmind.ui.commands.ModifyTopicHyperlinkCommand;
+import org.xmind.ui.internal.branch.UnbalancedData;
+import org.xmind.ui.mindmap.ITopicPart;
 import org.xmind.ui.util.MindMapUtils;
 
 public abstract class MindMapDNDClientBase implements IDndClient {
@@ -112,6 +118,8 @@ public abstract class MindMapDNDClientBase implements IDndClient {
         int index = request.getIntParameter(GEF.PARAM_INDEX, -1);
         Point position = (Point) request.getParameter(GEF.PARAM_POSITION);
 
+        int countForUnbalacedStructure = 0;
+
         for (Object element : elements) {
             if (element instanceof Command) {
                 commands.add((Command) element);
@@ -123,6 +131,10 @@ public abstract class MindMapDNDClientBase implements IDndClient {
                         commands.add(new AddTopicCommand(topic, targetParent,
                                 -1, ITopic.DETACHED));
                     } else {
+                        countForUnbalacedStructure = modifyRightNumeberForUnbalancedStructure(
+                                request, targetParent,
+                                countForUnbalacedStructure);
+
                         topic.setPosition(null);
                         commands.add(new AddTopicCommand(topic, targetParent,
                                 index, ITopic.ATTACHED));
@@ -187,6 +199,71 @@ public abstract class MindMapDNDClientBase implements IDndClient {
                 }
             }
         }
+
+        if (countForUnbalacedStructure != 0) {
+            IViewer viewer = request.getTargetViewer();
+            ITopic centralTopic = (ITopic) viewer.getAdapter(ITopic.class);
+            ITopicExtension extension = centralTopic
+                    .createExtension(UnbalancedData.EXTENTION_UNBALANCEDSTRUCTURE);
+            ITopicExtensionElement element = extension.getContent()
+                    .getCreatedChild(
+                            UnbalancedData.EXTENTIONELEMENT_RIGHTNUMBER);
+
+            String preDndRightNum = element.getTextContent();
+            if (preDndRightNum == null)
+                preDndRightNum = String.valueOf(0);
+            int postDndRightNum = Integer.valueOf(preDndRightNum);
+            commands.add(new ModifyRightNumberOfUnbalancedStructureCommand(
+                    centralTopic, preDndRightNum, postDndRightNum
+                            + countForUnbalacedStructure));
+        }
+    }
+
+    private int modifyRightNumeberForUnbalancedStructure(Request request,
+            ITopic targetParent, int count) {
+        IViewer viewer = request.getTargetViewer();
+        if (viewer == null)
+            return count;
+
+        ITopic centralTopic = (ITopic) viewer.getAdapter(ITopic.class);
+        if (centralTopic == targetParent) {
+            String centralTopicStructure = centralTopic.getStructureClass();
+            boolean isUnbalancedStructure = centralTopicStructure == null
+                    || UnbalancedData.STRUCTUREID_UNBALANCED
+                            .equalsIgnoreCase(centralTopicStructure);
+
+            if (isUnbalancedStructure) {
+                ITopicExtension extension = centralTopic
+                        .createExtension(UnbalancedData.EXTENTION_UNBALANCEDSTRUCTURE);
+                ITopicExtensionElement element = extension.getContent()
+                        .getCreatedChild(
+                                UnbalancedData.EXTENTIONELEMENT_RIGHTNUMBER);
+
+                String preDndRightNum = element.getTextContent();
+                if (preDndRightNum == null)
+                    preDndRightNum = String.valueOf(0);
+                int postDndRightNum = Integer.valueOf(preDndRightNum);
+
+                ITopicPart parentPart = (ITopicPart) request
+                        .getParameter(GEF.PARAM_PARENT);
+                if (parentPart != null || postDndRightNum <= 2) {
+                    if (parentPart != null) {
+                        Rectangle bounds = parentPart.getFigure().getBounds();
+                        if (bounds
+                                .getCenter()
+                                .getDifference(
+                                        (Point) request
+                                                .getParameter(GEF.PARAM_POSITION_ABSOLUTE)).width < 0) {
+                            count++;
+                        }
+                    } else if (postDndRightNum <= 2) {
+                        count++;
+                    }
+
+                }
+            }
+        }
+        return count;
     }
 
     protected Command createModifyImageCommand(ITopic target, String source,

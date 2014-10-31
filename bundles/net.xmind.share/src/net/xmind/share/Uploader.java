@@ -43,6 +43,8 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.xmind.core.Core;
 import org.xmind.core.IMeta;
@@ -51,13 +53,14 @@ import org.xmind.core.ITopic;
 import org.xmind.core.IWorkbook;
 import org.xmind.core.util.HyperlinkUtils;
 import org.xmind.gef.GEF;
-import org.xmind.ui.dialogs.NotificationWindow;
+import org.xmind.ui.dialogs.Notification;
 import org.xmind.ui.mindmap.IMindMapViewer;
 import org.xmind.ui.mindmap.MindMap;
 import org.xmind.ui.mindmap.MindMapExtractor;
 import org.xmind.ui.mindmap.MindMapImageExporter;
 import org.xmind.ui.mindmap.MindMapUI;
 import org.xmind.ui.resources.ColorUtils;
+import org.xmind.ui.util.TextFormatter;
 
 public class Uploader extends JobChangeAdapter {
 
@@ -267,7 +270,9 @@ public class Uploader extends JobChangeAdapter {
 
     private String getDefaultMapTitle() {
         if (workbook != null) {
-            return workbook.getPrimarySheet().getRootTopic().getTitleText();
+            return TextFormatter.removeNewLineCharacter(workbook
+                    .getPrimarySheet().getRootTopic() != null ? workbook
+                    .getPrimarySheet().getRootTopic().getTitleText() : ""); //$NON-NLS-1$
         }
         return null;
     }
@@ -282,7 +287,9 @@ public class Uploader extends JobChangeAdapter {
                 if (!mainTopics.isEmpty()) {
                     StringBuffer sb = new StringBuffer(mainTopics.size() * 15);
                     for (int i = 0; i < mainTopics.size(); i++) {
-                        sb.append(mainTopics.get(i).getTitleText());
+                        sb.append(TextFormatter
+                                .removeNewLineCharacter(mainTopics.get(i) != null ? mainTopics
+                                        .get(i).getTitleText() : "")); //$NON-NLS-1$
                         if (i < mainTopics.size() - 1) {
                             sb.append(" / "); //$NON-NLS-1$
                         }
@@ -367,17 +374,23 @@ public class Uploader extends JobChangeAdapter {
                 showUploadedMap(permalink);
             }
         };
-        viewAction.setText(Messages.UploadJob_OpenMap_message + " " //$NON-NLS-1$
-                + Messages.UploadJob_View_text);
-        new NotificationWindow(parentShell, Messages.UploadJob_OpenMap_title,
-                viewAction, null, 0).open();
+        viewAction.setText(Messages.Uploader_openAction_text);
+        viewAction.setImageDescriptor(XmindSharePlugin
+                .imageDescriptorFromPlugin(XmindSharePlugin.PLUGIN_ID,
+                        "icons/upload-notification.png")); //$NON-NLS-1$
 
-//        SimpleInfoPopupDialog dialog = new SimpleInfoPopupDialog(null, null,
-//                Messages.UploadJob_OpenMap_message, 0, null, viewAction);
-//        dialog.setDuration(30000);
-//        dialog.setGroupId("org.xmind.notifications"); //$NON-NLS-1$
-//        dialog.setCloseOnAction(true);
-//        dialog.popUp();
+        IWorkbenchWindow window = PlatformUI.getWorkbench()
+                .getActiveWorkbenchWindow();
+        if (window == null)
+            return;
+
+        Notification popup = new Notification(window.getShell(), null,
+                Messages.UploadJob_OpenMap_message, viewAction, null);
+        popup.setGroupId(XmindSharePlugin.PLUGIN_ID);
+        popup.setCenterPopUp(true);
+        popup.setDuration(20000);
+        popup.popUp();
+
     }
 
     private void showUploadedMap(String url) {

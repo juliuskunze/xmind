@@ -131,6 +131,16 @@ public class WorkbookRevisionsPage extends PageBookPage implements
         gridLayout.horizontalSpacing = 0;
         container.setLayout(gridLayout);
 
+        Composite contentContainer = new Composite(container, SWT.NONE);
+        contentContainer.setLayout(new FillLayout());
+        GridData contentLayoutData = new GridData(SWT.FILL, SWT.FILL, true,
+                true);
+        contentLayoutData.widthHint = SWT.DEFAULT;
+        contentLayoutData.heightHint = SWT.DEFAULT;
+        contentContainer.setLayoutData(contentLayoutData);
+
+        super.createControl(contentContainer);
+
         Composite optionContainer = new Composite(container, SWT.NONE);
         GridLayout optionLayout = new GridLayout(1, false);
         optionLayout.marginWidth = 5;
@@ -145,16 +155,6 @@ public class WorkbookRevisionsPage extends PageBookPage implements
         optionContainer.setLayoutData(optionLayoutData);
 
         fillOptions(optionContainer);
-
-        Composite contentContainer = new Composite(container, SWT.NONE);
-        contentContainer.setLayout(new FillLayout());
-        GridData contentLayoutData = new GridData(SWT.FILL, SWT.FILL, true,
-                true);
-        contentLayoutData.widthHint = SWT.DEFAULT;
-        contentLayoutData.heightHint = SWT.DEFAULT;
-        contentContainer.setLayoutData(contentLayoutData);
-
-        super.createControl(contentContainer);
 
         handleWorkbookChange();
         getEditor().addPropertyListener(this);

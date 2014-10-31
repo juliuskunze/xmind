@@ -124,6 +124,8 @@ public class TopicShapePropertySectionPart extends StyledPropertySectionPart {
         String shapeId = null;
         if (shapeViewer != null && !shapeViewer.getControl().isDisposed()) {
             shapeId = getStyleValue(Styles.ShapeClass, null);
+            if (Styles.TOPIC_SHAPE_NO_BORDER.equals(shapeId))
+                shapeId = Styles.TOPIC_SHAPE_RECT;
             IDecorationDescriptor element = getSelectableShape(shapeId);
             if (element == null) {
                 shapeViewer.setSelection(StructuredSelection.EMPTY);

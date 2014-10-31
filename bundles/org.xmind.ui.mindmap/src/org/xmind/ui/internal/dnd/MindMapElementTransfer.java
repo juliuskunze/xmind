@@ -43,7 +43,7 @@ public class MindMapElementTransfer extends ByteArrayTransfer {
 
     private Map<Object, Object> cloneMap = new HashMap<Object, Object>();
 
-    private MindMapElementTransfer() {
+    protected MindMapElementTransfer() {
     }
 
     public static MindMapElementTransfer getInstance() {

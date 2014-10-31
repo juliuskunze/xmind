@@ -221,8 +221,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
                 layout.setMajorAlignment(AdvancedToolbarLayout.ALIGN_TOPLEFT);
             }
             layout.setMinorAlignment(AdvancedToolbarLayout.ALIGN_BOTTOMRIGHT);
-            layout
-                    .setInnerMinorAlignment(AdvancedToolbarLayout.ALIGN_BOTTOMRIGHT);
+            layout.setInnerMinorAlignment(AdvancedToolbarLayout.ALIGN_BOTTOMRIGHT);
             layout.setSpacing(5);
             return layout;
         }
@@ -399,8 +398,7 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         protected LayoutManager createLayoutManager() {
             AdvancedToolbarLayout layout = new AdvancedToolbarLayout(true);
             layout.setMinorAlignment(AdvancedToolbarLayout.ALIGN_BOTTOMRIGHT);
-            layout
-                    .setInnerMinorAlignment(AdvancedToolbarLayout.ALIGN_BOTTOMRIGHT);
+            layout.setInnerMinorAlignment(AdvancedToolbarLayout.ALIGN_BOTTOMRIGHT);
             layout.setMajorAlignment(AdvancedToolbarLayout.ALIGN_TOPLEFT);
             layout.setSpacing(2);
             return layout;
@@ -656,8 +654,6 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
 
         Control fileGroup = createFileControls(composite);
         fileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-
-        updateStatus();
     }
 
     protected Control createSettingsGroup(Composite parent) {
@@ -809,8 +805,8 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
             if (propertyName instanceof String) {
                 if (event.widget instanceof Button) {
                     handlingEvent = true;
-                    setValue((String) propertyName, ((Button) event.widget)
-                            .getSelection());
+                    setValue((String) propertyName,
+                            ((Button) event.widget).getSelection());
                     handlingEvent = false;
                 }
             } else {
@@ -1044,13 +1040,11 @@ public abstract class DocumentExportPageBase extends AbstractMindMapExportPage {
         mainTopic.add(sub2);
 
         ITopic summary1 = workbook.createTopic();
-        summary1
-                .setTitleText(WizardMessages.DocumentExportPage_Sample_Summary1);
+        summary1.setTitleText(WizardMessages.DocumentExportPage_Sample_Summary1);
         mainTopic.add(summary1, ITopic.SUMMARY);
 
         ITopic summary2 = workbook.createTopic();
-        summary2
-                .setTitleText(WizardMessages.DocumentExportPage_Sample_Summary2);
+        summary2.setTitleText(WizardMessages.DocumentExportPage_Sample_Summary2);
         mainTopic.add(summary2, ITopic.SUMMARY);
 
         ITopic floating1 = workbook.createTopic();
