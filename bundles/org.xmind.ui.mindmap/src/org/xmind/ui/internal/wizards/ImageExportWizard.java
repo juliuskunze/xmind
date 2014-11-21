@@ -529,7 +529,7 @@ public class ImageExportWizard extends AbstractMindMapExportWizard {
     protected void loadDialogSettings(IDialogSettings settings) {
         String mediaType = settings.get(PROP_FORMAT);
         ImageFormat lastFormat = ImageFormat.findByMediaType(mediaType,
-                ImageFormat.BMP);
+                ImageFormat.PNG);
         setFormat(lastFormat);
         super.loadDialogSettings(settings);
     }

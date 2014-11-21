@@ -248,7 +248,7 @@ public class NotesViewer implements IInputSelectionProvider {
     }
 
     private SelectionSynchronizer getSelectionProvider() {
-        if (selectionProvider != null) {
+        if (selectionProvider == null) {
             selectionProvider = new SelectionSynchronizer();
         }
         return selectionProvider;

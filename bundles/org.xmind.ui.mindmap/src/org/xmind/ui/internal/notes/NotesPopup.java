@@ -777,7 +777,7 @@ public class NotesPopup extends PopupDialog implements IDocumentListener,
 
     private void updateTextActions() {
         if (notesViewer == null || notesViewer.getControl().isDisposed()
-                || contributor != null)
+                || contributor == null)
             return;
         TextViewer textViewer = notesViewer.getImplementation().getTextViewer();
         if (textViewer != null) {

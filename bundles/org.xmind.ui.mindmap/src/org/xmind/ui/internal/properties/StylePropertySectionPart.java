@@ -182,7 +182,8 @@ public class StylePropertySectionPart extends StyledPropertySectionPart {
                     true, false));
 
             Button showStyleEditorDialog = new Button(bottom, SWT.PUSH);
-            showStyleEditorDialog.setText(MindMapMessages.StylePropertySectionPart_ShowStyleEditorDialogButton_text);
+            showStyleEditorDialog
+                    .setText(MindMapMessages.StylePropertySectionPart_ShowStyleEditorDialogButton_text);
             showStyleEditorDialog.setLayoutData(new GridData(GridData.CENTER,
                     GridData.CENTER, true, false));
             showStyleEditorDialog.addListener(SWT.Selection, new Listener() {
@@ -241,8 +242,12 @@ public class StylePropertySectionPart extends StyledPropertySectionPart {
                     .getFirstElement();
             if (o instanceof IStyle) {
                 close();
-                IStyle selectedStyle = (IStyle) o;
-                applyStyle(selectedStyle);
+                final IStyle selectedStyle = (IStyle) o;
+                Display.getCurrent().asyncExec(new Runnable() {
+                    public void run() {
+                        applyStyle(selectedStyle);
+                    }
+                });
                 selectStyleWidget.setText((selectedStyle).getName());
             }
         }
@@ -254,7 +259,8 @@ public class StylePropertySectionPart extends StyledPropertySectionPart {
 
     @Override
     protected void doRefresh() {
-        selectStyleWidget.setText(MindMapMessages.StylePropertySectionPart_text);
+        selectStyleWidget
+                .setText(MindMapMessages.StylePropertySectionPart_text);
     }
 
     @Override
@@ -262,10 +268,9 @@ public class StylePropertySectionPart extends StyledPropertySectionPart {
         selectStyleWidget = new MButton(parent, MButton.NORMAL);
         selectStyleWidget.getControl().setLayoutData(
                 new GridData(GridData.FILL, GridData.FILL, true, false));
-        selectStyleWidget.getControl()
-                .setToolTipText(
-                        NLS.bind(MindMapMessages.StylePropertySectionPart_tooltip,
-                                getInputType()));
+        selectStyleWidget.getControl().setToolTipText(
+                NLS.bind(MindMapMessages.StylePropertySectionPart_tooltip,
+                        getInputType()));
         selectStyleWidget.addOpenListener(new IOpenListener() {
             public void open(OpenEvent event) {
                 openSelectStyleDialog();

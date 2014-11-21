@@ -16,7 +16,6 @@ package org.xmind.ui.internal.browser;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
-import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -33,9 +32,6 @@ public class BrowserUtil {
     private static final String BROWSER_PACKAGE_NAME = "org.eclipse.swt.browser.Browser"; //$NON-NLS-1$
 
     private static Boolean isInternalBrowserOperational = null;
-
-    private static Pattern INTERNAL_LINK_PATTERN = Pattern
-            .compile("^https?\\:\\/\\/(www\\.)?xmind\\.net\\/.*\\/"); //$NON-NLS-1$
 
     private BrowserUtil() {
     }
@@ -127,9 +123,7 @@ public class BrowserUtil {
     public static String makeRedirectURL(String url) {
         if (url == null || "".equals(url)) //$NON-NLS-1$
             return url;
-        if (url.startsWith("file:")) //$NON-NLS-1$
-            return url;
-        if (!INTERNAL_LINK_PATTERN.matcher(url).matches())
+        if (!url.startsWith("http:") && !url.startsWith("https:")) //$NON-NLS-1$ //$NON-NLS-2$
             return url;
         try {
             url = new URI(url).toString();
