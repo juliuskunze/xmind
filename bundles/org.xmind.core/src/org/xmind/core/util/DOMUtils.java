@@ -225,7 +225,7 @@ public class DOMUtils {
                     "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
                     true);
             factory.setFeature(
-                    "http://apache.org/xml/features/disallow-doctype-decl", true); //$NON-NLS-1$+
+                    "http://apache.org/xml/features/disallow-doctype-decl", true); //$NON-NLS-1$
             factory.setXIncludeAware(false);
         }
         catch(Exception ignored) {
