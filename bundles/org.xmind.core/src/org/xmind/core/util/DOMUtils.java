@@ -224,22 +224,38 @@ public class DOMUtils {
             factory.setAttribute(
                     "http://apache.org/xml/features/continue-after-fatal-error", //$NON-NLS-1$
                     true);
+        }
+        catch(IllegalArgumentException ignored) {
+        }
+
+        try {
             factory.setFeature(
                     "http://apache.org/xml/features/disallow-doctype-decl", true); //$NON-NLS-1$
+        }
+        catch(ParserConfigurationException ignored) {
+        }
+
+        try {
             factory.setXIncludeAware(false);
         }
-        catch(Exception ignored) {
+        catch(UnsupportedOperationException ignored) {
         }
+
 
         factory.setExpandEntityReferences(false);
 
         try {
             factory.setFeature(
                     "http://xml.org/sax/features/external-parameter-entities", false); //$NON-NLS-1$
+        }
+        catch(ParserConfigurationException ignored) {
+        }
+
+        try {
             factory.setFeature(
                     "http://xml.org/sax/features/external-general-entities", false); //$NON-NLS-1$
-            }
-        catch(Exception ignored) {
+        }
+        catch(ParserConfigurationException ignored) {
         }
 
         factory.setNamespaceAware(true);
